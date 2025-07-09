@@ -1,0 +1,24 @@
+.not-found-page {
+  padding: var(--space-lg);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.back-link {
+  margin-top: var(--space-lg);
+  display: inline-block;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  background-color: var(--primary-700);
+  color: white;
+  transition: background-color var(--transition-normal);
+}
+
+.back-link:hover {
+  background-color: var(--primary-500);
+  color: white;
+}

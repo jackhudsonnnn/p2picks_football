@@ -1,0 +1,27 @@
+.private-table-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height));
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.table-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--neutral-700);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}

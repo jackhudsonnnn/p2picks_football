@@ -1,0 +1,325 @@
+.profile-container {
+  margin-top: 7%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--space-xl);
+  background-color: var(--neutral-800);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-section {
+  margin-bottom: var(--space-xl);
+}
+
+.username-section {
+  margin-bottom: var(--space-xl);
+}
+
+.current-username {
+  margin-bottom: var(--space-md);
+}
+
+.change-username-btn {
+  margin-top: var(--space-md);
+}
+
+.username-form,
+.add-friend-form {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.profile-input {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--neutral-600);
+  background-color: var(--neutral-700);
+  color: var(--neutral-100);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+}
+
+.profile-input::placeholder {
+  color: var(--neutral-400);
+}
+
+.profile-input:focus {
+  border-color: var(--primary-500);
+  outline: none;
+  box-shadow: var(--shadow-glow);
+}
+
+.profile-input-invalid {
+  background-color: rgba(
+    244,
+    67,
+    54,
+    0.15
+  ) !important;
+  border-color: var(--accent-power) !important;
+}
+
+.profile-input-invalid:focus {
+  border-color: var(--accent-power) !important;
+  box-shadow: var(--shadow-power) !important; 
+}
+
+.friends-list {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--neutral-600);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  background-color: var(--neutral-700);
+  transition: background-color 0.3s ease;
+}
+
+.friend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.friend-item:nth-child(odd) {
+  background-color: var(--neutral-500);
+}
+
+.friend-item:nth-child(even) {
+  background-color: var(--neutral-600);
+}
+
+.friend-item:hover {
+  box-shadow: 0 0 2px var(--accent-victory);
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.friend-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: nowrap;
+}
+
+.friend-username {
+  color: var(--neutral-100);
+  font-weight: 500;
+}
+
+.friend-status {
+  font-size: var(--font-size-sm);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.friend-status.online {
+  color: var(--accent-victory);
+}
+
+.friend-status.offline {
+  color: var(--neutral-400);
+}
+
+.btn-danger {
+  background: none;
+  border: none;
+  color: var(--neutral-300);
+  font-size: var(--font-size-3xl);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-danger:hover {
+  color: var(--accent-power);
+  transform: scale(1.1);
+}
+
+.friend-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: var(--space-md);
+  border: 2px solid var(--neutral-600);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.friend-avatar:hover {
+  border-color: var(--primary-500);
+}
+
+/* Button Styles for Account Page */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem; 
+  border-radius: var(--radius-md); 
+  font-weight: 500; 
+  cursor: pointer;
+  transition: all var(--transition-normal); 
+  border: none; 
+  text-align: center;
+  vertical-align: middle;
+  user-select: none; 
+  letter-spacing: 0.05em; 
+  font-size: var(--font-size-base); 
+  line-height: 1.5; 
+}
+
+.btn:hover {
+  text-decoration: none; 
+}
+
+.btn:focus,
+.btn.focus {
+  outline: 0; 
+  box-shadow: var(--shadow-glow); 
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text-light);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-light);
+  transition: background-color 0.3s ease;
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: var(--neutral-600);
+}
+
+.btn-primary:disabled:hover {
+  background-color: var(--neutral-600);
+  box-shadow: none;
+}
+
+.user-code-section {
+  margin-bottom: var(--space-md);
+}
+
+.user-code-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.unique-code-text {
+  display: inline-block;
+  min-width: 100px;
+  font-family: monospace;
+  font-size: var(--font-size-lg);
+}
+
+.btn-reset {
+  background: none;
+  border: 1px solid var(--neutral-500);
+  border-radius: 50%;
+  color: var(--neutral-300);
+  font-size: 1rem;
+  cursor: pointer;
+  height: 2rem;
+  width: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+  border-color: var(--primary-500);
+  color: var(--primary-500);
+  transform: rotate(180deg);
+}
+
+.form-buttons {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 1px solid var(--neutral-400);
+  background-color: transparent;
+  color: var(--neutral-200);
+}
+
+.btn-secondary:hover {
+  border-color: var(--neutral-200);
+  color: var(--neutral-100);
+  background-color: var(--neutral-700);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  border-color: var(--neutral-600);
+  color: var(--neutral-400);
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    margin-top: 80px;
+    margin-left: var(--space-md);
+    margin-right: var(--space-md);
+    padding: var(--space-lg);
+  }
+
+  .username-form,
+  .add-friend-form {
+    flex-direction: column;
+  }
+
+  .username-form,
+  .add-friend-form {
+    flex-direction: column;
+  }
+
+  .form-buttons {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .form-buttons button {
+    flex: 1;
+  }
+}

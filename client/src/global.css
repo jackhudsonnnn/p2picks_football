@@ -1,0 +1,153 @@
+/* Root Variables */
+:root {
+  /* Core Colors - Sports-inspired color scheme */
+  --primary-100: #E3F3FF;
+  --primary-300: #60B2FF;
+  --primary-500: #2196F3;  
+  --primary-700: #1565C0;
+  --primary-900: #0D47A1;
+
+  /* Neutrals - Dark mode focused */
+  --neutral-100: #F8FAFC;
+  --neutral-200: #E2E8F0;
+  --neutral-300: #CBD5E1;
+  --neutral-400: #94A3B8;
+  --neutral-500: #64748B;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1E293B; 
+  --neutral-900: #0F172A;
+  --neutral-1000: #0d1322;
+
+  /* Accent Colors - Sports themes */
+  --accent-victory: #00C853;
+  --accent-energy: #FFB300;
+  --accent-power: #F44336; 
+  --accent-focus: #3D5AFE;
+  --accent-success: var(--accent-victory);
+  --accent-danger: var(--accent-power);
+  --accent-energy-dark: #e59d00;
+  --primary-transparent: rgba(33, 150, 243, 0.15);
+
+  /* Semantic Colors */
+  --success: var(--accent-victory);
+  --error: var(--accent-power);
+  --warning: var(--accent-energy);
+  --info: var(--accent-focus);
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: var(--font-size-base);
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.9rem;
+  
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 2.5rem;
+  --space-3xl: 3rem;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(255, 255, 255, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(255, 255, 255, 0.1);
+  --shadow-glow: 0 0 15px rgb(33 150 243 / 0.3);
+  --shadow-power: 0 0 15px rgb(244, 67, 54 / 0.3);
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Legacy variables mapped to new scheme for compatibility */
+  --primary: var(--primary-700);
+  --primary-light: var(--primary-500);
+  --primary-dark: var(--primary-900);
+  --accent: var(--accent-victory);
+  --accent-hover: #00a844; 
+  --bg-dark: var(--neutral-900);
+  --bg-darker: var(--neutral-1000);
+  --bg-surface: var(--neutral-800);
+  --bg-surface-secondary: var(--neutral-700);
+  --grey-100: var(--neutral-100);
+  --grey-300: var(--neutral-300);
+  --grey-600: var(--neutral-500);
+  --grey-800: var(--neutral-700);
+  --text-light: var(--neutral-100);
+  --text-secondary: rgba(248, 250, 252, 0.7); /* Based on neutral-100 with opacity */
+  --spacing-sm: var(--space-sm);
+  --spacing-md: var(--space-md);
+  --spacing-lg: var(--space-xl);
+  --spacing-xl: var(--space-3xl);
+  --spacing-xxl: 6rem;
+  --transition: var(--transition-normal);
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+}
+
+/* Global Resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base Styles */
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-dark);
+  margin-top: 60px;
+  color: var(--text-light);
+  line-height: 1.6;
+  padding-bottom: 20px;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+h1, h2, h3 {
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  margin-bottom: var(--spacing-md);
+}
+
+h1 { font-size: 2.25rem; }
+h2 { font-size: 1.875rem; }
+h3 { font-size: 1.5rem; }
+
+p, span {
+  color: var(--text-secondary);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color var(--transition-normal);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.5rem; }
+}

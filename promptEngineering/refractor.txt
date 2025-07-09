@@ -1,0 +1,33 @@
+Subject: Code Refactoring Request for {area_or_files_being_refactored}
+
+I need your assistance in refactoring code.
+
+**1. Refactoring Goal:**
+My primary objective is to: **{user_defined_refactoring_goal}**.
+*(e.g., "Improve modularity of {specific_module_or_class}", "Reduce code duplication in {specific_files_or_functions}", "Enhance readability of {specific_component}", "Convert legacy code in {file_path} to use {new_pattern_or_feature}", "Optimize performance of {function_name} without algorithm change")*
+
+**2. Code Location & Scope:**
+* Files/Modules to refactor: **{comma_separated_file_list}** and/or specific code block (if provided separately).
+* Specific scope within these files: **{e_g_specific_functions_classes_whole_files_or_directory}**.
+* Programming Language: **{programming_language}**.
+
+**3. Key Refactoring Instructions & Constraints:**
+* **Crucial: The code's external behavior, public APIs, and observable functionality MUST remain unchanged.** All existing tests (if any) should pass after refactoring.
+* Focus on improving internal structure, readability, maintainability, and/or performance as per the stated goal ({user_defined_refactoring_goal}).
+* Adhere to coding standards/style guide: **{link_to_style_guide_or_description_of_project_standards_or_none_use_best_practices}**.
+* Specific design patterns to apply or avoid: **{preferred_or_discouraged_design_patterns_or_none}**.
+* Specific libraries/framework features to leverage or avoid: **{preferred_or_discouraged_libraries_features_or_none}**.
+* Avoid introducing new external dependencies unless specified here: **{allowed_new_dependencies_or_none}**.
+* Update any relevant code comments and documentation (e.g., Javadoc, TSDoc, Python docstrings) to accurately reflect the changes.
+
+**4. Context (Optional, but highly recommended for better results):**
+* Brief description of the targeted code's purpose: **{brief_code_description}**.
+* Known issues, current limitations, or specific "code smells" you've identified that relate to the refactoring goal: **{known_issues_or_smells}**.
+* Link to repository or relevant documentation (if applicable): **{repository_url_or_documentation_link}**
+
+**5. Output Requirements:**
+* Provide the refactored code. If changes are extensive across multiple files, you can summarize the locations of changes and provide the full content of modified files.
+* Include a brief summary of the significant changes made and clearly explain how they achieve the **{user_defined_refactoring_goal}**.
+* If any parts of the request cannot be fully addressed or if there are ambiguities, please highlight these and explain the reasons.
+
+Please proceed with the refactoring based on these instructions. Confirm your understanding or ask for clarification if any part of this request is unclear.

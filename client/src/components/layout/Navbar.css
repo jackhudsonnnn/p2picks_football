@@ -1,0 +1,133 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--neutral-800);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  height: 60px;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  height: 100%;
+}
+
+.navbar-logo {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--primary-500);
+  margin-right: var(--space-xl);
+}
+
+.navbar-menu {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-links {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  padding: var(--space-sm) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--primary-300);
+}
+
+.btn-sign-out {
+  background-color: transparent;
+  border: 1px solid var(--neutral-600);
+  color: var(--text-light);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  transition: all var(--transition-normal);
+}
+
+.btn-sign-out:hover {
+  background-color: var(--neutral-700);
+  border-color: var(--neutral-500);
+}
+
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 0 var(--space-md);
+  }
+  
+  .navbar-logo {
+    margin-right: var(--space-2xl);
+    font-size: var(--font-size-3xl);
+  }
+  
+  .navbar-links {
+    gap: var(--space-xl);
+  }
+  
+  .nav-text {
+    display: none;
+  }
+  
+  .nav-icon {
+    margin-right: 0;
+    width: 25px;
+    height: 25px;
+  }
+}
+
+@media (max-width: 550px) {  
+  .navbar-logo {
+    margin-right: var(--space-lg);
+  }
+  
+  .navbar-links {
+    gap: var(--space-lg);
+  }
+}
+
+@media (max-width: 510px) {  
+  .navbar-logo {
+    margin-right: var(--space-md);
+  }
+  
+  .navbar-links {
+    gap: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {  
+  .navbar-logo {
+    margin-right: var(--space-sm);
+  }
+  
+  .navbar-links {
+    gap: var(--space-sm);
+  }
+}
