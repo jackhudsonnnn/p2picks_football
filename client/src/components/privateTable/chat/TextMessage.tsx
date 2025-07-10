@@ -6,6 +6,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import {
   acceptBetProposal,
   hasUserAcceptedBet,
+  getBetProposalDetails,
 } from "../../../services/betService";
 
 // Message Types
@@ -93,6 +94,18 @@ const TextMessage: React.FC<TextMessageProps> = ({
         return;
       }
       try {
+        console.log("Accepting bet proposal:", betMsg.betProposalId);
+        console.log("Debug info:", {
+          betId: betMsg.betProposalId,
+          tableId: betMsg.tableId,
+          userId: user.id,
+          userAuthId: user.id
+        });
+        
+        // Debug: Check bet proposal details
+        const betDetails = await getBetProposalDetails(betMsg.betProposalId);
+        console.log("Bet proposal details:", betDetails);
+        
         await acceptBetProposal({
           betId: betMsg.betProposalId,
           tableId: betMsg.tableId,
@@ -100,8 +113,10 @@ const TextMessage: React.FC<TextMessageProps> = ({
         });
         setAccepted(true);
         navigate("/bets-history");
-      } catch {
-        alert("Failed to accept bet.");
+      } catch (error) {
+        console.error("Failed to accept bet:", error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        alert(`Failed to accept bet: ${errorMessage}`);
       }
     },
     [user, navigate]

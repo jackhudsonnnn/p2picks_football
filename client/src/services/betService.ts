@@ -19,6 +19,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
         entity2_proposition: form.entity2_proposition,
         wager_amount: form.wager_amount,
         time_limit_seconds: form.time_limit_seconds,
+        bet_status: 'open_for_participation',
       }
     ])
     .select()
@@ -38,6 +39,17 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     ]);
   if (feedError) throw feedError;
   return bet;
+}
+
+// Debug function to get bet proposal details
+export async function getBetProposalDetails(betId: string) {
+  const { data, error } = await supabase
+    .from('bet_proposals')
+    .select('bet_id, table_id, bet_status, proposer_user_id')
+    .eq('bet_id', betId)
+    .single();
+  if (error) throw error;
+  return data;
 }
 
 // Accept a bet proposal: create a bet_participation for the user
