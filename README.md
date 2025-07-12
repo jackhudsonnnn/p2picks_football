@@ -58,46 +58,54 @@ To enhance your development experience, we recommend installing these VS Code ex
    - Or search "Supabase" in VS Code Extensions marketplace
 
 **Additional Recommended Extensions:**
-- **ES7+ React/Redux/React-Native snippets** - `dsznajder.es7-react-js-snippets`
 - **Prettier - Code formatter** - `esbenp.prettier-vscode`
 - **ESLint** - `dbaeumer.vscode-eslint`
-- **Auto Rename Tag** - `formulahendry.auto-rename-tag`
-- **Bracket Pair Colorizer 2** - `CoenraadS.bracket-pair-colorizer-2`
 - **GitLens** - `eamodio.gitlens`
 
 #### Model Context Protocol (MCP) Setup
 
-MCP allows AI assistants to access local development context. Here's how to set it up:
+MCP will allow GitHub Copilot to access Supabase information. Here's how to set it up:
 
 1. **Install MCP Server for your project:**
    ```bash
    npm install -g @modelcontextprotocol/server-filesystem
    ```
 
-2. **Create MCP configuration file** in your project root:
+2. **Create MCP configuration file** make a '.vscode/' directory in your project root, then mcp.json:
+   ```bash
+   mkdir .vscode
+   touch mcp.json
+   ```
+Generate a new token at https://supabase.com/dashboard/account/tokens
    ```json
-   // .mcp-config.json
+   // .vscode/mcp.json
    {
-     "mcpServers": {
-       "filesystem": {
+   "inputs": [
+      {
+         "type": "promptString",
+         "id": "supabase-access-token",
+         "description": "Supabase personal access token",
+         "password": true
+      }
+   ],
+   "servers": {
+      "supabase": {
          "command": "npx",
-         "args": ["@modelcontextprotocol/server-filesystem", "/path/to/your/project"],
-         "env": {}
-       }
-     }
+         "args": ["-y", "@supabase/mcp-server-supabase@latest", "--read-only", "--project-ref={USE PROJECT ID FOUND EARLIER}"],
+         "env": {
+         "SUPABASE_ACCESS_TOKEN": "${input:supabase-access-token}"
+         }
+      }
+   }
    }
    ```
+3. **Configure Copilot**
+   - Click 'Configure Tools'
+   - Follow instructions for starting the server and inputting your generated token
+4. **Test: Use GitHub Copilot agent mode**
+   - test the context by asking a question like, "What are my RLS policies for users?"
 
-3. **Configure your AI assistant** (Claude Desktop, etc.) to use MCP:
-   - Add the MCP server configuration to your AI assistant's settings
-   - Point it to your project directory for better context awareness
-
-4. **Alternative: Use GitHub Copilot with MCP:**
-   - Ensure GitHub Copilot is installed and authenticated
-   - The extension will automatically use your project context
-   - No additional MCP setup needed for basic functionality
-
-> **📌 Note:** MCP setup varies by AI assistant. Check your specific AI tool's documentation for detailed MCP configuration instructions.
+> **📌 Note:** MCP setup varies by AI assistant. Check your specific AI tool's documentation for detailed MCP configuration instructions if using tools other than GitHub Copilot.
 
 ### Installation
 

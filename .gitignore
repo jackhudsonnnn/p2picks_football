@@ -30,6 +30,9 @@ coverage/
 logs
 *.log
 
+# Config
+mcp-config.json
+
 # Vite
 client/.vite
 client/dist
