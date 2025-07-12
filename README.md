@@ -72,6 +72,7 @@ MCP allows AI assistants to access your development context and project informat
 **For GitHub Copilot users:**
 - GitHub Copilot automatically uses your project context
 - No additional MCP setup required for basic functionality
+- If you run into issues, ask copilot how to set it up, "How can I set up MCP with supabase?"
 
 **For other AI assistants (Claude Desktop, etc.):**
 1. **Install MCP Server:**
