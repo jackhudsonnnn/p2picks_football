@@ -58,54 +58,32 @@ To enhance your development experience, we recommend installing these VS Code ex
    - Or search "Supabase" in VS Code Extensions marketplace
 
 **Additional Recommended Extensions:**
+- **ES7+ React/Redux/React-Native snippets** - `dsznajder.es7-react-js-snippets`
 - **Prettier - Code formatter** - `esbenp.prettier-vscode`
 - **ESLint** - `dbaeumer.vscode-eslint`
+- **Auto Rename Tag** - `formulahendry.auto-rename-tag`
+- **Bracket Pair Colorizer 2** - `CoenraadS.bracket-pair-colorizer-2`
 - **GitLens** - `eamodio.gitlens`
 
 #### Model Context Protocol (MCP) Setup
 
-MCP will allow GitHub Copilot to access Supabase information. Here's how to set it up:
+MCP allows AI assistants to access your development context and project information. Setting this up is optional but recommended for enhanced AI assistance.
 
-1. **Install MCP Server for your project:**
+**For GitHub Copilot users:**
+- GitHub Copilot automatically uses your project context
+- No additional MCP setup required for basic functionality
+
+**For other AI assistants (Claude Desktop, etc.):**
+1. **Install MCP Server:**
    ```bash
    npm install -g @modelcontextprotocol/server-filesystem
    ```
 
-2. **Create MCP configuration file** make a '.vscode/' directory in your project root, then mcp.json:
-   ```bash
-   mkdir .vscode
-   touch mcp.json
-   ```
-Generate a new token at https://supabase.com/dashboard/account/tokens
-   ```json
-   // .vscode/mcp.json
-   {
-   "inputs": [
-      {
-         "type": "promptString",
-         "id": "supabase-access-token",
-         "description": "Supabase personal access token",
-         "password": true
-      }
-   ],
-   "servers": {
-      "supabase": {
-         "command": "npx",
-         "args": ["-y", "@supabase/mcp-server-supabase@latest", "--read-only", "--project-ref={USE PROJECT ID FOUND EARLIER}"],
-         "env": {
-         "SUPABASE_ACCESS_TOKEN": "${input:supabase-access-token}"
-         }
-      }
-   }
-   }
-   ```
-3. **Configure Copilot**
-   - Click 'Configure Tools'
-   - Follow instructions for starting the server and inputting your generated token
-4. **Test: Use GitHub Copilot agent mode**
-   - test the context by asking a question like, "What are my RLS policies for users?"
+2. **Configure your AI assistant:**
+   - Add MCP server configuration in your AI assistant's settings
+   - Point it to your project directory for better context awareness
 
-> **📌 Note:** MCP setup varies by AI assistant. Check your specific AI tool's documentation for detailed MCP configuration instructions if using tools other than GitHub Copilot.
+> **📌 Note:** MCP setup varies by AI assistant. Check your specific AI tool's documentation for detailed configuration instructions.
 
 ### Installation
 
@@ -129,18 +107,17 @@ Navigate to the client directory and create a local environment file by copying 
 
 ```bash
 cd client
-touch .env
+cp .env.example .env
 ```
 
 Open the newly created `.env` file and add your Supabase project credentials:
-
 
 ```env
 VITE_SUPABASE_URL="YOUR_SUPABASE_PROJECT_URL"
 VITE_SUPABASE_ANON_KEY="YOUR_SUPABASE_PUBLIC_ANON_KEY"
 ```
 
-> **📌 Note:** You can find these keys in your Supabase Project Dashboard under **Project Settings > Data API** and **Project Settings > API Keys**.
+> **📌 Note:** You can find these keys in your Supabase Project Dashboard under **Project Settings > API**.
 
 #### 4. 📦 Install Client Dependencies
 
