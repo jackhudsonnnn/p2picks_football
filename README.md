@@ -108,7 +108,7 @@ Navigate to the client directory and create a local environment file by copying 
 
 ```bash
 cd client
-cp .env.example .env
+touch .env
 ```
 
 Open the newly created `.env` file and add your Supabase project credentials:
@@ -118,7 +118,7 @@ VITE_SUPABASE_URL="YOUR_SUPABASE_PROJECT_URL"
 VITE_SUPABASE_ANON_KEY="YOUR_SUPABASE_PUBLIC_ANON_KEY"
 ```
 
-> **📌 Note:** You can find these keys in your Supabase Project Dashboard under **Project Settings > API**.
+> **📌 Note:** You can find these keys in your Supabase Project Dashboard under **Project Settings > Data API** and **Project Settings > API Keys**.
 
 #### 4. 📦 Install Client Dependencies
 
