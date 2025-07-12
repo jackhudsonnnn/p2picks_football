@@ -1,119 +1,123 @@
-# Full Stack Application (Client + Server)
+# P2Picks (Football)
 
-This project is structured with a React (Vite + TypeScript) client and a Node.js (TypeScript) server.
+P2Picks is a modern web application built with React and Supabase. This project is currently under active development.
 
-## Project Structure
+**Tech Stack:** React, Vite, Supabase, Node.js
 
-- `/client`: Contains the frontend React application.
-- `/server`: Contains the backend Node.js application.
-- `/scripts`: Utility scripts for the project.
+---
 
-## Prerequisites
+## 📁 Project Structure
 
-- Node.js (v18 or newer recommended)
-- npm or yarn
+The repository is organized into a monorepo structure:
 
-## Setup Instructions
-
-### 1. Clone the Repository (if applicable)
-
-```bash
-# git clone <your-repo-url>
-# cd <your-project-directory>
+```
+p2picks_football/
+├── client/
+│   ├── public/
+│   ├── src/
+│   ├── .env
+│   └── package.json
+└── server/
 ```
 
-### 2. Configure Client Environment Variables
+---
 
-Navigate to the `client` directory:
+## 🚀 Getting Started
+
+Follow these instructions to get a local copy of the project up and running.
+
+### Prerequisites
+
+You'll need a recent version of Node.js and a package manager like npm. We recommend using a Node version manager like nvm to ensure compatibility.
+
+- **Node.js:** v20.x (LTS) or higher
+- **npm:** v10.x or higher
+
+You can check your installed versions with the following commands:
+
+```bash
+node --version
+npm --version
+```
+
+> **💡 Tip:** If you don't have Node.js or npm installed, we recommend visiting the official Node.js website for installation instructions: https://nodejs.org/en/download/package-manager
+
+### Installation
+
+#### 1. 🔐 Permissions
+
+- To contribute directly, you will need collaborator access to this repository and the associated Supabase project.
+- Please contact **j4ckhudson111@gmail.com** for any permission-related issues.
+
+#### 2. 📥 Clone the Repository
+
+Fork the repository to your own GitHub account and then clone it locally.
+
+```bash
+git clone https://github.com/jackhudsonnnn/p2picks_football.git
+cd p2picks_football
+```
+
+#### 3. ⚙️ Set Up Client Environment Variables
+
+Navigate to the client directory and create a local environment file by copying the example.
+
 ```bash
 cd client
-```
-Create a `.env` file by copying `.env.example` (if one existed, or create it manually based on the script's output):
-```
-VITE_SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
-VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_PUBLIC_ANON_KEY
-```
-Replace the placeholder values with your actual Supabase URL and Anon Key (found in your Supabase project's API settings).
-
-### 3. Install Client Dependencies
-
-While in the `client` directory:
-```bash
-npm install
-# or
-# yarn install
-```
-
-### 4. Configure Server Environment Variables
-
-Navigate to the `server` directory:
-```bash
-cd ../server
-```
-Create a `.env` file by copying `server/.env.example`:
-```bash
 cp .env.example .env
 ```
-Edit `server/.env` and provide your Supabase URL and **SERVICE ROLE KEY**.
-```
-SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY # KEEP THIS SECRET!
-PORT=3001
-```
-**IMPORTANT**: The `SUPABASE_SERVICE_ROLE_KEY` is highly sensitive. Do not commit it to version control or expose it publicly.
 
-### 5. Install Server Dependencies
+Open the newly created `.env` file and add your Supabase project credentials:
 
-While in the `server` directory:
+```env
+VITE_SUPABASE_URL="YOUR_SUPABASE_PROJECT_URL"
+VITE_SUPABASE_ANON_KEY="YOUR_SUPABASE_PUBLIC_ANON_KEY"
+```
+
+> **📌 Note:** You can find these keys in your Supabase Project Dashboard under **Project Settings > API**.
+
+#### 4. 📦 Install Client Dependencies
+
+While still in the `/client` directory, install the required npm packages:
+
 ```bash
 npm install
-# or
-# yarn install
 ```
 
-## Running the Application
+---
 
-### Client (React App)
+## 🏃‍♂️ Running the Application
 
-Navigate to the `client` directory:
+### Frontend (React Client)
+
+The frontend is a Vite-powered React application.
+
+1. Navigate to the `/client` directory
+2. Run the development server:
+
 ```bash
-cd ../client
+cd client
 npm run dev
 ```
-This will start the Vite development server, typically on `http://localhost:5173`.
 
-### Server (Node.js App)
+This will start the application, which is typically accessible at **http://localhost:5173**.
 
-Navigate to the `server` directory:
-```bash
-cd ../server
-npm run build # To compile TypeScript
-npm run dev   # To run with nodemon (compiles and restarts on changes)
-# or
-# npm run start # To run the compiled code (after building)
-```
-The server will start, typically on `http://localhost:3001` (or as configured in `server/.env`).
+### Backend (Supabase)
 
-## Supabase Configuration (Recap)
+The backend infrastructure is currently powered entirely by Supabase. There is no separate server application to run locally. All database, authentication, and API services are managed live on the Supabase platform.
 
-1.  **Create Supabase Project**: Go to [supabase.com](https://supabase.com).
-2.  **Enable Google Auth Provider**:
-    * In Supabase Dashboard > Authentication > Providers > Google.
-    * Note the **Redirect URI**.
-3.  **Configure Google Cloud Console for OAuth**:
-    * Create OAuth 2.0 Client ID (Web application).
-    * Authorized JavaScript origins: `https://<YOUR_PROJECT_REF>.supabase.co` (and your dev origins like `http://localhost:5173`).
-    * Authorized redirect URIs: The Redirect URI from Supabase (e.g., `https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/callback`).
-    * Get Client ID and Client Secret.
-4.  **Add Google Credentials to Supabase**: Paste Client ID and Secret into Supabase Google provider settings and save.
-5.  **API Keys**:
-    * **Project URL** and **anon public key** for the client (`client/.env`).
-    * **service_role key** for the server (`server/.env`).
+> **🔮 Future Plans:** A dedicated Node.js server may be added to the `/server` directory to handle more complex backend logic.
 
-## Next Steps
+---
 
-- Implement the empty component, page, service, and utility files.
-- Set up routing in the client (e.g., using React Router).
-- Develop API endpoints in the server.
-- Configure ESLint and Prettier for code quality.
-- Write tests.
+## 📝 Contributing
+
+We welcome contributions! Please ensure you have the necessary permissions and follow the setup instructions above.
+
+## 📞 Support
+
+For any questions or issues, please contact: **j4ckhudson111@gmail.com**
+
+---
+
+*This project is under active development. Documentation and features may change frequently.*
