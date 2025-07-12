@@ -64,7 +64,7 @@ Navigate to the client directory and create a local environment file by copying 
 
 ```bash
 cd client
-cp .env.example .env
+touch .env
 ```
 
 Open the newly created `.env` file and add your Supabase project credentials:
@@ -74,7 +74,7 @@ VITE_SUPABASE_URL="YOUR_SUPABASE_PROJECT_URL"
 VITE_SUPABASE_ANON_KEY="YOUR_SUPABASE_PUBLIC_ANON_KEY"
 ```
 
-> **📌 Note:** You can find these keys in your Supabase Project Dashboard under **Project Settings > API**.
+> **📌 Note:** You can find these keys in your Supabase Project Dashboard under **Project Settings > Data API** and **Project Settings > API Keys**.
 
 #### 4. 📦 Install Client Dependencies
 
@@ -92,7 +92,7 @@ npm install
 
 The frontend is a Vite-powered React application.
 
-1. Navigate to the `/client` directory
+1. Navigate to the `/client` directory if you aren't here already
 2. Run the development server:
 
 ```bash
@@ -108,15 +108,6 @@ The backend infrastructure is currently powered entirely by Supabase. There is n
 
 > **🔮 Future Plans:** A dedicated Node.js server may be added to the `/server` directory to handle more complex backend logic.
 
----
-
-## 📝 Contributing
-
-We welcome contributions! Please ensure you have the necessary permissions and follow the setup instructions above.
-
-## 📞 Support
-
-For any questions or issues, please contact: **j4ckhudson111@gmail.com**
 
 ---
 
