@@ -58,11 +58,8 @@ To enhance your development experience, we recommend installing these VS Code ex
    - Or search "Supabase" in VS Code Extensions marketplace
 
 **Additional Recommended Extensions:**
-- **ES7+ React/Redux/React-Native snippets** - `dsznajder.es7-react-js-snippets`
 - **Prettier - Code formatter** - `esbenp.prettier-vscode`
 - **ESLint** - `dbaeumer.vscode-eslint`
-- **Auto Rename Tag** - `formulahendry.auto-rename-tag`
-- **Bracket Pair Colorizer 2** - `CoenraadS.bracket-pair-colorizer-2`
 - **GitLens** - `eamodio.gitlens`
 
 #### Model Context Protocol (MCP) Setup
