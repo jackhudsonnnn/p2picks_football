@@ -148,9 +148,18 @@ const TextMessage: React.FC<TextMessageProps> = ({
           </div>
           <div className="bet-actions bet-actions-flex-end">
             {accepted ? (
+              <div>
               <button className="accept-bet" onClick={handleViewTickets}>
                 View Tickets
               </button>
+                <div className="bet-timer">
+                  {settled
+                    ? "Pending"
+                    : timeLeft !== null
+                    ? `${timeLeft.toFixed(1)}s`
+                    : "--"}
+                </div>
+              </div>
             ) : (
               <div>
                 <button

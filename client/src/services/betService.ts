@@ -19,7 +19,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
         entity2_proposition: form.entity2_proposition,
         wager_amount: form.wager_amount,
         time_limit_seconds: form.time_limit_seconds,
-        bet_status: 'open_for_participation',
+        bet_status: 'active',
       }
     ])
     .select()

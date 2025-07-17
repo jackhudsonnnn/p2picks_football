@@ -178,7 +178,7 @@ export const TicketsPage = () => {
 
   const ticketCounts = {
     total: tickets.length,
-    active: tickets.length, // Only active for now
+    active: tickets.length, 
     pending: 0,
     settled: 0,
     wins: 0,
