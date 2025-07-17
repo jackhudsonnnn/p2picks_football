@@ -67,9 +67,35 @@ To enhance your development experience, we recommend installing these VS Code ex
 MCP allows AI assistants to access your development context and project information. Setting this up is optional but recommended for enhanced AI assistance.
 
 **For GitHub Copilot users:**
-- GitHub Copilot automatically uses your project context
-- No additional MCP setup required for basic functionality
-- If you run into issues, ask copilot how to set it up, "How can I set up MCP with supabase?"
+- Make a add these to the project root, ```P2Picks_football```
+```bash
+mkdir .vscode/
+cd .vscode/
+touch mcp.json
+```
+- The json should contain
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "supabase-access-token", INSERT_SUPABASE_ACCESS_TOKEN_FOUND_IN_SUPABASE
+      "description": "Supabase personal access token",
+      "password": true
+    }
+  ],
+  "servers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest", "--read-only", "--project-ref=INSERT_PROJECT_REF_FOUND_IN_SUPABASE"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${input:supabase-access-token}"
+      }
+    }
+  }
+}
+```
+- In your copilot window, ensure the supabase tools are enabled: navagate to 'agent' mode ('edit' and 'ask' modes won't work for supabase context); select the 'configure tools...' icon and scroll untill you find the supabase tooling has been enabled.
 
 **For other AI assistants (Claude Desktop, etc.):**
 1. **Install MCP Server:**
