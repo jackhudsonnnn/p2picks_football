@@ -1,16 +1,29 @@
-import React, { useState, useEffect } from "react";
-import nbaGamesData from "./nba_data.json";
-import './BetProposalForm.css';
-import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import React, { useState, useMemo } from "react";
+import nflGames from "../../../assets/mock/nfl_games.json";
+import "./BetProposalForm.css";
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+
+type ModeKey = "best_of_best" | "one_leg_spread";
 
 export interface BetProposalFormValues {
-  nba_game_id: string;
+  // Core
+  nfl_game_id: string;
+  wager_amount: number;
+  time_limit_seconds: number;
+  // Compatibility with existing schema (used by service mapping)
   entity1_name: string;
   entity1_proposition: string;
   entity2_name: string;
   entity2_proposition: string;
-  wager_amount: number;
-  time_limit_seconds: number;
+  // Mode-specific helpers (not stored yet, but helpful for tickets and future schema)
+  mode: ModeKey;
+  player1_id?: string;
+  player1_name?: string;
+  player2_id?: string;
+  player2_name?: string;
+  stat?: "Receptions" | "Receiving Yards" | "Touchdowns";
+  settle_at?: "Q1" | "Q2" | "Q3" | "Final";
+  spread_bucket?: "0-3" | "4-10" | "11-25" | "26+";
 }
 
 interface BetProposalFormProps {
@@ -19,106 +32,281 @@ interface BetProposalFormProps {
   loading?: boolean;
 }
 
-const propOptions = [
-  { value: "Next 3", label: "Next 3" },
-  { value: "Next 2", label: "Next 2" },
-  { value: "Next Point", label: "Next Point" },
+type NflGame = {
+  nfl_game_id: string;
+  shortName: string;
+  start_time: string;
+  status: { name: string; period?: number };
+  home: { id: string; name: string; abbreviation: string };
+  away: { id: string; name: string; abbreviation: string };
+  players: { id: string; name: string; team: "home" | "away"; position: string }[];
+};
+
+const MODE_OPTIONS: { value: ModeKey; label: string }[] = [
+  { value: "best_of_best", label: "Best of the Best" },
+  { value: "one_leg_spread", label: "1 Leg Spread" },
 ];
 
+const STATS_OPTIONS = [
+  { value: "Receptions", label: "Receptions" },
+  { value: "Receiving Yards", label: "Receiving Yards" },
+  { value: "Touchdowns", label: "Touchdowns" },
+] as const;
+
+// const SPREAD_BUCKETS = ["0-3", "4-10", "11-25", "26+"] as const; // reserved for future acceptor UI
+
 const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, loading }) => {
-  const [form, setForm] = useState<BetProposalFormValues>({
-    nba_game_id: "",
-    entity1_name: "",
-    entity1_proposition: "",
-    entity2_name: "",
-    entity2_proposition: "",
-    wager_amount: 1,
-    time_limit_seconds: 30,
-  });
-  const [nbaGames, setNbaGames] = useState<any[]>([]);
   const [step, setStep] = useState(0);
+  const [mode, setMode] = useState<ModeKey | "">("");
+  const [selectedGameId, setSelectedGameId] = useState("");
+  const [player1Id, setPlayer1Id] = useState("");
+  const [player2Id, setPlayer2Id] = useState("");
+  const [stat, setStat] = useState<BetProposalFormValues["stat"]>();
+  const [settleAt, setSettleAt] = useState<BetProposalFormValues["settle_at"]>();
+  // const [spreadBucket, setSpreadBucket] = useState<BetProposalFormValues["spread_bucket"]>(); // acceptor-side
+  const [wagerAmount, setWagerAmount] = useState<number>(1);
+  const [timeLimit, setTimeLimit] = useState<number>(30);
 
-  useEffect(() => {
-    setNbaGames(nbaGamesData);
-  }, []);
+  const games = nflGames as unknown as NflGame[];
 
-  // Auto-fill entity names when nba_game_id changes
-  useEffect(() => {
-    const selected = nbaGames.find(g => g.nba_game_id === form.nba_game_id);
-    if (selected) {
-      setForm(prev => ({
-        ...prev,
-        entity1_name: selected.home_team,
-        entity2_name: selected.away_team
-      }));
+  const availableGames = useMemo(() => {
+    const now = new Date();
+    return games.filter((g) => {
+      if (g.status?.name === "STATUS_IN_PROGRESS") return true;
+      // show games that start within next 6 hours
+      const start = new Date(g.start_time);
+      const diffHrs = (start.getTime() - now.getTime()) / (1000 * 60 * 60);
+      return diffHrs >= 0 && diffHrs <= 6;
+    });
+  }, [games]);
+
+  const selectedGame = useMemo(() => availableGames.find((g) => g.nfl_game_id === selectedGameId), [availableGames, selectedGameId]);
+
+  const players = selectedGame?.players ?? [];
+  const team1 = selectedGame?.home;
+  const team2 = selectedGame?.away;
+
+  const allowedSettleAt = useMemo((): BetProposalFormValues["settle_at"][] => {
+    if (!selectedGame) return ["Q1", "Q2", "Q3", "Final"];
+    const state = selectedGame.status?.name;
+    const period = selectedGame.status?.period ?? 1;
+    const base: BetProposalFormValues["settle_at"][] = [];
+    if (state !== "STATUS_FINAL") {
+      if (period <= 1) base.push("Q1");
+      if (period <= 2) base.push("Q2");
+      if (period <= 3) base.push("Q3");
     }
-  }, [form.nba_game_id, nbaGames]);
+    base.push("Final");
+    return base;
+  }, [selectedGame]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "wager_amount" || name === "time_limit_seconds" ? Number(value) : value,
-    }));
+  const canNext = useMemo(() => {
+    if (step === 0) return !!selectedGameId;
+    if (step === 1) return !!mode;
+    if (mode === "best_of_best") {
+      if (step === 2) return !!player1Id && !!player2Id && player1Id !== player2Id;
+      if (step === 3) return !!stat && !!settleAt;
+      if (step === 4) return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
+    } else if (mode === "one_leg_spread") {
+      if (step === 2) return true; // no special config
+      if (step === 3) return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
+    }
+    return false;
+  }, [step, selectedGameId, mode, player1Id, player2Id, stat, settleAt, wagerAmount, timeLimit]);
+
+  const totalSteps = useMemo(() => (mode === "best_of_best" ? 5 : mode === "one_leg_spread" ? 4 : 2), [mode]);
+
+  const stepContent = () => {
+    // Step 0: select game
+    if (step === 0) {
+      return (
+        <div className="form-step">
+          <label className="form-label" htmlFor="nfl_game">NFL Game</label>
+          <select id="nfl_game" className="form-select" value={selectedGameId} onChange={(e) => setSelectedGameId(e.target.value)} required>
+            <option value="" disabled>
+              Select NFL Game
+            </option>
+            {availableGames.map((g) => (
+              <option key={g.nfl_game_id} value={g.nfl_game_id}>
+                {g.shortName} ({new Date(g.start_time).toLocaleString()})
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+    // Step 1: select mode
+    if (step === 1) {
+      return (
+        <div className="form-step">
+          <label className="form-label" htmlFor="mode">Game Mode</label>
+          <select id="mode" className="form-select" value={mode} onChange={(e) => setMode(e.target.value as ModeKey)} required>
+            <option value="" disabled>
+              Select Mode
+            </option>
+            {MODE_OPTIONS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+    if (mode === "best_of_best") {
+      // Step 2: choose two players
+      if (step === 2) {
+        return (
+          <div className="form-step">
+            <label className="form-label">Choose Two Players</label>
+            <div className="form-group">
+              <select className="form-select" value={player1Id} onChange={(e) => setPlayer1Id(e.target.value)} required>
+                <option value="" disabled>
+                  Player 1
+                </option>
+                {players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.team === "home" ? team1?.abbreviation : team2?.abbreviation})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <select className="form-select" value={player2Id} onChange={(e) => setPlayer2Id(e.target.value)} required>
+                <option value="" disabled>
+                  Player 2
+                </option>
+                {players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.team === "home" ? team1?.abbreviation : team2?.abbreviation})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+      }
+      // Step 3: stat + settle at
+      if (step === 3) {
+        return (
+          <div className="form-step">
+            <div className="form-group">
+              <label className="form-label" htmlFor="stat">Stat / Prop</label>
+              <select id="stat" className="form-select" value={stat ?? ""} onChange={(e) => setStat(e.target.value as any)} required>
+                <option value="" disabled>
+                  Select Stat
+                </option>
+                {STATS_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="settle_at">Settle At</label>
+              <select id="settle_at" className="form-select" value={settleAt ?? ""} onChange={(e) => setSettleAt(e.target.value as any)} required>
+                <option value="" disabled>
+                  Select
+                </option>
+                {allowedSettleAt.map((q) => (
+                  <option key={q} value={q}>
+                    {q}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+      }
+      // Step 4: wager + time
+      if (step === 4) {
+        return (
+          <div className="form-step">
+            <div className="form-group">
+              <label className="form-label" htmlFor="wager_amount">Wager (pts)</label>
+              <input id="wager_amount" className="form-input" type="number" min={1} step={1} value={wagerAmount} onChange={(e) => setWagerAmount(Number(e.target.value))} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="time_limit_seconds">Time Limit (seconds)</label>
+              <input id="time_limit_seconds" className="form-input" type="number" min={10} max={60} value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))} required />
+            </div>
+          </div>
+        );
+      }
+    }
+    if (mode === "one_leg_spread") {
+      // Step 2: explain choices (no extra config)
+      if (step === 2) {
+        return (
+          <div className="form-step">
+            <p className="form-help-text">Acceptors will select: pass, 0-3, 4-10, 11-25, 26+.</p>
+          </div>
+        );
+      }
+      // Step 3: wager + time
+      if (step === 3) {
+        return (
+          <div className="form-step">
+            <div className="form-group">
+              <label className="form-label" htmlFor="wager_amount">Wager (pts)</label>
+              <input id="wager_amount" className="form-input" type="number" min={1} step={1} value={wagerAmount} onChange={(e) => setWagerAmount(Number(e.target.value))} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="time_limit_seconds">Time Limit (seconds)</label>
+              <input id="time_limit_seconds" className="form-input" type="number" min={10} max={60} value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))} required />
+            </div>
+          </div>
+        );
+      }
+    }
+    return null;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(form);
-  };
+    if (!selectedGame || !mode) return;
 
-  const steps = [
-    // Step 0: Select NBA Game
-    <div className="form-step" key="step-nba-game">
-      <label className="form-label" htmlFor="nba_game_id">NBA Game</label>
-      <select id="nba_game_id" name="nba_game_id" value={form.nba_game_id} onChange={handleChange} required className="form-select">
-        <option value="" disabled>Select NBA Game</option>
-        {nbaGames.map(game => (
-          <option key={game.nba_game_id} value={game.nba_game_id}>
-            {game.home_team} vs {game.away_team} ({new Date(game.start_time).toLocaleString()})
-          </option>
-        ))}
-      </select>
-    </div>,
-    // Step 1: Team 1 prop
-    <div className="form-step" key="step-entity1-prop">
-      <label className="form-label">{form.entity1_name || 'Team 1'} Proposition</label>
-      <select name="entity1_proposition" value={form.entity1_proposition} onChange={handleChange} required className="form-select">
-        <option value="" disabled>Select Proposition</option>
-        {propOptions.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-    </div>,
-    // Step 2: Team 2 prop
-    <div className="form-step" key="step-entity2-prop">
-      <label className="form-label">{form.entity2_name || 'Team 2'} Proposition</label>
-      <select name="entity2_proposition" value={form.entity2_proposition} onChange={handleChange} required className="form-select">
-        <option value="" disabled>Select Proposition</option>
-        {propOptions.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-    </div>,
-    // Step 3: Wager and Time Limit
-    <div className="form-step" key="step-wager-time">
-      <div className="form-group">
-        <label className="form-label" htmlFor="wager_amount">Wager ($)</label>
-        <input id="wager_amount" name="wager_amount" type="number" min={1} step={0.01} value={form.wager_amount} onChange={handleChange} placeholder="Wager Amount" required className="form-input" />
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="time_limit_seconds">Time Limit (seconds)</label>
-        <input id="time_limit_seconds" name="time_limit_seconds" type="number" min={10} max={60} value={form.time_limit_seconds} onChange={handleChange} placeholder="Time Limit (seconds)" required className="form-input" />
-      </div>
-    </div>
-  ];
+    // Build compatibility fields for current schema
+    let entity1_name = "";
+    let entity2_name = "";
+    let entity1_proposition = "";
+    let entity2_proposition = "";
 
-  const canNext = () => {
-    if (step === 0) return !!form.nba_game_id;
-    if (step === 1) return !!form.entity1_proposition;
-    if (step === 2) return !!form.entity2_proposition;
-    if (step === 3) return form.wager_amount >= 1 && form.time_limit_seconds >= 10 && form.time_limit_seconds <= 60;
-    return false;
+    if (mode === "best_of_best") {
+      const p1 = players.find((p) => p.id === player1Id);
+      const p2 = players.find((p) => p.id === player2Id);
+      entity1_name = p1?.name || "Player 1";
+      entity2_name = p2?.name || "Player 2";
+      const prop = `${stat || "Receptions"}|${settleAt || "Final"}`; // e.g., "Receptions|Q2"
+      entity1_proposition = prop;
+      entity2_proposition = prop;
+    } else if (mode === "one_leg_spread") {
+      entity1_name = team1?.abbreviation || "HOME";
+      entity2_name = team2?.abbreviation || "AWAY";
+      entity1_proposition = "1_leg_spread";
+      entity2_proposition = "buckets"; // acceptors will choose buckets
+    }
+
+    const values: BetProposalFormValues = {
+      nfl_game_id: selectedGame.nfl_game_id,
+      wager_amount: wagerAmount,
+      time_limit_seconds: timeLimit,
+      entity1_name,
+      entity1_proposition,
+      entity2_name,
+      entity2_proposition,
+      mode,
+      player1_id: player1Id,
+      player1_name: players.find((p) => p.id === player1Id)?.name,
+      player2_id: player2Id,
+      player2_name: players.find((p) => p.id === player2Id)?.name,
+      stat,
+      settle_at: settleAt,
+  // spread_bucket: spreadBucket,
+    };
+
+    onSubmit(values);
   };
 
   return (
@@ -127,17 +315,31 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
         ×
       </button>
       <div className="stepper-content">
-        <button type="button" className="stepper-arrow left" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0} aria-label="Previous">
+        <button
+          type="button"
+          className="stepper-arrow left"
+          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          disabled={step === 0}
+          aria-label="Previous"
+        >
           <IoIosArrowBack size={28} />
         </button>
-        <div className="stepper-slide">{steps[step]}</div>
-        <button type="button" className="stepper-arrow right" onClick={() => canNext() && setStep(s => Math.min(steps.length - 1, s + 1))} disabled={step === steps.length - 1 || !canNext()} aria-label="Next">
+        <div className="stepper-slide">{stepContent()}</div>
+        <button
+          type="button"
+          className="stepper-arrow right"
+          onClick={() => canNext && setStep((s) => Math.min(totalSteps - 1, s + 1))}
+          disabled={step === totalSteps - 1 || !canNext}
+          aria-label="Next"
+        >
           <IoIosArrowForward size={28} />
         </button>
       </div>
       <div className="form-actions-horizontal">
-        {step === steps.length - 1 ? (
-          <button type="submit" className="form-submit" disabled={loading || !canNext()}>Propose Bet</button>
+        {step === totalSteps - 1 ? (
+          <button type="submit" className="form-submit" disabled={!!loading || !canNext}>
+            Propose Bet
+          </button>
         ) : null}
       </div>
     </form>

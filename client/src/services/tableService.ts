@@ -79,7 +79,28 @@ export async function getTableFeed(tableId: string) {
       bet_proposal_id,
       text_messages:text_message_id (text_message_id, user_id, message_text, posted_at, users:user_id (username)),
       system_notifications:system_notification_id (system_notification_id, message_text, generated_at),
-      bet_proposal:bet_proposal_id (bet_id, table_id, proposer_user_id, nba_game_id, entity1_name, entity1_proposition, entity2_name, entity2_proposition, wager_amount, time_limit_seconds, proposal_time, bet_status, winning_condition, total_pot, users:proposer_user_id (username))
+      bet_proposal:bet_proposal_id (
+        bet_id,
+        table_id,
+        proposer_user_id,
+        nba_game_id,
+        nfl_game_id,
+        sport,
+        mode_key,
+        entity1_name,
+        entity1_proposition,
+        entity2_name,
+        entity2_proposition,
+        wager_amount,
+        time_limit_seconds,
+        proposal_time,
+        bet_status,
+        winning_condition,
+        total_pot,
+        users:proposer_user_id (username),
+  bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player2_id, stat, settle_at),
+  bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id)
+      )
     `)
     .eq('table_id', tableId)
     .order('item_created_at', { ascending: true });

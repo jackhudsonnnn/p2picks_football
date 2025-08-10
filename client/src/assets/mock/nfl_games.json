@@ -1,0 +1,51 @@
+[
+  {
+    "nfl_game_id": "401773026",
+    "shortName": "NO @ LAC",
+    "start_time": "2025-08-10T20:00:00Z",
+    "status": {
+      "name": "STATUS_IN_PROGRESS",
+      "period": 3
+    },
+    "home": {
+      "id": "24",
+      "name": "Los Angeles Chargers",
+      "abbreviation": "LAC"
+    },
+    "away": {
+      "id": "18",
+      "name": "New Orleans Saints",
+      "abbreviation": "NO"
+    },
+    "players": [
+      { "id": "4383351", "name": "Trey Lance", "team": "home", "position": "QB" },
+      { "id": "4433830", "name": "Luke Grimm", "team": "home", "position": "WR" },
+      { "id": "4360689", "name": "Tyler Shough", "team": "away", "position": "QB" },
+      { "id": "4573697", "name": "Mason Tipton", "team": "away", "position": "WR" }
+    ]
+  },
+  {
+    "nfl_game_id": "401776564",
+    "shortName": "MIA @ CHI",
+    "start_time": "2025-08-10T17:00:00Z",
+    "status": {
+      "name": "STATUS_FINAL",
+      "period": 4
+    },
+    "home": {
+      "id": "3",
+      "name": "Chicago Bears",
+      "abbreviation": "CHI"
+    },
+    "away": {
+      "id": "15",
+      "name": "Miami Dolphins",
+      "abbreviation": "MIA"
+    },
+    "players": [
+      { "id": "4434153", "name": "Tyson Bagent", "team": "home", "position": "QB" },
+      { "id": "4711533", "name": "Ollie Gordon II", "team": "away", "position": "RB" },
+      { "id": "4567506", "name": "Tahj Washington", "team": "away", "position": "WR" }
+    ]
+  }
+]

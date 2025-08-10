@@ -6,7 +6,7 @@ import "./styles/PrivateTableView.css";
 import { useAuth } from "../hooks/useAuth";
 import { getPrivateTable, getTableFeed, sendTextMessage } from "../services/tableService";
 import { createBetProposal } from "../services/betService";
-import { FeedItem, ChatMessage } from "../types/api";
+import { ChatMessage } from "../types/api";
 import ChatArea from "../components/privateTable/chat/ChatArea";
 import MemberList from "../components/privateTable/memberList";
 import HostControls from "../components/privateTable/hostControls";
@@ -39,7 +39,7 @@ export const PrivateTableView: React.FC = () => {
   // Fetch chat feed
   useEffect(() => {
     if (!tableId || !user) return;
-    getTableFeed(tableId)
+  getTableFeed(tableId)
       .then((items: any[]) => {
         const mapped: ChatMessage[] = items
           .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
@@ -83,12 +83,22 @@ export const PrivateTableView: React.FC = () => {
                   username = bet.users.username || 'Unknown';
                 }
               }
+              // Build dynamic bet description
+              let desc = '';
+              if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+                const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+                desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+              } else if (bet.mode_key === 'one_leg_spread') {
+                desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+              } else {
+                desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
+              }
               return {
                 id: item.feed_item_id,
                 type: 'bet_proposal',
                 senderUserId: bet.proposer_user_id,
                 senderUsername: username,
-                text: `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`,
+                text: desc,
                 timestamp: bet.proposal_time,
                 betProposalId: bet.bet_id,
                 betDetails: {
@@ -102,6 +112,9 @@ export const PrivateTableView: React.FC = () => {
                   winning_condition: bet.winning_condition,
                   bet_status: bet.bet_status,
                   total_pot: bet.total_pot,
+                  mode_key: bet.mode_key,
+                  nfl_game_id: bet.nfl_game_id,
+                  sport: bet.sport,
                 },
                 tableId: bet.table_id, // <-- Add this line
               };
@@ -111,16 +124,20 @@ export const PrivateTableView: React.FC = () => {
           .filter(Boolean) as ChatMessage[];
         setChatFeed(mapped);
       })
-      .catch(() => setChatFeed([]));
+      .catch((e) => {
+        console.error('getTableFeed error', e);
+        setChatFeed([]);
+      });
   }, [tableId, user]);
 
   // Send message handler
   const handleSendMessage = async (message: string) => {
     if (!tableId || !user) return;
-    await sendTextMessage(tableId, user.id, message);
-    // Refresh chat feed after sending
-    const items: any[] = await getTableFeed(tableId);
-    const mapped: ChatMessage[] = items
+    try {
+      await sendTextMessage(tableId, user.id, message);
+      // Refresh chat feed after sending
+      const items: any[] = await getTableFeed(tableId);
+      const mapped: ChatMessage[] = items
       .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
       .map(item => {
         if (item.item_type === 'text_message' && item.text_messages) {
@@ -161,12 +178,21 @@ export const PrivateTableView: React.FC = () => {
               username = bet.users.username || 'Unknown';
             }
           }
+          let desc = '';
+          if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+            const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+            desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+          } else if (bet.mode_key === 'one_leg_spread') {
+            desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+          } else {
+            desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
+          }
           return {
             id: item.feed_item_id,
             type: 'bet_proposal',
             senderUserId: bet.proposer_user_id,
             senderUsername: username,
-            text: `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`,
+            text: desc,
             timestamp: bet.proposal_time,
             betProposalId: bet.bet_id,
             betDetails: {
@@ -180,6 +206,9 @@ export const PrivateTableView: React.FC = () => {
               winning_condition: bet.winning_condition,
               bet_status: bet.bet_status,
               total_pot: bet.total_pot,
+              mode_key: bet.mode_key,
+              nfl_game_id: bet.nfl_game_id,
+              sport: bet.sport,
             },
             tableId: bet.table_id, // <-- Add this line
           };
@@ -187,7 +216,10 @@ export const PrivateTableView: React.FC = () => {
         return null;
       })
       .filter(Boolean) as ChatMessage[];
-    setChatFeed(mapped);
+      setChatFeed(mapped);
+    } catch (e) {
+      console.error('sendTextMessage or reload error', e);
+    }
   };
 
   // Bet proposal handler
@@ -244,12 +276,21 @@ export const PrivateTableView: React.FC = () => {
                 username = bet.users.username || 'Unknown';
               }
             }
+              let desc = '';
+              if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+                const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+                desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+              } else if (bet.mode_key === 'one_leg_spread') {
+                desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+              } else {
+                desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
+              }
             return {
               id: item.feed_item_id,
               type: 'bet_proposal',
               senderUserId: bet.proposer_user_id,
               senderUsername: username,
-              text: `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`,
+                text: desc,
               timestamp: bet.proposal_time,
               betProposalId: bet.bet_id,
               betDetails: {
@@ -262,7 +303,10 @@ export const PrivateTableView: React.FC = () => {
                 time_limit_seconds: bet.time_limit_seconds,
                 winning_condition: bet.winning_condition,
                 bet_status: bet.bet_status,
-                total_pot: bet.total_pot,
+                  total_pot: bet.total_pot,
+                  mode_key: bet.mode_key,
+                  nfl_game_id: bet.nfl_game_id,
+                  sport: bet.sport,
               },
               tableId: bet.table_id, // <-- Add this line
             };
@@ -272,7 +316,7 @@ export const PrivateTableView: React.FC = () => {
         .filter(Boolean) as ChatMessage[];
       setChatFeed(mapped);
     } catch (e) {
-      // handle error (show notification, etc)
+      console.error('createBetProposal error', e);
     } finally {
       setBetLoading(false);
     }

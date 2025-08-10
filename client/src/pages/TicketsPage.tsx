@@ -29,6 +29,12 @@ interface Ticket {
   // Add for timer logic
   proposalTime?: string;
   timeLimitSeconds?: number;
+  // Mode-aware fields
+  modeKey?: string;
+  player1Name?: string;
+  player2Name?: string;
+  stat?: string;
+  settleAt?: string;
 }
 
 // Hook to detect mobile screen
@@ -76,15 +82,25 @@ export const TicketsPage = () => {
         // Map Supabase data to Ticket interface
         const mapped = (data || []).map((row: any) => {
           const bet = row.bet_proposals;
+          // Dynamic description
+          let description = '';
+          if (bet?.mode_key === 'best_of_best' && bet?.bet_mode_best_of_best) {
+            const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+            description = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+          } else if (bet?.mode_key === 'one_leg_spread') {
+            description = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+          } else {
+            description = bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '';
+          }
           return {
             id: row.participation_id,
             tableId: row.table_id,
             tableName: bet?.private_tables?.table_name || '',
             createdAt: bet?.proposal_time || row.participation_time,
             closedAt: null, // No time logic yet
-            state: 'active', 
+            state: 'active',
             gameContext: bet ? `${bet.entity1_name} vs. ${bet.entity2_name}` : '',
-            betDetails: bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '',
+            betDetails: description,
             myGuess: row.user_guess || 'pass',
             wager: bet?.wager_amount || 0,
             payout: bet?.wager_amount ? bet.wager_amount * 2 : 0, // Example payout logic
@@ -92,6 +108,11 @@ export const TicketsPage = () => {
             settledStatus: false,
             proposalTime: bet?.proposal_time,
             timeLimitSeconds: bet?.time_limit_seconds,
+            modeKey: bet?.mode_key,
+            player1Name: bet?.entity1_name,
+            player2Name: bet?.entity2_name,
+            stat: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.stat : bet?.bet_mode_best_of_best?.stat,
+            settleAt: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.settle_at : bet?.bet_mode_best_of_best?.settle_at,
           };
         });
         setTickets(mapped);
@@ -127,6 +148,15 @@ export const TicketsPage = () => {
           .then((data) => {
             const mapped = (data || []).map((row: any) => {
               const bet = row.bet_proposals;
+              let description = '';
+              if (bet?.mode_key === 'best_of_best' && bet?.bet_mode_best_of_best) {
+                const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+                description = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+              } else if (bet?.mode_key === 'one_leg_spread') {
+                description = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+              } else {
+                description = bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '';
+              }
               return {
                 id: row.participation_id,
                 tableId: row.table_id,
@@ -135,7 +165,7 @@ export const TicketsPage = () => {
                 closedAt: null,
                 state: 'active',
                 gameContext: bet ? `${bet.entity1_name} vs. ${bet.entity2_name}` : '',
-                betDetails: bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '',
+                betDetails: description,
                 myGuess: row.user_guess || 'pass',
                 wager: bet?.wager_amount || 0,
                 payout: bet?.wager_amount ? bet.wager_amount * 2 : 0,
@@ -143,6 +173,11 @@ export const TicketsPage = () => {
                 settledStatus: false,
                 proposalTime: bet?.proposal_time,
                 timeLimitSeconds: bet?.time_limit_seconds,
+                modeKey: bet?.mode_key,
+                player1Name: bet?.entity1_name,
+                player2Name: bet?.entity2_name,
+                stat: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.stat : bet?.bet_mode_best_of_best?.stat,
+                settleAt: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.settle_at : bet?.bet_mode_best_of_best?.settle_at,
               };
             });
             setTickets(mapped);
@@ -243,7 +278,6 @@ export const TicketsPage = () => {
   const renderTicketContent = (ticket: Ticket) => (
     <>
       <span className="game-context">{ticket.gameContext}</span>
-      
     </>
   );
 
@@ -288,9 +322,25 @@ export const TicketsPage = () => {
               disabled={isPending}
             >
               <option value="">Select a pick</option>
-              <option value="before">before</option>
-              <option value="after">after</option>
-              <option value="pass">pass</option>
+              {ticket.modeKey === 'best_of_best' ? (
+                <>
+                  <option value="pass">pass</option>
+                  {ticket.player1Name && <option value={ticket.player1Name}>{ticket.player1Name}</option>}
+                  {ticket.player2Name && <option value={ticket.player2Name}>{ticket.player2Name}</option>}
+                </>
+              ) : ticket.modeKey === 'one_leg_spread' ? (
+                <>
+                  <option value="pass">pass</option>
+                  <option value="0-3">0-3</option>
+                  <option value="4-10">4-10</option>
+                  <option value="11-25">11-25</option>
+                  <option value="26+">26+</option>
+                </>
+              ) : (
+                <>
+                  <option value="pass">pass</option>
+                </>
+              )}
             </select>
             <div className="bet-timer">{timerDisplay}</div>
           </div>
@@ -334,7 +384,7 @@ export const TicketsPage = () => {
   }
 
   return (
-    <div className="tickets-page">
+    <div className={`tickets-page ${isMobile ? 'mobile' : ''}`}>
       {/* Use the generalized PageHeader */}
       <PageHeader
         title="My Tickets"

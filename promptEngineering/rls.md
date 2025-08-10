@@ -2,6 +2,13 @@
 
 | Table Name | Policy Name | Command | Using Expression | Check Expression |
 |------------|-------------|---------|------------------|------------------|
+| bet_mode_best_of_best | bob_insert | INSERT | null | `(EXISTS ( SELECT 1 FROM (bet_proposals bp JOIN table_members tm ON ((tm.table_id = bp.table_id))) WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND (tm.user_id = auth.uid()) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))` |
+| bet_mode_best_of_best | bob_select | SELECT | `(EXISTS ( SELECT 1 FROM bet_proposals bp WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND is_user_member_of_table(bp.table_id, auth.uid()))))` | null |
+| bet_mode_best_of_best | bob_update | UPDATE | `(EXISTS ( SELECT 1 FROM bet_proposals bp WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))` | `(EXISTS ( SELECT 1 FROM bet_proposals bp WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))` |
+| bet_mode_one_leg_spread | ols_insert | INSERT | null | `(EXISTS ( SELECT 1 FROM (bet_proposals bp JOIN table_members tm ON ((tm.table_id = bp.table_id))) WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND (tm.user_id = auth.uid()) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))` |
+| bet_mode_one_leg_spread | ols_select | SELECT | `(EXISTS ( SELECT 1 FROM bet_proposals bp WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND is_user_member_of_table(bp.table_id, auth.uid()))))` | null |
+| bet_mode_one_leg_spread | ols_update | UPDATE | `(EXISTS ( SELECT 1 FROM bet_proposals bp WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))` | `(EXISTS ( SELECT 1 FROM bet_proposals bp WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))` |
+| bet_modes | bet_modes_read | SELECT | true | null |
 | bet_participations | Participations are updatable by users | UPDATE | `((user_id = auth.uid()) AND (bet_id IN ( SELECT bet_proposals.bet_id FROM bet_proposals WHERE (bet_proposals.bet_status = 'active'::text))))` | null |
 | bet_participations | Users can participate in open bets in their tables | INSERT | null | `((auth.uid() = user_id) AND (EXISTS ( SELECT 1 FROM table_members tm WHERE ((tm.table_id = bet_participations.table_id) AND (tm.user_id = auth.uid())))) AND (EXISTS ( SELECT 1 FROM bet_proposals bp WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::text) AND (EXTRACT(epoch FROM (now() - bp.proposal_time)) < (bp.time_limit_seconds)::numeric)))))` |
 | bet_participations | Users can view participations in their tables or their own | SELECT | `((auth.uid() = user_id) OR is_table_member(table_id, auth.uid()))` | null |
@@ -37,8 +44,17 @@
 
 ## Summary
 
-This table contains **30 security policies** across **9 database tables**  a social betting platform application. The policies cover:
+This updated table contains **36 security policies** across **11 database tables** for the betting/social platform application. The key additions from the previous version include:
 
+### New Tables Added:
+- **bet_mode_best_of_best** (3 policies) - Security for "best of best" betting mode
+- **bet_mode_one_leg_spread** (3 policies) - Security for "one leg spread" betting mode  
+- **bet_modes** (1 policy) - General read access to betting modes
+
+### Policy Distribution:
+- **bet_mode_best_of_best** (3 policies) - Insert, select, and update operations
+- **bet_mode_one_leg_spread** (3 policies) - Insert, select, and update operations
+- **bet_modes** (1 policy) - Read-only access for all users
 - **bet_participations** (3 policies) - Managing user participation in bets
 - **bet_proposals** (3 policies) - Creating and managing bet proposals
 - **feed_items** (3 policies) - Content feed management
@@ -49,4 +65,4 @@ This table contains **30 security policies** across **9 database tables**  a soc
 - **text_messages** (4 policies) - Text message permissions
 - **users** (3 policies) - User profile access
 
-The policies implement row-level security using PostgreSQL's RLS (Row Level Security) with `auth.uid()` for user authentication and various helper functions for authorization checks.
+The new betting mode tables follow similar security patterns, ensuring that only bet proposers can create and modify betting mode configurations for active bets in tables where they are members, while allowing all table members to view them.

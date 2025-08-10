@@ -39,3 +39,6 @@ client/dist
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Python
+venv/
