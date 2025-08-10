@@ -95,14 +95,8 @@ const TextMessage: React.FC<TextMessageProps> = ({
       }
       try {
         console.log("Accepting bet proposal:", betMsg.betProposalId);
-        console.log("Debug info:", {
-          betId: betMsg.betProposalId,
-          tableId: betMsg.tableId,
-          userId: user.id,
-          userAuthId: user.id
-        });
         
-        // Debug: Check bet proposal details
+        // Check bet proposal details
         const betDetails = await getBetProposalDetails(betMsg.betProposalId);
         console.log("Bet proposal details:", betDetails);
         

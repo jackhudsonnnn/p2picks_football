@@ -30,7 +30,7 @@ export interface ChatMessage {
   senderUsername: string;
   text: string;
   timestamp: string;
-  tableId?: string; // <-- Add this line
+  tableId?: string;
 }
 
 // Bet proposal message format for ChatArea
@@ -39,7 +39,7 @@ export interface BetProposalMessage {
   type: 'bet_proposal';
   senderUserId: string;
   senderUsername: string;
-  text: string; // summary or proposition
+  text: string;
   timestamp: string;
   betProposalId: string;
   betDetails: {
@@ -54,5 +54,5 @@ export interface BetProposalMessage {
     bet_status: string;
     total_pot: number;
   };
-  tableId?: string; // <-- Add this line
+  tableId?: string;
 }

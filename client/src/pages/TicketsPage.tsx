@@ -82,7 +82,7 @@ export const TicketsPage = () => {
             tableName: bet?.private_tables?.table_name || '',
             createdAt: bet?.proposal_time || row.participation_time,
             closedAt: null, // No time logic yet
-            state: 'Active', // Only active tickets for now
+            state: 'active', 
             gameContext: bet ? `${bet.entity1_name} vs. ${bet.entity2_name}` : '',
             betDetails: bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '',
             myGuess: row.user_guess || 'pass',
@@ -102,14 +102,23 @@ export const TicketsPage = () => {
   const handleGuessChange = async (ticketId: string, newGuess: string) => {
     // Update in Supabase
     try {
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('bet_participations')
         .update({ user_guess: newGuess })
         .eq('participation_id', ticketId)
+        // Also scope by user to satisfy RLS and ensure a single row
+        .eq('user_id', user?.id || '')
+        // Request the updated row back; required when chaining .single()
+        .select('participation_id, user_guess')
         .single();
       if (error) {
-        alert('Failed to update your guess. Please try again.');
+        console.error('Update guess failed:', error);
+        alert(`Failed to update your guess. ${error.message ?? ''}`.trim());
         return;
+      }
+      // Optionally update local state optimistically if needed
+      if (updated) {
+        setTickets((prev) => prev.map(t => t.id === updated.participation_id ? { ...t, myGuess: updated.user_guess } : t));
       }
       // Re-fetch tickets to ensure latest participation is shown
       if (user) {
@@ -124,7 +133,7 @@ export const TicketsPage = () => {
                 tableName: bet?.private_tables?.table_name || '',
                 createdAt: bet?.proposal_time || row.participation_time,
                 closedAt: null,
-                state: 'Active',
+                state: 'active',
                 gameContext: bet ? `${bet.entity1_name} vs. ${bet.entity2_name}` : '',
                 betDetails: bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '',
                 myGuess: row.user_guess || 'pass',
@@ -186,7 +195,7 @@ export const TicketsPage = () => {
 
   const filterOptions: FilterOption[] = [
     { id: "all", label: "All", count: ticketCounts.total },
-    { id: "Active", label: "Active", count: ticketCounts.active },
+    { id: "active", label: "active", count: ticketCounts.active },
   ];
 
   // Format functions for tickets
@@ -240,8 +249,8 @@ export const TicketsPage = () => {
 
   // New footer left render function with bet options for active tickets
   const renderFooterLeft = (ticket: Ticket) => {
-    // Function to handle guess button clicks
-    const handleGuessClick = (ticketId: string, newGuess: string) => {
+    // Function to handle guess change via dropdown
+    const handleGuessChangeDropdown = (ticketId: string, newGuess: string) => {
       if (ticket.myGuess !== newGuess) {
         if (
           window.confirm(
@@ -267,57 +276,24 @@ export const TicketsPage = () => {
       : timeLeft !== undefined
       ? `${timeLeft.toFixed(1)}s`
       : "--";
-    if (ticket.state === "Active") {
-      // Return bet options instead of current pick info
+    if (ticket.state === "active") {
+      // Always use dropdown for bet options
       return (
         <div className="ticket-bet-options">
-          {isMobile ? (
-            <div className="mobile-bet-container">
-              <select
-                className="mobile-bet-dropdown"
-                value={ticket.myGuess}
-                onChange={(e) => handleGuessClick(ticket.id, e.target.value)}
-                disabled={isPending}
-              >
-                <option value="">Select a pick</option>
-                <option value="before">before</option>
-                <option value="after">after</option>
-                <option value="pass">pass</option>
-              </select>
-              <div className="bet-timer">{timerDisplay}</div>
-            </div>
-          ) : (
-            <>
-              <button
-                className={`bet-option ${
-                  ticket.myGuess === "before" ? "selected" : ""
-                }`}
-                onClick={() => handleGuessClick(ticket.id, "before")}
-                disabled={isPending}
-              >
-                before
-              </button>
-              <button
-                className={`bet-option ${
-                  ticket.myGuess === "after" ? "selected" : ""
-                }`}
-                onClick={() => handleGuessClick(ticket.id, "after")}
-                disabled={isPending}
-              >
-                after
-              </button>
-              <button
-                className={`bet-option ${
-                  ticket.myGuess === "pass" ? "selected" : ""
-                }`}
-                onClick={() => handleGuessClick(ticket.id, "pass")}
-                disabled={isPending}
-              >
-                pass
-              </button>
-              <div className="bet-timer">{timerDisplay}</div>
-            </>
-          )}
+          <div className="mobile-bet-container">
+            <select
+              className="mobile-bet-dropdown"
+              value={ticket.myGuess}
+              onChange={(e) => handleGuessChangeDropdown(ticket.id, e.target.value)}
+              disabled={isPending}
+            >
+              <option value="">Select a pick</option>
+              <option value="before">before</option>
+              <option value="after">after</option>
+              <option value="pass">pass</option>
+            </select>
+            <div className="bet-timer">{timerDisplay}</div>
+          </div>
         </div>
       );
     } else if (ticket.state === "Pending") {

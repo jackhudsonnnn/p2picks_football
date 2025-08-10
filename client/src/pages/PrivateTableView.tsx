@@ -7,7 +7,6 @@ import { useAuth } from "../hooks/useAuth";
 import { getPrivateTable, getTableFeed, sendTextMessage } from "../services/tableService";
 import { createBetProposal } from "../services/betService";
 import { FeedItem, ChatMessage } from "../types/api";
-import Header from "../components/privateTable/Header";
 import ChatArea from "../components/privateTable/chat/ChatArea";
 import MemberList from "../components/privateTable/memberList";
 import HostControls from "../components/privateTable/hostControls";
