@@ -333,7 +333,7 @@
                     "id": "401776564",
                     "uid": "s:20~l:28~e:401776564~c:401776564",
                     "date": "2025-08-10T17:00Z",
-                    "attendance": 43537,
+                    "attendance": 0,
                     "type": {
                         "id": "1",
                         "abbreviation": "STD"
@@ -342,7 +342,7 @@
                     "neutralSite": false,
                     "conferenceCompetition": false,
                     "playByPlayAvailable": true,
-                    "recent": false,
+                    "recent": true,
                     "venue": {
                         "id": "3933",
                         "fullName": "Soldier Field",
@@ -360,7 +360,6 @@
                             "type": "team",
                             "order": 0,
                             "homeAway": "home",
-                            "winner": false,
                             "team": {
                                 "id": "3",
                                 "uid": "s:20~l:28~t:3",
@@ -423,7 +422,7 @@
                                 ],
                                 "logo": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/chi.png"
                             },
-                            "score": "24",
+                            "score": "10",
                             "linescores": [
                                 {
                                     "value": 0.0,
@@ -436,28 +435,23 @@
                                     "period": 2
                                 },
                                 {
-                                    "value": 7.0,
-                                    "displayValue": "7",
+                                    "value": 0.0,
+                                    "displayValue": "0",
                                     "period": 3
-                                },
-                                {
-                                    "value": 7.0,
-                                    "displayValue": "7",
-                                    "period": 4
                                 }
                             ],
                             "statistics": [],
                             "records": [
                                 {
                                     "name": "overall",
-                                    "abbreviation": "Game",
+                                    "abbreviation": "Any",
                                     "type": "total",
-                                    "summary": "0-0-1"
+                                    "summary": "0-0"
                                 },
                                 {
                                     "name": "Home",
                                     "type": "home",
-                                    "summary": "0-0-1"
+                                    "summary": "0-0"
                                 },
                                 {
                                     "name": "Road",
@@ -472,7 +466,6 @@
                             "type": "team",
                             "order": 1,
                             "homeAway": "away",
-                            "winner": false,
                             "team": {
                                 "id": "15",
                                 "uid": "s:20~l:28~t:15",
@@ -535,7 +528,7 @@
                                 ],
                                 "logo": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/mia.png"
                             },
-                            "score": "24",
+                            "score": "14",
                             "linescores": [
                                 {
                                     "value": 0.0,
@@ -551,20 +544,15 @@
                                     "value": 0.0,
                                     "displayValue": "0",
                                     "period": 3
-                                },
-                                {
-                                    "value": 10.0,
-                                    "displayValue": "10",
-                                    "period": 4
                                 }
                             ],
                             "statistics": [],
                             "records": [
                                 {
                                     "name": "overall",
-                                    "abbreviation": "Game",
+                                    "abbreviation": "Any",
                                     "type": "total",
-                                    "summary": "0-0-1"
+                                    "summary": "0-0"
                                 },
                                 {
                                     "name": "Home",
@@ -574,24 +562,101 @@
                                 {
                                     "name": "Road",
                                     "type": "road",
-                                    "summary": "0-0-1"
+                                    "summary": "0-0"
                                 }
                             ]
                         }
                     ],
                     "notes": [],
+                    "situation": {
+                        "lastPlay": {
+                            "id": "4017765642848",
+                            "type": {
+                                "id": "3",
+                                "text": "Pass Incompletion"
+                            },
+                            "text": "(Shotgun) Q.Ewers pass incomplete short left to A.Mattison.",
+                            "scoreValue": 0,
+                            "team": {
+                                "id": "15"
+                            },
+                            "probability": {
+                                "tiePercentage": 0.0,
+                                "homeWinPercentage": 0.3898,
+                                "awayWinPercentage": 0.6102000000000001,
+                                "secondsLeft": 0
+                            },
+                            "drive": {
+                                "description": "2 plays, 0 yards, 0:04",
+                                "start": {
+                                    "yardLine": 90,
+                                    "text": "MIA 10"
+                                },
+                                "timeElapsed": {
+                                    "displayValue": "0:04"
+                                }
+                            },
+                            "start": {
+                                "yardLine": 90,
+                                "team": {
+                                    "id": "15"
+                                }
+                            },
+                            "end": {
+                                "yardLine": 90,
+                                "team": {
+                                    "id": "15"
+                                }
+                            },
+                            "statYardage": 0,
+                            "athletesInvolved": [
+                                {
+                                    "id": "4048244",
+                                    "fullName": "Alexander Mattison",
+                                    "displayName": "Alexander Mattison",
+                                    "shortName": "A. Mattison",
+                                    "links": [
+                                        {
+                                            "rel": [
+                                                "playercard",
+                                                "desktop",
+                                                "athlete"
+                                            ],
+                                            "href": "https://www.espn.com/nfl/player/_/id/4048244/alexander-mattison"
+                                        }
+                                    ],
+                                    "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4048244.png",
+                                    "jersey": "8",
+                                    "position": "RB",
+                                    "team": {
+                                        "id": "15"
+                                    }
+                                }
+                            ]
+                        },
+                        "down": 3,
+                        "yardLine": 90,
+                        "distance": 10,
+                        "downDistanceText": "3rd & 10 at MIA 10",
+                        "shortDownDistanceText": "3rd & 10",
+                        "possessionText": "MIA 10",
+                        "isRedZone": false,
+                        "homeTimeouts": 3,
+                        "awayTimeouts": 2,
+                        "possession": "15"
+                    },
                     "status": {
-                        "clock": 0.0,
-                        "displayClock": "0:00",
-                        "period": 4,
+                        "clock": 178.0,
+                        "displayClock": "2:58",
+                        "period": 3,
                         "type": {
-                            "id": "3",
-                            "name": "STATUS_FINAL",
-                            "state": "post",
-                            "completed": true,
-                            "description": "Final",
-                            "detail": "Final",
-                            "shortDetail": "Final"
+                            "id": "2",
+                            "name": "STATUS_IN_PROGRESS",
+                            "state": "in",
+                            "completed": false,
+                            "description": "In Progress",
+                            "detail": "2:58 - 3rd Quarter",
+                            "shortDetail": "2:58 - 3rd"
                         },
                         "isTBDFlex": false
                     },
@@ -663,13 +728,13 @@
                             "abbreviation": "RYDS",
                             "leaders": [
                                 {
-                                    "displayValue": "8 CAR, 33 YDS, 1 TD",
-                                    "value": 33.0,
+                                    "displayValue": "6 CAR, 30 YDS",
+                                    "value": 30.0,
                                     "athlete": {
-                                        "id": "4711533",
-                                        "fullName": "Ollie Gordon II",
-                                        "displayName": "Ollie Gordon II",
-                                        "shortName": "O. Gordon II",
+                                        "id": "4608686",
+                                        "fullName": "Kyle Monangai",
+                                        "displayName": "Kyle Monangai",
+                                        "shortName": "K. Monangai",
                                         "links": [
                                             {
                                                 "rel": [
@@ -677,21 +742,21 @@
                                                     "desktop",
                                                     "athlete"
                                                 ],
-                                                "href": "https://www.espn.com/nfl/player/_/id/4711533/ollie-gordon-ii"
+                                                "href": "https://www.espn.com/nfl/player/_/id/4608686/kyle-monangai"
                                             }
                                         ],
-                                        "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4711533.png",
-                                        "jersey": "31",
+                                        "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4608686.png",
+                                        "jersey": "25",
                                         "position": {
                                             "abbreviation": "RB"
                                         },
                                         "team": {
-                                            "id": "15"
+                                            "id": "3"
                                         },
                                         "active": true
                                     },
                                     "team": {
-                                        "id": "15"
+                                        "id": "3"
                                     }
                                 }
                             ]
@@ -791,234 +856,18 @@
                             "region": "us"
                         }
                     ],
-                    "highlights": [
-                        {
-                            "id": 45940271,
-                            "cerebroId": "689901412088e336dee4f3f8",
-                            "source": "espn",
-                            "headline": "Bears, Dolphins exchange TDs in preseason tie",
-                            "description": "The Bears-Dolphins preseason matchup ends in a 24-24 tie after exchanging a handful of touchdowns.",
-                            "lastModified": "2025-08-10T20:32:40Z",
-                            "originalPublishDate": "2025-08-10T20:29:51Z",
-                            "duration": 60,
-                            "timeRestrictions": {
-                                "embargoDate": "2025-08-10T20:29:51Z",
-                                "expirationDate": "2025-08-12T20:29:51Z"
-                            },
-                            "deviceRestrictions": {
-                                "type": "whitelist",
-                                "devices": [
-                                    "desktop",
-                                    "ipad",
-                                    "settop",
-                                    "handset",
-                                    "tablet"
-                                ]
-                            },
-                            "thumbnail": "https://a.espncdn.com/media/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.jpg",
-                            "links": {
-                                "web": {
-                                    "href": "https://www.espn.com/video/clip?id=45940271",
-                                    "self": {
-                                        "href": "https://www.espn.com/video/clip?id=45940271"
-                                    },
-                                    "seo": {
-                                        "href": "https://www.espn.com/video/clip/_/id/45940271"
-                                    }
-                                },
-                                "mobile": {
-                                    "href": "https://watch.auth.api.espn.com/video/auth/brightcove/fa0e63fa-462b-4d34-9066-f511c8660e96/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45940271",
-                                    "source": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.mp4"
-                                    },
-                                    "alert": {
-                                        "href": "https://m.espn.com/general/video/videoAlert?vid=45940271"
-                                    },
-                                    "streaming": {
-                                        "href": "https://watch.auth.api.espn.com/video/auth/brightcove/fa0e63fa-462b-4d34-9066-f511c8660e96/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45940271"
-                                    },
-                                    "progressiveDownload": {
-                                        "href": "https://watch.auth.api.espn.com/video/auth/brightcove/fa0e63fa-462b-4d34-9066-f511c8660e96/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45940271"
-                                    }
-                                },
-                                "api": {
-                                    "self": {
-                                        "href": "https://content.core.api.espn.com/v1/video/clips/45940271"
-                                    },
-                                    "artwork": {
-                                        "href": "https://artwork.api.espn.com/artwork/collections/media/fa0e63fa-462b-4d34-9066-f511c8660e96"
-                                    }
-                                },
-                                "source": {
-                                    "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_360p30_1464k.mp4",
-                                    "mezzanine": {
-                                        "href": "https://media.video-origin.espn.com/espnvideo/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.mp4"
-                                    },
-                                    "flash": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.smil"
-                                    },
-                                    "hds": {
-                                        "href": "https://hds.video-cdn.espn.com/z/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_rel.smil/manifest.f4m"
-                                    },
-                                    "HLS": {
-                                        "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8",
-                                        "HD": {
-                                            "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8"
-                                        },
-                                        "cmaf": {
-                                            "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8",
-                                            "9x16": {
-                                                "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/9x16/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8"
-                                            }
-                                        },
-                                        "9x16": {
-                                            "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/9x16/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8"
-                                        },
-                                        "shield": {
-                                            "href": "https://watch.auth.api.espn.com/video/auth/media/fa0e63fa-462b-4d34-9066-f511c8660e96/asset"
-                                        }
-                                    },
-                                    "HD": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_720p30_2896k.mp4"
-                                    },
-                                    "full": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_360p30_1464k.mp4"
-                                    }
-                                },
-                                "sportscenter": {
-                                    "href": "sportscenter://x-callback-url/showVideo?videoID=45940271&videoDSI=fa4673819d742"
-                                }
-                            },
-                            "ad": {
-                                "sport": "nfl",
-                                "bundle": "sportscenter"
-                            },
-                            "tracking": {
-                                "sportName": "nfl",
-                                "leagueName": "nfl",
-                                "coverageType": "Final Game Highlight",
-                                "trackingName": "NFL_One-Play (Bears, Dolphins exchange TDs in preseason tie) 2025/08/10 ESHEET",
-                                "trackingId": "dm_20250810_NFL_bears_dolphins_exchange_tds_in_preseason_tie"
-                            }
-                        }
-                    ],
-                    "headlines": [
-                        {
-                            "type": "Recap",
-                            "description": "\u2014 Miami Dolphins quarterback Tua Tagovailoa saw the value in playing a series in Sunday's preseason opener even if it didn't end the way he would have liked.",
-                            "shortLinkText": "Dolphins, Bears finish in 24-24 tie in the preseason",
-                            "video": [
-                                {
-                                    "id": 45940271,
-                                    "source": "espn",
-                                    "headline": "Bears, Dolphins exchange TDs in preseason tie",
-                                    "thumbnail": "https://a.espncdn.com/media/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.jpg",
-                                    "duration": 60,
-                                    "tracking": {
-                                        "sportName": "nfl",
-                                        "leagueName": "nfl",
-                                        "coverageType": "Final Game Highlight",
-                                        "trackingName": "NFL_One-Play (Bears, Dolphins exchange TDs in preseason tie) 2025/08/10 ESHEET",
-                                        "trackingId": "dm_20250810_NFL_bears_dolphins_exchange_tds_in_preseason_tie"
-                                    },
-                                    "deviceRestrictions": {
-                                        "type": "whitelist",
-                                        "devices": [
-                                            "desktop",
-                                            "ipad",
-                                            "settop",
-                                            "handset",
-                                            "tablet"
-                                        ]
-                                    },
-                                    "links": {
-                                        "web": {
-                                            "href": "https://www.espn.com/video/clip?id=45940271",
-                                            "self": {
-                                                "href": "https://www.espn.com/video/clip?id=45940271"
-                                            },
-                                            "seo": {
-                                                "href": "https://www.espn.com/video/clip/_/id/45940271"
-                                            }
-                                        },
-                                        "mobile": {
-                                            "href": "https://watch.auth.api.espn.com/video/auth/brightcove/fa0e63fa-462b-4d34-9066-f511c8660e96/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45940271",
-                                            "source": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.mp4"
-                                            },
-                                            "alert": {
-                                                "href": "https://m.espn.com/general/video/videoAlert?vid=45940271"
-                                            },
-                                            "streaming": {
-                                                "href": "https://watch.auth.api.espn.com/video/auth/brightcove/fa0e63fa-462b-4d34-9066-f511c8660e96/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45940271"
-                                            },
-                                            "progressiveDownload": {
-                                                "href": "https://watch.auth.api.espn.com/video/auth/brightcove/fa0e63fa-462b-4d34-9066-f511c8660e96/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45940271"
-                                            }
-                                        },
-                                        "api": {
-                                            "self": {
-                                                "href": "https://content.core.api.espn.com/v1/video/clips/45940271"
-                                            },
-                                            "artwork": {
-                                                "href": "https://artwork.api.espn.com/artwork/collections/media/fa0e63fa-462b-4d34-9066-f511c8660e96"
-                                            }
-                                        },
-                                        "source": {
-                                            "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_360p30_1464k.mp4",
-                                            "mezzanine": {
-                                                "href": "https://media.video-origin.espn.com/espnvideo/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.mp4"
-                                            },
-                                            "flash": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8.smil"
-                                            },
-                                            "hds": {
-                                                "href": "https://hds.video-cdn.espn.com/z/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_rel.smil/manifest.f4m"
-                                            },
-                                            "HLS": {
-                                                "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8",
-                                                "HD": {
-                                                    "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8"
-                                                },
-                                                "cmaf": {
-                                                    "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8",
-                                                    "9x16": {
-                                                        "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/9x16/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8"
-                                                    }
-                                                },
-                                                "9x16": {
-                                                    "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/9x16/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8/playlist.m3u8"
-                                                },
-                                                "shield": {
-                                                    "href": "https://watch.auth.api.espn.com/video/auth/media/fa0e63fa-462b-4d34-9066-f511c8660e96/asset"
-                                                }
-                                            },
-                                            "HD": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_720p30_2896k.mp4"
-                                            },
-                                            "full": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/02658e7a-e810-4968-9ff4-794d823925d8/02658e7a-e810-4968-9ff4-794d823925d8_360p30_1464k.mp4"
-                                            }
-                                        },
-                                        "sportscenter": {
-                                            "href": "sportscenter://x-callback-url/showVideo?videoID=45940271&videoDSI=fa4673819d742"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    ]
+                    "highlights": []
                 }
             ],
             "links": [
                 {
                     "language": "en-US",
                     "rel": [
-                        "summary",
+                        "live",
                         "desktop",
                         "event"
                     ],
-                    "href": "https://www.espn.com/nfl/game/_/gameId/401776564/dolphins-bears",
+                    "href": "https://www.espn.com/nfl/game?gameId=401776564",
                     "text": "Gamecast",
                     "shortText": "Gamecast",
                     "isExternal": false,
@@ -1040,18 +889,6 @@
                 {
                     "language": "en-US",
                     "rel": [
-                        "highlights",
-                        "desktop"
-                    ],
-                    "href": "https://www.espn.com/nfl/video?gameId=401776564",
-                    "text": "Highlights",
-                    "shortText": "Highlights",
-                    "isExternal": false,
-                    "isPremium": false
-                },
-                {
-                    "language": "en-US",
-                    "rel": [
                         "pbp",
                         "desktop",
                         "event"
@@ -1061,33 +898,37 @@
                     "shortText": "Play-by-Play",
                     "isExternal": false,
                     "isPremium": false
-                },
-                {
-                    "language": "en-US",
-                    "rel": [
-                        "recap",
-                        "desktop",
-                        "event"
-                    ],
-                    "href": "https://www.espn.com/nfl/recap?gameId=401776564",
-                    "text": "Recap",
-                    "shortText": "Recap",
-                    "isExternal": false,
-                    "isPremium": false
                 }
             ],
+            "weather": {
+                "displayValue": "3",
+                "temperature": 90,
+                "highTemperature": 90,
+                "conditionId": "Partly sunny",
+                "link": {
+                    "language": "en-US",
+                    "rel": [
+                        "60605"
+                    ],
+                    "href": "http://www.accuweather.com/en/us/soldier-field-il/60608/current-weather/18170_poi?lang=en-us",
+                    "text": "Weather",
+                    "shortText": "Weather",
+                    "isExternal": true,
+                    "isPremium": false
+                }
+            },
             "status": {
-                "clock": 0.0,
-                "displayClock": "0:00",
-                "period": 4,
+                "clock": 178.0,
+                "displayClock": "2:58",
+                "period": 3,
                 "type": {
-                    "id": "3",
-                    "name": "STATUS_FINAL",
-                    "state": "post",
-                    "completed": true,
-                    "description": "Final",
-                    "detail": "Final",
-                    "shortDetail": "Final"
+                    "id": "2",
+                    "name": "STATUS_IN_PROGRESS",
+                    "state": "in",
+                    "completed": false,
+                    "description": "In Progress",
+                    "detail": "2:58 - 3rd Quarter",
+                    "shortDetail": "2:58 - 3rd"
                 }
             }
         },
@@ -1110,7 +951,7 @@
                     "id": "401773026",
                     "uid": "s:20~l:28~e:401773026~c:401773026",
                     "date": "2025-08-10T20:00Z",
-                    "attendance": 65049,
+                    "attendance": 0,
                     "type": {
                         "id": "1",
                         "abbreviation": "STD"
@@ -1118,8 +959,8 @@
                     "timeValid": true,
                     "neutralSite": false,
                     "conferenceCompetition": false,
-                    "playByPlayAvailable": true,
-                    "recent": false,
+                    "playByPlayAvailable": false,
+                    "recent": true,
                     "venue": {
                         "id": "7065",
                         "fullName": "SoFi Stadium",
@@ -1137,7 +978,6 @@
                             "type": "team",
                             "order": 0,
                             "homeAway": "home",
-                            "winner": true,
                             "team": {
                                 "id": "24",
                                 "uid": "s:20~l:28~t:24",
@@ -1200,46 +1040,146 @@
                                 ],
                                 "logo": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/lac.png"
                             },
-                            "score": "27",
-                            "linescores": [
-                                {
-                                    "value": 0.0,
-                                    "displayValue": "0",
-                                    "period": 1
-                                },
-                                {
-                                    "value": 9.0,
-                                    "displayValue": "9",
-                                    "period": 2
-                                },
-                                {
-                                    "value": 8.0,
-                                    "displayValue": "8",
-                                    "period": 3
-                                },
-                                {
-                                    "value": 10.0,
-                                    "displayValue": "10",
-                                    "period": 4
-                                }
-                            ],
+                            "score": "0",
                             "statistics": [],
                             "records": [
                                 {
                                     "name": "overall",
-                                    "abbreviation": "Game",
+                                    "abbreviation": "Any",
                                     "type": "total",
-                                    "summary": "2-0"
+                                    "summary": "1-0"
                                 },
                                 {
                                     "name": "Home",
                                     "type": "home",
-                                    "summary": "1-0"
+                                    "summary": "0-0"
                                 },
                                 {
                                     "name": "Road",
                                     "type": "road",
                                     "summary": "1-0"
+                                }
+                            ],
+                            "leaders": [
+                                {
+                                    "name": "passingLeader",
+                                    "displayName": "Passing Leader",
+                                    "shortDisplayName": "PASS",
+                                    "abbreviation": "PYDS",
+                                    "leaders": [
+                                        {
+                                            "displayValue": "13/20, 120 YDS, 2 TD",
+                                            "value": 120.0,
+                                            "athlete": {
+                                                "id": "4383351",
+                                                "fullName": "Trey Lance",
+                                                "displayName": "Trey Lance",
+                                                "shortName": "T. Lance",
+                                                "links": [
+                                                    {
+                                                        "rel": [
+                                                            "playercard",
+                                                            "desktop",
+                                                            "athlete"
+                                                        ],
+                                                        "href": "https://www.espn.com/nfl/player/_/id/4383351/trey-lance"
+                                                    }
+                                                ],
+                                                "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4383351.png",
+                                                "jersey": "5",
+                                                "position": {
+                                                    "abbreviation": "QB"
+                                                },
+                                                "team": {
+                                                    "id": "24"
+                                                },
+                                                "active": true
+                                            },
+                                            "team": {
+                                                "id": "24"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "rushingLeader",
+                                    "displayName": "Rushing Leader",
+                                    "shortDisplayName": "RUSH",
+                                    "abbreviation": "RYDS",
+                                    "leaders": [
+                                        {
+                                            "displayValue": "9 CAR, 37 YDS, 2 TD",
+                                            "value": 37.0,
+                                            "athlete": {
+                                                "id": "4430968",
+                                                "fullName": "Kimani Vidal",
+                                                "displayName": "Kimani Vidal",
+                                                "shortName": "K. Vidal",
+                                                "links": [
+                                                    {
+                                                        "rel": [
+                                                            "playercard",
+                                                            "desktop",
+                                                            "athlete"
+                                                        ],
+                                                        "href": "https://www.espn.com/nfl/player/_/id/4430968/kimani-vidal"
+                                                    }
+                                                ],
+                                                "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4430968.png",
+                                                "jersey": "30",
+                                                "position": {
+                                                    "abbreviation": "RB"
+                                                },
+                                                "team": {
+                                                    "id": "24"
+                                                },
+                                                "active": true
+                                            },
+                                            "team": {
+                                                "id": "24"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "receivingLeader",
+                                    "displayName": "Receiving Leader",
+                                    "shortDisplayName": "REC",
+                                    "abbreviation": "RECYDS",
+                                    "leaders": [
+                                        {
+                                            "displayValue": "2 REC, 43 YDS, 1 TD",
+                                            "value": 43.0,
+                                            "athlete": {
+                                                "id": "4430870",
+                                                "fullName": "KeAndre Lambert-Smith",
+                                                "displayName": "KeAndre Lambert-Smith",
+                                                "shortName": "K. Lambert-Smith",
+                                                "links": [
+                                                    {
+                                                        "rel": [
+                                                            "playercard",
+                                                            "desktop",
+                                                            "athlete"
+                                                        ],
+                                                        "href": "https://www.espn.com/nfl/player/_/id/4430870/keandre-lambert-smith"
+                                                    }
+                                                ],
+                                                "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4430870.png",
+                                                "jersey": "84",
+                                                "position": {
+                                                    "abbreviation": "WR"
+                                                },
+                                                "team": {
+                                                    "id": "24"
+                                                },
+                                                "active": true
+                                            },
+                                            "team": {
+                                                "id": "24"
+                                            }
+                                        }
+                                    ]
                                 }
                             ]
                         },
@@ -1249,7 +1189,6 @@
                             "type": "team",
                             "order": 1,
                             "homeAway": "away",
-                            "winner": false,
                             "team": {
                                 "id": "18",
                                 "uid": "s:20~l:28~t:18",
@@ -1312,36 +1251,14 @@
                                 ],
                                 "logo": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/no.png"
                             },
-                            "score": "13",
-                            "linescores": [
-                                {
-                                    "value": 0.0,
-                                    "displayValue": "0",
-                                    "period": 1
-                                },
-                                {
-                                    "value": 3.0,
-                                    "displayValue": "3",
-                                    "period": 2
-                                },
-                                {
-                                    "value": 7.0,
-                                    "displayValue": "7",
-                                    "period": 3
-                                },
-                                {
-                                    "value": 3.0,
-                                    "displayValue": "3",
-                                    "period": 4
-                                }
-                            ],
+                            "score": "0",
                             "statistics": [],
                             "records": [
                                 {
                                     "name": "overall",
-                                    "abbreviation": "Game",
+                                    "abbreviation": "Any",
                                     "type": "total",
-                                    "summary": "0-1"
+                                    "summary": "0-0"
                                 },
                                 {
                                     "name": "Home",
@@ -1351,7 +1268,7 @@
                                 {
                                     "name": "Road",
                                     "type": "road",
-                                    "summary": "0-1"
+                                    "summary": "0-0"
                                 }
                             ]
                         }
@@ -1360,15 +1277,15 @@
                     "status": {
                         "clock": 0.0,
                         "displayClock": "0:00",
-                        "period": 4,
+                        "period": 0,
                         "type": {
-                            "id": "3",
-                            "name": "STATUS_FINAL",
-                            "state": "post",
-                            "completed": true,
-                            "description": "Final",
-                            "detail": "Final",
-                            "shortDetail": "Final"
+                            "id": "1",
+                            "name": "STATUS_SCHEDULED",
+                            "state": "pre",
+                            "completed": false,
+                            "description": "Scheduled",
+                            "detail": "Sun, August 10th at 4:00 PM EDT",
+                            "shortDetail": "8/10 - 4:00 PM EDT"
                         },
                         "isTBDFlex": false
                     },
@@ -1394,48 +1311,8 @@
                             "abbreviation": "PYDS",
                             "leaders": [
                                 {
-                                    "displayValue": "15/22, 165 YDS, 1 TD, 1 INT",
-                                    "value": 165.0,
-                                    "athlete": {
-                                        "id": "4360689",
-                                        "fullName": "Tyler Shough",
-                                        "displayName": "Tyler Shough",
-                                        "shortName": "T. Shough",
-                                        "links": [
-                                            {
-                                                "rel": [
-                                                    "playercard",
-                                                    "desktop",
-                                                    "athlete"
-                                                ],
-                                                "href": "https://www.espn.com/nfl/player/_/id/4360689/tyler-shough"
-                                            }
-                                        ],
-                                        "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4360689.png",
-                                        "jersey": "6",
-                                        "position": {
-                                            "abbreviation": "QB"
-                                        },
-                                        "team": {
-                                            "id": "18"
-                                        },
-                                        "active": true
-                                    },
-                                    "team": {
-                                        "id": "18"
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "rushingYards",
-                            "displayName": "Rushing Leader",
-                            "shortDisplayName": "RUSH",
-                            "abbreviation": "RYDS",
-                            "leaders": [
-                                {
-                                    "displayValue": "7 CAR, 48 YDS, 1 TD",
-                                    "value": 48.0,
+                                    "displayValue": "120 YDS, 2 TD",
+                                    "value": 120.0,
                                     "athlete": {
                                         "id": "4383351",
                                         "fullName": "Trey Lance",
@@ -1468,19 +1345,19 @@
                             ]
                         },
                         {
-                            "name": "receivingYards",
-                            "displayName": "Receiving Leader",
-                            "shortDisplayName": "REC",
-                            "abbreviation": "RECYDS",
+                            "name": "rushingYards",
+                            "displayName": "Rushing Leader",
+                            "shortDisplayName": "RUSH",
+                            "abbreviation": "RYDS",
                             "leaders": [
                                 {
-                                    "displayValue": "3 REC, 62 YDS",
-                                    "value": 62.0,
+                                    "displayValue": "9 CAR, 37 YDS, 2 TD",
+                                    "value": 37.0,
                                     "athlete": {
-                                        "id": "4569372",
-                                        "fullName": "Dalevon Campbell",
-                                        "displayName": "Dalevon Campbell",
-                                        "shortName": "D. Campbell",
+                                        "id": "4430968",
+                                        "fullName": "Kimani Vidal",
+                                        "displayName": "Kimani Vidal",
+                                        "shortName": "K. Vidal",
                                         "links": [
                                             {
                                                 "rel": [
@@ -1488,11 +1365,51 @@
                                                     "desktop",
                                                     "athlete"
                                                 ],
-                                                "href": "https://www.espn.com/nfl/player/_/id/4569372/dalevon-campbell"
+                                                "href": "https://www.espn.com/nfl/player/_/id/4430968/kimani-vidal"
                                             }
                                         ],
-                                        "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4569372.png",
-                                        "jersey": "38",
+                                        "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4430968.png",
+                                        "jersey": "30",
+                                        "position": {
+                                            "abbreviation": "RB"
+                                        },
+                                        "team": {
+                                            "id": "24"
+                                        },
+                                        "active": true
+                                    },
+                                    "team": {
+                                        "id": "24"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "receivingYards",
+                            "displayName": "Receiving Leader",
+                            "shortDisplayName": "REC",
+                            "abbreviation": "RECYDS",
+                            "leaders": [
+                                {
+                                    "displayValue": "2 REC, 43 YDS, 1 TD",
+                                    "value": 43.0,
+                                    "athlete": {
+                                        "id": "4430870",
+                                        "fullName": "KeAndre Lambert-Smith",
+                                        "displayName": "KeAndre Lambert-Smith",
+                                        "shortName": "K. Lambert-Smith",
+                                        "links": [
+                                            {
+                                                "rel": [
+                                                    "playercard",
+                                                    "desktop",
+                                                    "athlete"
+                                                ],
+                                                "href": "https://www.espn.com/nfl/player/_/id/4430870/keandre-lambert-smith"
+                                            }
+                                        ],
+                                        "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4430870.png",
+                                        "jersey": "84",
                                         "position": {
                                             "abbreviation": "WR"
                                         },
@@ -1513,6 +1430,20 @@
                             "periods": 4
                         }
                     },
+                    "tickets": [
+                        {
+                            "summary": "Tickets as low as $6",
+                            "numberAvailable": 3666,
+                            "links": [
+                                {
+                                    "href": "https://www.vividseats.com/los-angeles-chargers-tickets-sofi-stadium-8-11-2025--sports-nfl-football/production/5556652?wsUser=717"
+                                },
+                                {
+                                    "href": "https://www.vividseats.com/sofi-stadium-tickets/venue/21877?wsUser=717"
+                                }
+                            ]
+                        }
+                    ],
                     "startDate": "2025-08-10T20:00Z",
                     "broadcast": "NFL Net",
                     "geoBroadcasts": [
@@ -1547,223 +1478,521 @@
                             "region": "us"
                         }
                     ],
-                    "highlights": [
+                    "odds": [
                         {
-                            "id": 45941302,
-                            "cerebroId": "68992da6f8047a101334c47e",
-                            "source": "espn",
-                            "headline": "Chargers' defense key in win over Saints",
-                            "description": "Eric Rogers comes up with two interceptions, including a pick-six, in the Chargers' 27-13 win over the Saints.",
-                            "lastModified": "2025-08-10T23:44:39Z",
-                            "originalPublishDate": "2025-08-10T23:39:17Z",
-                            "duration": 91,
-                            "timeRestrictions": {
-                                "embargoDate": "2025-08-10T23:39:17Z",
-                                "expirationDate": "2025-08-12T23:39:17Z"
-                            },
-                            "deviceRestrictions": {
-                                "type": "whitelist",
-                                "devices": [
-                                    "desktop",
-                                    "ipad",
-                                    "settop",
-                                    "handset",
-                                    "tablet"
+                            "provider": {
+                                "id": "58",
+                                "name": "ESPN BET",
+                                "priority": 1,
+                                "logos": [
+                                    {
+                                        "href": "https://a.espncdn.com/i/espnbet/ESPN_Bet_Sportsbook_Light.svg",
+                                        "rel": [
+                                            "light"
+                                        ]
+                                    },
+                                    {
+                                        "href": "https://a.espncdn.com/i/espnbet/ESPN_Bet_Sportsbook_Dark.svg",
+                                        "rel": [
+                                            "dark"
+                                        ]
+                                    }
                                 ]
                             },
-                            "thumbnail": "https://a.espncdn.com/media/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.jpg",
-                            "links": {
-                                "web": {
-                                    "href": "https://www.espn.com/video/clip?id=45941302",
-                                    "self": {
-                                        "href": "https://www.espn.com/video/clip?id=45941302"
-                                    },
-                                    "seo": {
-                                        "href": "https://www.espn.com/video/clip/_/id/45941302"
+                            "details": "LAC -2.5",
+                            "overUnder": 38.5,
+                            "spread": -2.5,
+                            "awayTeamOdds": {
+                                "favorite": false,
+                                "underdog": true,
+                                "moneyLine": 120,
+                                "spreadOdds": -105.0,
+                                "team": {
+                                    "id": "18",
+                                    "abbreviation": "NO",
+                                    "displayName": "New Orleans Saints",
+                                    "shortDisplayName": "Saints"
+                                },
+                                "favoriteAtOpen": true
+                            },
+                            "homeTeamOdds": {
+                                "favorite": true,
+                                "underdog": false,
+                                "moneyLine": -140,
+                                "spreadOdds": -115.0,
+                                "team": {
+                                    "id": "24",
+                                    "abbreviation": "LAC",
+                                    "displayName": "Los Angeles Chargers",
+                                    "shortDisplayName": "Chargers"
+                                },
+                                "favoriteAtOpen": false
+                            },
+                            "links": [
+                                {
+                                    "language": "en-US",
+                                    "rel": [
+                                        "home",
+                                        "desktop",
+                                        "bets",
+                                        "espn-bet"
+                                    ],
+                                    "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=18f92bc9-9a3b-4473-bbfb-3c62643fa1b5&odds_numerator[0]=12&odds_denominator[0]=7",
+                                    "text": "Home Bet",
+                                    "shortText": "Home Bet",
+                                    "isExternal": true,
+                                    "isPremium": false,
+                                    "tracking": {
+                                        "campaign": "betting-integrations",
+                                        "tags": {
+                                            "league": "nfl",
+                                            "sport": "football",
+                                            "gameId": 401773026,
+                                            "betSide": "home",
+                                            "betType": "straight"
+                                        }
                                     }
                                 },
-                                "mobile": {
-                                    "href": "https://watch.auth.api.espn.com/video/auth/brightcove/23c7a0e6-716f-48de-95ae-089a40e590af/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45941302",
-                                    "source": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.mp4"
-                                    },
-                                    "alert": {
-                                        "href": "https://m.espn.com/general/video/videoAlert?vid=45941302"
-                                    },
-                                    "streaming": {
-                                        "href": "https://watch.auth.api.espn.com/video/auth/brightcove/23c7a0e6-716f-48de-95ae-089a40e590af/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45941302"
-                                    },
-                                    "progressiveDownload": {
-                                        "href": "https://watch.auth.api.espn.com/video/auth/brightcove/23c7a0e6-716f-48de-95ae-089a40e590af/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45941302"
+                                {
+                                    "language": "en-US",
+                                    "rel": [
+                                        "away",
+                                        "desktop",
+                                        "bets",
+                                        "espn-bet"
+                                    ],
+                                    "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=6af07524-804b-4a1a-b9de-732aaa4932a2&odds_numerator[0]=11&odds_denominator[0]=5",
+                                    "text": "Away Bet",
+                                    "shortText": "Away Bet",
+                                    "isExternal": true,
+                                    "isPremium": false,
+                                    "tracking": {
+                                        "campaign": "betting-integrations",
+                                        "tags": {
+                                            "league": "nfl",
+                                            "sport": "football",
+                                            "gameId": 401773026,
+                                            "betSide": "away",
+                                            "betType": "straight"
+                                        }
                                     }
                                 },
-                                "api": {
-                                    "self": {
-                                        "href": "https://content.core.api.espn.com/v1/video/clips/45941302"
-                                    },
-                                    "artwork": {
-                                        "href": "https://artwork.api.espn.com/artwork/collections/media/23c7a0e6-716f-48de-95ae-089a40e590af"
+                                {
+                                    "language": "en-US",
+                                    "rel": [
+                                        "homeSpread",
+                                        "desktop",
+                                        "bets"
+                                    ],
+                                    "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=9c0ed57f-440e-4795-829b-d7b51cc36d6b&odds_numerator[0]=43&odds_denominator[0]=23",
+                                    "text": "Home Point Spread",
+                                    "shortText": "Home Point Spread",
+                                    "isExternal": true,
+                                    "isPremium": false,
+                                    "tracking": {
+                                        "campaign": "betting-integrations",
+                                        "tags": {
+                                            "league": "nfl",
+                                            "sport": "football",
+                                            "gameId": 401773026,
+                                            "betSide": "none",
+                                            "betType": "straight",
+                                            "betDetails": "Spread:LAC-2.5"
+                                        }
                                     }
                                 },
-                                "source": {
-                                    "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_360p30_1464k.mp4",
-                                    "mezzanine": {
-                                        "href": "https://media.video-origin.espn.com/espnvideo/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.mp4"
-                                    },
-                                    "flash": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.smil"
-                                    },
-                                    "hds": {
-                                        "href": "https://hds.video-cdn.espn.com/z/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_rel.smil/manifest.f4m"
-                                    },
-                                    "HLS": {
-                                        "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8",
-                                        "HD": {
-                                            "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8"
-                                        },
-                                        "cmaf": {
-                                            "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8",
-                                            "9x16": {
-                                                "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/9x16/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8"
+                                {
+                                    "language": "en-US",
+                                    "rel": [
+                                        "awaySpread",
+                                        "desktop",
+                                        "bets"
+                                    ],
+                                    "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=38e1a71d-bcf0-48bb-af90-1e9c8550fcc3&odds_numerator[0]=41&odds_denominator[0]=21",
+                                    "text": "Away Point Spread",
+                                    "shortText": "Away Point Spread",
+                                    "isExternal": true,
+                                    "isPremium": false,
+                                    "tracking": {
+                                        "campaign": "betting-integrations",
+                                        "tags": {
+                                            "league": "nfl",
+                                            "sport": "football",
+                                            "gameId": 401773026,
+                                            "betSide": "none",
+                                            "betType": "straight",
+                                            "betDetails": "Spread:NO+2.5"
+                                        }
+                                    }
+                                },
+                                {
+                                    "language": "en-US",
+                                    "rel": [
+                                        "over",
+                                        "desktop",
+                                        "bets"
+                                    ],
+                                    "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=f9329e6e-0448-46a8-8e70-f43079e09f9c&odds_numerator[0]=21&odds_denominator[0]=11",
+                                    "text": "Over Odds",
+                                    "shortText": "Over Odds",
+                                    "isExternal": true,
+                                    "isPremium": false,
+                                    "tracking": {
+                                        "campaign": "betting-integrations",
+                                        "tags": {
+                                            "league": "nfl",
+                                            "sport": "football",
+                                            "gameId": 401773026,
+                                            "betSide": "over",
+                                            "betType": "straight",
+                                            "betDetails": "Over:38.5"
+                                        }
+                                    }
+                                },
+                                {
+                                    "language": "en-US",
+                                    "rel": [
+                                        "under",
+                                        "desktop",
+                                        "bets"
+                                    ],
+                                    "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=78ac2ddc-484b-4251-928f-5e2f1d632b1b&odds_numerator[0]=21&odds_denominator[0]=11",
+                                    "text": "Under Odds",
+                                    "shortText": "Under Odds",
+                                    "isExternal": true,
+                                    "isPremium": false,
+                                    "tracking": {
+                                        "campaign": "betting-integrations",
+                                        "tags": {
+                                            "league": "nfl",
+                                            "sport": "football",
+                                            "gameId": 401773026,
+                                            "betSide": "under",
+                                            "betType": "straight",
+                                            "betDetails": "Under:38.5"
+                                        }
+                                    }
+                                },
+                                {
+                                    "language": "en-US",
+                                    "rel": [
+                                        "game",
+                                        "desktop",
+                                        "bets"
+                                    ],
+                                    "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758",
+                                    "text": "See More on ESPN BET Sportsbook",
+                                    "shortText": "Game",
+                                    "isExternal": true,
+                                    "isPremium": false,
+                                    "tracking": {
+                                        "campaign": "betting-integrations",
+                                        "tags": {
+                                            "league": "nfl",
+                                            "sport": "football",
+                                            "gameId": 401773026,
+                                            "betSide": "none",
+                                            "betType": "straight"
+                                        }
+                                    }
+                                }
+                            ],
+                            "featuredBets": [
+                                {
+                                    "id": "c9b5d179-20d2-412c-975d-c6cbca13802f",
+                                    "displayName": "Charging Forward",
+                                    "type": "PARLAY",
+                                    "odds": "+227",
+                                    "url": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/parlay-lounge/section/featured&featured_bet_id=c9b5d179-20d2-412c-975d-c6cbca13802f",
+                                    "startTime": "2025-08-10T20:00Z",
+                                    "payoutText": "$10.00 pays $32.73",
+                                    "displayOrder": 114,
+                                    "locations": [
+                                        "FEATURED_BET_LOCATION_HOME",
+                                        "FEATURED_BET_LOCATION-PARLAY_LOUNGE"
+                                    ],
+                                    "legCount": 2,
+                                    "events": [
+                                        {
+                                            "displayName": "NO @ LAC",
+                                            "legs": [
+                                                {
+                                                    "marketId": "8c24832d-15f7-43ea-badf-dac1ec859faf",
+                                                    "marketSelectionId": "18f92bc9-9a3b-4473-bbfb-3c62643fa1b5",
+                                                    "eventId": "401773026",
+                                                    "selectionText": "LA Chargers",
+                                                    "type": "home_moneyline",
+                                                    "startTime": "2025-08-10T20:00Z",
+                                                    "marketText": "Moneyline",
+                                                    "icon": "https://a.espncdn.com/i/espnbet/mybets_fball_icon.png",
+                                                    "iconDark": "https://a.espncdn.com/i/espnbet/dark/mybets_fball_icon.png",
+                                                    "url": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=18f92bc9-9a3b-4473-bbfb-3c62643fa1b5&odds_numerator[0]=12&odds_denominator[0]=7"
+                                                },
+                                                {
+                                                    "marketId": "0465690a-4cb4-4988-8cb7-e48cc7ee8eb0",
+                                                    "marketSelectionId": "f9329e6e-0448-46a8-8e70-f43079e09f9c",
+                                                    "eventId": "401773026",
+                                                    "selectionText": "Over 38.5",
+                                                    "type": "over",
+                                                    "points": "38.5",
+                                                    "startTime": "2025-08-10T20:00Z",
+                                                    "marketText": "Total Points",
+                                                    "icon": "https://a.espncdn.com/i/espnbet/mybets_over_caret_icon.png",
+                                                    "iconDark": "https://a.espncdn.com/i/espnbet/dark/mybets_over_caret_icon.png",
+                                                    "url": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=f9329e6e-0448-46a8-8e70-f43079e09f9c&odds_numerator[0]=21&odds_denominator[0]=11"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ],
+                            "moneyline": {
+                                "displayName": "Moneyline",
+                                "shortDisplayName": "ML",
+                                "home": {
+                                    "close": {
+                                        "odds": "-140",
+                                        "link": {
+                                            "language": "en-US",
+                                            "rel": [
+                                                "home",
+                                                "desktop",
+                                                "bets",
+                                                "espn-bet"
+                                            ],
+                                            "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=18f92bc9-9a3b-4473-bbfb-3c62643fa1b5&odds_numerator[0]=12&odds_denominator[0]=7",
+                                            "text": "Home Bet",
+                                            "shortText": "Home Bet",
+                                            "isExternal": true,
+                                            "isPremium": false,
+                                            "tracking": {
+                                                "campaign": "betting-integrations",
+                                                "tags": {
+                                                    "league": "nfl",
+                                                    "sport": "football",
+                                                    "gameId": 401773026,
+                                                    "betSide": "home",
+                                                    "betType": "straight"
+                                                }
                                             }
-                                        },
-                                        "9x16": {
-                                            "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/9x16/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8"
-                                        },
-                                        "shield": {
-                                            "href": "https://watch.auth.api.espn.com/video/auth/media/23c7a0e6-716f-48de-95ae-089a40e590af/asset"
                                         }
                                     },
-                                    "HD": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_720p30_2896k.mp4"
-                                    },
-                                    "full": {
-                                        "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_360p30_1464k.mp4"
+                                    "open": {
+                                        "odds": "+115"
                                     }
                                 },
-                                "sportscenter": {
-                                    "href": "sportscenter://x-callback-url/showVideo?videoID=45941302&videoDSI=230567cd4954d"
+                                "away": {
+                                    "close": {
+                                        "odds": "+120",
+                                        "link": {
+                                            "language": "en-US",
+                                            "rel": [
+                                                "away",
+                                                "desktop",
+                                                "bets",
+                                                "espn-bet"
+                                            ],
+                                            "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=6af07524-804b-4a1a-b9de-732aaa4932a2&odds_numerator[0]=11&odds_denominator[0]=5",
+                                            "text": "Away Bet",
+                                            "shortText": "Away Bet",
+                                            "isExternal": true,
+                                            "isPremium": false,
+                                            "tracking": {
+                                                "campaign": "betting-integrations",
+                                                "tags": {
+                                                    "league": "nfl",
+                                                    "sport": "football",
+                                                    "gameId": 401773026,
+                                                    "betSide": "away",
+                                                    "betType": "straight"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "open": {
+                                        "odds": "-135"
+                                    }
                                 }
                             },
-                            "ad": {
-                                "sport": "nfl",
-                                "bundle": "sportscenter"
+                            "pointSpread": {
+                                "displayName": "Spread",
+                                "shortDisplayName": "Spread",
+                                "home": {
+                                    "close": {
+                                        "line": "-2.5",
+                                        "odds": "-115",
+                                        "link": {
+                                            "language": "en-US",
+                                            "rel": [
+                                                "homeSpread",
+                                                "desktop",
+                                                "bets"
+                                            ],
+                                            "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=9c0ed57f-440e-4795-829b-d7b51cc36d6b&odds_numerator[0]=43&odds_denominator[0]=23",
+                                            "text": "Home Point Spread",
+                                            "shortText": "Home Point Spread",
+                                            "isExternal": true,
+                                            "isPremium": false,
+                                            "tracking": {
+                                                "campaign": "betting-integrations",
+                                                "tags": {
+                                                    "league": "nfl",
+                                                    "sport": "football",
+                                                    "gameId": 401773026,
+                                                    "betSide": "none",
+                                                    "betType": "straight",
+                                                    "betDetails": "Spread:LAC-2.5"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "open": {
+                                        "line": "+2.5",
+                                        "odds": "-110"
+                                    }
+                                },
+                                "away": {
+                                    "close": {
+                                        "line": "+2.5",
+                                        "odds": "-105",
+                                        "link": {
+                                            "language": "en-US",
+                                            "rel": [
+                                                "awaySpread",
+                                                "desktop",
+                                                "bets"
+                                            ],
+                                            "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=38e1a71d-bcf0-48bb-af90-1e9c8550fcc3&odds_numerator[0]=41&odds_denominator[0]=21",
+                                            "text": "Away Point Spread",
+                                            "shortText": "Away Point Spread",
+                                            "isExternal": true,
+                                            "isPremium": false,
+                                            "tracking": {
+                                                "campaign": "betting-integrations",
+                                                "tags": {
+                                                    "league": "nfl",
+                                                    "sport": "football",
+                                                    "gameId": 401773026,
+                                                    "betSide": "none",
+                                                    "betType": "straight",
+                                                    "betDetails": "Spread:NO+2.5"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "open": {
+                                        "line": "-2.5",
+                                        "odds": "-110"
+                                    }
+                                }
                             },
-                            "tracking": {
-                                "sportName": "nfl",
-                                "leagueName": "nfl",
-                                "coverageType": "Final Game Highlight",
-                                "trackingName": "COM_NFL Highlight (Chargers' defense key in win over Saints) 2025/08/10 ESHEET SOTFULL",
-                                "trackingId": "dm_20250810_NFL_chargers_defense_key_in_win_over_saints"
+                            "total": {
+                                "displayName": "Total Points",
+                                "shortDisplayName": "Total",
+                                "over": {
+                                    "close": {
+                                        "line": "o38.5",
+                                        "odds": "-110",
+                                        "link": {
+                                            "language": "en-US",
+                                            "rel": [
+                                                "over",
+                                                "desktop",
+                                                "bets"
+                                            ],
+                                            "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=f9329e6e-0448-46a8-8e70-f43079e09f9c&odds_numerator[0]=21&odds_denominator[0]=11",
+                                            "text": "Over Odds",
+                                            "shortText": "Over Odds",
+                                            "isExternal": true,
+                                            "isPremium": false,
+                                            "tracking": {
+                                                "campaign": "betting-integrations",
+                                                "tags": {
+                                                    "league": "nfl",
+                                                    "sport": "football",
+                                                    "gameId": 401773026,
+                                                    "betSide": "over",
+                                                    "betType": "straight",
+                                                    "betDetails": "Over:38.5"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "open": {
+                                        "line": "o34.5",
+                                        "odds": "-105"
+                                    }
+                                },
+                                "under": {
+                                    "close": {
+                                        "line": "u38.5",
+                                        "odds": "-110",
+                                        "link": {
+                                            "language": "en-US",
+                                            "rel": [
+                                                "under",
+                                                "desktop",
+                                                "bets"
+                                            ],
+                                            "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758&market_selection_id[0]=78ac2ddc-484b-4251-928f-5e2f1d632b1b&odds_numerator[0]=21&odds_denominator[0]=11",
+                                            "text": "Under Odds",
+                                            "shortText": "Under Odds",
+                                            "isExternal": true,
+                                            "isPremium": false,
+                                            "tracking": {
+                                                "campaign": "betting-integrations",
+                                                "tags": {
+                                                    "league": "nfl",
+                                                    "sport": "football",
+                                                    "gameId": 401773026,
+                                                    "betSide": "under",
+                                                    "betType": "straight",
+                                                    "betDetails": "Under:38.5"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "open": {
+                                        "line": "u34.5",
+                                        "odds": "-115"
+                                    }
+                                }
+                            },
+                            "link": {
+                                "language": "en-US",
+                                "rel": [
+                                    "game",
+                                    "desktop",
+                                    "bets"
+                                ],
+                                "href": "https://espnbet.app.link/integrations?%243p=a_espn&clr=espnbettingintegration&$canonical_url=/sport/football/organization/united-states/competition/nfl-preseason/event/a6b6804d-830d-4401-a683-2f14e7de6758",
+                                "text": "See More on ESPN BET Sportsbook",
+                                "shortText": "Game",
+                                "isExternal": true,
+                                "isPremium": false,
+                                "tracking": {
+                                    "campaign": "betting-integrations",
+                                    "tags": {
+                                        "league": "nfl",
+                                        "sport": "football",
+                                        "gameId": 401773026,
+                                        "betSide": "none",
+                                        "betType": "straight"
+                                    }
+                                }
+                            },
+                            "header": {
+                                "logo": {
+                                    "dark": "https://a.espncdn.com/i/espnbet/dark/espn-bet-square-off.svg",
+                                    "light": "https://a.espncdn.com/i/espnbet/espn-bet-square-off.svg",
+                                    "exclusivesLogoDark": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg",
+                                    "exclusivesLogoLight": "https://a.espncdn.com/i/espnbet/espn-bet-square-mint.svg"
+                                },
+                                "text": "ESPN Bet Sportsbook"
                             }
                         }
                     ],
-                    "headlines": [
-                        {
-                            "type": "Recap",
-                            "description": "\u2014 Trey Lance scrambled for a 5-yard score and rookie Eric Rogers had a 43-yard pick-6 in a mostly sluggish offensive performance by the Los Angeles Chargers in a 27-13 exhibition win over the New Orleans Saints on Sunday.",
-                            "shortLinkText": "Chargers' defense steps up in 27-13 preseason win against Saints",
-                            "video": [
-                                {
-                                    "id": 45941302,
-                                    "source": "espn",
-                                    "headline": "Chargers' defense key in win over Saints",
-                                    "thumbnail": "https://a.espncdn.com/media/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.jpg",
-                                    "duration": 91,
-                                    "tracking": {
-                                        "sportName": "nfl",
-                                        "leagueName": "nfl",
-                                        "coverageType": "Final Game Highlight",
-                                        "trackingName": "COM_NFL Highlight (Chargers' defense key in win over Saints) 2025/08/10 ESHEET SOTFULL",
-                                        "trackingId": "dm_20250810_NFL_chargers_defense_key_in_win_over_saints"
-                                    },
-                                    "deviceRestrictions": {
-                                        "type": "whitelist",
-                                        "devices": [
-                                            "desktop",
-                                            "ipad",
-                                            "settop",
-                                            "handset",
-                                            "tablet"
-                                        ]
-                                    },
-                                    "links": {
-                                        "web": {
-                                            "href": "https://www.espn.com/video/clip?id=45941302",
-                                            "self": {
-                                                "href": "https://www.espn.com/video/clip?id=45941302"
-                                            },
-                                            "seo": {
-                                                "href": "https://www.espn.com/video/clip/_/id/45941302"
-                                            }
-                                        },
-                                        "mobile": {
-                                            "href": "https://watch.auth.api.espn.com/video/auth/brightcove/23c7a0e6-716f-48de-95ae-089a40e590af/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45941302",
-                                            "source": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.mp4"
-                                            },
-                                            "alert": {
-                                                "href": "https://m.espn.com/general/video/videoAlert?vid=45941302"
-                                            },
-                                            "streaming": {
-                                                "href": "https://watch.auth.api.espn.com/video/auth/brightcove/23c7a0e6-716f-48de-95ae-089a40e590af/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45941302"
-                                            },
-                                            "progressiveDownload": {
-                                                "href": "https://watch.auth.api.espn.com/video/auth/brightcove/23c7a0e6-716f-48de-95ae-089a40e590af/asset?UMADPARAMreferer=https://www.espn.com/video/clip?id=45941302"
-                                            }
-                                        },
-                                        "api": {
-                                            "self": {
-                                                "href": "https://content.core.api.espn.com/v1/video/clips/45941302"
-                                            },
-                                            "artwork": {
-                                                "href": "https://artwork.api.espn.com/artwork/collections/media/23c7a0e6-716f-48de-95ae-089a40e590af"
-                                            }
-                                        },
-                                        "source": {
-                                            "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_360p30_1464k.mp4",
-                                            "mezzanine": {
-                                                "href": "https://media.video-origin.espn.com/espnvideo/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.mp4"
-                                            },
-                                            "flash": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c.smil"
-                                            },
-                                            "hds": {
-                                                "href": "https://hds.video-cdn.espn.com/z/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_rel.smil/manifest.f4m"
-                                            },
-                                            "HLS": {
-                                                "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8",
-                                                "HD": {
-                                                    "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8"
-                                                },
-                                                "cmaf": {
-                                                    "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8",
-                                                    "9x16": {
-                                                        "href": "https://service-pkgespn.akamaized.net/opp/cmaf/espn/9x16/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8"
-                                                    }
-                                                },
-                                                "9x16": {
-                                                    "href": "https://service-pkgespn.akamaized.net/opp/hls/espn/9x16/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c/playlist.m3u8"
-                                                },
-                                                "shield": {
-                                                    "href": "https://watch.auth.api.espn.com/video/auth/media/23c7a0e6-716f-48de-95ae-089a40e590af/asset"
-                                                }
-                                            },
-                                            "HD": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_720p30_2896k.mp4"
-                                            },
-                                            "full": {
-                                                "href": "https://media.video-cdn.espn.com/motion/wsc/2025/0810/ac29a739-5010-47af-aa93-08104397230c/ac29a739-5010-47af-aa93-08104397230c_360p30_1464k.mp4"
-                                            }
-                                        },
-                                        "sportscenter": {
-                                            "href": "sportscenter://x-callback-url/showVideo?videoID=45941302&videoDSI=230567cd4954d"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    ]
+                    "highlights": []
                 }
             ],
             "links": [
@@ -1779,71 +2008,37 @@
                     "shortText": "Gamecast",
                     "isExternal": false,
                     "isPremium": false
-                },
-                {
-                    "language": "en-US",
-                    "rel": [
-                        "boxscore",
-                        "desktop",
-                        "event"
-                    ],
-                    "href": "https://www.espn.com/nfl/boxscore/_/gameId/401773026",
-                    "text": "Box Score",
-                    "shortText": "Box Score",
-                    "isExternal": false,
-                    "isPremium": false
-                },
-                {
-                    "language": "en-US",
-                    "rel": [
-                        "highlights",
-                        "desktop"
-                    ],
-                    "href": "https://www.espn.com/nfl/video?gameId=401773026",
-                    "text": "Highlights",
-                    "shortText": "Highlights",
-                    "isExternal": false,
-                    "isPremium": false
-                },
-                {
-                    "language": "en-US",
-                    "rel": [
-                        "pbp",
-                        "desktop",
-                        "event"
-                    ],
-                    "href": "https://www.espn.com/nfl/playbyplay/_/gameId/401773026",
-                    "text": "Play-by-Play",
-                    "shortText": "Play-by-Play",
-                    "isExternal": false,
-                    "isPremium": false
-                },
-                {
-                    "language": "en-US",
-                    "rel": [
-                        "recap",
-                        "desktop",
-                        "event"
-                    ],
-                    "href": "https://www.espn.com/nfl/recap?gameId=401773026",
-                    "text": "Recap",
-                    "shortText": "Recap",
-                    "isExternal": false,
-                    "isPremium": false
                 }
             ],
+            "weather": {
+                "displayValue": "Mostly cloudy",
+                "temperature": 77,
+                "highTemperature": 77,
+                "conditionId": "6",
+                "link": {
+                    "language": "en-US",
+                    "rel": [
+                        "90301"
+                    ],
+                    "href": "http://www.accuweather.com/en/us/sofi-stadium-ca/90301/hourly-weather-forecast/209205_poi?day=1&hbhhour=13&lang=en-us",
+                    "text": "Weather",
+                    "shortText": "Weather",
+                    "isExternal": true,
+                    "isPremium": false
+                }
+            },
             "status": {
                 "clock": 0.0,
                 "displayClock": "0:00",
-                "period": 4,
+                "period": 0,
                 "type": {
-                    "id": "3",
-                    "name": "STATUS_FINAL",
-                    "state": "post",
-                    "completed": true,
-                    "description": "Final",
-                    "detail": "Final",
-                    "shortDetail": "Final"
+                    "id": "1",
+                    "name": "STATUS_SCHEDULED",
+                    "state": "pre",
+                    "completed": false,
+                    "description": "Scheduled",
+                    "detail": "Sun, August 10th at 4:00 PM EDT",
+                    "shortDetail": "8/10 - 4:00 PM EDT"
                 }
             }
         },
