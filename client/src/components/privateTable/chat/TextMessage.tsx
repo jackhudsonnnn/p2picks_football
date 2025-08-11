@@ -94,12 +94,8 @@ const TextMessage: React.FC<TextMessageProps> = ({
         return;
       }
       try {
-        console.log("Accepting bet proposal:", betMsg.betProposalId);
-        
-        // Check bet proposal details
-        const betDetails = await getBetProposalDetails(betMsg.betProposalId);
-        console.log("Bet proposal details:", betDetails);
-        
+        // Optional: pre-check bet status
+        await getBetProposalDetails(betMsg.betProposalId);
         await acceptBetProposal({
           betId: betMsg.betProposalId,
           tableId: betMsg.tableId,
@@ -108,8 +104,7 @@ const TextMessage: React.FC<TextMessageProps> = ({
         setAccepted(true);
         navigate("/bets-history");
       } catch (error) {
-        console.error("Failed to accept bet:", error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         alert(`Failed to accept bet: ${errorMessage}`);
       }
     },
@@ -132,20 +127,19 @@ const TextMessage: React.FC<TextMessageProps> = ({
         <div className="bet-proposal-content bet-proposal-flex">
           <div className="bet-proposal-info">
             <div className="wager-amount">
-              Wager: ${Number(betMsg.betDetails.wager_amount).toFixed(2)}
+              Wager: {Number(betMsg.betDetails.wager_amount).toFixed(0)} pts
             </div>
 
             <div className="game-context">
-              {betMsg.betDetails.entity1_name} vs.{" "}
-              {betMsg.betDetails.entity2_name}
+              {betMsg.betDetails.entity1_name} vs. {betMsg.betDetails.entity2_name}
             </div>
           </div>
           <div className="bet-actions bet-actions-flex-end">
             {accepted ? (
               <div>
-              <button className="accept-bet" onClick={handleViewTickets}>
-                View Tickets
-              </button>
+                <button className="accept-bet" onClick={handleViewTickets}>
+                  View Tickets
+                </button>
                 <div className="bet-timer">
                   {settled
                     ? "Pending"
@@ -161,7 +155,7 @@ const TextMessage: React.FC<TextMessageProps> = ({
                   onClick={() => handleAccept(betMsg)}
                   disabled={settled}
                 >
-                  &nbsp;&nbsp;&nbsp;Accept&nbsp;&nbsp;&nbsp;
+                  Accept
                 </button>
                 <div className="bet-timer">
                   {settled
@@ -175,10 +169,7 @@ const TextMessage: React.FC<TextMessageProps> = ({
           </div>
         </div>
         <div className="bet-details bet-details-full">
-          {betMsg.betDetails.entity1_name}{" "}
-          {betMsg.betDetails.entity1_proposition} <b>___</b>{" "}
-          {betMsg.betDetails.entity2_name}{" "}
-          {betMsg.betDetails.entity2_proposition}
+          {betMsg.betDetails.entity1_name} {betMsg.betDetails.entity1_proposition} <b>vs</b> {betMsg.betDetails.entity2_name} {betMsg.betDetails.entity2_proposition}
         </div>
       </div>
     );

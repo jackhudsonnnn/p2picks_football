@@ -39,7 +39,7 @@ export const PrivateTableView: React.FC = () => {
   // Fetch chat feed
   useEffect(() => {
     if (!tableId || !user) return;
-  getTableFeed(tableId)
+    getTableFeed(tableId)
       .then((items: any[]) => {
         const mapped: ChatMessage[] = items
           .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
@@ -52,7 +52,8 @@ export const PrivateTableView: React.FC = () => {
                 if (Array.isArray(msg.users)) {
                   username = msg.users[0]?.username || 'Unknown';
                 } else {
-                  username = msg.users.username || 'Unknown';
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  username = (msg.users as any).username || 'Unknown';
                 }
               }
               return {
@@ -62,7 +63,7 @@ export const PrivateTableView: React.FC = () => {
                 senderUsername: username,
                 text: msg.message_text,
                 timestamp: msg.posted_at,
-              };
+              } as ChatMessage;
             } else if (item.item_type === 'system_notification' && item.system_notifications) {
               const sys = Array.isArray(item.system_notifications) ? item.system_notifications[0] : item.system_notifications;
               return {
@@ -72,7 +73,7 @@ export const PrivateTableView: React.FC = () => {
                 senderUsername: '',
                 text: sys.message_text,
                 timestamp: sys.generated_at,
-              };
+              } as ChatMessage;
             } else if (item.item_type === 'bet_proposal' && item.bet_proposal) {
               const bet = Array.isArray(item.bet_proposal) ? item.bet_proposal[0] : item.bet_proposal;
               let username = 'Unknown';
@@ -80,7 +81,8 @@ export const PrivateTableView: React.FC = () => {
                 if (Array.isArray(bet.users)) {
                   username = bet.users[0]?.username || 'Unknown';
                 } else {
-                  username = bet.users.username || 'Unknown';
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  username = (bet.users as any).username || 'Unknown';
                 }
               }
               // Build dynamic bet description
@@ -102,7 +104,6 @@ export const PrivateTableView: React.FC = () => {
                 timestamp: bet.proposal_time,
                 betProposalId: bet.bet_id,
                 betDetails: {
-                  nba_game_id: bet.nba_game_id,
                   entity1_name: bet.entity1_name,
                   entity1_proposition: bet.entity1_proposition,
                   entity2_name: bet.entity2_name,
@@ -114,10 +115,9 @@ export const PrivateTableView: React.FC = () => {
                   total_pot: bet.total_pot,
                   mode_key: bet.mode_key,
                   nfl_game_id: bet.nfl_game_id,
-                  sport: bet.sport,
                 },
-                tableId: bet.table_id, // <-- Add this line
-              };
+                tableId: bet.table_id,
+              } as ChatMessage;
             }
             return null;
           })
@@ -138,84 +138,84 @@ export const PrivateTableView: React.FC = () => {
       // Refresh chat feed after sending
       const items: any[] = await getTableFeed(tableId);
       const mapped: ChatMessage[] = items
-      .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
-      .map(item => {
-        if (item.item_type === 'text_message' && item.text_messages) {
-          const msg = Array.isArray(item.text_messages) ? item.text_messages[0] : item.text_messages;
-          let username = 'Unknown';
-          if (msg.users) {
-            if (Array.isArray(msg.users)) {
-              username = msg.users[0]?.username || 'Unknown';
-            } else {
-              username = msg.users.username || 'Unknown';
+        .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
+        .map(item => {
+          if (item.item_type === 'text_message' && item.text_messages) {
+            const msg = Array.isArray(item.text_messages) ? item.text_messages[0] : item.text_messages;
+            let username = 'Unknown';
+            if (msg.users) {
+              if (Array.isArray(msg.users)) {
+                username = msg.users[0]?.username || 'Unknown';
+              } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                username = (msg.users as any).username || 'Unknown';
+              }
             }
-          }
-          return {
-            id: item.feed_item_id,
-            type: 'chat',
-            senderUserId: msg.user_id,
-            senderUsername: username,
-            text: msg.message_text,
-            timestamp: msg.posted_at,
-          };
-        } else if (item.item_type === 'system_notification' && item.system_notifications) {
-          const sys = Array.isArray(item.system_notifications) ? item.system_notifications[0] : item.system_notifications;
-          return {
-            id: item.feed_item_id,
-            type: 'system',
-            senderUserId: '',
-            senderUsername: '',
-            text: sys.message_text,
-            timestamp: sys.generated_at,
-          };
-        } else if (item.item_type === 'bet_proposal' && item.bet_proposal) {
-          const bet = Array.isArray(item.bet_proposal) ? item.bet_proposal[0] : item.bet_proposal;
-          let username = 'Unknown';
-          if (bet.users) {
-            if (Array.isArray(bet.users)) {
-              username = bet.users[0]?.username || 'Unknown';
-            } else {
-              username = bet.users.username || 'Unknown';
+            return {
+              id: item.feed_item_id,
+              type: 'chat',
+              senderUserId: msg.user_id,
+              senderUsername: username,
+              text: msg.message_text,
+              timestamp: msg.posted_at,
+            } as ChatMessage;
+          } else if (item.item_type === 'system_notification' && item.system_notifications) {
+            const sys = Array.isArray(item.system_notifications) ? item.system_notifications[0] : item.system_notifications;
+            return {
+              id: item.feed_item_id,
+              type: 'system',
+              senderUserId: '',
+              senderUsername: '',
+              text: sys.message_text,
+              timestamp: sys.generated_at,
+            } as ChatMessage;
+          } else if (item.item_type === 'bet_proposal' && item.bet_proposal) {
+            const bet = Array.isArray(item.bet_proposal) ? item.bet_proposal[0] : item.bet_proposal;
+            let username = 'Unknown';
+            if (bet.users) {
+              if (Array.isArray(bet.users)) {
+                username = bet.users[0]?.username || 'Unknown';
+              } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                username = (bet.users as any).username || 'Unknown';
+              }
             }
+            let desc = '';
+            if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+              const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+              desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+            } else if (bet.mode_key === 'one_leg_spread') {
+              desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+            } else {
+              desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
+            }
+            return {
+              id: item.feed_item_id,
+              type: 'bet_proposal',
+              senderUserId: bet.proposer_user_id,
+              senderUsername: username,
+              text: desc,
+              timestamp: bet.proposal_time,
+              betProposalId: bet.bet_id,
+              betDetails: {
+                entity1_name: bet.entity1_name,
+                entity1_proposition: bet.entity1_proposition,
+                entity2_name: bet.entity2_name,
+                entity2_proposition: bet.entity2_proposition,
+                wager_amount: bet.wager_amount,
+                time_limit_seconds: bet.time_limit_seconds,
+                winning_condition: bet.winning_condition,
+                bet_status: bet.bet_status,
+                total_pot: bet.total_pot,
+                mode_key: bet.mode_key,
+                nfl_game_id: bet.nfl_game_id,
+              },
+              tableId: bet.table_id,
+            } as ChatMessage;
           }
-          let desc = '';
-          if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
-            const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-            desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
-          } else if (bet.mode_key === 'one_leg_spread') {
-            desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
-          } else {
-            desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
-          }
-          return {
-            id: item.feed_item_id,
-            type: 'bet_proposal',
-            senderUserId: bet.proposer_user_id,
-            senderUsername: username,
-            text: desc,
-            timestamp: bet.proposal_time,
-            betProposalId: bet.bet_id,
-            betDetails: {
-              nba_game_id: bet.nba_game_id,
-              entity1_name: bet.entity1_name,
-              entity1_proposition: bet.entity1_proposition,
-              entity2_name: bet.entity2_name,
-              entity2_proposition: bet.entity2_proposition,
-              wager_amount: bet.wager_amount,
-              time_limit_seconds: bet.time_limit_seconds,
-              winning_condition: bet.winning_condition,
-              bet_status: bet.bet_status,
-              total_pot: bet.total_pot,
-              mode_key: bet.mode_key,
-              nfl_game_id: bet.nfl_game_id,
-              sport: bet.sport,
-            },
-            tableId: bet.table_id, // <-- Add this line
-          };
-        }
-        return null;
-      })
-      .filter(Boolean) as ChatMessage[];
+          return null;
+        })
+        .filter(Boolean) as ChatMessage[];
       setChatFeed(mapped);
     } catch (e) {
       console.error('sendTextMessage or reload error', e);
@@ -245,7 +245,8 @@ export const PrivateTableView: React.FC = () => {
               if (Array.isArray(msg.users)) {
                 username = msg.users[0]?.username || 'Unknown';
               } else {
-                username = msg.users.username || 'Unknown';
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                username = (msg.users as any).username || 'Unknown';
               }
             }
             return {
@@ -255,7 +256,7 @@ export const PrivateTableView: React.FC = () => {
               senderUsername: username,
               text: msg.message_text,
               timestamp: msg.posted_at,
-            };
+            } as ChatMessage;
           } else if (item.item_type === 'system_notification' && item.system_notifications) {
             const sys = Array.isArray(item.system_notifications) ? item.system_notifications[0] : item.system_notifications;
             return {
@@ -265,7 +266,7 @@ export const PrivateTableView: React.FC = () => {
               senderUsername: '',
               text: sys.message_text,
               timestamp: sys.generated_at,
-            };
+            } as ChatMessage;
           } else if (item.item_type === 'bet_proposal' && item.bet_proposal) {
             const bet = Array.isArray(item.bet_proposal) ? item.bet_proposal[0] : item.bet_proposal;
             let username = 'Unknown';
@@ -273,28 +274,28 @@ export const PrivateTableView: React.FC = () => {
               if (Array.isArray(bet.users)) {
                 username = bet.users[0]?.username || 'Unknown';
               } else {
-                username = bet.users.username || 'Unknown';
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                username = (bet.users as any).username || 'Unknown';
               }
             }
-              let desc = '';
-              if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
-                const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-                desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
-              } else if (bet.mode_key === 'one_leg_spread') {
-                desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
-              } else {
-                desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
-              }
+            let desc = '';
+            if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+              const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+              desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+            } else if (bet.mode_key === 'one_leg_spread') {
+              desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+            } else {
+              desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
+            }
             return {
               id: item.feed_item_id,
               type: 'bet_proposal',
               senderUserId: bet.proposer_user_id,
               senderUsername: username,
-                text: desc,
+              text: desc,
               timestamp: bet.proposal_time,
               betProposalId: bet.bet_id,
               betDetails: {
-                nba_game_id: bet.nba_game_id,
                 entity1_name: bet.entity1_name,
                 entity1_proposition: bet.entity1_proposition,
                 entity2_name: bet.entity2_name,
@@ -303,13 +304,12 @@ export const PrivateTableView: React.FC = () => {
                 time_limit_seconds: bet.time_limit_seconds,
                 winning_condition: bet.winning_condition,
                 bet_status: bet.bet_status,
-                  total_pot: bet.total_pot,
-                  mode_key: bet.mode_key,
-                  nfl_game_id: bet.nfl_game_id,
-                  sport: bet.sport,
+                total_pot: bet.total_pot,
+                mode_key: bet.mode_key,
+                nfl_game_id: bet.nfl_game_id,
               },
-              tableId: bet.table_id, // <-- Add this line
-            };
+              tableId: bet.table_id,
+            } as ChatMessage;
           }
           return null;
         })

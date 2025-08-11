@@ -39,7 +39,12 @@ type NflGame = {
   status: { name: string; period?: number };
   home: { id: string; name: string; abbreviation: string };
   away: { id: string; name: string; abbreviation: string };
-  players: { id: string; name: string; team: "home" | "away"; position: string }[];
+  players: {
+    id: string;
+    name: string;
+    team: "home" | "away";
+    position: string;
+  }[];
 };
 
 const MODE_OPTIONS: { value: ModeKey; label: string }[] = [
@@ -55,15 +60,19 @@ const STATS_OPTIONS = [
 
 // const SPREAD_BUCKETS = ["0-3", "4-10", "11-25", "26+"] as const; // reserved for future acceptor UI
 
-const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, loading }) => {
+const BetProposalForm: React.FC<BetProposalFormProps> = ({
+  onSubmit,
+  onCancel,
+  loading,
+}) => {
   const [step, setStep] = useState(0);
   const [mode, setMode] = useState<ModeKey | "">("");
   const [selectedGameId, setSelectedGameId] = useState("");
   const [player1Id, setPlayer1Id] = useState("");
   const [player2Id, setPlayer2Id] = useState("");
   const [stat, setStat] = useState<BetProposalFormValues["stat"]>();
-  const [settleAt, setSettleAt] = useState<BetProposalFormValues["settle_at"]>();
-  // const [spreadBucket, setSpreadBucket] = useState<BetProposalFormValues["spread_bucket"]>(); // acceptor-side
+  const [settleAt, setSettleAt] =
+    useState<BetProposalFormValues["settle_at"]>();
   const [wagerAmount, setWagerAmount] = useState<number>(1);
   const [timeLimit, setTimeLimit] = useState<number>(30);
 
@@ -80,7 +89,10 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
     });
   }, [games]);
 
-  const selectedGame = useMemo(() => availableGames.find((g) => g.nfl_game_id === selectedGameId), [availableGames, selectedGameId]);
+  const selectedGame = useMemo(
+    () => availableGames.find((g) => g.nfl_game_id === selectedGameId),
+    [availableGames, selectedGameId]
+  );
 
   const players = selectedGame?.players ?? [];
   const team1 = selectedGame?.home;
@@ -104,81 +116,130 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
     if (step === 0) return !!selectedGameId;
     if (step === 1) return !!mode;
     if (mode === "best_of_best") {
-      if (step === 2) return !!player1Id && !!player2Id && player1Id !== player2Id;
+      if (step === 2)
+        return !!player1Id && !!player2Id && player1Id !== player2Id;
       if (step === 3) return !!stat && !!settleAt;
-      if (step === 4) return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
+      if (step === 4)
+        return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
     } else if (mode === "one_leg_spread") {
       if (step === 2) return true; // no special config
-      if (step === 3) return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
+      if (step === 3)
+        return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
     }
     return false;
-  }, [step, selectedGameId, mode, player1Id, player2Id, stat, settleAt, wagerAmount, timeLimit]);
+  }, [
+    step,
+    selectedGameId,
+    mode,
+    player1Id,
+    player2Id,
+    stat,
+    settleAt,
+    wagerAmount,
+    timeLimit,
+  ]);
 
-  const totalSteps = useMemo(() => (mode === "best_of_best" ? 5 : mode === "one_leg_spread" ? 4 : 2), [mode]);
+  const totalSteps = useMemo(
+    () => (mode === "best_of_best" ? 5 : mode === "one_leg_spread" ? 4 : 2),
+    [mode]
+  );
 
   const stepContent = () => {
     // Step 0: select game
     if (step === 0) {
       return (
-        <div className="form-step">
-          <label className="form-label" htmlFor="nfl_game">NFL Game</label>
-          <select id="nfl_game" className="form-select" value={selectedGameId} onChange={(e) => setSelectedGameId(e.target.value)} required>
-            <option value="" disabled>
-              Select NFL Game
-            </option>
-            {availableGames.map((g) => (
-              <option key={g.nfl_game_id} value={g.nfl_game_id}>
-                {g.shortName} ({new Date(g.start_time).toLocaleString()})
-              </option>
-            ))}
-          </select>
-        </div>
-      );
-    }
-    // Step 1: select mode
-    if (step === 1) {
-      return (
-        <div className="form-step">
-          <label className="form-label" htmlFor="mode">Game Mode</label>
-          <select id="mode" className="form-select" value={mode} onChange={(e) => setMode(e.target.value as ModeKey)} required>
-            <option value="" disabled>
-              Select Mode
-            </option>
-            {MODE_OPTIONS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      );
-    }
-    if (mode === "best_of_best") {
-      // Step 2: choose two players
-      if (step === 2) {
-        return (
+        <div>
           <div className="form-step">
-            <label className="form-label">Choose Two Players</label>
             <div className="form-group">
-              <select className="form-select" value={player1Id} onChange={(e) => setPlayer1Id(e.target.value)} required>
+              <label className="form-label" htmlFor="nfl_game">
+                NFL Game
+              </label>
+              <select
+                id="nfl_game"
+                className="form-select"
+                value={selectedGameId}
+                onChange={(e) => setSelectedGameId(e.target.value)}
+                required
+              >
                 <option value="" disabled>
-                  Player 1
+                  Select NFL Game
                 </option>
-                {players.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.team === "home" ? team1?.abbreviation : team2?.abbreviation})
+                {availableGames.map((g) => (
+                  <option key={g.nfl_game_id} value={g.nfl_game_id}>
+                    {g.shortName} ({new Date(g.start_time).toLocaleString()})
                   </option>
                 ))}
               </select>
             </div>
             <div className="form-group">
-              <select className="form-select" value={player2Id} onChange={(e) => setPlayer2Id(e.target.value)} required>
+              <label className="form-label" htmlFor="mode">
+                Game Mode
+              </label>
+              <select
+                id="mode"
+                className="form-select"
+                value={mode}
+                onChange={(e) => setMode(e.target.value as ModeKey)}
+                required
+              >
+                <option value="" disabled>
+                  Select Mode
+                </option>
+                {MODE_OPTIONS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (mode === "best_of_best") {
+      // Step 1: choose two players
+      if (step === 1) {
+        return (
+          <div className="form-step">
+            <label className="form-label">Choose Two Players</label>
+            <div className="form-group">
+              <select
+                className="form-select"
+                value={player1Id}
+                onChange={(e) => setPlayer1Id(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Player 1
+                </option>
+                {players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} (
+                    {p.team === "home"
+                      ? team1?.abbreviation
+                      : team2?.abbreviation}
+                    )
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <select
+                className="form-select"
+                value={player2Id}
+                onChange={(e) => setPlayer2Id(e.target.value)}
+                required
+              >
                 <option value="" disabled>
                   Player 2
                 </option>
                 {players.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.team === "home" ? team1?.abbreviation : team2?.abbreviation})
+                    {p.name} (
+                    {p.team === "home"
+                      ? team1?.abbreviation
+                      : team2?.abbreviation}
+                    )
                   </option>
                 ))}
               </select>
@@ -186,13 +247,21 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
           </div>
         );
       }
-      // Step 3: stat + settle at
-      if (step === 3) {
+      // Step 2: stat + settle at
+      if (step === 2) {
         return (
           <div className="form-step">
             <div className="form-group">
-              <label className="form-label" htmlFor="stat">Stat / Prop</label>
-              <select id="stat" className="form-select" value={stat ?? ""} onChange={(e) => setStat(e.target.value as any)} required>
+              <label className="form-label" htmlFor="stat">
+                Stat / Prop
+              </label>
+              <select
+                id="stat"
+                className="form-select"
+                value={stat ?? ""}
+                onChange={(e) => setStat(e.target.value as any)}
+                required
+              >
                 <option value="" disabled>
                   Select Stat
                 </option>
@@ -204,8 +273,16 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="settle_at">Settle At</label>
-              <select id="settle_at" className="form-select" value={settleAt ?? ""} onChange={(e) => setSettleAt(e.target.value as any)} required>
+              <label className="form-label" htmlFor="settle_at">
+                Settle At
+              </label>
+              <select
+                id="settle_at"
+                className="form-select"
+                value={settleAt ?? ""}
+                onChange={(e) => setSettleAt(e.target.value as any)}
+                required
+              >
                 <option value="" disabled>
                   Select
                 </option>
@@ -219,42 +296,78 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
           </div>
         );
       }
-      // Step 4: wager + time
-      if (step === 4) {
+      // Step 3: wager + time
+      if (step === 3) {
         return (
           <div className="form-step">
             <div className="form-group">
-              <label className="form-label" htmlFor="wager_amount">Wager (pts)</label>
-              <input id="wager_amount" className="form-input" type="number" min={1} step={1} value={wagerAmount} onChange={(e) => setWagerAmount(Number(e.target.value))} required />
+              <label className="form-label" htmlFor="wager_amount">
+                Wager (pts)
+              </label>
+              <input
+                id="wager_amount"
+                className="form-input"
+                type="number"
+                min={1}
+                step={1}
+                value={wagerAmount}
+                onChange={(e) => setWagerAmount(Number(e.target.value))}
+                required
+              />
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="time_limit_seconds">Time Limit (seconds)</label>
-              <input id="time_limit_seconds" className="form-input" type="number" min={10} max={60} value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))} required />
+              <label className="form-label" htmlFor="time_limit_seconds">
+                Time Limit (seconds)
+              </label>
+              <input
+                id="time_limit_seconds"
+                className="form-input"
+                type="number"
+                min={10}
+                max={60}
+                value={timeLimit}
+                onChange={(e) => setTimeLimit(Number(e.target.value))}
+                required
+              />
             </div>
           </div>
         );
       }
     }
     if (mode === "one_leg_spread") {
-      // Step 2: explain choices (no extra config)
-      if (step === 2) {
-        return (
-          <div className="form-step">
-            <p className="form-help-text">Acceptors will select: pass, 0-3, 4-10, 11-25, 26+.</p>
-          </div>
-        );
-      }
-      // Step 3: wager + time
-      if (step === 3) {
+      // Step 1: wager + time
+      if (step === 1) {
         return (
           <div className="form-step">
             <div className="form-group">
-              <label className="form-label" htmlFor="wager_amount">Wager (pts)</label>
-              <input id="wager_amount" className="form-input" type="number" min={1} step={1} value={wagerAmount} onChange={(e) => setWagerAmount(Number(e.target.value))} required />
+              <label className="form-label" htmlFor="wager_amount">
+                Wager (pts)
+              </label>
+              <input
+                id="wager_amount"
+                className="form-input"
+                type="number"
+                min={1}
+                step={1}
+                value={wagerAmount}
+                onChange={(e) => setWagerAmount(Number(e.target.value))}
+                required
+              />
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="time_limit_seconds">Time Limit (seconds)</label>
-              <input id="time_limit_seconds" className="form-input" type="number" min={10} max={60} value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))} required />
+              <label className="form-label" htmlFor="time_limit_seconds">
+                Time Limit (seconds)
+              </label>
+              <input
+                id="time_limit_seconds"
+                className="form-input"
+                type="number"
+                min={10}
+                max={60}
+                value={timeLimit}
+                onChange={(e) => setTimeLimit(Number(e.target.value))}
+                required
+              />
             </div>
           </div>
         );
@@ -303,15 +416,22 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
       player2_name: players.find((p) => p.id === player2Id)?.name,
       stat,
       settle_at: settleAt,
-  // spread_bucket: spreadBucket,
     };
 
     onSubmit(values);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bet-proposal-form horizontal-stepper">
-      <button type="button" className="form-x-cancel" onClick={onCancel} aria-label="Cancel">
+    <form
+      onSubmit={handleSubmit}
+      className="bet-proposal-form horizontal-stepper"
+    >
+      <button
+        type="button"
+        className="form-x-cancel"
+        onClick={onCancel}
+        aria-label="Cancel"
+      >
         ×
       </button>
       <div className="stepper-content">
@@ -328,7 +448,9 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
         <button
           type="button"
           className="stepper-arrow right"
-          onClick={() => canNext && setStep((s) => Math.min(totalSteps - 1, s + 1))}
+          onClick={() =>
+            canNext && setStep((s) => Math.min(totalSteps - 1, s + 1))
+          }
           disabled={step === totalSteps - 1 || !canNext}
           aria-label="Next"
         >
@@ -337,7 +459,11 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, onCancel, l
       </div>
       <div className="form-actions-horizontal">
         {step === totalSteps - 1 ? (
-          <button type="submit" className="form-submit" disabled={!!loading || !canNext}>
+          <button
+            type="submit"
+            className="form-submit"
+            disabled={!!loading || !canNext}
+          >
             Propose Bet
           </button>
         ) : null}

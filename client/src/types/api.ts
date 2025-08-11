@@ -34,7 +34,7 @@ export interface ChatMessage {
   // Optional fields when type === 'bet_proposal'
   betProposalId?: string;
   betDetails?: {
-    nba_game_id: string;
+  // NFL-only
     entity1_name: string;
     entity1_proposition: string;
     entity2_name: string;
@@ -46,7 +46,6 @@ export interface ChatMessage {
     total_pot: number;
     mode_key?: string;
     nfl_game_id?: string;
-    sport?: string;
   };
 }
 
@@ -60,7 +59,7 @@ export interface BetProposalMessage {
   timestamp: string;
   betProposalId: string;
   betDetails: {
-    nba_game_id: string;
+  // NFL-only
     entity1_name: string;
     entity1_proposition: string;
     entity2_name: string;
@@ -70,6 +69,8 @@ export interface BetProposalMessage {
     winning_condition: string;
     bet_status: string;
     total_pot: number;
+    mode_key?: string;
+    nfl_game_id?: string;
   };
   tableId?: string;
 }

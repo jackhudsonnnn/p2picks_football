@@ -9,10 +9,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
   const payload: any = {
     table_id: tableId,
     proposer_user_id: proposerUserId,
-    // Write both until all readers are on nfl_game_id
-    nfl_game_id: (form as any).nfl_game_id ?? null,
-    nba_game_id: (form as any).nfl_game_id ?? (form as any).nba_game_id ?? null,
-    sport: 'NFL',
+  nfl_game_id: (form as any).nfl_game_id ?? null,
     mode_key: (form as any).mode ?? null,
     entity1_name: form.entity1_name,
     entity1_proposition: form.entity1_proposition,
@@ -22,7 +19,6 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     time_limit_seconds: form.time_limit_seconds,
     bet_status: 'active',
   };
-
   const { data: bet, error: betError } = await supabase
     .from('bet_proposals')
     .insert([payload])
@@ -119,9 +115,7 @@ export async function getUserTickets(userId: string) {
       bet_proposals:bet_id (
         bet_id,
         table_id,
-        nba_game_id,
         nfl_game_id,
-        sport,
         mode_key,
         entity1_name,
         entity1_proposition,
@@ -133,8 +127,8 @@ export async function getUserTickets(userId: string) {
         bet_status,
         winning_condition,
         total_pot,
-  bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player2_id, stat, settle_at),
-  bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id),
+        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player2_id, stat, settle_at),
+        bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id),
         private_tables:table_id (table_name)
       )
     `)

@@ -38,7 +38,7 @@ The platform uses a pooled betting structure where winners split the losers' con
 
 ---
 
-### Game Modes
+### Modes
 
 #### Mode 1: Best of the Best
 This mode is a prop bet comparing the performance of two players.

@@ -113,7 +113,7 @@ export const TicketsPage = () => {
             player2Name: bet?.entity2_name,
             stat: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.stat : bet?.bet_mode_best_of_best?.stat,
             settleAt: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.settle_at : bet?.bet_mode_best_of_best?.settle_at,
-          };
+          } as Ticket;
         });
         setTickets(mapped);
       })
@@ -178,7 +178,7 @@ export const TicketsPage = () => {
                 player2Name: bet?.entity2_name,
                 stat: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.stat : bet?.bet_mode_best_of_best?.stat,
                 settleAt: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.settle_at : bet?.bet_mode_best_of_best?.settle_at,
-              };
+              } as Ticket;
             });
             setTickets(mapped);
           })

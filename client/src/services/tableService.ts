@@ -83,9 +83,7 @@ export async function getTableFeed(tableId: string) {
         bet_id,
         table_id,
         proposer_user_id,
-        nba_game_id,
         nfl_game_id,
-        sport,
         mode_key,
         entity1_name,
         entity1_proposition,
@@ -98,8 +96,8 @@ export async function getTableFeed(tableId: string) {
         winning_condition,
         total_pot,
         users:proposer_user_id (username),
-  bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player2_id, stat, settle_at),
-  bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id)
+        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player2_id, stat, settle_at),
+        bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id)
       )
     `)
     .eq('table_id', tableId)

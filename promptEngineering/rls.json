@@ -1,0 +1,275 @@
+[
+  {
+    "table_name": "bet_mode_best_of_best",
+    "policy_name": "bob_insert",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "(EXISTS ( SELECT 1\n   FROM (bet_proposals bp\n     JOIN table_members tm ON ((tm.table_id = bp.table_id)))\n  WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND (tm.user_id = auth.uid()) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))"
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "policy_name": "bob_select",
+    "command": "SELECT",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND is_user_member_of_table(bp.table_id, auth.uid()))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "policy_name": "bob_update",
+    "command": "UPDATE",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))",
+    "check_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_best_of_best.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))"
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "policy_name": "ols_insert",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "(EXISTS ( SELECT 1\n   FROM (bet_proposals bp\n     JOIN table_members tm ON ((tm.table_id = bp.table_id)))\n  WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND (tm.user_id = auth.uid()) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))"
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "policy_name": "ols_select",
+    "command": "SELECT",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND is_user_member_of_table(bp.table_id, auth.uid()))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "policy_name": "ols_update",
+    "command": "UPDATE",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))",
+    "check_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))"
+  },
+  {
+    "table_name": "bet_modes",
+    "policy_name": "bet_modes_read",
+    "command": "SELECT",
+    "using_expression": "true",
+    "check_expression": null
+  },
+  {
+    "table_name": "bet_participations",
+    "policy_name": "Participations are updatable by users",
+    "command": "UPDATE",
+    "using_expression": "((user_id = auth.uid()) AND is_bet_open(bet_id))",
+    "check_expression": "((user_id = auth.uid()) AND is_bet_open(bet_id))"
+  },
+  {
+    "table_name": "bet_participations",
+    "policy_name": "Users can participate in open bets in their tables",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM table_members tm\n  WHERE ((tm.table_id = bet_participations.table_id) AND (tm.user_id = auth.uid())))) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::text) AND (EXTRACT(epoch FROM (now() - bp.proposal_time)) < (bp.time_limit_seconds)::numeric)))))"
+  },
+  {
+    "table_name": "bet_participations",
+    "policy_name": "Users can view participations in their tables or their own",
+    "command": "SELECT",
+    "using_expression": "((auth.uid() = user_id) OR is_table_member(table_id, auth.uid()))",
+    "check_expression": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "policy_name": "Allow members to create bet proposals in their tables",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((proposer_user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM table_members tm\n  WHERE ((tm.table_id = bet_proposals.table_id) AND (tm.user_id = auth.uid())))))"
+  },
+  {
+    "table_name": "bet_proposals",
+    "policy_name": "Allow members to view bet proposals in their tables",
+    "command": "SELECT",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM table_members tm\n  WHERE ((tm.table_id = bet_proposals.table_id) AND (tm.user_id = auth.uid()))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "policy_name": "Allow proposers to update their open bet proposals",
+    "command": "UPDATE",
+    "using_expression": "((proposer_user_id = auth.uid()) AND (bet_status = 'active'::text))",
+    "check_expression": "(proposer_user_id = auth.uid())"
+  },
+  {
+    "table_name": "feed_items",
+    "policy_name": "Feed items updates are restricted",
+    "command": "UPDATE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
+    "table_name": "feed_items",
+    "policy_name": "Users can delete their own feed items; hosts can delete any",
+    "command": "DELETE",
+    "using_expression": "(is_table_member(table_id, auth.uid()) AND ((auth.uid() = get_table_host_user_id(table_id)) OR ((item_type = 'text_message'::text) AND (EXISTS ( SELECT 1\n   FROM text_messages txt\n  WHERE ((txt.text_message_id = feed_items.text_message_id) AND (txt.user_id = auth.uid()))))) OR ((item_type = 'bet_proposal'::text) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = feed_items.bet_proposal_id) AND (bp.proposer_user_id = auth.uid())))))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "feed_items",
+    "policy_name": "Users can insert their own content as feed items",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "(is_table_member(table_id, auth.uid()) AND (((item_type = 'text_message'::text) AND (text_message_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM text_messages txt\n  WHERE ((txt.text_message_id = feed_items.text_message_id) AND (txt.user_id = auth.uid()))))) OR ((item_type = 'bet_proposal'::text) AND (bet_proposal_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = feed_items.bet_proposal_id) AND (bp.proposer_user_id = auth.uid())))))))"
+  },
+  {
+    "table_name": "feed_items",
+    "policy_name": "Users can view feed items from their tables",
+    "command": "SELECT",
+    "using_expression": "is_table_member(table_id, auth.uid())",
+    "check_expression": null
+  },
+  {
+    "table_name": "friends",
+    "policy_name": "Allow users to add friends",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((auth.uid() = user_id1) AND (user_id1 <> user_id2))"
+  },
+  {
+    "table_name": "friends",
+    "policy_name": "Allow users to read their own friendships",
+    "command": "SELECT",
+    "using_expression": "((auth.uid() = user_id1) OR (auth.uid() = user_id2))",
+    "check_expression": null
+  },
+  {
+    "table_name": "friends",
+    "policy_name": "Allow users to remove their own friendships",
+    "command": "DELETE",
+    "using_expression": "((auth.uid() = user_id1) OR (auth.uid() = user_id2))",
+    "check_expression": null
+  },
+  {
+    "table_name": "private_tables",
+    "policy_name": "Allow authenticated insert for private tables",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "(host_user_id = auth.uid())"
+  },
+  {
+    "table_name": "private_tables",
+    "policy_name": "Allow host to delete their private table",
+    "command": "DELETE",
+    "using_expression": "(host_user_id = auth.uid())",
+    "check_expression": null
+  },
+  {
+    "table_name": "private_tables",
+    "policy_name": "Allow host to update their private table",
+    "command": "UPDATE",
+    "using_expression": "(host_user_id = auth.uid())",
+    "check_expression": "(host_user_id = auth.uid())"
+  },
+  {
+    "table_name": "private_tables",
+    "policy_name": "Allow members and host to read private table details",
+    "command": "SELECT",
+    "using_expression": "((host_user_id = auth.uid()) OR is_user_member_of_table(table_id, auth.uid()))",
+    "check_expression": null
+  },
+  {
+    "table_name": "system_notifications",
+    "policy_name": "System notifications deletes are restricted",
+    "command": "DELETE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
+    "table_name": "system_notifications",
+    "policy_name": "System notifications inserts are restricted",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "false"
+  },
+  {
+    "table_name": "system_notifications",
+    "policy_name": "System notifications updates are restricted",
+    "command": "UPDATE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
+    "table_name": "system_notifications",
+    "policy_name": "Users can view system_notifications linked to tables they are m",
+    "command": "SELECT",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM (feed_items fi\n     JOIN table_members tm ON ((fi.table_id = tm.table_id)))\n  WHERE ((fi.system_notification_id = system_notifications.system_notification_id) AND (tm.user_id = auth.uid()))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "table_members",
+    "policy_name": "Allow hosts to add members to their tables",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "is_user_host_of_table(table_id, auth.uid())"
+  },
+  {
+    "table_name": "table_members",
+    "policy_name": "Allow hosts to remove members from their tables",
+    "command": "DELETE",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM private_tables pt\n  WHERE ((pt.table_id = table_members.table_id) AND (pt.host_user_id = auth.uid()))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "table_members",
+    "policy_name": "Allow members to leave tables",
+    "command": "DELETE",
+    "using_expression": "(user_id = auth.uid())",
+    "check_expression": null
+  },
+  {
+    "table_name": "table_members",
+    "policy_name": "Allow members to read own membership and hosts to read their ta",
+    "command": "SELECT",
+    "using_expression": "((user_id = auth.uid()) OR is_user_member_of_table(table_id, auth.uid()))",
+    "check_expression": null
+  },
+  {
+    "table_name": "text_messages",
+    "policy_name": "Users can delete their own text messages",
+    "command": "DELETE",
+    "using_expression": "(auth.uid() = user_id)",
+    "check_expression": null
+  },
+  {
+    "table_name": "text_messages",
+    "policy_name": "Users can insert their own text messages",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "(auth.uid() = user_id)"
+  },
+  {
+    "table_name": "text_messages",
+    "policy_name": "Users can update their own text messages",
+    "command": "UPDATE",
+    "using_expression": "(auth.uid() = user_id)",
+    "check_expression": "(auth.uid() = user_id)"
+  },
+  {
+    "table_name": "text_messages",
+    "policy_name": "Users can view text messages linked to tables they are members ",
+    "command": "SELECT",
+    "using_expression": "((EXISTS ( SELECT 1\n   FROM (feed_items fi\n     JOIN table_members tm ON ((fi.table_id = tm.table_id)))\n  WHERE ((fi.text_message_id = text_messages.text_message_id) AND (tm.user_id = auth.uid())))) OR (auth.uid() = user_id))",
+    "check_expression": null
+  },
+  {
+    "table_name": "users",
+    "policy_name": "Allow authenticated read access to usernames",
+    "command": "SELECT",
+    "using_expression": "(auth.role() = 'authenticated'::text)",
+    "check_expression": null
+  },
+  {
+    "table_name": "users",
+    "policy_name": "Allow individual read access to own profile",
+    "command": "SELECT",
+    "using_expression": "(auth.uid() = user_id)",
+    "check_expression": null
+  },
+  {
+    "table_name": "users",
+    "policy_name": "Allow users to update their own profile",
+    "command": "UPDATE",
+    "using_expression": "(auth.uid() = user_id)",
+    "check_expression": "(auth.uid() = user_id)"
+  }
+]
