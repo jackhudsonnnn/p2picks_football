@@ -131,7 +131,7 @@ const TextMessage: React.FC<TextMessageProps> = ({
             </div>
 
             <div className="game-context">
-              {betMsg.betDetails.entity1_name} vs. {betMsg.betDetails.entity2_name}
+              {betMsg.betDetails.description}
             </div>
           </div>
           <div className="bet-actions bet-actions-flex-end">
@@ -169,7 +169,7 @@ const TextMessage: React.FC<TextMessageProps> = ({
           </div>
         </div>
         <div className="bet-details bet-details-full">
-          {betMsg.betDetails.entity1_name} {betMsg.betDetails.entity1_proposition} <b>vs</b> {betMsg.betDetails.entity2_name} {betMsg.betDetails.entity2_proposition}
+          {betMsg.text}
         </div>
       </div>
     );

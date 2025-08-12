@@ -1,0 +1,546 @@
+[
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "player1_id",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "player2_id",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "stat",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "settle_at",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "player1_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "player2_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "bet_modes",
+    "column_name": "mode_key",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "bet_modes",
+    "column_name": "mode_name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "participation_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> private_tables(table_id)"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "user_guess",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "wager_placed",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "payout_received",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "is_winner",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "participation_time",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> private_tables(table_id)"
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "proposer_user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)"
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "wager_amount",
+    "data_type": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "time_limit_seconds",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "proposal_time",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "bet_status",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": "'''Active'''::text",
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "winning_condition",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "total_pot",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0.00",
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "resolution_time",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "settled_as_part_of_table_reset",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false",
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "nfl_game_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "mode_key",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_modes(mode_key)"
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "close_time",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "description",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "feed_items",
+    "column_name": "feed_item_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "feed_items",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> private_tables(table_id)"
+  },
+  {
+    "table_name": "feed_items",
+    "column_name": "item_created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "feed_items",
+    "column_name": "item_type",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "feed_items",
+    "column_name": "text_message_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> text_messages(text_message_id)"
+  },
+  {
+    "table_name": "feed_items",
+    "column_name": "system_notification_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> system_notifications(system_notification_id)"
+  },
+  {
+    "table_name": "feed_items",
+    "column_name": "bet_proposal_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+  },
+  {
+    "table_name": "friends",
+    "column_name": "user_id1",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "friends",
+    "column_name": "user_id2",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "friends",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "private_tables",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "private_tables",
+    "column_name": "table_name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "private_tables",
+    "column_name": "host_user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)"
+  },
+  {
+    "table_name": "private_tables",
+    "column_name": "passcode",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "private_tables",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "private_tables",
+    "column_name": "last_activity_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "system_notifications",
+    "column_name": "system_notification_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "system_notifications",
+    "column_name": "message_text",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "system_notifications",
+    "column_name": "generated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "table_members",
+    "column_name": "member_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "table_members",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "FOREIGN KEY -> private_tables(table_id)"
+  },
+  {
+    "table_name": "table_members",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "FOREIGN KEY -> users(user_id)"
+  },
+  {
+    "table_name": "table_members",
+    "column_name": "balance_cents",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "key_info": ""
+  },
+  {
+    "table_name": "table_members",
+    "column_name": "joined_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "text_messages",
+    "column_name": "text_message_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "text_messages",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)"
+  },
+  {
+    "table_name": "text_messages",
+    "column_name": "message_text",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "text_messages",
+    "column_name": "posted_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "users",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "users",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "users",
+    "column_name": "username",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "users",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "users",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "users",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "key_info": ""
+  }
+]

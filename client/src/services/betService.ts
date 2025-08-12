@@ -5,16 +5,13 @@ import { BetProposalFormValues } from '../components/privateTable/chat/BetPropos
 
 // Create a bet proposal and insert a feed item
 export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalFormValues) {
-  // 1) Insert into bet_proposals (with temporary compatibility fields)
+  // Insert into bet_proposals without legacy entity fields
   const payload: any = {
     table_id: tableId,
     proposer_user_id: proposerUserId,
-  nfl_game_id: (form as any).nfl_game_id ?? null,
-    mode_key: (form as any).mode ?? null,
-    entity1_name: form.entity1_name,
-    entity1_proposition: form.entity1_proposition,
-    entity2_name: form.entity2_name,
-    entity2_proposition: form.entity2_proposition,
+    nfl_game_id: form.nfl_game_id ?? null,
+    mode_key: form.mode ?? null,
+    description: form.description,
     wager_amount: form.wager_amount,
     time_limit_seconds: form.time_limit_seconds,
     bet_status: 'active',
@@ -26,30 +23,31 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     .single();
   if (betError) throw betError;
 
-  // 2) Insert into per-mode configuration table
+  // Per-mode configuration table
   try {
-    if ((form as any).mode === 'best_of_best') {
+    if (form.mode === 'best_of_best') {
       const cfg = {
         bet_id: bet.bet_id,
-        player1_id: (form as any).player1_id,
-        player2_id: (form as any).player2_id,
-        stat: (form as any).stat,
-        settle_at: (form as any).settle_at,
+        player1_id: form.player1_id,
+        player1_name: form.player1_name,
+        player2_id: form.player2_id,
+        player2_name: form.player2_name,
+        stat: form.stat,
+        settle_at: form.settle_at,
       };
       const { error: cfgErr } = await supabase.from('bet_mode_best_of_best').insert([cfg]);
       if (cfgErr) throw cfgErr;
-    } else if ((form as any).mode === 'one_leg_spread') {
+    } else if (form.mode === 'one_leg_spread') {
       const cfg = { bet_id: bet.bet_id };
       const { error: cfgErr } = await supabase.from('bet_mode_one_leg_spread').insert([cfg]);
       if (cfgErr) throw cfgErr;
     }
   } catch (cfgError) {
-    // Roll back the proposal if mode insert fails (best-effort)
     await supabase.from('bet_proposals').delete().eq('bet_id', bet.bet_id);
     throw cfgError;
   }
 
-  // 3) Insert into feed_items
+  // Feed item
   const { error: feedError } = await supabase
     .from('feed_items')
     .insert([
@@ -117,17 +115,14 @@ export async function getUserTickets(userId: string) {
         table_id,
         nfl_game_id,
         mode_key,
-        entity1_name,
-        entity1_proposition,
-        entity2_name,
-        entity2_proposition,
+        description,
         wager_amount,
         time_limit_seconds,
         proposal_time,
         bet_status,
         winning_condition,
         total_pot,
-        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player2_id, stat, settle_at),
+        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player1_name, player2_id, player2_name, stat, settle_at),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id),
         private_tables:table_id (table_name)
       )

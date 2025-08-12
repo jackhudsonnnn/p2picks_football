@@ -57,6 +57,7 @@ This mode is a bet on the final point spread of a game.
 * **Participant Choices:** `pass`, `0-3`, `4-10`, `11-25`, `26+`.
 * **Winning Condition:** The winning choice is the range (inclusive) that includes the final, absolute point difference of the game score. All ranges are inclusive.
     * *Example:* If the final score is 30-24, the spread is $|30 - 24| = 6$. The winning choice is **'4-10'**.
+* **Considerations:** This app will scale to accept many different game modes.
 
 ---
 

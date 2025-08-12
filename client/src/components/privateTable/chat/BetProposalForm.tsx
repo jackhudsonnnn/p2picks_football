@@ -6,29 +6,22 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 type ModeKey = "best_of_best" | "one_leg_spread";
 
 export interface BetProposalFormValues {
-  // Core
   nfl_game_id: string;
   wager_amount: number;
   time_limit_seconds: number;
-  // Compatibility with existing schema (used by service mapping)
-  entity1_name: string;
-  entity1_proposition: string;
-  entity2_name: string;
-  entity2_proposition: string;
-  // Mode-specific helpers (not stored yet, but helpful for tickets and future schema)
   mode: ModeKey;
+  // Mode-specific helpers
   player1_id?: string;
   player1_name?: string;
   player2_id?: string;
   player2_name?: string;
   stat?: "Receptions" | "Receiving Yards" | "Touchdowns";
   settle_at?: "Q1" | "Q2" | "Q3" | "Final";
-  spread_bucket?: "0-3" | "4-10" | "11-25" | "26+";
+  description: string;
 }
 
 interface BetProposalFormProps {
   onSubmit: (values: BetProposalFormValues) => void;
-  onCancel: () => void;
   loading?: boolean;
 }
 
@@ -62,7 +55,6 @@ const STATS_OPTIONS = [
 
 const BetProposalForm: React.FC<BetProposalFormProps> = ({
   onSubmit,
-  onCancel,
   loading,
 }) => {
   const [step, setStep] = useState(0);
@@ -113,18 +105,29 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
   }, [selectedGame]);
 
   const canNext = useMemo(() => {
-    if (step === 0) return !!selectedGameId;
-    if (step === 1) return !!mode;
+    // Step 0: require both game and mode
+    if (step === 0) {
+      return !!selectedGameId && !!mode;
+    }
+    // Step 1: mode-specific requirements
     if (mode === "best_of_best") {
-      if (step === 2)
+      // Step 1: require two different players
+      if (step === 1) {
         return !!player1Id && !!player2Id && player1Id !== player2Id;
-      if (step === 3) return !!stat && !!settleAt;
-      if (step === 4)
+      }
+      // Step 2: require stat and settleAt
+      if (step === 2) {
+        return !!stat && !!settleAt;
+      }
+      // Step 3: require valid wager and time
+      if (step === 3) {
         return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
+      }
     } else if (mode === "one_leg_spread") {
-      if (step === 2) return true; // no special config
-      if (step === 3)
+      // Step 1: require valid wager and time
+      if (step === 1) {
         return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
+      }
     }
     return false;
   }, [
@@ -140,7 +143,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
   ]);
 
   const totalSteps = useMemo(
-    () => (mode === "best_of_best" ? 5 : mode === "one_leg_spread" ? 4 : 2),
+    () => (mode === "best_of_best" ? 5 : mode === "one_leg_spread" ? 3 : 2),
     [mode]
   );
 
@@ -214,11 +217,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
                 </option>
                 {players.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} (
-                    {p.team === "home"
-                      ? team1?.abbreviation
-                      : team2?.abbreviation}
-                    )
+                    {p.name} ({p.team === "home" ? team1?.abbreviation : team2?.abbreviation})
                   </option>
                 ))}
               </select>
@@ -235,11 +234,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
                 </option>
                 {players.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} (
-                    {p.team === "home"
-                      ? team1?.abbreviation
-                      : team2?.abbreviation}
-                    )
+                    {p.name} ({p.team === "home" ? team1?.abbreviation : team2?.abbreviation})
                   </option>
                 ))}
               </select>
@@ -333,6 +328,33 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
           </div>
         );
       }
+      // Step 4: summary step
+      if (step === 4) {
+        const p1 = players.find((p) => p.id === player1Id);
+        const p2 = players.find((p) => p.id === player2Id);
+        return (
+          <div className="form-step" style={{ alignItems: 'center', textAlign: 'center' }}>
+            <div>
+              {selectedGame ? <strong>{selectedGame.shortName} — Best of the Best</strong> : ''}
+            </div>
+
+            <div>
+              <strong>{timeLimit}s</strong> to choose — <strong>{wagerAmount} pt(s)</strong> to lose
+            </div>
+
+            <div>
+              {(p1 && p2) ? (<><strong>{p1.name}</strong> vs <strong>{p2.name}</strong></>) : ''}
+            </div>
+
+            <div >
+              Largest ↑ in <strong>{stat}</strong>
+            </div>
+            <div>
+              Settled At <strong>{settleAt}</strong>
+            </div>
+          </div>
+        );
+      }
     }
     if (mode === "one_leg_spread") {
       // Step 1: wager + time
@@ -372,6 +394,19 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
           </div>
         );
       }
+      // Step 2: summary step
+      if (step === 2) {
+        return (
+          <div className="form-step" style={{ alignItems: 'center', textAlign: 'center' }}>
+            <div>
+              {selectedGame ? <strong>{selectedGame.shortName} — 1 Leg Spread</strong> : ''}
+            </div>
+            <div>
+              <strong>{timeLimit}s</strong> to choose — <strong>{wagerAmount} pt(s)</strong> to lose
+            </div>
+          </div>
+        );
+      }
     }
     return null;
   };
@@ -380,42 +415,28 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
     e.preventDefault();
     if (!selectedGame || !mode) return;
 
-    // Build compatibility fields for current schema
-    let entity1_name = "";
-    let entity2_name = "";
-    let entity1_proposition = "";
-    let entity2_proposition = "";
+    let description = "";
 
     if (mode === "best_of_best") {
       const p1 = players.find((p) => p.id === player1Id);
       const p2 = players.find((p) => p.id === player2Id);
-      entity1_name = p1?.name || "Player 1";
-      entity2_name = p2?.name || "Player 2";
-      const prop = `${stat || "Receptions"}|${settleAt || "Final"}`; // e.g., "Receptions|Q2"
-      entity1_proposition = prop;
-      entity2_proposition = prop;
+      description = `${stat || "Receptions"} • ${settleAt || "Final"} — ${(p1?.name) || "Player 1"} vs ${(p2?.name) || "Player 2"}`;
     } else if (mode === "one_leg_spread") {
-      entity1_name = team1?.abbreviation || "HOME";
-      entity2_name = team2?.abbreviation || "AWAY";
-      entity1_proposition = "1_leg_spread";
-      entity2_proposition = "buckets"; // acceptors will choose buckets
+      description = `${(team1?.abbreviation || "HOME")} vs ${(team2?.abbreviation || "AWAY")}`;
     }
 
     const values: BetProposalFormValues = {
       nfl_game_id: selectedGame.nfl_game_id,
       wager_amount: wagerAmount,
       time_limit_seconds: timeLimit,
-      entity1_name,
-      entity1_proposition,
-      entity2_name,
-      entity2_proposition,
       mode,
-      player1_id: player1Id,
+      player1_id: player1Id || undefined,
       player1_name: players.find((p) => p.id === player1Id)?.name,
-      player2_id: player2Id,
+      player2_id: player2Id || undefined,
       player2_name: players.find((p) => p.id === player2Id)?.name,
       stat,
       settle_at: settleAt,
+      description,
     };
 
     onSubmit(values);
@@ -426,14 +447,6 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
       onSubmit={handleSubmit}
       className="bet-proposal-form horizontal-stepper"
     >
-      <button
-        type="button"
-        className="form-x-cancel"
-        onClick={onCancel}
-        aria-label="Cancel"
-      >
-        ×
-      </button>
       <div className="stepper-content">
         <button
           type="button"
@@ -457,12 +470,13 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
           <IoIosArrowForward size={28} />
         </button>
       </div>
-      <div className="form-actions-horizontal">
+      <div className="form-actions-horizontal" style={{ justifyContent: 'center' }}>
         {step === totalSteps - 1 ? (
           <button
             type="submit"
             className="form-submit"
-            disabled={!!loading || !canNext}
+            disabled={!!loading}
+            style={{ margin: '0 auto', display: 'block' }}
           >
             Propose Bet
           </button>

@@ -34,11 +34,7 @@ export interface ChatMessage {
   // Optional fields when type === 'bet_proposal'
   betProposalId?: string;
   betDetails?: {
-  // NFL-only
-    entity1_name: string;
-    entity1_proposition: string;
-    entity2_name: string;
-    entity2_proposition: string;
+    description: string;
     wager_amount: number;
     time_limit_seconds: number;
     winning_condition: string;
@@ -59,11 +55,7 @@ export interface BetProposalMessage {
   timestamp: string;
   betProposalId: string;
   betDetails: {
-  // NFL-only
-    entity1_name: string;
-    entity1_proposition: string;
-    entity2_name: string;
-    entity2_proposition: string;
+    description: string;
     wager_amount: number;
     time_limit_seconds: number;
     winning_condition: string;

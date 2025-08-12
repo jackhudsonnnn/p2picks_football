@@ -85,10 +85,7 @@ export async function getTableFeed(tableId: string) {
         proposer_user_id,
         nfl_game_id,
         mode_key,
-        entity1_name,
-        entity1_proposition,
-        entity2_name,
-        entity2_proposition,
+        description,
         wager_amount,
         time_limit_seconds,
         proposal_time,
@@ -96,7 +93,7 @@ export async function getTableFeed(tableId: string) {
         winning_condition,
         total_pot,
         users:proposer_user_id (username),
-        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player2_id, stat, settle_at),
+        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player1_name, player2_id, player2_name, stat, settle_at),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id)
       )
     `)

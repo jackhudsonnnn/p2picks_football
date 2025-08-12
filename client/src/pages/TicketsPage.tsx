@@ -79,40 +79,42 @@ export const TicketsPage = () => {
     setLoading(true);
     getUserTickets(user.id)
       .then((data) => {
-        // Map Supabase data to Ticket interface
         const mapped = (data || []).map((row: any) => {
           const bet = row.bet_proposals;
-          // Dynamic description
-          let description = '';
-          if (bet?.mode_key === 'best_of_best' && bet?.bet_mode_best_of_best) {
-            const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-            description = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
-          } else if (bet?.mode_key === 'one_leg_spread') {
-            description = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
-          } else {
-            description = bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '';
-          }
+          // Description
+          const description = bet?.description || (() => {
+            if (bet?.mode_key === 'best_of_best' && bet?.bet_mode_best_of_best) {
+              const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+              return `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at}`;
+            } else if (bet?.mode_key === 'one_leg_spread') {
+              return `1 Leg Spread`;
+            }
+            return 'Bet';
+          })();
+          const cfg = bet?.bet_mode_best_of_best
+            ? (Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best)
+            : undefined;
           return {
             id: row.participation_id,
             tableId: row.table_id,
             tableName: bet?.private_tables?.table_name || '',
             createdAt: bet?.proposal_time || row.participation_time,
-            closedAt: null, // No time logic yet
+            closedAt: null,
             state: 'active',
-            gameContext: bet ? `${bet.entity1_name} vs. ${bet.entity2_name}` : '',
+            gameContext: description,
             betDetails: description,
             myGuess: row.user_guess || 'pass',
             wager: bet?.wager_amount || 0,
-            payout: bet?.wager_amount ? bet.wager_amount * 2 : 0, // Example payout logic
-            result: null, // No result logic yet
+            payout: bet?.wager_amount ? bet.wager_amount * 2 : 0,
+            result: null,
             settledStatus: false,
             proposalTime: bet?.proposal_time,
             timeLimitSeconds: bet?.time_limit_seconds,
             modeKey: bet?.mode_key,
-            player1Name: bet?.entity1_name,
-            player2Name: bet?.entity2_name,
-            stat: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.stat : bet?.bet_mode_best_of_best?.stat,
-            settleAt: Array.isArray(bet?.bet_mode_best_of_best) ? bet?.bet_mode_best_of_best?.[0]?.settle_at : bet?.bet_mode_best_of_best?.settle_at,
+            player1Name: cfg?.player1_name,
+            player2Name: cfg?.player2_name,
+            stat: cfg?.stat,
+            settleAt: cfg?.settle_at,
           } as Ticket;
         });
         setTickets(mapped);
@@ -151,9 +153,9 @@ export const TicketsPage = () => {
               let description = '';
               if (bet?.mode_key === 'best_of_best' && bet?.bet_mode_best_of_best) {
                 const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-                description = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
+                description = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at}`;
               } else if (bet?.mode_key === 'one_leg_spread') {
-                description = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
+                description = `1 Leg Spread`;
               } else {
                 description = bet ? `${bet.entity1_name} ${bet.entity1_proposition} __ ${bet.entity2_name} ${bet.entity2_proposition}` : '';
               }
@@ -311,7 +313,6 @@ export const TicketsPage = () => {
       ? `${timeLeft.toFixed(1)}s`
       : "--";
     if (ticket.state === "active") {
-      // Always use dropdown for bet options
       return (
         <div className="ticket-bet-options">
           <div className="mobile-bet-container">
@@ -321,7 +322,6 @@ export const TicketsPage = () => {
               onChange={(e) => handleGuessChangeDropdown(ticket.id, e.target.value)}
               disabled={isPending}
             >
-              <option value="">Select a pick</option>
               {ticket.modeKey === 'best_of_best' ? (
                 <>
                   <option value="pass">pass</option>

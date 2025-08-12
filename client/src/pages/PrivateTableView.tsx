@@ -45,14 +45,12 @@ export const PrivateTableView: React.FC = () => {
           .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
           .map(item => {
             if (item.item_type === 'text_message' && item.text_messages) {
-              // Handle array or object
               const msg = Array.isArray(item.text_messages) ? item.text_messages[0] : item.text_messages;
               let username = 'Unknown';
               if (msg.users) {
                 if (Array.isArray(msg.users)) {
                   username = msg.users[0]?.username || 'Unknown';
                 } else {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   username = (msg.users as any).username || 'Unknown';
                 }
               }
@@ -81,20 +79,18 @@ export const PrivateTableView: React.FC = () => {
                 if (Array.isArray(bet.users)) {
                   username = bet.users[0]?.username || 'Unknown';
                 } else {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   username = (bet.users as any).username || 'Unknown';
                 }
               }
-              // Build dynamic bet description
-              let desc = '';
-              if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
-                const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-                desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
-              } else if (bet.mode_key === 'one_leg_spread') {
-                desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
-              } else {
-                desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
-              }
+              const desc: string = bet.description || (() => {
+                if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+                  const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+                  return `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${cfg?.player1_name ?? 'Player 1'} vs ${cfg?.player2_name ?? 'Player 2'}`;
+                } else if (bet.mode_key === 'one_leg_spread') {
+                  return `1 Leg Spread`;
+                }
+                return 'Bet';
+              })();
               return {
                 id: item.feed_item_id,
                 type: 'bet_proposal',
@@ -104,10 +100,7 @@ export const PrivateTableView: React.FC = () => {
                 timestamp: bet.proposal_time,
                 betProposalId: bet.bet_id,
                 betDetails: {
-                  entity1_name: bet.entity1_name,
-                  entity1_proposition: bet.entity1_proposition,
-                  entity2_name: bet.entity2_name,
-                  entity2_proposition: bet.entity2_proposition,
+                  description: desc,
                   wager_amount: bet.wager_amount,
                   time_limit_seconds: bet.time_limit_seconds,
                   winning_condition: bet.winning_condition,
@@ -176,19 +169,18 @@ export const PrivateTableView: React.FC = () => {
               if (Array.isArray(bet.users)) {
                 username = bet.users[0]?.username || 'Unknown';
               } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 username = (bet.users as any).username || 'Unknown';
               }
             }
-            let desc = '';
-            if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
-              const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-              desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
-            } else if (bet.mode_key === 'one_leg_spread') {
-              desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
-            } else {
-              desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
-            }
+            const desc: string = bet.description || (() => {
+              if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+                const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+                return `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${cfg?.player1_name ?? 'Player 1'} vs ${cfg?.player2_name ?? 'Player 2'}`;
+              } else if (bet.mode_key === 'one_leg_spread') {
+                return `1 Leg Spread`;
+              }
+              return 'Bet';
+            })();
             return {
               id: item.feed_item_id,
               type: 'bet_proposal',
@@ -198,10 +190,7 @@ export const PrivateTableView: React.FC = () => {
               timestamp: bet.proposal_time,
               betProposalId: bet.bet_id,
               betDetails: {
-                entity1_name: bet.entity1_name,
-                entity1_proposition: bet.entity1_proposition,
-                entity2_name: bet.entity2_name,
-                entity2_proposition: bet.entity2_proposition,
+                description: desc,
                 wager_amount: bet.wager_amount,
                 time_limit_seconds: bet.time_limit_seconds,
                 winning_condition: bet.winning_condition,
@@ -222,7 +211,6 @@ export const PrivateTableView: React.FC = () => {
     }
   };
 
-  // Bet proposal handler
   const handleProposeBet = () => {
     setShowBetModal(true);
   };
@@ -233,7 +221,6 @@ export const PrivateTableView: React.FC = () => {
     try {
       await createBetProposal(tableId, user.id, form);
       setShowBetModal(false);
-      // Refresh chat feed after bet proposal
       const items: any[] = await getTableFeed(tableId);
       const mapped: ChatMessage[] = items
         .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
@@ -245,7 +232,6 @@ export const PrivateTableView: React.FC = () => {
               if (Array.isArray(msg.users)) {
                 username = msg.users[0]?.username || 'Unknown';
               } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 username = (msg.users as any).username || 'Unknown';
               }
             }
@@ -274,19 +260,18 @@ export const PrivateTableView: React.FC = () => {
               if (Array.isArray(bet.users)) {
                 username = bet.users[0]?.username || 'Unknown';
               } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 username = (bet.users as any).username || 'Unknown';
               }
             }
-            let desc = '';
-            if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
-              const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-              desc = `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${bet.entity1_name} vs ${bet.entity2_name}`;
-            } else if (bet.mode_key === 'one_leg_spread') {
-              desc = `1 Leg Spread — ${bet.entity1_name} vs ${bet.entity2_name}`;
-            } else {
-              desc = `${bet.entity1_name}: ${bet.entity1_proposition} vs ${bet.entity2_name}: ${bet.entity2_proposition}`;
-            }
+            const desc: string = bet.description || (() => {
+              if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
+                const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
+                return `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${cfg?.player1_name ?? 'Player 1'} vs ${cfg?.player2_name ?? 'Player 2'}`;
+              } else if (bet.mode_key === 'one_leg_spread') {
+                return `1 Leg Spread`;
+              }
+              return 'Bet';
+            })();
             return {
               id: item.feed_item_id,
               type: 'bet_proposal',
@@ -296,10 +281,7 @@ export const PrivateTableView: React.FC = () => {
               timestamp: bet.proposal_time,
               betProposalId: bet.bet_id,
               betDetails: {
-                entity1_name: bet.entity1_name,
-                entity1_proposition: bet.entity1_proposition,
-                entity2_name: bet.entity2_name,
-                entity2_proposition: bet.entity2_proposition,
+                description: desc,
                 wager_amount: bet.wager_amount,
                 time_limit_seconds: bet.time_limit_seconds,
                 winning_condition: bet.winning_condition,
@@ -355,7 +337,7 @@ export const PrivateTableView: React.FC = () => {
               onProposeBet={handleProposeBet}
             />
             <Modal isOpen={showBetModal} onClose={handleBetCancel} title="Propose Bet">
-              <BetProposalForm onSubmit={handleBetSubmit} onCancel={handleBetCancel} loading={betLoading} />
+              <BetProposalForm onSubmit={handleBetSubmit} loading={betLoading} />
             </Modal>
           </>
         )}
