@@ -1,5 +1,9 @@
 [
   {
+    "function_name": "set_bets_pending",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.set_bets_pending()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  UPDATE bet_proposals\r\n  SET bet_status = 'pending'\r\n  WHERE bet_status = 'active'\r\n    AND close_time IS NOT NULL\r\n    AND now() >= close_time;\r\nEND;\r\n$function$\n"
+  },
+  {
     "function_name": "is_user_member_of_table",
     "function_definition": "CREATE OR REPLACE FUNCTION public.is_user_member_of_table(p_table_id uuid, p_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n  RETURN EXISTS (\r\n    SELECT 1\r\n    FROM public.table_members tm\r\n    WHERE tm.table_id = p_table_id AND tm.user_id = p_user_id\r\n  );\r\nEND;\r\n$function$\n"
   },

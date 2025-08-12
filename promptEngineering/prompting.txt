@@ -1,0 +1,5 @@
+Prioritize p2picks.md as the source of truth for completing this task. 
+Some of the current code is outdated. ask clarification questions as needed.
+
+
+Feel free to suggest supabase db changes if necessary.
