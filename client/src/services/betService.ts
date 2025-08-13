@@ -2,6 +2,7 @@
 
 import { supabase } from './supabaseClient';
 import { BetProposalFormValues } from '../components/privateTable/chat/BetProposalForm';
+import { scheduleMockResolution } from './mock/mockEngine';
 
 // Create a bet proposal and insert a feed item
 export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalFormValues) {
@@ -59,6 +60,13 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
       },
     ]);
   if (feedError) throw feedError;
+
+  // POC: schedule a mock resolution after 20s that posts a system message
+  try {
+    scheduleMockResolution({ bet, tableId });
+  } catch (_) {
+    // non-blocking
+  }
 
   return bet;
 }

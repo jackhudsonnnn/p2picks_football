@@ -76,9 +76,9 @@ This feature provides a mechanism for a Table to "cash out" and end a session.
 > **Host:** `Chris_P_Bacon`: -20 points
 >
 > **Winners (To Receive from Host):**
-> * `Jenna_Tulls`: +230 points
+> * `BallIzLife`: +230 points
 > * `Al_Kaholic`: +55 points
 >
 > **Losers (To Pay Host):**
-> * `Chris_P_Bacon (Host)`: -175 points
+> * `WontonJohn`: -175 points
 > * `Anita_Bath`: -90 points

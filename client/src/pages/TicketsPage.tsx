@@ -129,9 +129,7 @@ export const TicketsPage = () => {
         .from('bet_participations')
         .update({ user_guess: newGuess })
         .eq('participation_id', ticketId)
-        // Also scope by user to satisfy RLS and ensure a single row
         .eq('user_id', user?.id || '')
-        // Request the updated row back; required when chaining .single()
         .select('participation_id, user_guess')
         .single();
       if (error) {
@@ -139,11 +137,11 @@ export const TicketsPage = () => {
         alert(`Failed to update your guess. ${error.message ?? ''}`.trim());
         return;
       }
-      // Optionally update local state optimistically if needed
+
       if (updated) {
         setTickets((prev) => prev.map(t => t.id === updated.participation_id ? { ...t, myGuess: updated.user_guess } : t));
       }
-      // Re-fetch tickets to ensure latest participation is shown
+
       if (user) {
         setLoading(true);
         getUserTickets(user.id)
@@ -279,7 +277,7 @@ export const TicketsPage = () => {
 
   const renderTicketContent = (ticket: Ticket) => (
     <>
-      <span className="game-context">{ticket.gameContext}</span>
+      <span className="game-context">{ticket.modeKey}</span>
     </>
   );
 

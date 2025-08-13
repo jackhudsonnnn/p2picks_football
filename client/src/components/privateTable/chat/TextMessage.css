@@ -73,6 +73,15 @@
   gap: var(--spacing-md);
 }
 
+.bet-proposal-message.clickable {
+  cursor: pointer;
+}
+
+.bet-proposal-message.clickable:hover {
+  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.5);
+  transition: box-shadow 0.4s;
+}
+
 .bet-proposal-content {
   display: flex;
   flex-direction: row;

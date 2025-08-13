@@ -39,7 +39,7 @@ const TextMessage: React.FC<TextMessageProps> = ({
   const [accepted, setAccepted] = useState(false);
   // Timer state for bet proposals
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [settled, setSettled] = useState(false);
+  const [phase, setPhase] = useState<'active' | 'pending' | 'resolved'>('active');
 
   useEffect(() => {
     let mounted = true;
@@ -73,17 +73,26 @@ const TextMessage: React.FC<TextMessageProps> = ({
 
     const updateTimeLeft = () => {
       const now = Date.now();
-      const elapsed = (now - proposalTime) / 1000; // seconds
-      const left = Math.max(0, timeLimit - elapsed);
-      setTimeLeft(left);
-      setSettled(left <= 0);
+      const activeEnds = proposalTime + timeLimit * 1000;
+      const pendingEnds = activeEnds + 20_000; // mock resolution window
+      if (now < activeEnds) {
+        const left = Math.max(0, (activeEnds - now) / 1000);
+        setTimeLeft(left);
+        setPhase('active');
+      } else if (now < pendingEnds) {
+        setTimeLeft(0);
+        setPhase('pending');
+      } else {
+        setTimeLeft(0);
+        setPhase('resolved');
+      }
     };
     updateTimeLeft();
-    if (settled) return;
+    if (phase === 'resolved') return;
     const interval = setInterval(updateTimeLeft, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line
-  }, [message, settled]);
+  }, [message, phase]);
 
   // Handlers
   const handleAccept = useCallback(
@@ -111,61 +120,61 @@ const TextMessage: React.FC<TextMessageProps> = ({
     [user, navigate]
   );
 
-  const handleViewTickets = useCallback(() => {
-    navigate("/bets-history");
-  }, [navigate]);
+  // Removed explicit buttons; navigation happens on container click
 
   // Render bet proposal message
   if (message.type === "bet_proposal") {
     const betMsg = message as BetProposalMessage;
+    const onBetClick = async () => {
+      // If already accepted or no longer active, go to tickets
+      if (accepted || phase !== 'active') {
+        navigate("/bets-history");
+        return;
+      }
+      // Otherwise accept (defaults to 'pass') and navigate
+      await handleAccept(betMsg);
+    };
+
+    const onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = async (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        await onBetClick();
+      }
+    };
     return (
       <div
         className={`message bet-proposal-message ${
           isOwnMessage ? "own-message" : "other-message"
-        }`}
+        } clickable`}
+        role="button"
+        tabIndex={0}
+        onClick={onBetClick}
+        onKeyDown={onKeyDown}
+        aria-label={
+          accepted
+            ? "Open tickets"
+            : phase !== 'active'
+            ? "View tickets (not active)"
+            : "Accept bet"
+        }
       >
         <div className="bet-proposal-content bet-proposal-flex">
           <div className="bet-proposal-info">
             <div className="wager-amount">
               Wager: {Number(betMsg.betDetails.wager_amount).toFixed(0)} pts
             </div>
-
             <div className="game-context">
-              {betMsg.betDetails.description}
+              {betMsg.betDetails.mode_key}
             </div>
           </div>
           <div className="bet-actions bet-actions-flex-end">
-            {accepted ? (
-              <div>
-                <button className="accept-bet" onClick={handleViewTickets}>
-                  View Tickets
-                </button>
-                <div className="bet-timer">
-                  {settled
-                    ? "Pending"
-                    : timeLeft !== null
-                    ? `${timeLeft.toFixed(1)}s`
-                    : "--"}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <button
-                  className="accept-bet"
-                  onClick={() => handleAccept(betMsg)}
-                  disabled={settled}
-                >
-                  Accept
-                </button>
-                <div className="bet-timer">
-                  {settled
-                    ? "Pending"
-                    : timeLeft !== null
-                    ? `${timeLeft.toFixed(1)}s`
-                    : "--"}
-                </div>
-              </div>
-            )}
+            <div className="bet-timer">
+              {phase === 'active' && timeLeft !== null
+                ? `${timeLeft.toFixed(1)}s`
+                : phase === 'pending'
+                ? 'Pending'
+                : 'Resolved'}
+            </div>
           </div>
         </div>
         <div className="bet-details bet-details-full">

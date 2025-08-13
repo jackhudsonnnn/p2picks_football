@@ -1,10 +1,7 @@
 # Future Bet Modes
 
-### Next Score Type 
+### Next Score Type
 Pick the type of next score: TD, FG, Safety, No More Scores.
-
-### Driver
-Predict the result of the current drive: TD, FG, Punt, Turnover.
 
 ### Horse Race
 Bet on which team leads at “settle at”.

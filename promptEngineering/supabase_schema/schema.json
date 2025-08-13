@@ -204,7 +204,7 @@
     "column_name": "bet_status",
     "data_type": "text",
     "is_nullable": "NO",
-    "column_default": "'''Active'''::text",
+    "column_default": "'active'::text",
     "key_info": ""
   },
   {
@@ -268,6 +268,14 @@
     "column_name": "description",
     "data_type": "text",
     "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "winning_choice",
+    "data_type": "text",
+    "is_nullable": "YES",
     "column_default": null,
     "key_info": ""
   },
