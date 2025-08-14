@@ -1,12 +1,12 @@
 // Chat feed item types for table chat
-export type FeedItemType = 'text_message' | 'system_notification' | 'bet_proposal';
+export type FeedItemType = 'text_message' | 'system_message' | 'bet_proposal';
 
 export interface FeedItem {
   feed_item_id: string;
   item_type: FeedItemType;
   item_created_at: string;
   text_message_id?: string;
-  system_notification_id?: string;
+  system_message_id?: string;
   bet_proposal_id?: string;
   text_messages?: {
     text_message_id: string;
@@ -15,8 +15,8 @@ export interface FeedItem {
     posted_at: string;
     users?: { username: string };
   };
-  system_notifications?: {
-    system_notification_id: string;
+  system_messages?: {
+    system_message_id: string;
     message_text: string;
     generated_at: string;
   };

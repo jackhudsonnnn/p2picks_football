@@ -91,10 +91,7 @@ export async function acceptBetProposal({ betId, tableId, userId }: { betId: str
         bet_id: betId,
         table_id: tableId,
         user_id: userId,
-        user_guess: 'pass', // default
-        wager_placed: null,
-        payout_received: null,
-        is_winner: null,
+        user_guess: 'pass',
         participation_time: new Date().toISOString(),
       }
     ])
@@ -114,9 +111,6 @@ export async function getUserTickets(userId: string) {
       table_id,
       user_id,
       user_guess,
-      wager_placed,
-      payout_received,
-      is_winner,
       participation_time,
       bet_proposals:bet_id (
         bet_id,

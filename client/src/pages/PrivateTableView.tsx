@@ -42,7 +42,7 @@ export const PrivateTableView: React.FC = () => {
     getTableFeed(tableId)
       .then((items: any[]) => {
         const mapped: ChatMessage[] = items
-          .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
+          .filter(item => item.item_type === 'text_message' || item.item_type === 'system_message' || item.item_type === 'bet_proposal')
           .map(item => {
             if (item.item_type === 'text_message' && item.text_messages) {
               const msg = Array.isArray(item.text_messages) ? item.text_messages[0] : item.text_messages;
@@ -62,8 +62,8 @@ export const PrivateTableView: React.FC = () => {
                 text: msg.message_text,
                 timestamp: msg.posted_at,
               } as ChatMessage;
-            } else if (item.item_type === 'system_notification' && item.system_notifications) {
-              const sys = Array.isArray(item.system_notifications) ? item.system_notifications[0] : item.system_notifications;
+            } else if (item.item_type === 'system_message' && item.system_messages) {
+              const sys = Array.isArray(item.system_messages) ? item.system_messages[0] : item.system_messages;
               return {
                 id: item.feed_item_id,
                 type: 'system',
@@ -131,7 +131,7 @@ export const PrivateTableView: React.FC = () => {
       // Refresh chat feed after sending
       const items: any[] = await getTableFeed(tableId);
       const mapped: ChatMessage[] = items
-        .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
+        .filter(item => item.item_type === 'text_message' || item.item_type === 'system_message' || item.item_type === 'bet_proposal')
         .map(item => {
           if (item.item_type === 'text_message' && item.text_messages) {
             const msg = Array.isArray(item.text_messages) ? item.text_messages[0] : item.text_messages;
@@ -152,8 +152,8 @@ export const PrivateTableView: React.FC = () => {
               text: msg.message_text,
               timestamp: msg.posted_at,
             } as ChatMessage;
-          } else if (item.item_type === 'system_notification' && item.system_notifications) {
-            const sys = Array.isArray(item.system_notifications) ? item.system_notifications[0] : item.system_notifications;
+          } else if (item.item_type === 'system_message' && item.system_messages) {
+            const sys = Array.isArray(item.system_messages) ? item.system_messages[0] : item.system_messages;
             return {
               id: item.feed_item_id,
               type: 'system',
@@ -223,7 +223,7 @@ export const PrivateTableView: React.FC = () => {
       setShowBetModal(false);
       const items: any[] = await getTableFeed(tableId);
       const mapped: ChatMessage[] = items
-        .filter(item => item.item_type === 'text_message' || item.item_type === 'system_notification' || item.item_type === 'bet_proposal')
+        .filter(item => item.item_type === 'text_message' || item.item_type === 'system_message' || item.item_type === 'bet_proposal')
         .map(item => {
           if (item.item_type === 'text_message' && item.text_messages) {
             const msg = Array.isArray(item.text_messages) ? item.text_messages[0] : item.text_messages;
@@ -243,8 +243,8 @@ export const PrivateTableView: React.FC = () => {
               text: msg.message_text,
               timestamp: msg.posted_at,
             } as ChatMessage;
-          } else if (item.item_type === 'system_notification' && item.system_notifications) {
-            const sys = Array.isArray(item.system_notifications) ? item.system_notifications[0] : item.system_notifications;
+          } else if (item.item_type === 'system_message' && item.system_messages) {
+            const sys = Array.isArray(item.system_messages) ? item.system_messages[0] : item.system_messages;
             return {
               id: item.feed_item_id,
               type: 'system',
@@ -314,7 +314,6 @@ export const PrivateTableView: React.FC = () => {
   const members = (table.table_members || []).map((tm: any) => ({
     userId: tm.user_id,
     username: tm.users?.username || tm.user_id,
-    balance: (tm.balance_cents / 100).toFixed(2),
   }));
   const isHost = table.host_user_id === user.id;
 

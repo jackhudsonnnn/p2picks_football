@@ -112,11 +112,6 @@
   margin-bottom: var(--spacing-xs);
 }
 
-.table-passcode-info {
-  font-size: var(--font-size-sm);
-  color: var(--accent-energy);
-}
-
 /* View table button */
 .view-table-container {
   display: flex;

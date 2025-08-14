@@ -41,7 +41,7 @@
   padding: var(--spacing-md);
   gap: var(--spacing-sm);
   border-top: 1px solid var(--neutral-700);
-  background-color: var(--bg-surface);
+  background-color: var(--neutral-850);
 }
 
 .message-input {

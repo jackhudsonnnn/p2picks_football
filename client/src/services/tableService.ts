@@ -2,16 +2,9 @@ import { supabase } from './supabaseClient';
 
 // Create a new private table and add the creator as a member
 export async function createPrivateTable(tableName: string, hostUserId: string) {
-  // Generate a 16-character passcode
-  const passcode = Array(16)
-    .fill(0)
-    .map(() => Math.random().toString(36)[2])
-    .join('')
-    .toUpperCase();
-
   const { data: table, error } = await supabase
     .from('private_tables')
-    .insert([{ table_name: tableName, host_user_id: hostUserId, passcode }])
+    .insert([{ table_name: tableName, host_user_id: hostUserId }])
     .select()
     .single();
   if (error) throw error;
@@ -66,7 +59,7 @@ export async function removeTableMember(tableId: string, userId: string) {
   if (error) throw error;
 }
 
-// Fetch chat feed for a table (joins feed_items, text_messages, system_notifications, bet_proposals, users)
+// Fetch chat feed for a table (joins feed_items, text_messages, system_messages, bet_proposals, users)
 export async function getTableFeed(tableId: string) {
   const { data, error } = await supabase
     .from('feed_items')
@@ -75,10 +68,10 @@ export async function getTableFeed(tableId: string) {
       item_type,
       item_created_at,
       text_message_id,
-      system_notification_id,
+      system_message_id,
       bet_proposal_id,
       text_messages:text_message_id (text_message_id, user_id, message_text, posted_at, users:user_id (username)),
-      system_notifications:system_notification_id (system_notification_id, message_text, generated_at),
+      system_messages:system_message_id (system_message_id, message_text, generated_at),
       bet_proposal:bet_proposal_id (
         bet_id,
         table_id,
@@ -125,11 +118,11 @@ export async function sendTextMessage(tableId: string, userId: string, messageTe
   return txtMsg;
 }
 
-// Send a system notification (system_notification + feed_item)
+// Send a system notification (system_message + feed_item)
 export async function sendSystemNotification(tableId: string, messageText: string) {
-  // 1. Insert into system_notifications
+  // 1. Insert into system_messages
   const { data: sysMsg, error: sysError } = await supabase
-    .from('system_notifications')
+    .from('system_messages')
     .insert([{ message_text: messageText }])
     .select()
     .single();
@@ -139,8 +132,8 @@ export async function sendSystemNotification(tableId: string, messageText: strin
     .from('feed_items')
     .insert([{
       table_id: tableId,
-      item_type: 'system_notification',
-      system_notification_id: sysMsg.system_notification_id,
+      item_type: 'system_message',
+      system_message_id: sysMsg.system_message_id,
       item_created_at: sysMsg.generated_at
     }]);
   if (feedError) throw feedError;

@@ -1,5 +1,5 @@
 // Mock resolver engine: after the active window ends, mark pending (via chat text)
-// and 20s later randomly pick a winner (via chat text). This avoids RLS on system_notifications.
+// and 20s later randomly pick a winner (via chat text). This avoids RLS on system_messages.
 
 import { MODES, ModeKey } from '../../modes';
 import { putResolution, getResolution } from './mockStore';
@@ -8,7 +8,7 @@ import { supabase } from '../supabaseClient';
 
 // Public API: schedule a mock resolution for a bet
 export function scheduleMockResolution(opts: {
-  bet: any; // freshly inserted bet row
+  bet: any;
   tableId: string;
 }): void {
   const { bet, tableId } = opts;
@@ -35,10 +35,6 @@ export function scheduleMockResolution(opts: {
         .update({ bet_status: 'pending' })
         .eq('bet_id', bet.bet_id)
         .eq('bet_status', 'active');
-
-      const text = `Bet ${bet.bet_id.slice(0, 8)} is now pending.`;
-      // Attribute as the proposer to pass RLS for text_messages
-      await sendTextMessage(tableId, bet.proposer_user_id, text);
     } catch (_) {
       // swallow for POC
     }

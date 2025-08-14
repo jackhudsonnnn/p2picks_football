@@ -18,7 +18,6 @@ interface SupabaseTable {
   table_id: string;
   table_name: string;
   host_user_id: string;
-  passcode: string;
   created_at: string;
   last_activity_at: string;
   host_username?: string; 

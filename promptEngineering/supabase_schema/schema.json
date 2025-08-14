@@ -121,33 +121,9 @@
   },
   {
     "table_name": "bet_participations",
-    "column_name": "wager_placed",
-    "data_type": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_participations",
-    "column_name": "payout_received",
-    "data_type": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_participations",
-    "column_name": "is_winner",
-    "data_type": "boolean",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_participations",
     "column_name": "participation_time",
     "data_type": "timestamp with time zone",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": "now()",
     "key_info": ""
   },
@@ -321,11 +297,11 @@
   },
   {
     "table_name": "feed_items",
-    "column_name": "system_notification_id",
+    "column_name": "system_message_id",
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> system_notifications(system_notification_id)"
+    "key_info": "FOREIGN KEY -> system_messages(system_message_id)"
   },
   {
     "table_name": "feed_items",
@@ -408,15 +384,15 @@
     "key_info": ""
   },
   {
-    "table_name": "system_notifications",
-    "column_name": "system_notification_id",
+    "table_name": "system_messages",
+    "column_name": "system_message_id",
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
     "key_info": "PRIMARY KEY"
   },
   {
-    "table_name": "system_notifications",
+    "table_name": "system_messages",
     "column_name": "message_text",
     "data_type": "text",
     "is_nullable": "NO",
@@ -424,7 +400,7 @@
     "key_info": ""
   },
   {
-    "table_name": "system_notifications",
+    "table_name": "system_messages",
     "column_name": "generated_at",
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",

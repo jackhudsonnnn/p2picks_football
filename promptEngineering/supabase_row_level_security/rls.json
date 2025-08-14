@@ -168,31 +168,31 @@
     "check_expression": null
   },
   {
-    "table_name": "system_notifications",
+    "table_name": "system_messages",
     "policy_name": "System notifications deletes are restricted",
     "command": "DELETE",
     "using_expression": "false",
     "check_expression": null
   },
   {
-    "table_name": "system_notifications",
+    "table_name": "system_messages",
     "policy_name": "System notifications inserts are restricted",
     "command": "INSERT",
     "using_expression": null,
     "check_expression": "false"
   },
   {
-    "table_name": "system_notifications",
+    "table_name": "system_messages",
     "policy_name": "System notifications updates are restricted",
     "command": "UPDATE",
     "using_expression": "false",
     "check_expression": null
   },
   {
-    "table_name": "system_notifications",
+    "table_name": "system_messages",
     "policy_name": "Users can view system_notifications linked to tables they are m",
     "command": "SELECT",
-    "using_expression": "(EXISTS ( SELECT 1\n   FROM (feed_items fi\n     JOIN table_members tm ON ((fi.table_id = tm.table_id)))\n  WHERE ((fi.system_notification_id = system_notifications.system_notification_id) AND (tm.user_id = auth.uid()))))",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM (feed_items fi\n     JOIN table_members tm ON ((fi.table_id = tm.table_id)))\n  WHERE ((fi.system_message_id = system_messages.system_message_id) AND (tm.user_id = auth.uid()))))",
     "check_expression": null
   },
   {
