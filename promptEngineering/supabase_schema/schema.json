@@ -361,14 +361,6 @@
   },
   {
     "table_name": "private_tables",
-    "column_name": "passcode",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "private_tables",
     "column_name": "created_at",
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
@@ -380,6 +372,46 @@
     "column_name": "last_activity_at",
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "event_type",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "payload",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
     "column_default": "now()",
     "key_info": ""
   },
@@ -430,14 +462,6 @@
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
     "key_info": "FOREIGN KEY -> users(user_id)"
-  },
-  {
-    "table_name": "table_members",
-    "column_name": "balance_cents",
-    "data_type": "integer",
-    "is_nullable": "NO",
-    "column_default": "0",
-    "key_info": ""
   },
   {
     "table_name": "table_members",

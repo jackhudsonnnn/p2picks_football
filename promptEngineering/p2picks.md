@@ -18,6 +18,7 @@ A bet progresses through several states from its creation to its completion.
 2.  **Participation (`Active` State):** Once proposed, the bet's timer begins. While the timer is running, the bet is **`Active`**. Members can join, and participants can change their choices.
 3.  **Lock-in (`Pending` State):** When the timer expires, choices are locked in. If the underlying game event is not yet complete, the bet is now **`Pending`**.
 4.  **Resolution (`Resolved` State):** Once the game event concludes, the bet is validated and either paid out or washed. The bet's state is now **`Resolved`**.
+5.  **Washed (`Washed` State):** If a bet meets wash conditions (zero participants, all pass, all same option, or no winners), it transitions to **`Washed`**. A system message is emitted by a DB trigger.
 
 ---
 
@@ -35,6 +36,11 @@ The platform uses a pooled betting structure where winners split the losers' con
 * The timer expires and all participants chose 'pass'
 * The timer expires and all participants chose the same option
 * The bet is resolved and no one chose the winning option
+
+Implementation notes (server-first):
+- Active → Pending flips are performed server-side.
+- System messages for `pending`, `resolved`, and `washed` are emitted by database triggers.
+- Random client-side outcomes are disabled by default; server is the source of truth.
 
 ---
 

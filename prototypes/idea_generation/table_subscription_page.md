@@ -1,0 +1,1 @@
+A page with a dropdown of checkboxes (defaulting to all) that is much like the table view page, except shows all proposals in 1 spot.

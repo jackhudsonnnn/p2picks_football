@@ -2,7 +2,7 @@
 
 import { supabase } from './supabaseClient';
 import { BetProposalFormValues } from '../components/privateTable/chat/BetProposalForm';
-import { scheduleMockResolution } from './mock/mockEngine';
+const ENABLE_CLIENT_MOCK = import.meta.env.VITE_ENABLE_CLIENT_MOCK_RESOLVER === 'true';
 
 // Create a bet proposal and insert a feed item
 export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalFormValues) {
@@ -61,11 +61,15 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     ]);
   if (feedError) throw feedError;
 
-  // POC: schedule a mock resolution after 20s that posts a system message
-  try {
-    scheduleMockResolution({ bet, tableId });
-  } catch (_) {
-    // non-blocking
+  // POC: optionally schedule a client-side mock resolution (prefer server in prod)
+  // Dynamically import to keep out of the bundle unless explicitly enabled
+  if (ENABLE_CLIENT_MOCK) {
+    try {
+      const { scheduleMockResolution } = await import('./mock/mockEngine');
+      scheduleMockResolution({ bet, tableId });
+    } catch (_) {
+      // non-blocking
+    }
   }
 
   return bet;

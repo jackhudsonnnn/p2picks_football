@@ -1,0 +1,13 @@
+[
+  {
+    "jobid": 6,
+    "schedule": "* * * * *",
+    "command": "SELECT public.set_bets_pending();",
+    "nodename": "localhost",
+    "nodeport": 5432,
+    "database": "postgres",
+    "username": "postgres",
+    "active": true,
+    "jobname": "p2picks_set_bets_pending"
+  }
+]

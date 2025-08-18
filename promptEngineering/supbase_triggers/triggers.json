@@ -1,0 +1,92 @@
+[
+  {
+    "table_schema": "auth",
+    "table_name": "users",
+    "trigger_schema": "auth",
+    "trigger_name": "on_auth_user_created",
+    "event": "INSERT",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION handle_new_user()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_participations",
+    "trigger_schema": "public",
+    "trigger_name": "trg_enforce_immutable_bet_participation_fields",
+    "event": "UPDATE",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION enforce_immutable_bet_participation_fields()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
+    "trigger_name": "trg_bet_proposals_washed_msg",
+    "event": "UPDATE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION create_system_message_on_bet_washed()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
+    "trigger_name": "trg_bet_resolved_system_message",
+    "event": "UPDATE",
+    "activation": "AFTER",
+    "condition": "((old.bet_status IS DISTINCT FROM 'resolved'::text) AND (new.bet_status = 'resolved'::text))",
+    "definition": "EXECUTE FUNCTION create_system_message_on_bet_resolved()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
+    "trigger_name": "trg_bet_status_change_system_message",
+    "event": "UPDATE",
+    "activation": "AFTER",
+    "condition": "((old.bet_status IS DISTINCT FROM new.bet_status) AND ((new.bet_status = 'pending'::text) OR (new.bet_status = 'resolved'::text)))",
+    "definition": "EXECUTE FUNCTION create_system_message_on_bet_status_change()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
+    "trigger_name": "trg_set_bet_close_time",
+    "event": "INSERT,UPDATE",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION set_bet_close_time()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
+    "trigger_name": "trg_set_bet_close_time_before_insert",
+    "event": "INSERT",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION set_bet_close_time()"
+  },
+  {
+    "table_schema": "realtime",
+    "table_name": "subscription",
+    "trigger_schema": "realtime",
+    "trigger_name": "tr_check_filters",
+    "event": "INSERT,UPDATE",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION realtime.subscription_check_filters()"
+  },
+  {
+    "table_schema": "storage",
+    "table_name": "objects",
+    "trigger_schema": "storage",
+    "trigger_name": "update_objects_updated_at",
+    "event": "UPDATE",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION storage.update_updated_at_column()"
+  }
+]

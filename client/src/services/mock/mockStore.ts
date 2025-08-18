@@ -4,7 +4,7 @@
 type BetResolution = {
   bet_id: string;
   table_id: string;
-  resolve_at: number; // epoch ms
+  resolve_at: number;
   winning_choice: string | null;
 };
 

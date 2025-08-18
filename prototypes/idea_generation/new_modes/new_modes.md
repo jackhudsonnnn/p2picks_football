@@ -1,6 +1,6 @@
 # Future Bet Modes
 
-### Next Score Type
+### Scorcerer
 Pick the type of next score: TD, FG, Safety, No More Scores.
 
 ### Horse Race

@@ -87,8 +87,8 @@
     "table_name": "bet_proposals",
     "policy_name": "Allow proposers to update their open bet proposals",
     "command": "UPDATE",
-    "using_expression": "((proposer_user_id = auth.uid()) AND (bet_status = 'active'::text))",
-    "check_expression": "(proposer_user_id = auth.uid())"
+    "using_expression": "((proposer_user_id = auth.uid()) AND (bet_status = 'active'::text) AND ((close_time IS NULL) OR (now() < close_time)))",
+    "check_expression": "((proposer_user_id = auth.uid()) AND ((close_time IS NULL) OR (now() < close_time)))"
   },
   {
     "table_name": "feed_items",
@@ -117,6 +117,13 @@
     "command": "SELECT",
     "using_expression": "is_table_member(table_id, auth.uid())",
     "check_expression": null
+  },
+  {
+    "table_name": "feed_items",
+    "policy_name": "feed_items_insert_system",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "(is_table_member(table_id, auth.uid()) AND (item_type = 'system_message'::text) AND (system_message_id IS NOT NULL))"
   },
   {
     "table_name": "friends",
@@ -193,6 +200,20 @@
     "policy_name": "Users can view system_notifications linked to tables they are m",
     "command": "SELECT",
     "using_expression": "(EXISTS ( SELECT 1\n   FROM (feed_items fi\n     JOIN table_members tm ON ((fi.table_id = tm.table_id)))\n  WHERE ((fi.system_message_id = system_messages.system_message_id) AND (tm.user_id = auth.uid()))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "system_messages",
+    "policy_name": "system_messages_insert",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "true"
+  },
+  {
+    "table_name": "system_messages",
+    "policy_name": "system_messages_select",
+    "command": "SELECT",
+    "using_expression": "true",
     "check_expression": null
   },
   {

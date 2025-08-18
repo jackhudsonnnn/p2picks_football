@@ -123,7 +123,7 @@ export async function sendSystemNotification(tableId: string, messageText: strin
   // 1. Insert into system_messages
   const { data: sysMsg, error: sysError } = await supabase
     .from('system_messages')
-    .insert([{ message_text: messageText }])
+  .insert([{ table_id: tableId, message_text: messageText }])
     .select()
     .single();
   if (sysError) throw sysError;

@@ -1,11 +1,15 @@
 [
   {
     "function_name": "set_bets_pending",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.set_bets_pending()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  UPDATE bet_proposals\r\n  SET bet_status = 'pending'\r\n  WHERE bet_status = 'active'\r\n    AND close_time IS NOT NULL\r\n    AND now() >= close_time;\r\nEND;\r\n$function$\n"
+    "function_definition": "CREATE OR REPLACE FUNCTION public.set_bets_pending()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nBEGIN\r\n  UPDATE public.bet_proposals\r\n    SET bet_status = 'pending'\r\n  WHERE bet_status = 'active'\r\n    AND close_time IS NOT NULL\r\n    AND now() >= close_time;\r\nEND;\r\n$function$\n"
   },
   {
     "function_name": "is_user_member_of_table",
     "function_definition": "CREATE OR REPLACE FUNCTION public.is_user_member_of_table(p_table_id uuid, p_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n  RETURN EXISTS (\r\n    SELECT 1\r\n    FROM public.table_members tm\r\n    WHERE tm.table_id = p_table_id AND tm.user_id = p_user_id\r\n  );\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "create_system_message_on_bet_washed",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.create_system_message_on_bet_washed()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  v_sys_id uuid;\r\n  v_text   text;\r\nBEGIN\r\n  IF (OLD.bet_status IS DISTINCT FROM 'washed' AND NEW.bet_status = 'washed') THEN\r\n    v_text := format('Bet %s washed.', left(NEW.bet_id::text, 8));\r\n    INSERT INTO public.system_messages (message_text, generated_at)\r\n    VALUES (v_text, now())\r\n    RETURNING system_message_id INTO v_sys_id;\r\n\r\n    INSERT INTO public.feed_items (table_id, item_type, system_message_id, item_created_at)\r\n    VALUES (NEW.table_id, 'system_message', v_sys_id, now());\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
   },
   {
     "function_name": "enforce_immutable_bet_participation_fields",
@@ -32,7 +36,19 @@
     "function_definition": "CREATE OR REPLACE FUNCTION public.is_user_host_of_table(p_table_id uuid, p_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n  RETURN EXISTS (\r\n    SELECT 1\r\n    FROM public.private_tables pt\r\n    WHERE pt.table_id = p_table_id AND pt.host_user_id = p_user_id\r\n  );\r\nEND;\r\n$function$\n"
   },
   {
+    "function_name": "my_trigger_function",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.my_trigger_function()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n  -- Your custom logic goes here\r\n  -- e.g., manipulating NEW or OLD data\r\n  RETURN NEW; -- Or RETURN OLD, or NULL\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "create_system_message_on_bet_resolved",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.create_system_message_on_bet_resolved()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  v_sys_id uuid;\r\n  v_text   text;\r\nBEGIN\r\n  IF (OLD.bet_status IS DISTINCT FROM 'resolved' AND NEW.bet_status = 'resolved') THEN\r\n    v_text := format('Bet %s resolved. Winning choice: \"%s\".',\r\n                     left(NEW.bet_id::text, 8), COALESCE(NEW.winning_choice::text, 'unknown'));\r\n    INSERT INTO public.system_messages (message_text, generated_at)\r\n    VALUES (v_text, now())\r\n    RETURNING system_message_id INTO v_sys_id;\r\n\r\n    INSERT INTO public.feed_items (table_id, item_type, system_message_id, item_created_at)\r\n    VALUES (NEW.table_id, 'system_message', v_sys_id, now());\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
+  },
+  {
     "function_name": "set_bet_close_time",
     "function_definition": "CREATE OR REPLACE FUNCTION public.set_bet_close_time()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  -- Derive close_time from proposal_time + time_limit_seconds\r\n  NEW.close_time := NEW.proposal_time + make_interval(secs => NEW.time_limit_seconds::double precision);\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "create_system_message_on_bet_status_change",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.create_system_message_on_bet_status_change()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  v_sys_id uuid;\r\n  v_text   text;\r\n  v_close_text text;\r\nBEGIN\r\n  IF (OLD.bet_status IS DISTINCT FROM NEW.bet_status) THEN\r\n    -- active -> pending: include the actual close_time (may be slightly in the past)\r\n    IF (OLD.bet_status = 'active' AND NEW.bet_status = 'pending') THEN\r\n      v_close_text := COALESCE(NEW.close_time::text, 'unknown');\r\n      v_text := format(\r\n        'Bet window for %s closed at %s (now pending).',\r\n        left(NEW.bet_id::text, 8),\r\n        v_close_text\r\n      );\r\n\r\n      INSERT INTO public.system_messages (message_text, generated_at)\r\n      VALUES (v_text, now())\r\n      RETURNING system_message_id INTO v_sys_id;\r\n\r\n      INSERT INTO public.feed_items (table_id, item_type, system_message_id, item_created_at)\r\n      VALUES (NEW.table_id, 'system_message', v_sys_id, now());\r\n\r\n    -- resolved: keep existing resolved message\r\n    ELSIF (NEW.bet_status = 'resolved' AND OLD.bet_status IS DISTINCT FROM 'resolved') THEN\r\n      v_text := format(\r\n        'Bet %s resolved. Winning choice: \"%s\".',\r\n        left(NEW.bet_id::text, 8),\r\n        COALESCE(NEW.winning_choice::text, 'unknown')\r\n      );\r\n\r\n      INSERT INTO public.system_messages (message_text, generated_at)\r\n      VALUES (v_text, now())\r\n      RETURNING system_message_id INTO v_sys_id;\r\n\r\n      INSERT INTO public.feed_items (table_id, item_type, system_message_id, item_created_at)\r\n      VALUES (NEW.table_id, 'system_message', v_sys_id, now());\r\n    END IF;\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
   }
 ]
