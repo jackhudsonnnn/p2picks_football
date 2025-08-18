@@ -1,6 +1,0 @@
-# Node/Deno build artifacts
-*.map
-npm-
-
-# Local env
-.env
