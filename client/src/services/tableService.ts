@@ -1,4 +1,5 @@
-import { supabase } from './supabaseClient';
+import { supabase } from '../shared/api/supabaseClient';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // Create a new private table and add the creator as a member
 export async function createPrivateTable(tableName: string, hostUserId: string) {
@@ -141,4 +142,59 @@ export async function sendSystemNotification(tableId: string, messageText: strin
     }]);
   if (feedError) throw feedError;
   return sysMsg;
+}
+
+// Realtime: subscribe to member changes for a table
+export function subscribeToTableMembers(
+  tableId: string,
+  onChange: (payload: { eventType: 'INSERT' | 'DELETE' | 'UPDATE' }) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`table_members:${tableId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'table_members', filter: `table_id=eq.${tableId}` },
+      (payload) => {
+        const eventType = payload.eventType as 'INSERT' | 'DELETE' | 'UPDATE';
+        onChange({ eventType });
+      }
+    )
+    .subscribe();
+  return channel;
+}
+
+// Realtime: subscribe to feed inserts for a table (text messages, system messages, bet proposals)
+export function subscribeToFeedItems(
+  tableId: string,
+  onInsert: (payload: { eventType: 'INSERT'; feed_item_id?: string }) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`feed_items:${tableId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'feed_items', filter: `table_id=eq.${tableId}` },
+      (payload) => {
+        onInsert({ eventType: 'INSERT', feed_item_id: (payload.new as any)?.feed_item_id });
+      }
+    )
+    .subscribe();
+  return channel;
+}
+
+// Realtime: subscribe to bet proposal status updates for a table
+export function subscribeToBetProposals(
+  tableId: string,
+  onUpdate: (payload: { eventType: 'UPDATE'; bet_id?: string }) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`bet_proposals:${tableId}`)
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'bet_proposals', filter: `table_id=eq.${tableId}` },
+      (payload) => {
+        onUpdate({ eventType: 'UPDATE', bet_id: (payload.new as any)?.bet_id });
+      }
+    )
+    .subscribe();
+  return channel;
 }

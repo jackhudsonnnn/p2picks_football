@@ -3,18 +3,12 @@ import "./Card.css";
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
-  
   useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
+    const checkIsMobile = () => setIsMobile(window.innerWidth <= 768);
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
-    
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
-  
   return isMobile;
 };
 
@@ -40,44 +34,15 @@ const Card = <T extends Record<string, any>>({
   renderFooterRight,
 }: CardProps<T>) => {
   const isMobile = useIsMobile();
-
   return (
     <div className={`card`}>
-      {/* Card Header */}
-      {renderHeader && (
-        <div className="card-header">
-          {renderHeader(data)}
-        </div>
-      )}
-      
-      {/* Card Content */}
-      {renderContent && (
-        <div className="card-content">
-          {renderContent(data)}
-        </div>
-      )}
-      
-      {/* Card Actions */}
-      {renderActions && (
-        <div className="card-actions">
-          {renderActions(data, isMobile)}
-        </div>
-      )}
-      
-      {/* Card Footer */}
+      {renderHeader && <div className="card-header">{renderHeader(data)}</div>}
+      {renderContent && <div className="card-content">{renderContent(data)}</div>}
+      {renderActions && <div className="card-actions">{renderActions(data, isMobile)}</div>}
       {(renderFooterLeft || renderFooterRight) && (
         <div className="card-footer">
-          {renderFooterLeft && (
-            <div className="card-footer-left">
-              {renderFooterLeft(data)}
-            </div>
-          )}
-          
-          {renderFooterRight && (
-            <div className="card-footer-right">
-              {renderFooterRight(data)}
-            </div>
-          )}
+          {renderFooterLeft && <div className="card-footer-left">{renderFooterLeft(data)}</div>}
+          {renderFooterRight && <div className="card-footer-right">{renderFooterRight(data)}</div>}
         </div>
       )}
     </div>

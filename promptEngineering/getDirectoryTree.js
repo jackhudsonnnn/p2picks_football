@@ -5,7 +5,7 @@ const IGNORED_ITEMS = [
   'node_modules', '.git', 'dist', 'build', '.firebase', 'hosting.cHVibGlj.cache', 
   '.firebaserc', '.gitignore', 'package-lock.json', 'package.json', 'public', 
   'README.md', 'firebase.json', 'serviceAccountKey.json', '.env', 
-  '.env.development', '.env.production', '.env.development.local', '.github'
+  '.env.development', '.env.production', '.env.development.local', '.github', 'venv', 'lib'
 ];
 
 function getDirectoryTree(dirPath, depth = 0) {

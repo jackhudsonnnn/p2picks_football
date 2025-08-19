@@ -1,7 +1,7 @@
 // client/src/pages/AccountPage.tsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "../services/supabaseClient"; // Ensure this path is correct
+import { supabase } from "../shared/api/supabaseClient"; // Ensure this path is correct
 import type { User } from "@supabase/supabase-js";
 import "./styles/AccountPage.css";
 

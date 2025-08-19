@@ -39,9 +39,9 @@ export interface ChatMessage {
     time_limit_seconds: number;
     winning_condition: string;
     bet_status: string;
-  close_time?: string | null;
-  winning_choice?: string | null;
-  resolution_time?: string | null;
+    close_time?: string | null;
+    winning_choice?: string | null;
+    resolution_time?: string | null;
     total_pot: number;
     mode_key?: string;
     nfl_game_id?: string;
@@ -63,9 +63,9 @@ export interface BetProposalMessage {
     time_limit_seconds: number;
     winning_condition: string;
     bet_status: string;
-  close_time?: string | null;
-  winning_choice?: string | null;
-  resolution_time?: string | null;
+    close_time?: string | null;
+    winning_choice?: string | null;
+    resolution_time?: string | null;
     total_pot: number;
     mode_key?: string;
     nfl_game_id?: string;

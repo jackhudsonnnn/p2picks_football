@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import Modal from "../general/Modal";
+import Modal from "../../shared/ui/Modal/Modal.tsx";
 import FriendsList from "../profile/FriendsList";
 import { useAuth } from "../../hooks/useAuth";
-import { addTableMember, removeTableMember } from "../../services/tableService";
-import { supabase } from "../../services/supabaseClient";
+import { addTableMember, removeTableMember } from "@entities/table/service";
+import { supabase } from "../../shared/api/supabaseClient";
 import "./hostControls.css";
 
 const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {

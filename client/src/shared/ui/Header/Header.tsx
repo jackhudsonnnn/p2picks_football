@@ -12,7 +12,7 @@ interface PageHeaderProps {
   className?: string;
   titleClassName?: string;
   statsClassName?: string;
-  actionButton?: ReactNode; // Add support for an action button
+  actionButton?: ReactNode;
 }
 
 const PageHeader = ({ 
@@ -21,20 +21,14 @@ const PageHeader = ({
   className = "", 
   titleClassName = "", 
   statsClassName = "",
-  actionButton // New prop for action button
+  actionButton
 }: PageHeaderProps) => {
   return (
     <div className={`page-header ${className}`}>
       <div className={`page-title ${titleClassName}`}>
         {typeof title === 'string' ? <h1>{title}</h1> : title}
       </div>
-      
-      {actionButton && (
-        <div className="page-action">
-          {actionButton}
-        </div>
-      )}
-      
+      {actionButton && <div className="page-action">{actionButton}</div>}
       {!actionButton && stats && stats.length > 0 && (
         <div className={`page-stats ${statsClassName}`}>
           {stats.map((stat, index) => (

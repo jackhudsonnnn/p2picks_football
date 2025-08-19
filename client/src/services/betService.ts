@@ -1,10 +1,10 @@
 // client/src/services/betService.ts
 
-import { supabase } from './supabaseClient';
-import { BetProposalFormValues } from '../components/privateTable/chat/BetProposalForm';
+import { supabase } from '../shared/api/supabaseClient';
+import { BetProposalInput } from '../features/bets/types';
 
 // Create a bet proposal and insert a feed item
-export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalFormValues) {
+export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalInput) {
   // Insert into bet_proposals without legacy entity fields
   const payload: any = {
     table_id: tableId,
@@ -25,7 +25,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
 
   // Per-mode configuration table
   try {
-    if (form.mode === 'best_of_best') {
+  if (form.mode === 'best_of_best') {
       const cfg = {
         bet_id: bet.bet_id,
         player1_id: form.player1_id,
@@ -37,7 +37,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
       };
       const { error: cfgErr } = await supabase.from('bet_mode_best_of_best').insert([cfg]);
       if (cfgErr) throw cfgErr;
-    } else if (form.mode === 'one_leg_spread') {
+  } else if (form.mode === 'one_leg_spread') {
       const cfg = { bet_id: bet.bet_id };
       const { error: cfgErr } = await supabase.from('bet_mode_one_leg_spread').insert([cfg]);
       if (cfgErr) throw cfgErr;

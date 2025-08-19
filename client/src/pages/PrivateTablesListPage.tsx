@@ -2,16 +2,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { createPrivateTable, getUserPrivateTables } from "../services/tableService";
-import { getUsernamesByIds } from "../services/userService";
+import { createPrivateTable, getUserPrivateTables } from "@entities/table/service";
+import { getUsernamesByIds } from "@entities/user/service";
 import "./styles/PrivateTablesListPage.css";
 
 // Import generalized components
-import Card from "../components/cards/Card";
-import SearchBar from "../components/general/SearchBar";
-import FilterBar, { FilterOption } from "../components/general/Filter";
-import PageHeader from "../components/general/Header";
-import Modal from "../components/general/Modal";
+import { Card, SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@shared/ui";
 
 // Table interface for Supabase
 interface SupabaseTable {

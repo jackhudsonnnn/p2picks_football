@@ -1,3 +1,4 @@
+/* moved from components/general/Modal.css */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -13,7 +14,7 @@
 }
 
 .modal-content {
-  background-color: #010c1d65; /* Neutral-800 */
+  background-color: #010c1d65;
   border-radius: var(--radius-md);
   width: 100%;
   max-width: 500px;
