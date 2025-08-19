@@ -33,21 +33,21 @@
     "table_schema": "public",
     "table_name": "bet_proposals",
     "trigger_schema": "public",
-    "trigger_name": "trg_bet_resolved_system_message",
-    "event": "UPDATE",
-    "activation": "AFTER",
-    "condition": "((old.bet_status IS DISTINCT FROM 'resolved'::text) AND (new.bet_status = 'resolved'::text))",
-    "definition": "EXECUTE FUNCTION create_system_message_on_bet_resolved()"
-  },
-  {
-    "table_schema": "public",
-    "table_name": "bet_proposals",
-    "trigger_schema": "public",
     "trigger_name": "trg_bet_status_change_system_message",
     "event": "UPDATE",
     "activation": "AFTER",
     "condition": "((old.bet_status IS DISTINCT FROM new.bet_status) AND ((new.bet_status = 'pending'::text) OR (new.bet_status = 'resolved'::text)))",
     "definition": "EXECUTE FUNCTION create_system_message_on_bet_status_change()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
+    "trigger_name": "trg_enforce_resolve_no_winner_wash",
+    "event": "UPDATE",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION resolution_enforce_no_winner_wash()"
   },
   {
     "table_schema": "public",

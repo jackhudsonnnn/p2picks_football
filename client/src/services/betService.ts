@@ -2,7 +2,6 @@
 
 import { supabase } from './supabaseClient';
 import { BetProposalFormValues } from '../components/privateTable/chat/BetProposalForm';
-const ENABLE_CLIENT_MOCK = import.meta.env.VITE_ENABLE_CLIENT_MOCK_RESOLVER === 'true';
 
 // Create a bet proposal and insert a feed item
 export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalFormValues) {
@@ -61,17 +60,6 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     ]);
   if (feedError) throw feedError;
 
-  // POC: optionally schedule a client-side mock resolution (prefer server in prod)
-  // Dynamically import to keep out of the bundle unless explicitly enabled
-  if (ENABLE_CLIENT_MOCK) {
-    try {
-      const { scheduleMockResolution } = await import('./mock/mockEngine');
-      scheduleMockResolution({ bet, tableId });
-    } catch (_) {
-      // non-blocking
-    }
-  }
-
   return bet;
 }
 
@@ -79,7 +67,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
 export async function getBetProposalDetails(betId: string) {
   const { data, error } = await supabase
     .from('bet_proposals')
-    .select('bet_id, table_id, bet_status, proposer_user_id')
+  .select('bet_id, table_id, bet_status, proposer_user_id, close_time, winning_choice, resolution_time')
     .eq('bet_id', betId)
     .single();
   if (error) throw error;
@@ -126,7 +114,10 @@ export async function getUserTickets(userId: string) {
         time_limit_seconds,
         proposal_time,
         bet_status,
+  close_time,
         winning_condition,
+  winning_choice,
+  resolution_time,
         total_pot,
         bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player1_name, player2_id, player2_name, stat, settle_at),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id),

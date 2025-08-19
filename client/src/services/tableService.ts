@@ -83,7 +83,10 @@ export async function getTableFeed(tableId: string) {
         time_limit_seconds,
         proposal_time,
         bet_status,
+  close_time,
         winning_condition,
+  winning_choice,
+  resolution_time,
         total_pot,
         users:proposer_user_id (username),
         bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player1_name, player2_id, player2_name, stat, settle_at),
@@ -123,7 +126,7 @@ export async function sendSystemNotification(tableId: string, messageText: strin
   // 1. Insert into system_messages
   const { data: sysMsg, error: sysError } = await supabase
     .from('system_messages')
-  .insert([{ table_id: tableId, message_text: messageText }])
+  .insert([{ message_text: messageText }])
     .select()
     .single();
   if (sysError) throw sysError;

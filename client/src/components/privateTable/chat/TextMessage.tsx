@@ -37,9 +37,9 @@ const TextMessage: React.FC<TextMessageProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const [accepted, setAccepted] = useState(false);
-  // Timer state for bet proposals
+  // Timer/phase state for bet proposals (driven by DB)
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [phase, setPhase] = useState<'active' | 'pending' | 'resolved'>('active');
+  const [phase, setPhase] = useState<'active' | 'pending' | 'resolved' | 'washed'>('active');
 
   useEffect(() => {
     let mounted = true;
@@ -62,37 +62,57 @@ const TextMessage: React.FC<TextMessageProps> = ({
     };
   }, [user, message.type, message.betProposalId]);
 
-  // Calculate and sync timer for bet proposals
+  // Calculate and sync timer/status for bet proposals using DB fields
   useEffect(() => {
     if (message.type !== "bet_proposal") return;
     const betMsg = message as BetProposalMessage;
-    // Use betMsg.timestamp as proposal_time
-    const proposalTime = new Date(betMsg.timestamp).getTime();
-    const timeLimit = Number(betMsg.betDetails?.time_limit_seconds) || 0;
-    if (!proposalTime || !timeLimit) return;
+    const closeAt = betMsg.betDetails?.close_time
+      ? new Date(betMsg.betDetails.close_time).getTime()
+      : null;
 
-    const updateTimeLeft = () => {
-      const now = Date.now();
-      const activeEnds = proposalTime + timeLimit * 1000;
-      const pendingEnds = activeEnds + 20_000; // mock resolution window
-      if (now < activeEnds) {
-        const left = Math.max(0, (activeEnds - now) / 1000);
-        setTimeLeft(left);
-        setPhase('active');
-      } else if (now < pendingEnds) {
-        setTimeLeft(0);
-        setPhase('pending');
-      } else {
-        setTimeLeft(0);
-        setPhase('resolved');
+    const computePhaseFromStatus = (status: string | undefined) => {
+      switch (status) {
+        case 'pending':
+          return 'pending' as const;
+        case 'resolved':
+          return 'resolved' as const;
+        case 'washed':
+          return 'washed' as const;
+        case 'active':
+        default:
+          return 'active' as const;
       }
     };
-    updateTimeLeft();
-    if (phase === 'resolved') return;
-    const interval = setInterval(updateTimeLeft, 1000);
+
+    const update = () => {
+      const status = betMsg.betDetails?.bet_status;
+      if (status && status !== 'active') {
+        setPhase(computePhaseFromStatus(status));
+        setTimeLeft(0);
+        return;
+      }
+      if (closeAt) {
+        const now = Date.now();
+        if (now < closeAt) {
+          setPhase('active');
+          setTimeLeft(Math.max(0, (closeAt - now) / 1000));
+        } else {
+          // If past close_time but status still 'active' locally, show pending until feed refresh updates status
+          setPhase('pending');
+          setTimeLeft(0);
+        }
+      } else {
+        // No close_time available; fallback to status
+        setPhase(computePhaseFromStatus(betMsg.betDetails?.bet_status));
+        setTimeLeft(null);
+      }
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line
-  }, [message, phase]);
+  }, [message]);
 
   // Handlers
   const handleAccept = useCallback(
@@ -126,8 +146,8 @@ const TextMessage: React.FC<TextMessageProps> = ({
   if (message.type === "bet_proposal") {
     const betMsg = message as BetProposalMessage;
     const onBetClick = async () => {
-      // If already accepted or no longer active, go to tickets
-      if (accepted || phase !== 'active') {
+  // If already accepted or no longer active, go to tickets
+  if (accepted || phase !== 'active') {
         navigate("/bets-history");
         return;
       }
@@ -141,15 +161,16 @@ const TextMessage: React.FC<TextMessageProps> = ({
         await onBetClick();
       }
     };
+    const clickable = phase === 'active' && !accepted;
     return (
       <div
         className={`message bet-proposal-message ${
           isOwnMessage ? "own-message" : "other-message"
-        } clickable`}
+        } ${clickable ? 'clickable' : ''}`}
         role="button"
         tabIndex={0}
-        onClick={onBetClick}
-        onKeyDown={onKeyDown}
+        onClick={clickable ? onBetClick : undefined}
+        onKeyDown={clickable ? onKeyDown : undefined}
         aria-label={
           accepted
             ? "Open tickets"
@@ -173,6 +194,8 @@ const TextMessage: React.FC<TextMessageProps> = ({
                 ? `${timeLeft.toFixed(1)}s`
                 : phase === 'pending'
                 ? 'Pending'
+                : phase === 'washed'
+                ? 'Washed'
                 : 'Resolved'}
             </div>
           </div>
