@@ -19,7 +19,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
 
-  // Scroll to bottom of messages when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -42,30 +41,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    // Check if it's today
     if (date.toDateString() === today.toDateString()) {
       return "Today";
-    }
-    // Check if it's yesterday
-    else if (date.toDateString() === yesterday.toDateString()) {
+    } else if (date.toDateString() === yesterday.toDateString()) {
       return "Yesterday";
-    }
-    // Otherwise show date
-    else {
-      return date.toLocaleDateString([], {
-        month: "short",
-        day: "numeric",
-      });
+    } else {
+      return date.toLocaleDateString([], { month: "short", day: "numeric" });
     }
   };
 
-  // Group messages by date
   const groupedMessages = messages.reduce<{ [date: string]: Message[] }>(
     (groups, message) => {
       const dateStr = new Date(message.timestamp).toDateString();
-      if (!groups[dateStr]) {
-        groups[dateStr] = [];
-      }
+      if (!groups[dateStr]) { groups[dateStr] = []; }
       groups[dateStr].push(message);
       return groups;
     },

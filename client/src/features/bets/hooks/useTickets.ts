@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../../../shared/api/supabaseClient';
-import { getUserTickets } from '../../../services/betService';
+import { getUserTickets } from '../service';
 import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
 import { subscribeToBetProposals } from '@entities/table/service';

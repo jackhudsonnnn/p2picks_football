@@ -25,6 +25,7 @@
       "@app/*": ["src/app/*"],
       "@pages/*": ["src/pages/*"],
       "@features/*": ["src/features/*"],
+  "@widgets": ["src/widgets/index.ts"],
       "@widgets/*": ["src/widgets/*"],
       "@entities/*": ["src/entities/*"],
       "@shared/*": ["src/shared/*"]

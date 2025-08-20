@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import Modal from "../../shared/ui/Modal/Modal.tsx";
-import FriendsList from "../profile/FriendsList";
-import { useAuth } from "../../hooks/useAuth";
+import { Modal } from "@shared/ui";
+import FriendsList from "@/components/profile/FriendsList";
+import { useAuth } from "@/hooks/useAuth";
 import { addTableMember, removeTableMember } from "@entities/table/service";
-import { supabase } from "../../shared/api/supabaseClient";
+import { supabase } from "@shared/api/supabaseClient";
 import "./hostControls.css";
 
 const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
@@ -17,7 +17,6 @@ const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
 
   useEffect(() => {
     if (!user) return;
-    // Fetch friends
     (async () => {
       const { data: friendRelations } = await supabase
         .from("friends")

@@ -1,11 +1,8 @@
-// client/src/services/betService.ts
-
-import { supabase } from '../shared/api/supabaseClient';
-import { BetProposalInput } from '../features/bets/types';
+import { supabase } from '@shared/api/supabaseClient';
+import { BetProposalInput } from './types';
 
 // Create a bet proposal and insert a feed item
 export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalInput) {
-  // Insert into bet_proposals without legacy entity fields
   const payload: any = {
     table_id: tableId,
     proposer_user_id: proposerUserId,
@@ -25,7 +22,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
 
   // Per-mode configuration table
   try {
-  if (form.mode === 'best_of_best') {
+    if (form.mode === 'best_of_best') {
       const cfg = {
         bet_id: bet.bet_id,
         player1_id: form.player1_id,
@@ -37,7 +34,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
       };
       const { error: cfgErr } = await supabase.from('bet_mode_best_of_best').insert([cfg]);
       if (cfgErr) throw cfgErr;
-  } else if (form.mode === 'one_leg_spread') {
+    } else if (form.mode === 'one_leg_spread') {
       const cfg = { bet_id: bet.bet_id };
       const { error: cfgErr } = await supabase.from('bet_mode_one_leg_spread').insert([cfg]);
       if (cfgErr) throw cfgErr;
@@ -67,7 +64,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
 export async function getBetProposalDetails(betId: string) {
   const { data, error } = await supabase
     .from('bet_proposals')
-  .select('bet_id, table_id, bet_status, proposer_user_id, close_time, winning_choice, resolution_time')
+    .select('bet_id, table_id, bet_status, proposer_user_id, close_time, winning_choice, resolution_time')
     .eq('bet_id', betId)
     .single();
   if (error) throw error;
@@ -75,7 +72,7 @@ export async function getBetProposalDetails(betId: string) {
 }
 
 // Accept a bet proposal: create a bet_participation for the user
-export async function acceptBetProposal({ betId, tableId, userId }: { betId: string, tableId: string, userId: string }) {
+export async function acceptBetProposal({ betId, tableId, userId }: { betId: string; tableId: string; userId: string }) {
   const { data, error } = await supabase
     .from('bet_participations')
     .insert([
@@ -85,7 +82,7 @@ export async function acceptBetProposal({ betId, tableId, userId }: { betId: str
         user_id: userId,
         user_guess: 'pass',
         participation_time: new Date().toISOString(),
-      }
+      },
     ])
     .select()
     .single();
@@ -97,7 +94,8 @@ export async function acceptBetProposal({ betId, tableId, userId }: { betId: str
 export async function getUserTickets(userId: string) {
   const { data, error } = await supabase
     .from('bet_participations')
-    .select(`
+    .select(
+      `
       participation_id,
       bet_id,
       table_id,
@@ -114,16 +112,17 @@ export async function getUserTickets(userId: string) {
         time_limit_seconds,
         proposal_time,
         bet_status,
-  close_time,
+        close_time,
         winning_condition,
-  winning_choice,
-  resolution_time,
+        winning_choice,
+        resolution_time,
         total_pot,
         bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player1_name, player2_id, player2_name, stat, settle_at),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id),
         private_tables:table_id (table_name)
       )
-    `)
+    `
+    )
     .eq('user_id', userId)
     .order('participation_time', { ascending: false });
   if (error) throw error;

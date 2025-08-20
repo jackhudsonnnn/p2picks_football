@@ -1,9 +1,8 @@
 import React from "react";
 import "./TextMessage.css";
-import { BetProposalMessage } from "../../../types/api";
-import BetProposalCard from "../../../features/bets/ui/BetProposalCard";
+import { BetProposalMessage } from "@/types/api";
+import BetProposalCard from "@features/bets/ui/BetProposalCard";
 
-// Message Types
 export type MessageType = "chat" | "system" | "bet_proposal";
 
 export interface Message {
@@ -23,35 +22,21 @@ interface TextMessageProps {
   formatTimestamp: (timestamp: string) => string;
 }
 
-const TextMessage: React.FC<TextMessageProps> = ({
-  message,
-  isOwnMessage,
-  formatTimestamp,
-}) => {
-  // Bet proposal rendering delegated to BetProposalCard
-
-  // Render bet proposal message via domain card
+const TextMessage: React.FC<TextMessageProps> = ({ message, isOwnMessage, formatTimestamp }) => {
   if (message.type === "bet_proposal") {
     const betMsg = message as BetProposalMessage;
     return <BetProposalCard message={betMsg} isOwnMessage={isOwnMessage} />;
   }
 
-  // Render chat or system message
   return (
-    <div
-      className={`message ${message.type} ${
-        isOwnMessage ? "own-message" : "other-message"
-      }`}
-    >
+    <div className={`message ${message.type} ${isOwnMessage ? "own-message" : "other-message"}`}>
       {message.type === "system" ? (
         <div className="system-message">{message.text}</div>
       ) : (
         <div className="chat-message">
           <div className="message-header">
             <span className="sender-name">{message.senderUsername}</span>
-            <span className="message-time">
-              {formatTimestamp(message.timestamp)}
-            </span>
+            <span className="message-time">{formatTimestamp(message.timestamp)}</span>
           </div>
           <p className="message-text">{message.text}</p>
         </div>

@@ -5,13 +5,13 @@ import { useParams } from "react-router-dom";
 import "./styles/PrivateTableView.css";
 import { useAuth } from "../hooks/useAuth";
 import { getPrivateTable, sendTextMessage, subscribeToTableMembers } from "@entities/table/service";
-import { createBetProposal } from "../services/betService";
+import { createBetProposal } from "@/features/bets/service";
 // ChatMessage type now handled internally by useTableFeed
-import ChatArea from "../components/privateTable/chat/ChatArea";
-import MemberList from "../components/privateTable/memberList";
-import HostControls from "../components/privateTable/hostControls";
-import Navigation from "../components/privateTable/Navigation";
-import BetProposalForm, { BetProposalFormValues } from "../components/privateTable/chat/BetProposalForm";
+import ChatArea from "@widgets/PrivateTable/chat/ChatArea";
+import MemberList from "@widgets/PrivateTable/memberList";
+import HostControls from "@widgets/PrivateTable/hostControls";
+import Navigation from "@widgets/PrivateTable/Navigation";
+import BetProposalForm, { BetProposalFormValues } from "@widgets/PrivateTable/chat/BetProposalForm";
 import { Modal } from "@shared/ui";
 import { useTableFeed } from "../features/bets/hooks/useTableFeed";
 

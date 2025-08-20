@@ -6,7 +6,7 @@ import { PrivateTableView } from './pages/PrivateTableView';
 import { TicketsPage } from './pages/TicketsPage';
 import { AccountPage } from './pages/AccountPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { Navbar } from './components/layout/Navbar';
+import { Navbar } from '@widgets';
 
 function App() {
   return (
