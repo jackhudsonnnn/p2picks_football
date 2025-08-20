@@ -24,7 +24,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting session:', error.message);
-          // Potentially handle UI indication of error
         }
         setSession(session);
         setUser(session?.user ?? null);
@@ -56,14 +55,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin, // Or a specific callback page like window.location.origin + '/auth/callback'
+          redirectTo: window.location.origin,
         },
       });
       if (error) {
         console.error('Google sign-in error:', error.message);
         alert('Error signing in with Google: ' + error.message);
       }
-      // Supabase handles redirection, loading state will be updated by onAuthStateChange
     } catch (error: any) {
       console.error('Exception during Google sign-in:', error.message);
       alert('An unexpected error occurred during sign-in.');
@@ -79,7 +77,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Sign-out error:', error.message);
         alert('Error signing out: ' + error.message);
       }
-      // Session and user will be set to null by onAuthStateChange
     } catch (error: any) {
       console.error('Exception during sign-out:', error.message);
       alert('An unexpected error occurred during sign-out.');

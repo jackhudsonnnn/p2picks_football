@@ -11,12 +11,10 @@ export interface BetProposalInput {
   mode: BetModeKey;
   description: string;
   // mode-specific (best_of_best)
-  player1_id?: string;
   player1_name?: string;
-  player2_id?: string;
   player2_name?: string;
   stat?: 'Receptions' | 'Receiving Yards' | 'Touchdowns';
-  settle_at?: 'Q1' | 'Q2' | 'Q3' | 'Final';
+  resolve_after?: 'Q1 ends' | 'Q2 ends' | 'Q3 ends' | 'Q4 ends';
 }
 
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
@@ -63,7 +61,7 @@ export interface Ticket {
   player1Name?: string;
   player2Name?: string;
   stat?: 'Receptions' | 'Receiving Yards' | 'Touchdowns' | string;
-  settleAt?: 'Q1' | 'Q2' | 'Q3' | 'Final' | string;
+  resolve_after?: 'Q1 ends' | 'Q2 ends' | 'Q3 ends' | 'Q4 ends' | string;
   betStatus?: string;
   closeTime?: string | null;
   winningChoice?: string | null;

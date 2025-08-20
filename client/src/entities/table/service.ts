@@ -90,7 +90,7 @@ export async function getTableFeed(tableId: string) {
 				resolution_time,
 				total_pot,
 				users:proposer_user_id (username),
-				bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player1_name, player2_id, player2_name, stat, settle_at),
+				bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_name, player2_name, stat, resolve_after),
 				bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id)
 			)
 		`)

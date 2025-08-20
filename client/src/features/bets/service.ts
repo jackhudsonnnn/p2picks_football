@@ -25,12 +25,10 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     if (form.mode === 'best_of_best') {
       const cfg = {
         bet_id: bet.bet_id,
-        player1_id: form.player1_id,
         player1_name: form.player1_name,
-        player2_id: form.player2_id,
         player2_name: form.player2_name,
         stat: form.stat,
-        settle_at: form.settle_at,
+        resolve_after: form.resolve_after,
       };
       const { error: cfgErr } = await supabase.from('bet_mode_best_of_best').insert([cfg]);
       if (cfgErr) throw cfgErr;
@@ -117,7 +115,7 @@ export async function getUserTickets(userId: string) {
         winning_choice,
         resolution_time,
         total_pot,
-        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_id, player1_name, player2_id, player2_name, stat, settle_at),
+        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_name, player2_name, stat, resolve_after),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id),
         private_tables:table_id (table_name)
       )

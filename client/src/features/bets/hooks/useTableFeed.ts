@@ -42,7 +42,7 @@ export async function mapFeedItemsToChatMessages(items: any[]): Promise<ChatMess
         const desc: string = bet.description || (() => {
           if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
             const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-            return `Best of the Best • ${cfg?.stat} • ${cfg?.settle_at} — ${cfg?.player1_name ?? 'Player 1'} vs ${cfg?.player2_name ?? 'Player 2'}`;
+            return `Best of the Best • ${cfg?.stat} • ${cfg?.resolve_after} — ${cfg?.player1_name ?? 'Player 1'} vs ${cfg?.player2_name ?? 'Player 2'}`;
           } else if (bet.mode_key === 'one_leg_spread') {
             return `1 Leg Spread`;
           }

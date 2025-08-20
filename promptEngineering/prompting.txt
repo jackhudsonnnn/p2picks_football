@@ -3,6 +3,3 @@ Some of the current code is outdated and not all features are currently develope
 Ask clarification questions as needed. 
 
 Feel free to suggest supabase db changes if necessary.
-
-
-Your task is to begin moving the neccessary betting logic to the server side. As you get confimation from me that the server-side logic is working, you may choose to delete certain files/logic. do not worry about validating with real data. either use mock data that i can somehow change manually, or choose a random winning guess. 

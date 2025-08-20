@@ -52,7 +52,7 @@ This mode is a prop bet comparing the performance of two players.
 * **Proposer Configuration:**
     * Selects **two unique players** (WR, TE, or RB).
     * Selects the **stat** to compare: Receptions, Receiving Yards, or Touchdowns.
-    * Selects when the bet should **settle at**: End of Q1, Q2, Q3, or Final.
+    * Selects when the bet should **resolve after**: Q1 ends, Q2 ends, Q3 ends, or Q4 ends.
 * **Participant Choices:** `pass`, `Player 1`, `Player 2`.
 * **Winning Condition:** The winning choice is the player who achieves the **largest net increase** in the selected stat from the moment the bet is placed until the "settle at" time.
 

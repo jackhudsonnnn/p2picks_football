@@ -47,7 +47,7 @@ export function mapParticipationRowToTicket(row: any): Ticket {
     player1Name: cfg?.player1_name,
     player2Name: cfg?.player2_name,
     stat: cfg?.stat,
-    settleAt: cfg?.settle_at,
+    resolveAfter: cfg?.resolve_after,
     betStatus,
     closeTime,
     winningChoice: bet?.winning_choice ?? null,

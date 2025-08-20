@@ -9,22 +9,6 @@
   },
   {
     "table_name": "bet_mode_best_of_best",
-    "column_name": "player1_id",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "player2_id",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
     "column_name": "stat",
     "data_type": "text",
     "is_nullable": "NO",
@@ -33,7 +17,7 @@
   },
   {
     "table_name": "bet_mode_best_of_best",
-    "column_name": "settle_at",
+    "column_name": "resolve_after",
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
@@ -43,7 +27,7 @@
     "table_name": "bet_mode_best_of_best",
     "column_name": "player1_name",
     "data_type": "text",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -51,7 +35,7 @@
     "table_name": "bet_mode_best_of_best",
     "column_name": "player2_name",
     "data_type": "text",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },

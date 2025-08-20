@@ -4,7 +4,7 @@
 Pick the type of next score: TD, FG, Safety, No More Scores.
 
 ### Horse Race
-Bet on which team leads at “settle at”.
+Bet on which team leads at “resolve at” or some defined time.
 
 ### Choose their Fate
 Predict if the current possession ends in TD, FG, or Turnover.

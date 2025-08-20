@@ -10,12 +10,10 @@ export interface BetProposalFormValues {
   wager_amount: number;
   time_limit_seconds: number;
   mode: ModeKey;
-  player1_id?: string;
   player1_name?: string;
-  player2_id?: string;
   player2_name?: string;
   stat?: "Receptions" | "Receiving Yards" | "Touchdowns";
-  settle_at?: "Q1" | "Q2" | "Q3" | "Final";
+  resolve_after?: "Q1 ends" | "Q2 ends" | "Q3 ends" | "Q4 ends";
   description: string;
 }
 
@@ -52,7 +50,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
   const [player1Id, setPlayer1Id] = useState("");
   const [player2Id, setPlayer2Id] = useState("");
   const [stat, setStat] = useState<BetProposalFormValues["stat"]>();
-  const [settleAt, setSettleAt] = useState<BetProposalFormValues["settle_at"]>();
+  const [resolveAfter, setResolveAfter] = useState<BetProposalFormValues["resolve_after"]>();
   const [wagerAmount, setWagerAmount] = useState<number>(1);
   const [timeLimit, setTimeLimit] = useState<number>(30);
 
@@ -74,17 +72,17 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
   const team1 = selectedGame?.home;
   const team2 = selectedGame?.away;
 
-  const allowedSettleAt = useMemo((): BetProposalFormValues["settle_at"][] => {
-    if (!selectedGame) return ["Q1", "Q2", "Q3", "Final"];
+  const allowedResolveAfter = useMemo((): BetProposalFormValues["resolve_after"][] => {
+    if (!selectedGame) return ["Q1 ends", "Q2 ends", "Q3 ends", "Q4 ends"];
     const state = selectedGame.status?.name;
     const period = selectedGame.status?.period ?? 1;
-    const base: BetProposalFormValues["settle_at"][] = [];
+    const base: BetProposalFormValues["resolve_after"][] = [];
     if (state !== "STATUS_FINAL") {
-      if (period <= 1) base.push("Q1");
-      if (period <= 2) base.push("Q2");
-      if (period <= 3) base.push("Q3");
+      if (period <= 1) base.push("Q1 ends");
+      if (period <= 2) base.push("Q2 ends");
+      if (period <= 3) base.push("Q3 ends");
     }
-    base.push("Final");
+    base.push("Q4 ends");
     return base;
   }, [selectedGame]);
 
@@ -97,7 +95,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
         return !!player1Id && !!player2Id && player1Id !== player2Id;
       }
       if (step === 2) {
-        return !!stat && !!settleAt;
+        return !!stat && !!resolveAfter;
       }
       if (step === 3) {
         return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
@@ -108,7 +106,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       }
     }
     return false;
-  }, [step, selectedGameId, mode, player1Id, player2Id, stat, settleAt, wagerAmount, timeLimit]);
+  }, [step, selectedGameId, mode, player1Id, player2Id, stat, resolveAfter, wagerAmount, timeLimit]);
 
   const totalSteps = useMemo(() => (mode === "best_of_best" ? 5 : mode === "one_leg_spread" ? 3 : 2), [mode]);
 
@@ -170,10 +168,10 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="settle_at">Settle At</label>
-              <select id="settle_at" className="form-select" value={settleAt ?? ""} onChange={(e) => setSettleAt(e.target.value as any)} required>
+              <label className="form-label" htmlFor="resolve_after">Resolve After</label>
+              <select id="resolve_after" className="form-select" value={resolveAfter ?? ""} onChange={(e) => setResolveAfter(e.target.value as any)} required>
                 <option value="" disabled>Select</option>
-                {allowedSettleAt.map((q) => (<option key={q} value={q}>{q}</option>))}
+                {allowedResolveAfter.map((q) => (<option key={q} value={q}>{q}</option>))}
               </select>
             </div>
           </div>
@@ -202,7 +200,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
             <div><strong>{timeLimit}s</strong> to choose — <strong>{wagerAmount} pt(s)</strong> to lose</div>
             <div>{(p1 && p2) ? (<><strong>{p1.name}</strong> vs <strong>{p2.name}</strong></>) : ''}</div>
             <div>Largest ↑ in <strong>{stat}</strong></div>
-            <div>Settled At <strong>{settleAt}</strong></div>
+            <div>Resolved After <strong>{resolveAfter}</strong></div>
           </div>
         );
       }
@@ -249,9 +247,9 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       player2_id: player2Id,
       player2_name: players.find(p => p.id === player2Id)?.name,
       stat,
-      settle_at: settleAt,
+      resolve_after: resolveAfter,
       description: mode === 'best_of_best'
-        ? `Largest increase in ${stat} until ${settleAt}`
+        ? `Largest increase in ${stat} until ${resolveAfter}`
         : `1 Leg Spread — details TBD`
     };
     onSubmit(values);

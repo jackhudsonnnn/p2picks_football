@@ -11,7 +11,7 @@ export interface ModeDefinition {
   key: ModeKey;
   label: string;
   // Valid non-pass choices for determining winners
-  winningChoices: string[];
+  potentialWinningChoices: string[];
   // For POC: pick a random winning choice
   pickRandomWinner(ctx: ModeContext): string;
 }

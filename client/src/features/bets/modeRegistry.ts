@@ -18,7 +18,7 @@ export const modeRegistry: Record<BetModeKey, ModeDefinition> = {
     summary: (ctx: any) => {
       const cfg = ctx?.bet_mode_best_of_best || ctx?.modeConfig;
       if (!cfg) return 'Best of the Best';
-      return `Best of the Best • ${cfg.stat ?? ''} • ${cfg.settle_at ?? ''}`.trim();
+      return `Best of the Best • ${cfg.stat ?? ''} • ${cfg.resolve_after ?? ''}`.trim();
     },
     options: (ctx: any) => {
       const cfg = ctx?.bet_mode_best_of_best || ctx?.modeConfig;

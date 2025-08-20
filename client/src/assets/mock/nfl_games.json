@@ -18,10 +18,30 @@
       "abbreviation": "NO"
     },
     "players": [
-      { "id": "4383351", "name": "Trey Lance", "team": "home", "position": "QB" },
-      { "id": "4433830", "name": "Luke Grimm", "team": "home", "position": "WR" },
-      { "id": "4360689", "name": "Tyler Shough", "team": "away", "position": "QB" },
-      { "id": "4573697", "name": "Mason Tipton", "team": "away", "position": "WR" }
+      {
+        "id": "4383351", 
+        "name": "Trey Lance", 
+        "team": "home", 
+        "position": "QB" 
+      },
+      { 
+        "id": "4433830", 
+        "name": "Luke Grimm", 
+        "team": "home", 
+        "position": "WR" 
+      },
+      { 
+        "id": "4360689", 
+        "name": "Tyler Shough", 
+        "team": "away", 
+        "position": "QB" 
+      },
+      { 
+        "id": "4573697", 
+        "name": "Mason Tipton", 
+        "team": "away", 
+        "position": "WR" 
+      }
     ]
   },
   {
@@ -43,9 +63,24 @@
       "abbreviation": "MIA"
     },
     "players": [
-      { "id": "4434153", "name": "Tyson Bagent", "team": "home", "position": "QB" },
-      { "id": "4711533", "name": "Ollie Gordon II", "team": "away", "position": "RB" },
-      { "id": "4567506", "name": "Tahj Washington", "team": "away", "position": "WR" }
+      { 
+        "id": "4434153", 
+        "name": "Tyson Bagent", 
+        "team": "home", 
+        "position": "QB" 
+      },
+      { 
+        "id": "4711533", 
+        "name": "Ollie Gordon II", 
+        "team": "away", 
+        "position": "RB" 
+      },
+      { 
+        "id": "4567506", 
+        "name": "Tahj Washington", 
+        "team": "away", 
+        "position": "WR" 
+      }
     ]
   }
 ]
