@@ -124,30 +124,6 @@ export async function sendTextMessage(tableId: string, userId: string, messageTe
 	return txtMsg;
 }
 
-// Send a system notification (system_message + feed_item)
-export async function sendSystemNotification(tableId: string, messageText: string) {
-	// 1. Insert into system_messages
-	const { data: sysMsg, error: sysError } = await supabase
-		.from('system_messages')
-		.insert([{ message_text: messageText }])
-		.select()
-		.single();
-	if (sysError) throw sysError;
-	// 2. Insert into feed_items
-	const { error: feedError } = await supabase
-		.from('feed_items')
-		.insert([
-			{
-				table_id: tableId,
-				item_type: 'system_message',
-				system_message_id: (sysMsg as any).system_message_id,
-				item_created_at: (sysMsg as any).generated_at,
-			},
-		]);
-	if (feedError) throw feedError;
-	return sysMsg;
-}
-
 // Realtime: subscribe to member changes for a table
 export function subscribeToTableMembers(
 	tableId: string,
