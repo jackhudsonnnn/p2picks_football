@@ -9,13 +9,7 @@ import { subscribeToBetProposals } from '@entities/index';
 export function useTickets(userId?: string) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [now, setNow] = useState<number>(Date.now());
-
-  // live timer
-  useEffect(() => {
-    const i = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(i);
-  }, []);
+  // Removed global ticking 'now' to prevent unnecessary list re-renders (which closed open dropdowns)
 
   const refresh = () => {
     if (!userId) return;
@@ -134,5 +128,5 @@ export function useTickets(userId?: string) {
     }
   };
 
-  return { tickets, loading, now, counts, refresh, changeGuess };
+  return { tickets, loading, counts, refresh, changeGuess };
 }

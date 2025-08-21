@@ -63,7 +63,7 @@ export const AccountPage: React.FC = () => {
     } catch (err) {
       alert("An unexpected error occurred while adding friend.");
     } finally {
-      setIsUpdatingUsername(false); // Or the new loading state for adding friend
+      setIsUpdatingUsername(false);
     }
   };
 
