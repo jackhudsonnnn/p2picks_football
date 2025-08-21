@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '../../../shared/api/supabaseClient';
+import { supabase } from '@shared/api/supabaseClient';
 import { getUserTickets } from '../service';
 import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
-import { subscribeToBetProposals } from '@entities/table/service';
+import { subscribeToBetProposals } from '@entities/index';
 
 export function useTickets(userId?: string) {
   const [tickets, setTickets] = useState<Ticket[]>([]);

@@ -1,11 +1,10 @@
 // client/src/pages/AccountPage.tsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "../../shared/api/supabaseClient"; // Ensure this path is correct
+import { supabase } from "@shared/api/supabaseClient";
 import type { User } from "@supabase/supabase-js";
 import "./AccountPage.css";
 
-// Define types for profile and friend
 interface UserProfile {
   user_id: string;
   username: string | null;
@@ -56,19 +55,16 @@ export const AccountPage: React.FC = () => {
 
       if (profileError) {
         console.error("Error fetching user profile:", profileError);
-        // Potentially handle case where profile doesn't exist yet for a new auth user
-        // For now, we assume a profile row is created (e.g., via trigger)
         setUserProfile({ user_id: user.id, username: null, email: user.email });
       } else if (profileData) {
         setUserProfile(profileData as UserProfile);
         if (profileData.username) {
-          setShowUsernameForm(false); // Don't show form if username exists
+          setShowUsernameForm(false);
         } else {
-          setShowUsernameForm(true); // Show form if no username
+          setShowUsernameForm(true);
         }
       }
     } else {
-      // No user logged in, potentially redirect or show login message
       console.log("No authenticated user found.");
     }
     setLoadingProfile(false);

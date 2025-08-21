@@ -19,7 +19,7 @@ const getInitials = (name: string) => {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 };
 
-const MemberList: React.FC<MemberListProps> = ({ members, hostUserId, currentUserId }) => (
+export const MemberList: React.FC<MemberListProps> = ({ members, hostUserId, currentUserId }) => (
   <section className="members-container" aria-label="Table members">
     <div className="members-list">
       <header className="members-header">
@@ -55,5 +55,3 @@ const MemberList: React.FC<MemberListProps> = ({ members, hostUserId, currentUse
     </div>
   </section>
 );
-
-export default MemberList;

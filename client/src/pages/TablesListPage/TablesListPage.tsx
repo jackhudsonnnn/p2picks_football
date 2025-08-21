@@ -2,8 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
-import { createTable, getUserTables } from "@entities/table/service";
-import { getUsernamesByIds } from "@entities/user/service";
+import { createTable, getUserTables, getUsernamesByIds } from "@entities/index";
 import "./TablesListPage.css";
 
 // Import generalized components

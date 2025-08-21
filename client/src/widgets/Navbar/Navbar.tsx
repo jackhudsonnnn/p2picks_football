@@ -33,7 +33,7 @@ export const Navbar: React.FC = () => {
                   />
                   <span className="nav-text">Tables</span>
                 </Link>
-                <Link to="/bets-history" className="nav-link">
+                <Link to="/tickets" className="nav-link">
                   <img src={TicketsIcon} alt="Tickets" className="nav-icon" />
                   <span className="nav-text">Tickets</span>
                 </Link>

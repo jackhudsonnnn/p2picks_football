@@ -22,7 +22,7 @@ interface TextMessageProps {
   formatTimestamp: (timestamp: string) => string;
 }
 
-const TextMessage: React.FC<TextMessageProps> = ({ message, isOwnMessage, formatTimestamp }) => {
+export const TextMessage: React.FC<TextMessageProps> = ({ message, isOwnMessage, formatTimestamp }) => {
   if (message.type === "bet_proposal") {
     const betMsg = message as BetProposalMessage;
     return <BetProposalCard message={betMsg} isOwnMessage={isOwnMessage} />;
@@ -44,5 +44,3 @@ const TextMessage: React.FC<TextMessageProps> = ({ message, isOwnMessage, format
     </div>
   );
 };
-
-export default TextMessage;

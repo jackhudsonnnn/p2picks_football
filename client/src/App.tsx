@@ -16,7 +16,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/tables" element={<TablesListPage />} />
           <Route path="/tables/:tableId" element={<TableView />} />
-          <Route path="/bets-history" element={<TicketsPage />} />
+          <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

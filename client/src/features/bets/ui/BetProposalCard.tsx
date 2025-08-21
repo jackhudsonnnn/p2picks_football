@@ -91,7 +91,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message, isOwnMessage
       await getBetProposalDetails(message.betProposalId);
       await acceptBetProposal({ betId: message.betProposalId, tableId: message.tableId, userId: user.id });
       setAccepted(true);
-      navigate('/bets-history');
+      navigate('/tickets');
     } catch (error: any) {
       alert(`Failed to accept bet: ${error?.message ?? 'Unknown error'}`);
     }
@@ -99,7 +99,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message, isOwnMessage
 
   const onBetClick = async () => {
     if (accepted || phase !== 'active') {
-      navigate('/bets-history');
+      navigate('/tickets');
       return;
     }
     await handleAccept();

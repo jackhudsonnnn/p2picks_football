@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import TextMessage, { Message } from '../TextMessage/TextMessage';
+import { TextMessage, Message } from '../TextMessage/TextMessage';
 import './ChatArea.css';
 
 interface ChatAreaProps {

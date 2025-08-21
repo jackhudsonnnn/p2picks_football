@@ -8,7 +8,7 @@ interface NavigationProps {
   isHost: boolean;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, memberCount, isHost }) => (
+export const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, memberCount, isHost }) => (
   <nav className="table-navigation" aria-label="Table navigation">
     <div className="tab-section">
       <div className="tab-buttons" role="tablist">
@@ -21,5 +21,3 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, member
     </div>
   </nav>
 );
-
-export default Navigation;

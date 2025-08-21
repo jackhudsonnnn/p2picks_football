@@ -4,16 +4,16 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "./TableView.css";
 import { useAuth } from "@features/auth";
-import { getTable, sendTextMessage, subscribeToTableMembers } from "@entities/table/service";
-import { createBetProposal } from "@/features/bets/service";
+import { getTable, sendTextMessage, subscribeToTableMembers } from "@entities/index";
+import { createBetProposal } from "@features/bets/service";
 import { ChatArea } from "@widgets/index";
-import MemberList from "@/widgets/Table/MemberList/memberList";
-import HostControls from "@/widgets/Table/HostControls/hostControls";
-import Navigation from "@/widgets/Table/Navigation/Navigation";
+import { MemberList } from "@widgets/Table/MemberList/memberList";
+import { HostControls } from "@widgets/Table/HostControls/hostControls";
+import { Navigation } from "@widgets/Table/Navigation/Navigation";
 import { BetProposalForm } from "@widgets/index";
 import type { BetProposalFormValues } from "@widgets/Table/BetProposalForm/BetProposalForm";
 import { Modal } from "@shared/ui";
-import { useTableFeed } from "../../features/bets/hooks/useTableFeed";
+import { useTableFeed } from "@features/bets/hooks/useTableFeed";
 
 export const TableView: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
