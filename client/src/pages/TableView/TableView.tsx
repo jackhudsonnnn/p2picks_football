@@ -1,21 +1,21 @@
-// client/src/pages/PrivateTableView.tsx
+// client/src/pages/TableView.tsx
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import "./styles/PrivateTableView.css";
-import { useAuth } from "../hooks/useAuth";
-import { getPrivateTable, sendTextMessage, subscribeToTableMembers } from "@entities/table/service";
+import "./TableView.css";
+import { useAuth } from "@features/auth";
+import { getTable, sendTextMessage, subscribeToTableMembers } from "@entities/table/service";
 import { createBetProposal } from "@/features/bets/service";
-// ChatMessage type now handled internally by useTableFeed
-import ChatArea from "@widgets/PrivateTable/chat/ChatArea";
-import MemberList from "@widgets/PrivateTable/memberList";
-import HostControls from "@widgets/PrivateTable/hostControls";
-import Navigation from "@widgets/PrivateTable/Navigation";
-import BetProposalForm, { BetProposalFormValues } from "@widgets/PrivateTable/chat/BetProposalForm";
+import { ChatArea } from "@widgets/index";
+import MemberList from "@/widgets/Table/MemberList/memberList";
+import HostControls from "@/widgets/Table/HostControls/hostControls";
+import Navigation from "@/widgets/Table/Navigation/Navigation";
+import { BetProposalForm } from "@widgets/index";
+import type { BetProposalFormValues } from "@widgets/Table/BetProposalForm/BetProposalForm";
 import { Modal } from "@shared/ui";
-import { useTableFeed } from "../features/bets/hooks/useTableFeed";
+import { useTableFeed } from "../../features/bets/hooks/useTableFeed";
 
-export const PrivateTableView: React.FC = () => {
+export const TableView: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"chat" | "members" | "controls">("chat");
@@ -31,7 +31,7 @@ export const PrivateTableView: React.FC = () => {
     if (!tableId || !user) return;
     setLoading(true);
     setError(null);
-    getPrivateTable(tableId)
+    getTable(tableId)
       .then((data) => setTable(data))
       .catch(() => setError("Could not load table. Please try again."))
       .finally(() => setLoading(false));
@@ -45,7 +45,7 @@ export const PrivateTableView: React.FC = () => {
     // Members: update table members on insert/delete
     const chMembers = subscribeToTableMembers(tableId, async () => {
       try {
-        const updated = await getPrivateTable(tableId);
+        const updated = await getTable(tableId);
         setTable(updated);
       } catch {}
     });
@@ -97,7 +97,7 @@ export const PrivateTableView: React.FC = () => {
   const isHost = table.host_user_id === user.id;
 
   return (
-    <main className="private-table-container">
+    <main className="table-container">
       {/* <Header tableName={table.table_name} /> */}
       <Navigation
         activeTab={activeTab}

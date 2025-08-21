@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from "@features/auth";
 import { acceptBetProposal, getBetProposalDetails, hasUserAcceptedBet } from '../service';
 import type { BetProposalMessage } from '../../../types/api';
 import './BetProposalCard.css';

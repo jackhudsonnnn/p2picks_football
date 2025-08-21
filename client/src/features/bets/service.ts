@@ -117,7 +117,7 @@ export async function getUserTickets(userId: string) {
         total_pot,
         bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_name, player2_name, stat, resolve_after),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id),
-        private_tables:table_id (table_name)
+        tables:table_id (table_name)
       )
     `
     )

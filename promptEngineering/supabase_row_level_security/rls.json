@@ -147,34 +147,6 @@
     "check_expression": null
   },
   {
-    "table_name": "private_tables",
-    "policy_name": "Allow authenticated insert for private tables",
-    "command": "INSERT",
-    "using_expression": null,
-    "check_expression": "(host_user_id = auth.uid())"
-  },
-  {
-    "table_name": "private_tables",
-    "policy_name": "Allow host to delete their private table",
-    "command": "DELETE",
-    "using_expression": "(host_user_id = auth.uid())",
-    "check_expression": null
-  },
-  {
-    "table_name": "private_tables",
-    "policy_name": "Allow host to update their private table",
-    "command": "UPDATE",
-    "using_expression": "(host_user_id = auth.uid())",
-    "check_expression": "(host_user_id = auth.uid())"
-  },
-  {
-    "table_name": "private_tables",
-    "policy_name": "Allow members and host to read private table details",
-    "command": "SELECT",
-    "using_expression": "((host_user_id = auth.uid()) OR is_user_member_of_table(table_id, auth.uid()))",
-    "check_expression": null
-  },
-  {
     "table_name": "system_messages",
     "policy_name": "System notifications deletes are restricted",
     "command": "DELETE",
@@ -227,7 +199,7 @@
     "table_name": "table_members",
     "policy_name": "Allow hosts to remove members from their tables",
     "command": "DELETE",
-    "using_expression": "(EXISTS ( SELECT 1\n   FROM private_tables pt\n  WHERE ((pt.table_id = table_members.table_id) AND (pt.host_user_id = auth.uid()))))",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM tables pt\n  WHERE ((pt.table_id = table_members.table_id) AND (pt.host_user_id = auth.uid()))))",
     "check_expression": null
   },
   {
@@ -242,6 +214,34 @@
     "policy_name": "Allow members to read own membership and hosts to read their ta",
     "command": "SELECT",
     "using_expression": "((user_id = auth.uid()) OR is_user_member_of_table(table_id, auth.uid()))",
+    "check_expression": null
+  },
+  {
+    "table_name": "tables",
+    "policy_name": "Allow authenticated insert for tables",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "(host_user_id = auth.uid())"
+  },
+  {
+    "table_name": "tables",
+    "policy_name": "Allow host to delete their table",
+    "command": "DELETE",
+    "using_expression": "(host_user_id = auth.uid())",
+    "check_expression": null
+  },
+  {
+    "table_name": "tables",
+    "policy_name": "Allow host to update their table",
+    "command": "UPDATE",
+    "using_expression": "(host_user_id = auth.uid())",
+    "check_expression": "(host_user_id = auth.uid())"
+  },
+  {
+    "table_name": "tables",
+    "policy_name": "Allow members and host to read table details",
+    "command": "SELECT",
+    "using_expression": "((host_user_id = auth.uid()) OR is_user_member_of_table(table_id, auth.uid()))",
     "check_expression": null
   },
   {

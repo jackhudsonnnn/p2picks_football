@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import "./styles/TicketsPage.css";
+import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import { supabase } from "../shared/api/supabaseClient";
+import { useAuth } from "@features/auth";
+import { supabase } from "../../shared/api/supabaseClient";
 
 // Import generalized components
-import TicketCard from "../features/bets/ui/TicketCard";
+import TicketCard from "../../features/bets/ui/TicketCard";
 import { SearchBar, FilterBar, type FilterOption, PageHeader } from "@shared/ui";
-import { useTickets } from "../features/bets/hooks/useTickets";
+import { useTickets } from "../../features/bets/hooks/useTickets";
 // Ticket type comes from feature module but not needed here directly
 
 // Ticket-specific interfaces
@@ -59,7 +59,7 @@ export const TicketsPage = () => {
   };
 
   const handleEnterTable = (tableId: string) => {
-    navigate(`/private-tables/${tableId}`);
+    navigate(`/tables/${tableId}`);
   };
 
   const handlePageChange = (newPage: number) => {

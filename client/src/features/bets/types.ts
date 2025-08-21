@@ -36,7 +36,7 @@ export interface BetRecord {
   total_pot?: number | null;
   bet_mode_best_of_best?: any;
   bet_mode_one_leg_spread?: any;
-  private_tables?: { table_name?: string } | null;
+  tables?: { table_name?: string } | null;
 }
 
 // Ticket (participation) normalized for UI

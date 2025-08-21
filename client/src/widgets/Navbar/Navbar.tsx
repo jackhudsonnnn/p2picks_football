@@ -1,11 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@features/auth";
 import "./Navbar.css";
 
-// Import icons
-import PublicTablesIcon from "../../assets/PublicTablesIcon.png";
-import PrivateTablesIcon from "../../assets/PrivateTablesIcon.png";
+import TablesIcon from "../../assets/TablesIcon.png";
 import TicketsIcon from "../../assets/TicketsIcon.png";
 import AccountIcon from "../../assets/AccountIcon.png";
 
@@ -27,18 +25,10 @@ export const Navbar: React.FC = () => {
                   <img src={AccountIcon} alt="Account" className="nav-icon" />
                   <span className="nav-text">Account</span>
                 </Link>
-                <Link to="/public-tables" className="nav-link">
+                <Link to="/tables" className="nav-link">
                   <img
-                    src={PublicTablesIcon}
-                    alt="Public Tables"
-                    className="nav-icon"
-                  />
-                  <span className="nav-text">Tables</span>
-                </Link>
-                <Link to="/private-tables" className="nav-link">
-                  <img
-                    src={PrivateTablesIcon}
-                    alt="Private Tables"
+                    src={TablesIcon}
+                    alt="Tables"
                     className="nav-icon"
                   />
                   <span className="nav-text">Tables</span>

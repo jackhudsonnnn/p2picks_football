@@ -24,10 +24,6 @@
     "function_definition": "CREATE OR REPLACE FUNCTION public.is_bet_open(p_bet_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE\nAS $function$\r\n  SELECT EXISTS (\r\n    SELECT 1\r\n    FROM public.bet_proposals bp\r\n    WHERE bp.bet_id = p_bet_id\r\n      AND bp.bet_status = 'active'::text\r\n      AND now() < bp.close_time\r\n  );\r\n$function$\n"
   },
   {
-    "function_name": "get_table_host_user_id",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.get_table_host_user_id(p_table_id uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n    v_host_user_id uuid;\r\nBEGIN\r\n    SELECT host_user_id INTO v_host_user_id\r\n    FROM private_tables pt -- Assumes 'private_tables' table exists\r\n    WHERE pt.table_id = p_table_id;\r\n    RETURN v_host_user_id;\r\nEND;\r\n$function$\n"
-  },
-  {
     "function_name": "handle_new_user",
     "function_definition": "CREATE OR REPLACE FUNCTION public.handle_new_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  insert into public.users (user_id, email)\r\n  values (new.id, new.email);\r\n  return new;\r\nend;\r\n$function$\n"
   },
@@ -36,12 +32,16 @@
     "function_definition": "CREATE OR REPLACE FUNCTION public.is_table_member(p_table_id uuid, p_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN EXISTS (\r\n        SELECT 1\r\n        FROM table_members tm -- Assumes 'table_members' table exists as per your schema\r\n        WHERE tm.table_id = p_table_id AND tm.user_id = p_user_id\r\n    );\r\nEND;\r\n$function$\n"
   },
   {
-    "function_name": "is_user_host_of_table",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.is_user_host_of_table(p_table_id uuid, p_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n  RETURN EXISTS (\r\n    SELECT 1\r\n    FROM public.private_tables pt\r\n    WHERE pt.table_id = p_table_id AND pt.host_user_id = p_user_id\r\n  );\r\nEND;\r\n$function$\n"
-  },
-  {
     "function_name": "my_trigger_function",
     "function_definition": "CREATE OR REPLACE FUNCTION public.my_trigger_function()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n  -- Your custom logic goes here\r\n  -- e.g., manipulating NEW or OLD data\r\n  RETURN NEW; -- Or RETURN OLD, or NULL\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "get_table_host_user_id",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.get_table_host_user_id(p_table_id uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$DECLARE\r\n    v_host_user_id uuid;\r\nBEGIN\r\n    SELECT host_user_id INTO v_host_user_id\r\n    FROM tables pt \r\n    WHERE pt.table_id = p_table_id;\r\n    RETURN v_host_user_id;\r\nEND;$function$\n"
+  },
+  {
+    "function_name": "is_user_host_of_table",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.is_user_host_of_table(p_table_id uuid, p_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\nAS $function$BEGIN\r\n  RETURN EXISTS (\r\n    SELECT 1\r\n    FROM public.tables pt\r\n    WHERE pt.table_id = p_table_id AND pt.host_user_id = p_user_id\r\n  );\r\nEND;$function$\n"
   },
   {
     "function_name": "set_bet_close_time",

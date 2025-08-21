@@ -30,7 +30,7 @@ export function mapParticipationRowToTicket(row: any): Ticket {
     betId: bet?.bet_id,
     id: row.participation_id,
     tableId: row.table_id,
-    tableName: (bet?.private_tables as any)?.table_name || '',
+    tableName: (bet?.tables as any)?.table_name || '',
     createdAt: bet?.proposal_time || row.participation_time,
     closedAt: bet?.resolution_time ?? null,
     state: betStatus,

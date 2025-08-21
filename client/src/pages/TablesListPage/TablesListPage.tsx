@@ -1,10 +1,10 @@
-// filepath: /home/jhudson/projects/test1/p2picks/client/src/pages/PrivateTablesListPage.tsx
+// filepath: /home/jhudson/projects/test1/p2picks/client/src/pages/TablesListPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import { createPrivateTable, getUserPrivateTables } from "@entities/table/service";
+import { useAuth } from "@features/auth";
+import { createTable, getUserTables } from "@entities/table/service";
 import { getUsernamesByIds } from "@entities/user/service";
-import "./styles/PrivateTablesListPage.css";
+import "./TablesListPage.css";
 
 // Import generalized components
 import { Card, SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@shared/ui";
@@ -19,7 +19,7 @@ interface SupabaseTable {
   host_username?: string; 
 }
 
-export const PrivateTablesListPage: React.FC = () => {
+export const TablesListPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [allTables, setAllTables] = useState<SupabaseTable[]>([]);
@@ -33,7 +33,7 @@ export const PrivateTablesListPage: React.FC = () => {
   // Fetch tables from Supabase
   useEffect(() => {
     if (!user) return;
-    getUserPrivateTables(user.id)
+    getUserTables(user.id)
       .then(async (tables) => {
         const hostIds = Array.from(new Set(tables.map(t => t.host_user_id)));
         const idToUsername = await getUsernamesByIds(hostIds);
@@ -72,11 +72,11 @@ export const PrivateTablesListPage: React.FC = () => {
       return;
     }
     try {
-      const table = await createPrivateTable(newTableName, user.id);
+      const table = await createTable(newTableName, user.id);
       setAllTables([table, ...allTables]);
       setIsCreateModalOpen(false);
       setNewTableName("");
-      navigate(`/private-tables/${table.table_id}`);
+      navigate(`/tables/${table.table_id}`);
     } catch (err: any) {
       alert("Failed to create table: " + (err.message || err));
     }
@@ -155,7 +155,7 @@ export const PrivateTablesListPage: React.FC = () => {
   const renderTableFooterRight = (table: SupabaseTable) => (
     <button
       className="view-table-btn"
-      onClick={() => navigate(`/private-tables/${table.table_id}`)}
+      onClick={() => navigate(`/tables/${table.table_id}`)}
     >
       View Table →
     </button>
@@ -173,7 +173,7 @@ export const PrivateTablesListPage: React.FC = () => {
   );
 
   return (
-    <div className="private-tables-list-page">
+    <div className="tables-list-page">
       {/* Page Header with Create Button */}
       <PageHeader
         title="My Tables"

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import TextMessage, { Message } from './TextMessage';
+import TextMessage, { Message } from '../TextMessage/TextMessage';
 import './ChatArea.css';
 
 interface ChatAreaProps {
@@ -9,7 +9,7 @@ interface ChatAreaProps {
   onProposeBet: () => void;
 }
 
-const ChatArea: React.FC<ChatAreaProps> = ({ 
+export const ChatArea: React.FC<ChatAreaProps> = ({ 
   messages, 
   currentUserId, 
   onSendMessage, 
@@ -107,6 +107,5 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       </div>
     </div>
   );
-};
 
-export default ChatArea;
+};

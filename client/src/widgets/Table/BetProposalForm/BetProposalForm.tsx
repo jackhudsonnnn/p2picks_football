@@ -43,7 +43,7 @@ const STATS_OPTIONS = [
   { value: "Touchdowns", label: "Touchdowns" },
 ] as const;
 
-const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) => {
+export const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) => {
   const [step, setStep] = useState(0);
   const [mode, setMode] = useState<ModeKey | "">("");
   const [selectedGameId, setSelectedGameId] = useState("");
@@ -275,5 +275,3 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     </div>
   );
 };
-
-export default BetProposalForm;

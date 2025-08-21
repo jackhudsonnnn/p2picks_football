@@ -1,10 +1,10 @@
 import { supabase } from '@shared/api/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
-// Create a new private table and add the creator as a member
-export async function createPrivateTable(tableName: string, hostUserId: string) {
+// Create a new table and add the creator as a member
+export async function createTable(tableName: string, hostUserId: string) {
 	const { data: table, error } = await supabase
-		.from('private_tables')
+		.from('tables')
 		.insert([{ table_name: tableName, host_user_id: hostUserId }])
 		.select()
 		.single();
@@ -17,28 +17,28 @@ export async function createPrivateTable(tableName: string, hostUserId: string) 
 	return table;
 }
 
-// Fetch all private tables for the current user (where user is a member)
-export async function getUserPrivateTables(userId: string) {
+// Fetch all tables for the current user (where user is a member)
+export async function getUserTables(userId: string) {
 	const { data, error } = await supabase
 		.from('table_members')
-		.select('table_id, private_tables(*)')
+		.select('table_id, tables(*)')
 		.eq('user_id', userId);
 	if (error) throw error;
-	return (data || []).map((row: any) => row.private_tables);
+	return (data || []).map((row: any) => row.tables);
 }
 
-// Fetch a private table by ID (with members)
-export async function getPrivateTable(tableId: string) {
+// Fetch a table by ID (with members)
+export async function getTable(tableId: string) {
 	const { data: table, error } = await supabase
-		.from('private_tables')
+		.from('tables')
 		.select('*, table_members(*, users(*))')
 		.eq('table_id', tableId)
 		.single();
 	if (error) throw error;
-	// Ensure table_members is always an array
 	if (table && !table.table_members) {
 		(table as any).table_members = [];
 	}
+
 	return table;
 }
 

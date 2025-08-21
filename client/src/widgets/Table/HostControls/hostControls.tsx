@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "@shared/ui";
 import FriendsList from "@/features/social/ui/FriendsList";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@features/auth";
 import { addTableMember, removeTableMember } from "@entities/table/service";
 import { supabase } from "@shared/api/supabaseClient";
 import "./hostControls.css";
@@ -36,7 +36,7 @@ const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
     if (!tableId) return;
     (async () => {
       const { data: table } = await supabase
-        .from("private_tables")
+        .from("tables")
         .select("*, table_members(*, users(*))")
         .eq("table_id", tableId)
         .single();

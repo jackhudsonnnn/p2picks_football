@@ -1,5 +1,5 @@
 /* Main container */
-.private-tables-list-page {
+.tables-list-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
@@ -199,7 +199,7 @@
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .private-tables-list-page {
+  .tables-list-page {
     padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md);
   }
   
