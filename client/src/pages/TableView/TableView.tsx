@@ -37,6 +37,7 @@ export const TableView: React.FC = () => {
         setActiveTab={setActiveTab}
         memberCount={members.length}
         isHost={isHost}
+  tableName={table.table_name}
       />
       <section className="table-content" aria-live="polite">
         {activeTab === "chat" && (

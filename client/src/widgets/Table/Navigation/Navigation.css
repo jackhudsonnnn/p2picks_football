@@ -22,11 +22,24 @@
   align-items: center;
 }
 
+.table-name {
+  flex: 1 1 auto;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-light);
+  font-size: var(--font-size-md);
+  padding: 0 var(--spacing-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .tab-buttons {
   display: flex;
   overflow-x: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  justify-content: flex-end;
 }
 
 .tab-buttons::-webkit-scrollbar {
