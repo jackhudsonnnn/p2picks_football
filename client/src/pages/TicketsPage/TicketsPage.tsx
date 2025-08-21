@@ -15,7 +15,7 @@ export const TicketsPage: React.FC = () => {
   const ticketsPerPage = 6;
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { tickets, loading, now, counts, changeGuess } = useTickets(user?.id);
+  const { tickets, loading, counts, changeGuess } = useTickets(user?.id);
 
   const handleGuessChange = async (ticketId: string, newGuess: string) => {
     try { await changeGuess(ticketId, newGuess); } catch (e: any) { alert(`Failed to update your guess. ${e?.message ?? ''}`.trim()); }
@@ -94,7 +94,6 @@ export const TicketsPage: React.FC = () => {
             <TicketCard
               key={ticket.id}
               ticket={ticket}
-              now={now}
               onChangeGuess={handleGuessChange}
               onEnterTable={handleEnterTable}
             />
