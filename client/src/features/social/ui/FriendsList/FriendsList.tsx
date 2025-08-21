@@ -12,10 +12,10 @@ interface FriendsListProps {
 }
 
 const FriendsList: React.FC<FriendsListProps> = ({ friends, selectedIds, onToggle }) => (
-  <div style={{ maxHeight: 300, overflowY: "auto" }}>
-    {friends.length === 0 && <div>No friends found.</div>}
+  <div className="friends-list-container">
+    {friends.length === 0 && <div className="friends-list-empty">No friends found.</div>}
     {friends.map(friend => (
-      <label key={friend.user_id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+      <label key={friend.user_id} className="friends-list-label">
         <input
           type="checkbox"
           checked={selectedIds.has(friend.user_id)}

@@ -1,0 +1,113 @@
+.username-section { 
+    margin-bottom: var(--space-xl); 
+}
+
+.current-username { 
+    margin-bottom: var(--space-md); 
+}
+
+.change-username-btn { 
+    margin-top: var(--space-md); 
+}
+
+.username-form { 
+    display: flex; 
+    gap: var(--space-md); 
+    margin-top: var(--space-md); 
+}
+
+.profile-input { 
+    flex: 1; 
+    padding: 0.75rem; 
+    border-radius: var(--radius-md); 
+    border: 1px solid var(--neutral-600); 
+    background-color: var(--neutral-700); 
+    color: var(--neutral-100); 
+    transition: border-color .3s ease, box-shadow .3s ease; 
+    width: 100%; 
+}
+
+.profile-input::placeholder { 
+    color: var(--neutral-400); 
+}
+
+.profile-input:focus { 
+    border-color: var(--primary-500); 
+    outline:none; 
+    box-shadow: var(--shadow-glow); 
+}
+
+.profile-input-invalid { 
+    background-color: rgba(244,67,54,0.15)!important; 
+    border-color: var(--accent-power)!important; 
+}
+
+.profile-input-invalid:focus { 
+    border-color: var(--accent-power)!important; 
+    box-shadow: var(--shadow-power)!important; 
+}
+
+.form-buttons { 
+    display: flex; 
+    gap: var(--space-md); 
+}
+
+.btn-primary { 
+    display: inline-block; 
+    padding: 0.75rem 1.5rem; 
+    border-radius: var(--radius-md); 
+    font-weight: 500; 
+    cursor: pointer; 
+    transition: all var(--transition-normal); 
+    border: 1px solid var(--neutral-500); 
+    background-color: var(--primary-700); 
+    color: var(--neutral-200); 
+}
+
+.btn-primary:hover { 
+    color: var(--neutral-100); 
+    background-color: var(--primary-500); 
+}
+
+.btn-primary:disabled { 
+    opacity: .65; 
+    cursor: not-allowed; 
+    border-color: var(--neutral-600); 
+    color: var(--neutral-400); 
+}
+
+.btn-secondary { 
+    display: inline-block; 
+    padding: 0.75rem 1.5rem; 
+    border-radius: var(--radius-md); 
+    font-weight: 500; 
+    cursor: pointer; 
+    transition: all var(--transition-normal); 
+    border: 1px solid var(--neutral-400); 
+    background: transparent; 
+    color: var(--neutral-200); 
+}
+
+.btn-secondary:hover { 
+    border-color: var(--neutral-200); 
+    color: var(--neutral-100); 
+    background-color: var(--neutral-700); 
+}
+
+.btn-secondary:disabled { 
+    opacity: .65; 
+    cursor: not-allowed; 
+    border-color: var(--neutral-600); 
+    color: var(--neutral-400); 
+}
+
+@media (max-width: 768px) { 
+    .form-buttons { 
+        flex-direction: row; 
+        width: 100%; 
+    } 
+    
+    .form-buttons button { 
+        flex: 1; 
+    } 
+}

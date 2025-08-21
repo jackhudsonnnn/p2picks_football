@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "@shared/ui";
-import FriendsList from "@features/social/ui/FriendsList";
+import FriendsList from "@/features/social/ui/FriendsList/FriendsList";
 import { useAuth } from "@features/auth";
 import { addTableMember, removeTableMember } from "@entities/index";
 import { supabase } from "@shared/api/supabaseClient";
