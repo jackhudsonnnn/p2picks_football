@@ -21,7 +21,7 @@ export async function createTable(tableName: string, hostUserId: string) {
 export async function getUserTables(userId: string) {
 	const { data, error } = await supabase
 		.from('table_members')
-		.select('table_id, tables(*)')
+		.select('table_id, tables(*, table_members(*))')
 		.eq('user_id', userId);
 	if (error) throw error;
 	return (data || []).map((row: any) => row.tables);

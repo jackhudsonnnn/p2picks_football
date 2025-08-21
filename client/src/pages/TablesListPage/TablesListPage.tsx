@@ -95,7 +95,7 @@ export const TablesListPage: React.FC = () => {
               <div className="table-card-content" />
               <div className="table-card-footer">
                 <div className="table-activity">
-                  <span className="members-count">members</span>
+                  <span className="members-count">{table.memberCount ?? 0} members</span>
                 </div>
                 <button className="view-table-btn" onClick={() => navigate(`/tables/${table.table_id}`)}>View Table →</button>
               </div>
