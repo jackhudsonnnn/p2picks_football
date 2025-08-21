@@ -12,17 +12,33 @@ import { BetProposalForm } from "@widgets/index";
 import type { BetProposalFormValues } from "@widgets/Table/BetProposalForm/BetProposalForm";
 import { Modal } from "@shared/ui";
 import { useTableView } from "@features/tables/hooks";
+import { useTableFeed } from "@features/bets/hooks/useTableFeed";
+import { sendTextMessage } from "@entities/index";
+import { createBetProposal } from "@features/bets/service";
 
 export const TableView: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"chat" | "members" | "controls">("chat");
   const [showBetModal, setShowBetModal] = useState(false);
-  const { table, loading, error, members, isHost, chatFeed, sendMessage, proposeBet, betLoading } = useTableView(tableId, user?.id);
+  const { table, loading, error, members, isHost } = useTableView(tableId, user?.id);
+  const { messages: chatFeed, refresh: refreshFeed } = useTableFeed(tableId, Boolean(tableId && user?.id));
+  const [betLoading, setBetLoading] = useState(false);
 
   const handleProposeBet = () => setShowBetModal(true);
-  const handleBetSubmit = async (form: BetProposalFormValues) => { await proposeBet(form); setShowBetModal(false); };
+  const handleBetSubmit = async (form: BetProposalFormValues) => {
+    if (!tableId || !user) return;
+    setBetLoading(true);
+    try { await createBetProposal(tableId, user.id, form); await refreshFeed(); setShowBetModal(false); }
+    finally { setBetLoading(false); }
+  };
   const handleBetCancel = () => setShowBetModal(false);
+
+  const sendMessage = async (message: string) => {
+    if (!tableId || !user) return;
+    await sendTextMessage(tableId, user.id, message);
+    await refreshFeed();
+  };
 
   if (!user) return <div className="loading">You must be logged in to view this table.</div>;
   if (loading) return <div className="loading">Loading table...</div>;

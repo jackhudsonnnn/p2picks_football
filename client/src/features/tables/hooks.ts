@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { createTable, getTable, getUserTables, getUsernamesByIds, sendTextMessage, subscribeToTableMembers } from '@entities/index';
-import { useTableFeed } from '@features/bets/hooks/useTableFeed';
-import { createBetProposal } from '@features/bets/service';
+import { createTable, getTable, getUserTables, getUsernamesByIds, subscribeToTableMembers } from '@entities/index';
 
 export type TableListItem = {
   table_id: string;
@@ -67,9 +65,7 @@ export function useTableView(tableId?: string, userId?: string) {
   const [table, setTable] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [betLoading, setBetLoading] = useState(false);
-
-  const { messages: chatFeed, refresh: refreshFeed } = useTableFeed(tableId, Boolean(tableId && userId));
+  
 
   const refresh = useCallback(async () => {
     if (!tableId) return;
@@ -104,22 +100,5 @@ export function useTableView(tableId?: string, userId?: string) {
 
   const isHost = useMemo(() => Boolean(table && userId && table.host_user_id === userId), [table, userId]);
 
-  const sendMessage = useCallback(async (message: string) => {
-    if (!tableId || !userId) return;
-    await sendTextMessage(tableId, userId, message);
-    await refreshFeed();
-  }, [tableId, userId, refreshFeed]);
-
-  const proposeBet = useCallback(async (form: any) => {
-    if (!tableId || !userId) return;
-    setBetLoading(true);
-    try {
-      await createBetProposal(tableId, userId, form);
-      await refreshFeed();
-    } finally {
-      setBetLoading(false);
-    }
-  }, [tableId, userId, refreshFeed]);
-
-  return { table, loading, error, members, isHost, chatFeed, refreshFeed, refresh, sendMessage, proposeBet, betLoading } as const;
+  return { table, loading, error, members, isHost, refresh } as const;
 }
