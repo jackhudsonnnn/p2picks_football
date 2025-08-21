@@ -76,7 +76,7 @@ export const AccountPage: React.FC = () => {
     );
     if (!confirmRemoval) return;
 
-    setIsUpdatingUsername(true); // Re-use for loading state
+    setIsUpdatingUsername(true);
     try {
     await remove(friendToRemove.user_id);
     alert(`${friendToRemove.username} removed from friends.`);
@@ -169,7 +169,7 @@ export const AccountPage: React.FC = () => {
                   >
                     {isUpdatingUsername ? "Saving..." : "Save"}
                   </button>
-                  {userProfile.username && ( // Only show cancel if a username already exists
+                  {userProfile.username && (
                     <button
                       type="button"
                       className="btn-secondary"
