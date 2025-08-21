@@ -9,6 +9,7 @@ export type TableListItem = {
   created_at: string;
   last_activity_at: string;
   host_username?: string | null;
+  memberCount?: number;
 };
 
 export function useTablesList(userId?: string) {
@@ -31,6 +32,7 @@ export function useTablesList(userId?: string) {
         created_at: t.created_at,
         last_activity_at: t.last_activity_at ?? t.created_at,
         host_username: idToUsername[t.host_user_id] ?? null,
+  memberCount: (t.table_members || []).length,
       }));
       setTables(items);
     } catch (e: any) {
