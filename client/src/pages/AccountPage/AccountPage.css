@@ -302,17 +302,6 @@
     margin-right: var(--space-md);
     padding: var(--space-lg);
   }
-
-  .username-form,
-  .add-friend-form {
-    flex-direction: column;
-  }
-
-  .username-form,
-  .add-friend-form {
-    flex-direction: column;
-  }
-
   .form-buttons {
     display: flex;
     flex-direction: row;
@@ -322,4 +311,41 @@
   .form-buttons button {
     flex: 1;
   }
+}
+
+/* Ensure add-friend input + submit button match height and line up with the "search friends" input */
+.add-friend-form {
+  /* let the search-bar expand to fill available width */
+  align-items: stretch;
+}
+
+/* control height used for inputs/buttons on this page */
+:root {
+  --account-control-height: 44px;
+}
+
+.add-friend-form .add-friend-search {
+  flex: 1; /* make the search-bar container fill remaining space */
+}
+
+.add-friend-form .search-input.profile-input,
+.add-friend-form .add-friend-search .profile-input {
+  height: var(--account-control-height);
+  box-sizing: border-box;
+}
+
+.add-friend-form > .btn-primary,
+.add-friend-form .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--account-control-height);
+  padding: 0 1rem;
+}
+
+/* Make the stand-alone "search friends" input match the same control height */
+.account-search .search-input.profile-input,
+.account-search .profile-input {
+  height: var(--account-control-height);
+  box-sizing: border-box;
 }

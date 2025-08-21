@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import "./AccountPage.css";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends, useUsernameUpdater } from "@features/social/hooks";
+import SearchBar from "@shared/ui/SearchBar/SearchBar";
 
 export const AccountPage: React.FC = () => {
   const { user } = useAuth();
@@ -191,12 +192,13 @@ export const AccountPage: React.FC = () => {
           <section className="profile-section">
             <h3>Friends</h3>
             <form onSubmit={handleAddFriend} className="add-friend-form">
-              <input
-                type="text"
+              <SearchBar
                 value={friendUsernameToAdd}
-                onChange={(e) => setFriendUsernameToAdd(e.target.value)}
+                onChange={(v: string) => setFriendUsernameToAdd(v.replace(/[^a-zA-Z0-9_]/g, ""))}
                 placeholder="Enter friend's username"
-                className={`profile-input`} // Add invalid style if needed based on 'isFriendUsernameValid'
+                inputClassName="profile-input"
+                ariaLabel="Friend username input"
+                className="add-friend-search"
               />
               <button
                 type="submit"
@@ -209,17 +211,16 @@ export const AccountPage: React.FC = () => {
               </button>
             </form>
 
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) =>
-                setSearchTerm(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))
-              }
-              placeholder="Search friends"
-              className="profile-input"
-              style={{ marginTop: "1rem" }}
-              disabled={loadingFriends}
-            />
+            <div style={{ marginTop: "1rem" }}>
+              <SearchBar
+                value={searchTerm}
+                onChange={(v: string) => setSearchTerm(v.replace(/[^a-zA-Z0-9_]/g, ""))}
+                placeholder="Search friends"
+                inputClassName="profile-input"
+                ariaLabel="Search friends"
+                className="account-search"
+              />
+            </div>
 
             {loadingFriends ? (
               <p>Loading friends...</p>
@@ -228,7 +229,7 @@ export const AccountPage: React.FC = () => {
                 {filteredFriends.length > 0 ? (
                   filteredFriends.map((friend) => (
                     <div
-                      key={friend.user_id} // Use friend's user_id as key
+                      key={friend.user_id} 
                       className="friend-item container-primary"
                     >
                       <div className="friend-info">
