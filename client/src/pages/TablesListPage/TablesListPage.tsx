@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
-import { Card, SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@shared/ui";
+import { SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@shared/ui";
 import { useTablesList } from "@features/tables/hooks";
 
 export const TablesListPage: React.FC = () => {
@@ -81,38 +81,25 @@ export const TablesListPage: React.FC = () => {
       {filteredTables.length > 0 ? (
         <div className="tables-list">
           {currentTables.map((table) => (
-            <Card
-              key={table.table_id}
-              data={table}
-              renderHeader={() => (
-                <>
-                  <div className="table-header-left">
-                    <span className="table-name">{table.table_name}</span>
-                    <span className="table-host">Hosted by {table.host_username || table.host_user_id}</span>
-                  </div>
-                  <div className="table-header-right">
-                    <span className="activity-label">Last activity</span>
-                    <span className="activity-time">{formatDate(table.last_activity_at)}</span>
-                  </div>
-                </>
-              )}
-              renderContent={() => <></>}
-              renderActions={() => (
-                <div className="table-actions">
-                  <span className="activity-label">Created</span>
-                  <span className="activity-time">{formatDate(table.created_at)}</span>
+            <div key={table.table_id} className="table-card">
+              <div className="table-card-header">
+                <div className="table-header-left">
+                  <span className="table-name">{table.table_name}</span>
+                  <span className="table-host">Hosted by {table.host_username || table.host_user_id}</span>
                 </div>
-              )}
-              renderFooterLeft={() => (
+                <div className="table-header-right">
+                  <span className="activity-label">Last activity</span>
+                  <span className="activity-time">{formatDate(table.last_activity_at)}</span>
+                </div>
+              </div>
+              <div className="table-card-content" />
+              <div className="table-card-footer">
                 <div className="table-activity">
                   <span className="members-count">members</span>
                 </div>
-              )}
-              renderFooterRight={() => (
                 <button className="view-table-btn" onClick={() => navigate(`/tables/${table.table_id}`)}>View Table →</button>
-              )}
-              stateClass="table-card"
-            />
+              </div>
+            </div>
           ))}
         </div>
       ) : (

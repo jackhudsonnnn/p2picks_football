@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '@shared/ui';
+import './TicketCard.css';
 import type { Ticket } from '../types';
 import { modeRegistry } from '../modeRegistry';
 
@@ -35,8 +35,8 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket, now, onChangeGuess, onE
     return ticket.state.charAt(0).toUpperCase() + ticket.state.slice(1);
   })();
 
-  const renderHeader = () => (
-    <>
+  const Header = () => (
+    <div className="ticket-card-header">
       <div className="ticket-header-left">
         <span className="bet-details">{ticket.betDetails}</span>
         <span className="ticket-date">{formatDate(ticket.createdAt)}</span>
@@ -45,10 +45,14 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket, now, onChangeGuess, onE
         <span className={`ticket-status status-${displayState.toLowerCase()}`}>{displayState}</span>
         <span className="ticket-type">{ticket.tableName}</span>
       </div>
-    </>
+    </div>
   );
 
-  const renderContent = () => <span className="game-context">{ticket.modeKey}</span>;
+  const Content = () => (
+    <div className="ticket-card-content">
+      <span className="game-context">{ticket.modeKey}</span>
+    </div>
+  );
 
   const handleGuessChangeDropdown = (ticketId: string, newGuess: string) => {
     if (ticket.myGuess !== newGuess) {
@@ -58,7 +62,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket, now, onChangeGuess, onE
     }
   };
 
-  const renderFooterLeft = () => {
+  const FooterLeft = () => {
     // Timer
     let timerDisplay = '--';
     if (ticket.state === 'active' && ticket.closeTime) {
@@ -130,21 +134,25 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket, now, onChangeGuess, onE
     );
   };
 
-  const renderFooterRight = () => (
+  const FooterRight = () => (
     <button className="enter-table-btn" onClick={() => onEnterTable(ticket.tableId)}>
       View Table →
     </button>
   );
 
   return (
-    <Card
-      data={ticket}
-      renderHeader={renderHeader}
-      renderContent={renderContent}
-      renderFooterLeft={renderFooterLeft}
-      renderFooterRight={renderFooterRight}
-      stateClass={ticket.state.toLowerCase()}
-    />
+    <div className={`ticket-card state-${ticket.state.toLowerCase()}`}>
+      <Header />
+      <Content />
+      <div className="ticket-card-footer">
+        <div className="ticket-card-footer-left">
+          <FooterLeft />
+        </div>
+        <div className="ticket-card-footer-right">
+          <FooterRight />
+        </div>
+      </div>
+    </div>
   );
 };
 

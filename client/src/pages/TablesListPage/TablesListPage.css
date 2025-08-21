@@ -16,6 +16,24 @@
   margin-top: var(--spacing-lg);
 }
 
+.table-card {
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--neutral-600);
+  padding: var(--spacing-md);
+  background-color: var(--bg-surface);
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "content content"
+    "footer footer";
+  gap: var(--spacing-sm);
+  border: 1px solid var(--neutral-700);
+}
+
+.table-card-header { grid-area: header; display: flex; justify-content: space-between; align-items: flex-start; }
+.table-card-content { grid-area: content; }
+.table-card-footer { grid-area: footer; display: flex; align-items: center; justify-content: space-between; padding-top: var(--spacing-sm); border-top: 1px solid var(--neutral-700); }
+
 /* Table header styling */
 .table-header-left {
   display: flex;
