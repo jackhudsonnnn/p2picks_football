@@ -14,7 +14,7 @@ P2Picks is a peer-to-peer, democratized sports betting application built with a 
 ### The Bet Lifecycle & States
 A bet progresses through several states from its creation to its completion.
 
-1.  **Proposal:** Any usercan initiate a bet by selecting parameters. This posts the bet to their Table.
+1.  **Proposal:** Any user can initiate a bet by selecting parameters. This posts the bet to their Table.
 2.  **Participation (`Active` State):** Once proposed, the bet's timer begins. While the timer is running, the bet is **`Active`**. Members can join, and participants can change their choices.
 3.  **Lock-in (`Pending` State):** When the timer expires, choices are locked in. If the underlying game event is not yet complete, the bet is now **`Pending`**.
 4.  **Resolution (`Resolved` State):** Once the game event concludes, the bet is validated and either paid out or washed. The bet's state is now **`Resolved`**.
@@ -40,7 +40,7 @@ The platform uses a pooled betting structure where winners split the losers' con
 Implementation notes (server-first):
 - Active → Pending flips are performed server-side.
 - System messages for `pending`, `resolved`, and `washed` are emitted by database triggers.
-- Random client-side outcomes are disabled by default; server is the source of truth.
+- Server is the source of truth.
 
 ---
 

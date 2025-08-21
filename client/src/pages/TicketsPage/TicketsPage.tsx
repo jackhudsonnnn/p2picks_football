@@ -1,28 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
-import { supabase } from "../../shared/api/supabaseClient";
 import TicketCard from "../../features/bets/ui/TicketCard";
 import { SearchBar, FilterBar, type FilterOption, PageHeader } from "@shared/ui";
 import { useTickets } from "../../features/bets/hooks/useTickets";
-
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkIsMobile();
-    window.addEventListener("resize", checkIsMobile);
-
-    return () => window.removeEventListener("resize", checkIsMobile);
-  }, []);
-
-  return isMobile;
-};
+import { useIsMobile } from "@shared/hooks/useIsMobile";
 
 export const TicketsPage: React.FC = () => {
   const { user } = useAuth();
@@ -32,21 +15,10 @@ export const TicketsPage: React.FC = () => {
   const ticketsPerPage = 6;
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { tickets, loading, now, counts } = useTickets(user?.id);
+  const { tickets, loading, now, counts, changeGuess } = useTickets(user?.id);
 
   const handleGuessChange = async (ticketId: string, newGuess: string) => {
-    try {
-      const { error } = await supabase
-        .from('bet_participations')
-        .update({ user_guess: newGuess })
-        .eq('participation_id', ticketId)
-        .eq('user_id', user?.id || '')
-        .select('participation_id, user_guess')
-        .single();
-      if (error) throw error;
-    } catch (e: any) {
-      alert(`Failed to update your guess. ${e?.message ?? ''}`.trim());
-    }
+    try { await changeGuess(ticketId, newGuess); } catch (e: any) { alert(`Failed to update your guess. ${e?.message ?? ''}`.trim()); }
   };
 
   const handleEnterTable = (tableId: string) => {
