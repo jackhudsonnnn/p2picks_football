@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Modal } from "@shared/ui";
-import FriendsList from "@shared/ui/FriendsList/FriendsList";
+import { Modal } from "@/shared/widgets";
+import FriendsList from "@/shared/widgets/FriendsList/FriendsList";
 import { useAuth } from "@features/auth";
 import { addTableMember, removeTableMember } from "@entities/index";
 import { supabase } from "@shared/api/supabaseClient";
@@ -68,6 +68,7 @@ export const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
           variant="add"
           friends={friends.filter(f => !members.some(m => m.user_id === f.user_id))}
           disabled={loading}
+          addSymbol="✔"
           onAction={async (userId: string, username: string) => {
             if (!tableId) return;
             if (!window.confirm(`Are you sure you want to add ${username} to the table?`)) return;
@@ -92,6 +93,7 @@ export const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
           variant="remove"
           friends={members.filter(m => m.user_id !== user?.id)}
           disabled={loading}
+          removeSymbol="✖"
           onAction={async (userId: string, username: string) => {
             if (!tableId) return;
             if (!window.confirm(`Are you sure you want to remove ${username} from the table?`)) return;
