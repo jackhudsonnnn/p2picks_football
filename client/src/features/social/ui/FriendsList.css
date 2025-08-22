@@ -1,0 +1,86 @@
+/* Styles for the FriendsList widget (shared) - derived from AccountPage.css */
+.friends-list {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--neutral-600);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  background-color: var(--neutral-700);
+  transition: background-color 0.3s ease;
+}
+
+.friend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.friend-item:nth-child(odd) {
+  background-color: var(--neutral-500);
+}
+
+.friend-item:nth-child(even) {
+  background-color: var(--neutral-600);
+}
+
+.friend-item:hover {
+  box-shadow: 0 0 2px var(--accent-victory);
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.friend-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: nowrap;
+}
+
+.friend-username {
+  color: var(--neutral-100);
+  font-weight: 500;
+}
+
+.friend-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: var(--space-md);
+  border: 2px solid var(--neutral-600);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.friend-select-btn {
+  background: none;
+  border: 1px solid var(--neutral-400);
+  color: var(--neutral-200);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.friend-select-btn:hover {
+  border-color: var(--primary-500);
+  color: var(--text-light);
+}
+
+.friend-select-btn.selected {
+  background-color: var(--primary-500);
+  color: var(--text-light);
+  border-color: var(--primary-500);
+}
+
+.friends-list > div[role="status"] {
+  padding: var(--space-sm);
+}
