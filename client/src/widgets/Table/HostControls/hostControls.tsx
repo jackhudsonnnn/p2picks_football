@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "@shared/ui";
-import FriendsList from "@features/social/ui/FriendsList";
+import FriendsList from "@shared/ui/FriendsList/FriendsList";
 import { useAuth } from "@features/auth";
 import { addTableMember, removeTableMember } from "@entities/index";
 import { supabase } from "@shared/api/supabaseClient";
@@ -12,7 +12,6 @@ export const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
   const [showRemove, setShowRemove] = useState(false);
   const [friends, setFriends] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -47,33 +46,7 @@ export const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
     })();
   }, [tableId, showAdd, showRemove]);
 
-  const handleToggle = (userId: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(userId) ? next.delete(userId) : next.add(userId);
-      return next;
-    });
-  };
-
-  const handleAddMembers = async () => {
-    setLoading(true);
-    for (const userId of selected) {
-      await addTableMember(tableId!, userId);
-    }
-    setShowAdd(false);
-    setSelected(new Set());
-    setLoading(false);
-  };
-
-  const handleRemoveMembers = async () => {
-    setLoading(true);
-    for (const userId of selected) {
-      await removeTableMember(tableId!, userId);
-    }
-    setShowRemove(false);
-    setSelected(new Set());
-    setLoading(false);
-  };
+  // per-row actions now handle add/remove with confirmation via onAction
 
   return (
     <section className="host-controls-container" aria-label="Host controls">
@@ -91,19 +64,50 @@ export const HostControls: React.FC<{ tableId: string }> = ({ tableId }) => {
       </div>
       <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add Members">
         <FriendsList
+          mode="select"
+          variant="add"
           friends={friends.filter(f => !members.some(m => m.user_id === f.user_id))}
-          selectedIds={selected}
-          onToggle={handleToggle}
+          disabled={loading}
+          onAction={async (userId: string, username: string) => {
+            if (!tableId) return;
+            if (!window.confirm(`Are you sure you want to add ${username} to the table?`)) return;
+            setLoading(true);
+            try {
+              await addTableMember(tableId, userId);
+              // refresh handled by effect watching showAdd/showRemove; close modal
+              setShowAdd(false);
+            } catch (err) {
+              console.error(err);
+              alert('An error occurred while adding member.');
+            } finally {
+              setLoading(false);
+            }
+          }}
+          emptyMessage="No eligible friends to add."
         />
-        <button onClick={handleAddMembers} disabled={loading || selected.size === 0} className="action-button">Add Selected</button>
       </Modal>
       <Modal isOpen={showRemove} onClose={() => setShowRemove(false)} title="Remove Members">
         <FriendsList
+          mode="select"
+          variant="remove"
           friends={members.filter(m => m.user_id !== user?.id)}
-          selectedIds={selected}
-          onToggle={handleToggle}
+          disabled={loading}
+          onAction={async (userId: string, username: string) => {
+            if (!tableId) return;
+            if (!window.confirm(`Are you sure you want to remove ${username} from the table?`)) return;
+            setLoading(true);
+            try {
+              await removeTableMember(tableId, userId);
+              setShowRemove(false);
+            } catch (err) {
+              console.error(err);
+              alert('An error occurred while removing member.');
+            } finally {
+              setLoading(false);
+            }
+          }}
+          emptyMessage="No removable members."
         />
-        <button onClick={handleRemoveMembers} disabled={loading || selected.size === 0} className="action-button">Remove Selected</button>
       </Modal>
     </section>
   );
