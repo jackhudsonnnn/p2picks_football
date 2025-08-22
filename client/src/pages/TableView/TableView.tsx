@@ -10,7 +10,7 @@ import { HostControls } from "@widgets/Table/HostControls/hostControls";
 import { Navigation } from "@widgets/Table/Navigation/Navigation";
 import { BetProposalForm } from "@widgets/index";
 import type { BetProposalFormValues } from "@widgets/Table/BetProposalForm/BetProposalForm";
-import { Modal } from "@shared/ui";
+import { Modal } from "@/shared/widgets";
 import { useTableView } from "@features/tables/hooks";
 import { useTableFeed } from "@features/bets/hooks/useTableFeed";
 import { sendTextMessage } from "@entities/index";

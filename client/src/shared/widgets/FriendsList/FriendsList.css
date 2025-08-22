@@ -1,0 +1,156 @@
+/* Shared Friends List Styles (used across account page + host control modals) */
+
+.friends-list-shared {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--space-sm, 8px);
+  background: var(--neutral-700);
+  border: 1px solid var(--neutral-600);
+  border-radius: var(--radius-md, 8px);
+}
+
+.friends-list-shared.empty {
+  color: var(--neutral-400);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.friend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm, 8px) var(--space-md, 12px);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--neutral-600);
+  gap: var(--space-md, 12px);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease,
+    transform 0.15s ease;
+  text-align: left;
+}
+
+.friend-row:nth-child(odd) {
+  background: var(--neutral-500);
+}
+.friend-row:nth-child(even) {
+  background: var(--neutral-600);
+}
+
+.friend-row-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 12px);
+}
+
+.friend-row-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--neutral-600);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.friend-row-username {
+  color: var(--neutral-100);
+  font-weight: 500;
+}
+
+/* Selectable variant */
+.friends-list-shared.selectable .friend-row.action {
+  cursor: pointer;
+  border: 1px solid transparent;
+  /* background removed so base odd/even zebra striping shows */
+}
+
+/* Re-assert zebra striping explicitly for clarity (only when not selected) */
+.friends-list-shared.selectable
+  .friend-row.action:not(.selected):nth-child(odd) {
+  background: var(--neutral-500);
+}
+.friends-list-shared.selectable
+  .friend-row.action:not(.selected):nth-child(even) {
+  background: var(--neutral-600);
+}
+
+.friends-list-shared.selectable .friend-row.action:hover {
+  box-shadow: 0 0 2px var(--accent-victory);
+}
+
+.friends-list-shared.selectable .friend-row.action.selected {
+  background: var(--neutral-400);
+  border-color: var(--accent-victory);
+}
+
+.friend-row-symbol {
+  font-size: 1.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, transform 0.18s ease, color 0.2s ease;
+  color: var(--neutral-300);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* hover: slightly larger and more visible; color depends on variant */
+.friend-row.action:hover .friend-row-symbol {
+  opacity: 1;
+  transform: scale(1.15);
+}
+.friend-row.action:hover .friend-row-symbol.remove {
+  color: var(--accent-power);
+}
+.friend-row.action:hover .friend-row-symbol.add {
+  color: var(--accent-victory);
+}
+
+/* selected/pressed: larger and highlighted by variant */
+.friends-list-shared.selectable
+  .friend-row.action.selected
+  .friend-row-symbol.remove,
+.friends-list-shared.selectable
+  .friend-row.action[aria-pressed="true"]
+  .friend-row-symbol.remove {
+  transform: scale(1.45);
+  color: var(--accent-power);
+  opacity: 1;
+}
+.friends-list-shared.selectable
+  .friend-row.action.selected
+  .friend-row-symbol.add,
+.friends-list-shared.selectable
+  .friend-row.action[aria-pressed="true"]
+  .friend-row-symbol.add {
+  transform: scale(1.45);
+  color: var(--accent-victory);
+  opacity: 1;
+}
+
+/* also give a subtle avatar pop on selected to match account page enlargement */
+.friends-list-shared.selectable .friend-row.action.selected .friend-row-avatar,
+.friends-list-shared.selectable
+  .friend-row.action[aria-pressed="true"]
+  .friend-row-avatar {
+  transform: scale(1.06);
+  border-color: var(--accent-power);
+}
+
+.friend-row.action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .friend-row {
+    padding: 6px 10px;
+  }
+  .friend-row-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  .friend-row-symbol {
+    font-size: 1rem;
+  }
+}

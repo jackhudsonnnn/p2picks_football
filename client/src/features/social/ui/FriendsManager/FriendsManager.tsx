@@ -1,23 +1,19 @@
 import React, { useState, useMemo } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends } from "../../hooks";
-import SearchBar from "@shared/ui/SearchBar/SearchBar";
+import SearchBar from "@/shared/widgets/SearchBar/SearchBar";
+import FriendsList from "@/shared/widgets/FriendsList/FriendsList";
 import "./FriendsManager.css";
 
 export const FriendsManager: React.FC = () => {
   const { user } = useAuth();
   const { profile } = useAuthProfile();
-  const { friends, loading, add, remove } = useFriends(
-    profile?.user_id || undefined
-  );
+  const { friends, loading, add, remove } = useFriends(profile?.user_id || undefined);
   const [friendUsernameToAdd, setFriendUsernameToAdd] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [busy, setBusy] = useState(false);
   const filteredFriends = useMemo(
-    () =>
-      friends.filter((f) =>
-        f.username.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
+    () => friends.filter((f) => f.username.toLowerCase().includes(searchTerm.toLowerCase())),
     [friends, searchTerm]
   );
   if (!user || !profile) return null;
@@ -47,17 +43,9 @@ export const FriendsManager: React.FC = () => {
       setBusy(false);
     }
   };
-  const handleRemoveFriend = async (friend: {
-    user_id: string;
-    username: string;
-  }) => {
+  const handleRemoveFriend = async (friend: { user_id: string; username: string }) => {
     if (!profile.user_id) return;
-    if (
-      !window.confirm(
-        `Are you sure you want to remove ${friend.username} as a friend?`
-      )
-    )
-      return;
+    if (!window.confirm(`Are you sure you want to remove ${friend.username} as a friend?`)) return;
     setBusy(true);
     try {
       await remove(friend.user_id);
@@ -105,37 +93,18 @@ export const FriendsManager: React.FC = () => {
       {loading ? (
         <p>Loading friends...</p>
       ) : (
-        <div className="friends-list">
-          {filteredFriends.length > 0 ? (
-            filteredFriends.map((friend) => (
-              <div
-                key={friend.user_id}
-                className="friend-item container-primary"
-              >
-                <div className="friend-info">
-                  <img
-                    src={`https://ui-avatars.com/api/?name=${friend.username}&background=random`}
-                    alt={`${friend.username}'s avatar`}
-                    className="friend-avatar"
-                  />
-                  <div>
-                    <span className="friend-username">{friend.username}</span>
-                  </div>
-                </div>
-                <button
-                  className="btn-danger"
-                  onClick={() => handleRemoveFriend(friend)}
-                  aria-label="Remove friend"
-                  disabled={busy}
-                >
-                  ✖
-                </button>
-              </div>
-            ))
-          ) : (
-            <p>No friends yet. Add some friends using their username!</p>
-          )}
-        </div>
+        <FriendsList
+          friends={filteredFriends}
+          emptyMessage="No friends yet. Add some friends using their username!"
+          mode="select"
+          variant="remove"
+          onAction={(userId: string) => {
+            const friend = filteredFriends.find(f => f.user_id === userId);
+            if (friend) handleRemoveFriend(friend);
+          }}
+          disabled={busy}
+          removeSymbol="✖"
+        />
       )}
     </section>
   );

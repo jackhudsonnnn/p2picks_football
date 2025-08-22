@@ -3,7 +3,7 @@ import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import TicketCard from "@features/bets/ui/TicketCard";
-import { SearchBar, FilterBar, type FilterOption, PageHeader } from "@shared/ui";
+import { SearchBar, FilterBar, type FilterOption, PageHeader } from "@/shared/widgets";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
 
