@@ -4,16 +4,16 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import "./TableView.css";
 import { useAuth } from "@features/auth";
-import { ChatArea } from "@widgets/index";
-import { MemberList } from "@widgets/Table/MemberList/memberList";
-import { HostControls } from "@widgets/Table/HostControls/hostControls";
-import { Navigation } from "@widgets/Table/Navigation/Navigation";
-import { BetProposalForm } from "@widgets/index";
-import type { BetProposalFormValues } from "@widgets/Table/BetProposalForm/BetProposalForm";
-import { Modal } from "@/shared/widgets";
+import { ChatArea } from "@/components/index";
+import { MemberList } from "@/components/Table/MemberList/memberList";
+import { HostControls } from "@/components/Table/HostControls/hostControls";
+import { Navigation } from "@/components/Table/Navigation/Navigation";
+import { BetProposalForm } from "@/components/index";
+import type { BetProposalFormValues } from "@/components/Table/BetProposalForm/BetProposalForm";
+import { Modal } from "@shared/widgets";
 import { useTableView } from "@features/tables/hooks";
 import { useTableFeed } from "@features/bets/hooks/useTableFeed";
-import { sendTextMessage } from "@entities/index";
+import { sendTextMessage } from '@shared/api/tableService';
 import { createBetProposal } from "@features/bets/service";
 
 export const TableView: React.FC = () => {

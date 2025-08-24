@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "gameState": "pre"
+  },
+  "game": {
+    "id": "401776565",
+    "isFinal": false,
+    "homeAbbr": "MIA",
+    "awayAbbr": "JAX"
+  },
+  "players": [],
+  "scoringPlays": [],
+  "drives": {
+    "previous": []
+  },
+  "aggregates": {
+    "totalScore": 0
+  }
+}

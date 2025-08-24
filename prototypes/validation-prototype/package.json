@@ -1,0 +1,23 @@
+{
+  "name": "utils",
+  "version": "1.0.0",
+  "description": "Prototype utilities for P2Picks data validation",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+  "validate": "npm run build && node dist/validatorCli.js",
+  "prototype": "npm run build && node dist/betPrototype.js live",
+  "start": "npm run prototype",
+  "refine:file": "npm run build && node dist/refineData.js",
+  "dev": "tsc -w"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  }
+}

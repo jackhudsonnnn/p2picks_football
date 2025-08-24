@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
-import { SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@/shared/widgets";
+import { SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@shared/widgets";
 import { useTablesList } from "@features/tables/hooks";
 
 export const TablesListPage: React.FC = () => {

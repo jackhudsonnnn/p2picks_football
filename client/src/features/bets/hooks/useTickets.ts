@@ -4,12 +4,11 @@ import { supabase } from '@shared/api/supabaseClient';
 import { getUserTickets } from '../service';
 import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
-import { subscribeToBetProposals } from '@entities/index';
+import { subscribeToBetProposals } from '@shared/api/tableService';
 
 export function useTickets(userId?: string) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  // Removed global ticking 'now' to prevent unnecessary list re-renders (which closed open dropdowns)
 
   const refresh = () => {
     if (!userId) return;

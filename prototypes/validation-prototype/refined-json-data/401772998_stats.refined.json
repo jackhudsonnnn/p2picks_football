@@ -1,0 +1,436 @@
+{
+  "meta": {
+    "lastUpdatedAt": "2025-08-23T20:04:56Z",
+    "gameState": "in"
+  },
+  "game": {
+    "id": "401772998",
+    "isFinal": false,
+    "quarter": 4,
+    "clock": "0:13",
+    "homeAbbr": "CIN",
+    "awayAbbr": "IND",
+    "homeScore": 14,
+    "awayScore": 41
+  },
+  "players": [
+    {
+      "id": "3051889",
+      "name": "Laquon Treadwell",
+      "team": "IND",
+      "receptions": 6,
+      "receivingYards": 116,
+      "receivingTouchdowns": 1
+    },
+    {
+      "id": "4578436",
+      "name": "Coleman Owen",
+      "team": "IND",
+      "receptions": 5,
+      "receivingYards": 60,
+      "receivingTouchdowns": 1,
+      "rushingYards": 11,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4429684",
+      "name": "Anthony Gould",
+      "team": "IND",
+      "receptions": 4,
+      "receivingYards": 43,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4241410",
+      "name": "Jelani Woods",
+      "team": "IND",
+      "receptions": 3,
+      "receivingYards": 30,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "5083552",
+      "name": "Blayne Taylor",
+      "team": "IND",
+      "receptions": 1,
+      "receivingYards": 12,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4362523",
+      "name": "Will Mallory",
+      "team": "IND",
+      "receptions": 1,
+      "receivingYards": 8,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4370170",
+      "name": "Landon Parker",
+      "team": "IND",
+      "receptions": 1,
+      "receivingYards": 8,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "5279793",
+      "name": "Tyler Kahmann",
+      "team": "IND",
+      "receptions": 2,
+      "receivingYards": 8,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4597500",
+      "name": "Adonai Mitchell",
+      "team": "IND",
+      "receptions": 1,
+      "receivingYards": 4,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4722908",
+      "name": "Drew Ogletree",
+      "team": "IND",
+      "receptions": 1,
+      "receivingYards": 4,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4036275",
+      "name": "Sean McKeon",
+      "team": "IND",
+      "receptions": 1,
+      "receivingYards": 3,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4429207",
+      "name": "Ajou Ajou",
+      "team": "IND",
+      "receptions": 0,
+      "receivingYards": 0,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4613032",
+      "name": "Nate Noel",
+      "team": "IND",
+      "receptions": 0,
+      "receivingYards": 0,
+      "receivingTouchdowns": 0,
+      "rushingYards": 63,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4426689",
+      "name": "Ulysses Bentley IV",
+      "team": "IND",
+      "rushingYards": 32,
+      "rushingTouchdowns": 2
+    },
+    {
+      "id": "4360900",
+      "name": "Jason Bean",
+      "team": "IND",
+      "rushingYards": 29,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4567400",
+      "name": "Nay'Quan Wright",
+      "team": "IND",
+      "rushingYards": 27,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4874509",
+      "name": "DJ Giddens",
+      "team": "IND",
+      "rushingYards": 22,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4683423",
+      "name": "Riley Leonard",
+      "team": "IND",
+      "rushingYards": 14,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4569371",
+      "name": "Isaiah Williams",
+      "team": "CIN",
+      "receptions": 3,
+      "receivingYards": 33,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4700712",
+      "name": "Cam Grandy",
+      "team": "CIN",
+      "receptions": 3,
+      "receivingYards": 17,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4429033",
+      "name": "Jermaine Burton",
+      "team": "CIN",
+      "receptions": 1,
+      "receivingYards": 16,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "5192448",
+      "name": "Cole Burgess",
+      "team": "CIN",
+      "receptions": 1,
+      "receivingYards": 16,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4594444",
+      "name": "Jordan Moore",
+      "team": "CIN",
+      "receptions": 2,
+      "receivingYards": 13,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4430577",
+      "name": "Rashod Owens",
+      "team": "CIN",
+      "receptions": 1,
+      "receivingYards": 12,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4245645",
+      "name": "Gary Brightwell",
+      "team": "CIN",
+      "receptions": 1,
+      "receivingYards": 9,
+      "receivingTouchdowns": 0,
+      "rushingYards": 22,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4035776",
+      "name": "Kendric Pryor",
+      "team": "CIN",
+      "receptions": 0,
+      "receivingYards": 0,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4384171",
+      "name": "Tanner McLachlan",
+      "team": "CIN",
+      "receptions": 0,
+      "receivingYards": 0,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4429012",
+      "name": "Kendall Milton",
+      "team": "CIN",
+      "receptions": 0,
+      "receivingYards": 0,
+      "receivingTouchdowns": 0,
+      "rushingYards": 72,
+      "rushingTouchdowns": 0
+    },
+    {
+      "id": "4692972",
+      "name": "Jamoi Mayes",
+      "team": "CIN",
+      "receptions": 0,
+      "receivingYards": 0,
+      "receivingTouchdowns": 0
+    },
+    {
+      "id": "4694583",
+      "name": "Quali Conley",
+      "team": "CIN",
+      "rushingYards": 28,
+      "rushingTouchdowns": 1
+    },
+    {
+      "id": "4239086",
+      "name": "Desmond Ridder",
+      "team": "CIN",
+      "rushingYards": 10,
+      "rushingTouchdowns": 1
+    }
+  ],
+  "scoringPlays": [
+    {
+      "id": "401772998297",
+      "type": "FG",
+      "awayScore": 3,
+      "homeScore": 0,
+      "period": 1,
+      "clock": "9:47"
+    },
+    {
+      "id": "401772998833",
+      "type": "TD",
+      "awayScore": 10,
+      "homeScore": 0,
+      "period": 1,
+      "clock": "1:52"
+    },
+    {
+      "id": "4017729981184",
+      "type": "TD",
+      "awayScore": 10,
+      "homeScore": 7,
+      "period": 2,
+      "clock": "12:47"
+    },
+    {
+      "id": "4017729981915",
+      "type": "TD",
+      "awayScore": 17,
+      "homeScore": 7,
+      "period": 2,
+      "clock": "1:53"
+    },
+    {
+      "id": "4017729982174",
+      "type": "TD",
+      "awayScore": 24,
+      "homeScore": 7,
+      "period": 2,
+      "clock": "0:29"
+    },
+    {
+      "id": "4017729982605",
+      "type": "TD",
+      "awayScore": 31,
+      "homeScore": 7,
+      "period": 3,
+      "clock": "10:43"
+    },
+    {
+      "id": "4017729983168",
+      "type": "TD",
+      "awayScore": 38,
+      "homeScore": 7,
+      "period": 3,
+      "clock": "2:09"
+    },
+    {
+      "id": "4017729983971",
+      "type": "FG",
+      "awayScore": 41,
+      "homeScore": 7,
+      "period": 4,
+      "clock": "6:01"
+    },
+    {
+      "id": "4017729984397",
+      "type": "TD",
+      "awayScore": 41,
+      "homeScore": 14,
+      "period": 4,
+      "clock": "0:13"
+    }
+  ],
+  "drives": {
+    "previous": [
+      {
+        "id": "40177299810",
+        "result": "TD",
+        "isScore": true,
+        "description": "4 plays, 77 yards, 0:51",
+        "period": 2,
+        "clock": "1:20"
+      },
+      {
+        "id": "40177299811",
+        "result": "END OF HALF",
+        "isScore": false,
+        "description": "4 plays, 19 yards, 0:29",
+        "period": 2,
+        "clock": "0:29"
+      },
+      {
+        "id": "40177299812",
+        "result": "PUNT",
+        "isScore": false,
+        "description": "3 plays, -7 yards, 1:23",
+        "period": 3,
+        "clock": "15:00"
+      },
+      {
+        "id": "40177299813",
+        "result": "TD",
+        "isScore": true,
+        "description": "6 plays, 58 yards, 2:54",
+        "period": 3,
+        "clock": "13:37"
+      },
+      {
+        "id": "40177299814",
+        "result": "PUNT",
+        "isScore": false,
+        "description": "3 plays, -1 yard, 1:07",
+        "period": 3,
+        "clock": "10:43"
+      },
+      {
+        "id": "40177299815",
+        "result": "TD",
+        "isScore": true,
+        "description": "14 plays, 93 yards, 7:27",
+        "period": 3,
+        "clock": "9:36"
+      },
+      {
+        "id": "40177299816",
+        "result": "PUNT",
+        "isScore": false,
+        "description": "3 plays, 7 yards, 0:45",
+        "period": 3,
+        "clock": "2:09"
+      },
+      {
+        "id": "40177299817",
+        "result": "INT",
+        "isScore": false,
+        "description": "13 plays, 30 yards, 6:08",
+        "period": 3,
+        "clock": "1:24"
+      },
+      {
+        "id": "40177299818",
+        "result": "FG",
+        "isScore": true,
+        "description": "8 plays, 48 yards, 4:15",
+        "period": 4,
+        "clock": "10:16"
+      },
+      {
+        "id": "40177299819",
+        "result": "TD",
+        "isScore": true,
+        "description": "13 plays, 69 yards, 5:48",
+        "period": 4,
+        "clock": "6:01"
+      }
+    ],
+    "current": {
+      "id": "40177299819",
+      "result": "TD",
+      "isScore": true,
+      "description": "13 plays, 69 yards, 5:48",
+      "period": 4,
+      "clock": "6:01"
+    }
+  },
+  "aggregates": {
+    "totalScore": 55
+  }
+}

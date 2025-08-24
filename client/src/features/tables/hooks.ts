@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { createTable, getTable, getUserTables, getUsernamesByIds, subscribeToTableMembers } from '@entities/index';
+import { createTable, getTable, getUserTables, subscribeToTableMembers } from '@shared/api/tableService';
+import { getUsernamesByIds } from '@shared/api/userService';
 
 export type TableListItem = {
   table_id: string;
