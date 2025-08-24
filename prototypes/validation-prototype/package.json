@@ -6,10 +6,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "validate": "npm run build && node dist/validatorCli.js",
-    "validate:file": "npm run build && node dist/validatorCli.js",
-  "prototype": "npm run build && node dist/betPrototype.js",
-  "refine": "npm run build && node dist/refineData.js",
+  "validate": "npm run build && node dist/validatorCli.js",
+  "prototype": "npm run build && node dist/betPrototype.js live",
+  "start": "npm run prototype",
+  "refine:file": "npm run build && node dist/refineData.js",
   "dev": "tsc -w"
   },
   "keywords": [],

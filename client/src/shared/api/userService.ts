@@ -1,6 +1,6 @@
+// Moved from src/entities/user/service.ts
 import { supabase } from '@shared/api/supabaseClient';
 
-// Given an array of user IDs, returns a mapping { userId: username }
 export async function getUsernamesByIds(userIds: string[]): Promise<Record<string, string>> {
   if (!userIds.length) return {};
   const { data, error } = await supabase

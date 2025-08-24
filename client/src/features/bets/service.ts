@@ -1,14 +1,17 @@
 import { supabase } from '@shared/api/supabaseClient';
 import { BetProposalInput } from './types';
+import { modeRegistry } from './modes';
 
 // Create a bet proposal and insert a feed item
 export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalInput) {
+  const modeDef = form.mode ? modeRegistry[form.mode] : undefined;
+  const description = form.description || (modeDef?.buildDescription ? modeDef.buildDescription(form) : 'Bet');
   const payload: any = {
     table_id: tableId,
     proposer_user_id: proposerUserId,
     nfl_game_id: form.nfl_game_id ?? null,
     mode_key: form.mode ?? null,
-    description: form.description,
+    description,
     wager_amount: form.wager_amount,
     time_limit_seconds: form.time_limit_seconds,
     bet_status: 'active',
@@ -19,42 +22,18 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     .select()
     .single();
   if (betError) throw betError;
-
-  // Per-mode configuration table
   try {
-    if (form.mode === 'best_of_best') {
-      const cfg = {
-        bet_id: bet.bet_id,
-        player1_name: form.player1_name,
-        player2_name: form.player2_name,
-        stat: form.stat,
-        resolve_after: form.resolve_after,
-      };
-      const { error: cfgErr } = await supabase.from('bet_mode_best_of_best').insert([cfg]);
-      if (cfgErr) throw cfgErr;
-    } else if (form.mode === 'one_leg_spread') {
-      const cfg = { bet_id: bet.bet_id };
-      const { error: cfgErr } = await supabase.from('bet_mode_one_leg_spread').insert([cfg]);
-      if (cfgErr) throw cfgErr;
+    if (modeDef?.persistConfig) {
+      await modeDef.persistConfig({ bet, config: form, tableId, proposerUserId });
     }
   } catch (cfgError) {
     await supabase.from('bet_proposals').delete().eq('bet_id', bet.bet_id);
     throw cfgError;
   }
-
-  // Feed item
   const { error: feedError } = await supabase
     .from('feed_items')
-    .insert([
-      {
-        table_id: tableId,
-        item_type: 'bet_proposal',
-        bet_proposal_id: bet.bet_id,
-        item_created_at: bet.proposal_time,
-      },
-    ]);
+    .insert([{ table_id: tableId, item_type: 'bet_proposal', bet_proposal_id: bet.bet_id, item_created_at: bet.proposal_time }]);
   if (feedError) throw feedError;
-
   return bet;
 }
 

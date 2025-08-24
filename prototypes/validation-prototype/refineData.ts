@@ -8,14 +8,14 @@ import { readFileSync, writeFileSync } from 'fs';
 import { resolve, basename } from 'path';
 import { validateGameData, extractPlayerStats } from './boxscoreValidator.js';
 
-interface RefinedPlayer {
+export interface RefinedPlayer {
   id: string; name: string; team: string;
   receptions?: number; receivingYards?: number; receivingTouchdowns?: number;
   rushingYards?: number; rushingTouchdowns?: number;
 }
-interface RefinedDrive { id?: string; result?: string; isScore?: boolean; description?: string; period?: number; clock?: string; }
-interface RefinedScoringPlay { id: string; type: string; awayScore: number; homeScore: number; period: number; clock: string; }
-interface RefinedData {
+export interface RefinedDrive { id?: string; result?: string; isScore?: boolean; description?: string; period?: number; clock?: string; }
+export interface RefinedScoringPlay { id: string; type: string; awayScore: number; homeScore: number; period: number; clock: string; }
+export interface RefinedData {
   meta: { lastUpdatedAt?: string; gameState?: string };
   game: { id?: string; quarter?: number; clock?: string; isFinal: boolean; homeAbbr?: string; awayAbbr?: string; homeScore?: number; awayScore?: number; };
   players: RefinedPlayer[];
@@ -26,7 +26,7 @@ interface RefinedData {
 
 function optional<T>(v: any, path: string[]): T|undefined { try { return path.reduce((a,k)=>a?.[k], v); } catch { return undefined; } }
 
-function refine(rawPath: string): RefinedData {
+export function refineFromPath(rawPath: string): RefinedData {
   const raw = JSON.parse(readFileSync(rawPath,'utf-8'));
   // Player stats via validator (may throw)
   let players: RefinedPlayer[] = [];
@@ -102,7 +102,7 @@ function main(){
   inFiles.forEach(f=>{
     const path = resolve(f);
     try {
-      const refined = refine(path);
+  const refined = refineFromPath(path);
       const outName = basename(path).replace(/\.json$/, '.refined.json');
       const outPath = resolve('refined-json-data', outName);
       writeFileSync(outPath, JSON.stringify(refined, null, 2));
@@ -113,4 +113,6 @@ function main(){
   });
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

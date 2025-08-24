@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends } from "../../hooks";
-import SearchBar from "@/shared/widgets/SearchBar/SearchBar";
-import FriendsList from "@/shared/widgets/FriendsList/FriendsList";
+import SearchBar from "@shared/widgets/SearchBar/SearchBar";
+import FriendsList from "@shared/widgets/FriendsList/FriendsList";
 import "./FriendsManager.css";
 
 export const FriendsManager: React.FC = () => {

@@ -1,6 +1,6 @@
 // Domain types for the bets feature
 
-export type BetModeKey = 'best_of_best' | 'one_leg_spread';
+export type BetModeKey = 'best_of_best' | 'one_leg_spread' | (string & { _brand?: 'BetModeKey' });
 export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
 
 // Input shape for creating a bet proposal (frontend domain)

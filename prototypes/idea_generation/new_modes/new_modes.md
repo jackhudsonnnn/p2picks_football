@@ -9,8 +9,5 @@ Bet on which team leads at “resolve at” or some defined time.
 ### Choose their Fate
 Predict if the current possession ends in TD, FG, or Turnover.
 
-### Sack Stack
-Predict total sacks by both teams in the remainder of game: 0-1, 2-4, 5+
-
 ### Two-Minute Drill
 Bet on whether a point scored in the last 2 minutes of the half/game

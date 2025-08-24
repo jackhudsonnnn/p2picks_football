@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getTableFeed, subscribeToBetProposals, subscribeToFeedItems } from '@entities/index';
-import type { ChatMessage } from '@/types/api';
+import { getTableFeed, subscribeToBetProposals, subscribeToFeedItems } from '@shared/api/tableService';
+import type { ChatMessage } from '@shared/types/chat';
 
 // Centralized feed mapping reused by PrivateTableView
 export async function mapFeedItemsToChatMessages(items: any[]): Promise<ChatMessage[]> {

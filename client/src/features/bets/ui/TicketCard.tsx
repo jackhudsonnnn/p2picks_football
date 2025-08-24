@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import './TicketCard.css';
 import type { Ticket } from '../types';
-import { modeRegistry } from '../modeRegistry';
+import { modeRegistry } from '../modes';
 
 export interface TicketCardProps {
   ticket: Ticket;

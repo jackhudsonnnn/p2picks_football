@@ -1,5 +1,5 @@
 import { BetModeKey, BetRecord, BetStatus, Ticket } from './types';
-import { modeRegistry } from './modeRegistry';
+import { modeRegistry } from './modes';
 
 export function deriveBetState(bet: BetRecord): BetStatus {
   const s = (bet?.bet_status || 'active').toString().toLowerCase();
@@ -13,7 +13,7 @@ export function getBetDescription(bet: BetRecord): string {
   const mode = (bet.mode_key ?? undefined) as BetModeKey | undefined;
   if (mode && mode in modeRegistry) {
     const def = modeRegistry[mode];
-    return def.summary(bet);
+    return def.summary({ bet });
   }
   return 'Bet';
 }

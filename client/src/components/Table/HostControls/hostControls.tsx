@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Modal } from "@/shared/widgets";
-import FriendsList from "@/shared/widgets/FriendsList/FriendsList";
+import { Modal } from "@shared/widgets";
+import FriendsList from "@shared/widgets/FriendsList/FriendsList";
 import { useAuth } from "@features/auth";
-import { addTableMember, removeTableMember } from "@entities/index";
+import { addTableMember, removeTableMember } from '@shared/api/tableService';
 import { supabase } from "@shared/api/supabaseClient";
 import "./hostControls.css";
 

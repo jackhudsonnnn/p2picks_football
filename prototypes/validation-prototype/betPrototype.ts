@@ -3,10 +3,38 @@
  * Enhanced Bet Validation Prototype CLI
  * Adds implementations for future modes (developer simulation only).
  */
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { resolve } from 'path';
 import readline from 'readline';
 import { validateGameData, extractPlayerStats } from './boxscoreValidator.js';
+import http from 'http';
+import https from 'https';
+import { refineFromPath } from './refineData.js';
+
+/* ------------------ Live Fetch Config ------------------ */
+const BASE_SCOREBOARD_URL = 'http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
+const BASE_SUMMARY_URL = 'http://site.api.espn.com/apis/site/v2/sports/football/nfl/summary';
+const RAW_DIR = 'json-data';
+const REFINED_DIR = 'refined-json-data';
+const UPDATE_INTERVAL_SECONDS = 90; // scoreboard + summaries
+const CLEAN_INTERVAL_SECONDS = 60 * 15; // run cleanup every 15 min
+const DATA_TTL_MS = 60 * 60 * 1000; // 1 hour retention
+const HOURS_BEFORE_GAME_TO_FETCH = 4;
+
+function ensureDirs(){ [RAW_DIR, REFINED_DIR].forEach(d=>{ try { mkdirSync(d,{recursive:true}); } catch{} }); }
+ensureDirs();
+
+function fetchJson(url: string): Promise<any|null>{ return new Promise(res=>{ const lib = url.startsWith('https')? https: http; const req = lib.get(url,r=>{ if(r.statusCode && r.statusCode>=400){ r.resume(); return res(null);} let data=''; r.on('data',c=>data+=c); r.on('end',()=>{ try{ res(JSON.parse(data)); }catch{ res(null);} }); }); req.on('error',()=>res(null)); req.setTimeout(15000,()=>{ req.destroy(); res(null); }); }); }
+function writeRaw(name: string, obj:any){ const full=resolve(RAW_DIR,name); try { writeFileSync(full, JSON.stringify(obj,null,2)); } catch{} }
+function writeRefinedFromRaw(rawPath: string){ try { const refined = refineFromPath(rawPath); const base = rawPath.split('/').pop()!; const outName = base.replace(/\.json$/, '.refined.json'); writeFileSync(resolve(REFINED_DIR,outName), JSON.stringify(refined,null,2)); } catch(e) { /* swallow for prototype */ } }
+function shouldFetch(event:any, now:Date){ const status = event.status?.type?.name; if(status==='STATUS_IN_PROGRESS') return true; if(status==='STATUS_FINAL') return false; if(status==='STATUS_SCHEDULED' && event.date){ try { const gt=new Date(event.date); const diffH=(gt.getTime()-now.getTime())/3600000; return diffH>=0 && diffH < HOURS_BEFORE_GAME_TO_FETCH; } catch { return false; } } return false; }
+async function liveCycle(){ const scoreboard = await fetchJson(BASE_SCOREBOARD_URL); const now=new Date(); if(scoreboard){ writeRaw('nfl_data.json',scoreboard); const events = (scoreboard.events||[]).filter((e:any)=>e?.id); for(const ev of events.filter((e:any)=>shouldFetch(e, now))){ const summary= await fetchJson(`${BASE_SUMMARY_URL}?event=${ev.id}`); if(summary){ const fname = `${ev.id}_stats.json`; writeRaw(fname, summary); writeRefinedFromRaw(resolve(RAW_DIR,fname)); } } }
+  cleanupOld(); }
+function cleanupOld(){ const now=Date.now(); [RAW_DIR, REFINED_DIR].forEach(dir=>{ if(!existsSync(dir)) return; readdirSync(dir).forEach(f=>{ const full=resolve(dir,f); try { const age = now - statSync(full).mtimeMs; if(age>DATA_TTL_MS) unlinkSync(full); } catch{} }); }); }
+setInterval(liveCycle, UPDATE_INTERVAL_SECONDS*1000).unref();
+setInterval(cleanupOld, CLEAN_INTERVAL_SECONDS*1000).unref();
+// kick off immediately
+liveCycle();
 
 /* ------------------ Modes & Core Bet Structures ------------------ */
 type Mode = 'BEST_OF_THE_BEST' | 'ONE_LEG_SPREAD' | 'SCORCERER' | 'HORSE_RACE' | 'CHOOSE_THEIR_FATE' | 'SACK_STACK' | 'TWO_MINUTE_DRILL';
@@ -47,9 +75,9 @@ function parseNumberSafe(v: any): number | undefined { if (v == null) return und
 
 function loadBoxscore(boxscorePath: string): Partial<GameSnapshot> {
   // If a refined file version exists, use that
-  const refinedPath = boxscorePath.includes('refined-json-data')
+  const refinedPath = boxscorePath.includes(REFINED_DIR)
     ? boxscorePath
-    : boxscorePath.replace(/json-data/, 'refined-json-data').replace(/\.json$/, '.refined.json');
+    : boxscorePath.replace(/json-data/, REFINED_DIR).replace(/\.json$/, '.refined.json');
   if (existsSync(refinedPath)) {
     try {
       const refined = JSON.parse(readFileSync(refinedPath, 'utf-8'));
@@ -68,7 +96,10 @@ function loadBoxscore(boxscorePath: string): Partial<GameSnapshot> {
   }
   const raw = JSON.parse(readFileSync(boxscorePath, 'utf-8'));
   const validation = validateGameData(raw);
-  if (!validation.isValid || !validation.data) throw new Error('Invalid boxscore file');
+  if (!validation.isValid || !validation.data) {
+    console.warn('Warning: boxscore validation failed for', boxscorePath, 'errors=', validation.errors);
+    return { playerStats: [], isFinal: false };
+  }
   const playerStats = validation.players ?? [];
   let combinedSacks = 0;
   try {
@@ -146,8 +177,8 @@ function describe(b: AnyBet): string { switch(b.mode){ case 'BEST_OF_THE_BEST': 
 /* ------------------ Main Loop ------------------ */
 async function chooseGameFile(): Promise<string> {
   // Collect refined files first
-  const refinedDir = resolve('refined-json-data');
-  const rawDir = resolve('json-data');
+  const refinedDir = resolve(REFINED_DIR);
+  const rawDir = resolve(RAW_DIR);
   const files: { path: string; label: string; refined: boolean }[] = [];
   if (existsSync(refinedDir)) {
     readdirSync(refinedDir).filter(f=>f.endsWith('.refined.json')).forEach(f=>{
@@ -177,9 +208,24 @@ async function chooseGameFile(): Promise<string> {
   }
 }
 
-async function main(){ let boxscoreFileArg = process.argv[2]; let boxscoreFile: string; if (boxscoreFileArg) { boxscoreFile = resolve(boxscoreFileArg); } else { boxscoreFile = await chooseGameFile(); } const scoreboardFile=resolve(process.argv[3]||'json-data/nfl_data.json'); console.log('Using boxscore:', boxscoreFile); console.log('Using scoreboard:', scoreboardFile); let snap=currentSnapshot({boxscoreFile,scoreboardFile}); console.log(`Initial snapshot Q${snap.quarter??'?'} ${snap.clock??'?'} Score ${snap.awayAbbr??'AWY'} ${snap.awayScore??'?'} - ${snap.homeAbbr??'HOME'} ${snap.homeScore??'?'}`); const bets: AnyBet[]=[]; let prevSnap: GameSnapshot | undefined = undefined;
+async function main(){ let boxscoreFileArg = process.argv[2]; let boxscoreFile: string = '';
+  if (boxscoreFileArg === 'live' || !boxscoreFileArg) { // choose most recent refined or raw
+    const dir = resolve(REFINED_DIR);
+    const fallbackDir = resolve(RAW_DIR);
+    if (existsSync(dir)) {
+      const candidates = readdirSync(dir).filter(f=>/\.refined\.json$/.test(f)).map(f=>{ const full=resolve(dir,f); return { f: full, m: statSync(full).mtimeMs }; });
+      if (candidates.length) { candidates.sort((a,b)=>b.m-a.m); boxscoreFile = candidates[0]!.f; console.log('Live mode: selected latest refined file', boxscoreFile); }
+    }
+    if (!boxscoreFile && existsSync(fallbackDir)) {
+      const c2 = readdirSync(fallbackDir).filter(f=>/_stats\.json$/.test(f)).map(f=>{ const full=resolve(fallbackDir,f); return { f: full, m: statSync(full).mtimeMs }; });
+      if (c2.length) { c2.sort((a,b)=>b.m-a.m); boxscoreFile = c2[0]!.f; console.log('Live mode: selected latest raw file', boxscoreFile); }
+    }
+  if (!boxscoreFile) { console.log('No live files yet, waiting for first fetch...'); while(!boxscoreFile){ await new Promise(r=>setTimeout(r,3000)); if (existsSync(resolve(REFINED_DIR))) { const cs = readdirSync(resolve(REFINED_DIR)).filter(f=>/\.refined\.json$/.test(f)); if (cs.length){ boxscoreFile = resolve(REFINED_DIR, cs[0]!); } } } }
+  } else { boxscoreFile = resolve(boxscoreFileArg); }
+  const scoreboardFile=resolve('json-data/nfl_data.json'); console.log('Using boxscore:', boxscoreFile); console.log('Using scoreboard:', scoreboardFile); let snap=currentSnapshot({boxscoreFile,scoreboardFile}); console.log(`Initial snapshot Q${snap.quarter??'?'} ${snap.clock??'?'} Score ${snap.awayAbbr??'AWY'} ${snap.awayScore??'?'} - ${snap.homeAbbr??'HOME'} ${snap.homeScore??'?'}`); const bets: AnyBet[]=[]; let prevSnap: GameSnapshot | undefined = undefined;
   async function newBet(){ snap=currentSnapshot({boxscoreFile,scoreboardFile}); const mode=await chooseMode(); const bet=await createBet(mode,snap); bets.push(bet); console.log('Created bet', bet.id); }
-  await newBet();
+  // Attempt initial bet creation; if user interrupts with Ctrl+C exit gracefully
+  try { await newBet(); } catch(e:any) { console.warn('Initial bet creation aborted:', e.message); }
   let auto=false; const pollMs=60_000;
   async function poll(){ prevSnap=snap; snap=currentSnapshot({boxscoreFile,scoreboardFile}); bets.forEach((b,i)=>{ // update dynamic fields for Scorcerer baseline last observed
     if (b.mode==='SCORCERER' && b.status==='PENDING'){ const sc=b as ScorcererBet; if (snap.totalScore!=null) { (b as ScorcererBet).lastObservedTotal = snap.totalScore; } }

@@ -21,16 +21,13 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@app/*": ["src/app/*"],
-      "@assets/*": ["src/assets/*"],
-      "@pages/*": ["src/pages/*"],
-      "@features/*": ["src/features/*"],
-      "@types/*": ["src/types/*"],
-      "@widgets": ["src/widgets/index.ts"],
-      "@widgets/*": ["src/widgets/*"],
-      "@entities/*": ["src/entities/*"],
-      "@shared/*": ["src/shared/*"]
+      "@*": ["src/*"],
+      "@app*": ["src/app/*"],
+      "@assets*": ["src/assets/*"],
+      "@pages*": ["src/pages/*"],
+      "@features*": ["src/features/*"],
+      "@components*": ["src/components/*"],
+      "@shared*": ["src/shared/*"]
     }
   },
   "include": ["src", "tsconfig.node.json"],

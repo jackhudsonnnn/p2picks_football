@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "lastUpdatedAt": "2025-08-23T20:06:19Z",
+    "gameState": "in"
+  },
+  "game": {
+    "id": "401773011",
+    "isFinal": false,
+    "quarter": 1,
+    "clock": "15:00",
+    "homeAbbr": "GB",
+    "awayAbbr": "SEA"
+  },
+  "players": [],
+  "scoringPlays": [],
+  "drives": {
+    "previous": [
+      {
+        "id": "4017730111",
+        "isScore": false,
+        "description": "0 plays, 0 yards, 0:00",
+        "period": 1,
+        "clock": "15:00"
+      }
+    ],
+    "current": {
+      "id": "4017730111",
+      "isScore": false,
+      "description": "0 plays, 0 yards, 0:00",
+      "period": 1,
+      "clock": "15:00"
+    }
+  },
+  "aggregates": {
+    "totalScore": 0
+  }
+}
