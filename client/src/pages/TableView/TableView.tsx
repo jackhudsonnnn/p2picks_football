@@ -12,9 +12,7 @@ import BetProposalForm from "@components/Bet/BetProposalForm/BetProposalForm";
 import type { BetProposalFormValues } from "@components/Bet/BetProposalForm/BetProposalForm";
 import { Modal } from "@shared/widgets";
 import { useTableView } from "@features/tables/hooks";
-import { useTableFeed } from "@features/bets/hooks/useTableFeed";
-import { sendTextMessage } from "@shared/api/tableService";
-import { createBetProposal } from "@features/bets/service";
+import { useTableChat } from "@features/tables/hooks/useTableChat";
 
 export const TableView: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -27,31 +25,16 @@ export const TableView: React.FC = () => {
     tableId,
     user?.id
   );
-  const { messages: chatFeed, refresh: refreshFeed } = useTableFeed(
-    tableId,
-    Boolean(tableId && user?.id)
-  );
-  const [betLoading, setBetLoading] = useState(false);
+  const { messages: chatFeed, sendMessage, proposeBet, betLoading } = useTableChat(tableId, user?.id);
 
   const handleProposeBet = () => setShowBetModal(true);
   const handleBetSubmit = async (form: BetProposalFormValues) => {
-    if (!tableId || !user) return;
-    setBetLoading(true);
-    try {
-      await createBetProposal(tableId, user.id, form);
-      await refreshFeed();
-      setShowBetModal(false);
-    } finally {
-      setBetLoading(false);
-    }
+    await proposeBet(form);
+    setShowBetModal(false);
   };
   const handleBetCancel = () => setShowBetModal(false);
 
-  const sendMessage = async (message: string) => {
-    if (!tableId || !user) return;
-    await sendTextMessage(tableId, user.id, message);
-    await refreshFeed();
-  };
+  // sendMessage provided by useTableChat
 
   if (!user)
     return (
@@ -93,13 +76,17 @@ export const TableView: React.FC = () => {
         )}
         {activeTab === "members" && (
           <MemberList
-            members={members}
+            members={members.map(m => ({ ...m, balance: 0 }))}
             hostUserId={table.host_user_id}
             currentUserId={user.id}
           />
         )}
         {activeTab === "controls" && tableId && (
-          <HostControls tableId={tableId} />
+          <HostControls
+            tableId={tableId}
+            members={members}
+            currentUserId={user.id}
+          />
         )}
       </section>
     </main>

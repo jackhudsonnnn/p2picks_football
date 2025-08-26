@@ -5,7 +5,7 @@ import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
 import { SearchBar, FilterBar, type FilterOption, Modal } from "@shared/widgets";
 import AddIcon from "@shared/widgets/icons/AddIcon";
-import { useTablesList } from "@features/tables/hooks";
+import { useTablesList } from "@features/tables/hooks/useTablesList";
 import { formatDateTime } from "@shared/utils/dateTime";
 
 export const TablesListPage: React.FC = () => {

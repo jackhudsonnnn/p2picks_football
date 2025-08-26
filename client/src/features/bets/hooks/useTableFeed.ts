@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getTableFeed, subscribeToBetProposals, subscribeToFeedItems } from '@shared/api/tableService';
-import { formatDateTime } from '@shared/utils/dateTime';
+import { formatTimeOfDay } from '@shared/utils/dateTime';
 import type { ChatMessage } from '@shared/types/chat';
 
 // Centralized feed mapping reused by PrivateTableView
@@ -70,7 +70,7 @@ export async function mapFeedItemsToChatMessages(items: any[]): Promise<ChatMess
 
         // Follow-up user chat message with instructions & details
         const betIdShort = bet.bet_id?.slice(0, 8) ?? '';
-        const closeTimeText = formatDateTime(bet.close_time, { includeTime: true });
+  const closeTimeText = formatTimeOfDay(bet.close_time, { includeSeconds: true });
 
         const detailLines: string[] = [
           `Join my bet #${betIdShort}.`,

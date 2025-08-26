@@ -90,7 +90,7 @@ export const ProfileCard: React.FC = () => {
             <div className="form-buttons">
               <button
                 type="submit"
-                className="btn-primary"
+                className="btn-primary save-btn"
                 disabled={updating || (!isUsernameValid && !isEmpty)}
               >
                 {updating ? "Saving..." : "Save"}
@@ -98,7 +98,7 @@ export const ProfileCard: React.FC = () => {
               {profile.username && (
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="btn-secondary cancel-btn"
                   onClick={() => {
                     setShowForm(false);
                     setUsername("");
