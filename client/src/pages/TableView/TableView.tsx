@@ -13,24 +13,37 @@ import type { BetProposalFormValues } from "@components/Bet/BetProposalForm/BetP
 import { Modal } from "@shared/widgets";
 import { useTableView } from "@features/tables/hooks";
 import { useTableFeed } from "@features/bets/hooks/useTableFeed";
-import { sendTextMessage } from '@shared/api/tableService';
+import { sendTextMessage } from "@shared/api/tableService";
 import { createBetProposal } from "@features/bets/service";
 
 export const TableView: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"chat" | "members" | "controls">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "members" | "controls">(
+    "chat"
+  );
   const [showBetModal, setShowBetModal] = useState(false);
-  const { table, loading, error, members, isHost } = useTableView(tableId, user?.id);
-  const { messages: chatFeed, refresh: refreshFeed } = useTableFeed(tableId, Boolean(tableId && user?.id));
+  const { table, loading, error, members, isHost } = useTableView(
+    tableId,
+    user?.id
+  );
+  const { messages: chatFeed, refresh: refreshFeed } = useTableFeed(
+    tableId,
+    Boolean(tableId && user?.id)
+  );
   const [betLoading, setBetLoading] = useState(false);
 
   const handleProposeBet = () => setShowBetModal(true);
   const handleBetSubmit = async (form: BetProposalFormValues) => {
     if (!tableId || !user) return;
     setBetLoading(true);
-    try { await createBetProposal(tableId, user.id, form); await refreshFeed(); setShowBetModal(false); }
-    finally { setBetLoading(false); }
+    try {
+      await createBetProposal(tableId, user.id, form);
+      await refreshFeed();
+      setShowBetModal(false);
+    } finally {
+      setBetLoading(false);
+    }
   };
   const handleBetCancel = () => setShowBetModal(false);
 
@@ -40,27 +53,41 @@ export const TableView: React.FC = () => {
     await refreshFeed();
   };
 
-  if (!user) return <div className="loading">You must be logged in to view this table.</div>;
+  if (!user)
+    return (
+      <div className="loading">You must be logged in to view this table.</div>
+    );
   if (loading) return <div className="loading">Loading table...</div>;
   if (error) return <div className="loading">{error}</div>;
   if (!table) return <div className="loading">Table not found.</div>;
 
   return (
     <main className="table-container">
-      {/* <Header tableName={table.table_name} /> */}
       <Navigation
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         memberCount={members.length}
         isHost={isHost}
-  tableName={table.table_name}
+        tableName={table.table_name}
       />
       <section className="table-content" aria-live="polite">
         {activeTab === "chat" && (
           <>
-            <ChatArea messages={chatFeed} currentUserId={user.id} onSendMessage={sendMessage} onProposeBet={handleProposeBet} />
-            <Modal isOpen={showBetModal} onClose={handleBetCancel} title="Propose Bet">
-              <BetProposalForm onSubmit={handleBetSubmit} loading={betLoading} />
+            <ChatArea
+              messages={chatFeed}
+              currentUserId={user.id}
+              onSendMessage={sendMessage}
+              onProposeBet={handleProposeBet}
+            />
+            <Modal
+              isOpen={showBetModal}
+              onClose={handleBetCancel}
+              title="Propose Bet"
+            >
+              <BetProposalForm
+                onSubmit={handleBetSubmit}
+                loading={betLoading}
+              />
             </Modal>
           </>
         )}
@@ -71,7 +98,9 @@ export const TableView: React.FC = () => {
             currentUserId={user.id}
           />
         )}
-        {activeTab === "controls" && tableId && <HostControls tableId={tableId} />}
+        {activeTab === "controls" && tableId && (
+          <HostControls tableId={tableId} />
+        )}
       </section>
     </main>
   );

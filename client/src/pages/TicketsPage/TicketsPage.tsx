@@ -3,7 +3,7 @@ import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import TicketCard from "@components/Bet/TicketCard/TicketCard";
-import { SearchBar, FilterBar, type FilterOption, PageHeader } from "@shared/widgets";
+import { SearchBar, FilterBar, type FilterOption } from "@shared/widgets";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
 
@@ -65,14 +65,19 @@ export const TicketsPage: React.FC = () => {
 
   return (
     <div className={`tickets-page ${isMobile ? 'mobile' : ''}`}>
-      {/* Use the generalized PageHeader */}
-      <PageHeader
-        title="My Tickets"
-        stats={[
-          { value: ticketCounts.total, label: "Total Tickets" },
-          { value: ticketCounts.wins, label: "Total Wins" },
-        ]}
-      />
+      <div className="page-header">
+        <div className="page-title"><h1>My Tickets</h1></div>
+        <div className="page-stats">
+          <div className="stat">
+            <span className="stat-value">{ticketCounts.total}</span>
+            <span className="stat-label">Total Tickets</span>
+          </div>
+            <div className="stat">
+            <span className="stat-value">{ticketCounts.wins}</span>
+            <span className="stat-label">Total Wins</span>
+          </div>
+        </div>
+      </div>
 
       {/* Use the generalized FilterBar */}
       <FilterBar

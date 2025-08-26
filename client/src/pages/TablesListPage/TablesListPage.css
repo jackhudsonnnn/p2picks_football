@@ -5,6 +5,11 @@
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
 }
 
+/* Deprecated shared header styles (inlined) */
+.tables-list-page .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--spacing-lg); flex-wrap:wrap; gap: var(--spacing-md); }
+.tables-list-page .page-title h1 { margin-bottom:0; font-weight:600; font-size:2.5rem; padding: var(--spacing-sm) 0; }
+.tables-list-page .page-action { display:flex; align-items:center; }
+
 /* Grid layout for tables */
 .tables-list {
   display: grid;
