@@ -48,13 +48,3 @@
 .action-button:hover {
   background-color: var(--neutral-600);
 }
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .action-button {
-    flex: 1;
-    text-align: center;
-    white-space: nowrap;
-    padding: var(--spacing-sm);
-  }
-}

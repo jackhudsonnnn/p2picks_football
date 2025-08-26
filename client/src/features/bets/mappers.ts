@@ -54,15 +54,3 @@ export function mapParticipationRowToTicket(row: any): Ticket {
     resolutionTime: bet?.resolution_time ?? null,
   } as Ticket;
 }
-
-export function formatDate(dateString: string): string {
-  if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}

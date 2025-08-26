@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import './TicketCard.css';
-import type { Ticket } from '../types';
-import { modeRegistry } from '../modes';
+import type { Ticket } from '@features/bets/types';
+import { modeRegistry } from '@features/bets/modes';
+import { formatDateTime } from '@shared/utils/dateTime';
 
 export interface TicketCardProps {
   ticket: Ticket;
@@ -10,7 +11,6 @@ export interface TicketCardProps {
 }
 
 const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess, onEnterTable }) => {
-  // Refs for imperative timer & select disabling to avoid re-renders closing dropdown
   const timerRef = useRef<HTMLDivElement | null>(null);
   const selectRef = useRef<HTMLSelectElement | null>(null);
   const lastDisplayRef = useRef<string>('');
@@ -18,39 +18,37 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   useEffect(() => {
     if (ticket.state === 'active' && ticket.closeTime) {
       const closeAt = new Date(ticket.closeTime).getTime();
+      let intervalId: ReturnType<typeof setInterval> | null = null;
       const tick = () => {
         const remaining = Math.max(0, closeAt - Date.now());
         const seconds = remaining / 1000;
-        const display = `${seconds.toFixed(1)}s`;
-        if (timerRef.current && display !== lastDisplayRef.current) {
-          timerRef.current.textContent = display;
-          lastDisplayRef.current = display;
-        }
-        if (seconds <= 0 && selectRef.current) {
-          selectRef.current.disabled = true;
+        if (seconds > 0) {
+          const display = `${seconds.toFixed(1)}s`;
+          if (timerRef.current && display !== lastDisplayRef.current) {
+            timerRef.current.textContent = display;
+            lastDisplayRef.current = display;
+          }
+        } else {
+          // Timer expired: mark as Pending visually & disable input
+          if (timerRef.current && lastDisplayRef.current !== 'Pending') {
+            timerRef.current.textContent = 'Pending';
+            lastDisplayRef.current = 'Pending';
+          }
+          if (selectRef.current) selectRef.current.disabled = true;
+          if (intervalId) clearInterval(intervalId);
         }
       };
       tick();
-      const id = setInterval(tick, 200);
-      return () => clearInterval(id);
+      intervalId = setInterval(tick, 100);
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
     } else {
       // Non-active states
-      if (timerRef.current) timerRef.current.textContent = ticket.state === 'active' ? '--' : '0.0s';
+      if (timerRef.current) timerRef.current.textContent = '0.0s';
       if (selectRef.current) selectRef.current.disabled = ticket.state !== 'active';
     }
   }, [ticket.state, ticket.closeTime]);
-
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   const displayState = (() => {
     if (ticket.state === 'active' && ticket.closeTime) {
@@ -66,10 +64,16 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     <div className="ticket-card-header">
       <div className="ticket-header-left">
         <span className="bet-details">{ticket.betDetails}</span>
-        <span className="ticket-date">{formatDate(ticket.createdAt)}</span>
+        <span className="ticket-date">{formatDateTime(ticket.createdAt, { includeTime: true }) || 'N/A'}</span>
       </div>
       <div className="ticket-header-right">
-        <span className={`ticket-status status-${displayState.toLowerCase()}`}>{displayState}</span>
+        {/* For active tickets, this span becomes the countdown timer. Other states show their status label. */}
+        <span
+          className={`ticket-status status-${displayState.toLowerCase()}`}
+          ref={timerRef}
+        >
+          {ticket.state === 'active' ? '--' : displayState}
+        </span>
         <span className="ticket-type">{ticket.tableName}</span>
       </div>
     </div>
@@ -90,8 +94,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   };
 
   const FooterLeft = () => {
-    // Timer
-  const initialDisabled = ticket.state !== 'active';
+    const initialDisabled = ticket.state !== 'active';
 
     if (ticket.state === 'active' || ticket.state === 'pending') {
       // build options from mode registry
@@ -126,7 +129,6 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
                 </option>
               ))}
             </select>
-            <div className="bet-timer" ref={timerRef}></div>
           </div>
         </div>
       );
@@ -137,8 +139,6 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
         <div className="guess-row">
           <span className="guess-label">Your pick: </span>
           <span className="guess-value">{ticket.myGuess}</span>
-          <span className="guess-label"> | Result: </span>
-          <span className="guess-value">{ticket.result ? ticket.result : 'N/A'}</span>
         </div>
       </div>
     );
@@ -165,7 +165,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     </div>
   );
 };
-// Memoize so unrelated parent state changes (like a global clock) don't close the open dropdown
+
 const TicketCard = React.memo(TicketCardComponent);
 TicketCard.displayName = 'TicketCard';
 

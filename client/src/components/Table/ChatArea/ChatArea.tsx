@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import { TextMessage, Message } from '../TextMessage/TextMessage';
-import './ChatArea.css';
+import { useState, useRef, useEffect } from "react";
+import { TextMessage, Message } from "../TextMessage/TextMessage";
+import "./ChatArea.css";
+import { formatTimeOfDay, groupByDateLabel } from "@shared/utils/dateTime";
 
 interface ChatAreaProps {
   messages: Message[];
@@ -9,11 +10,11 @@ interface ChatAreaProps {
   onProposeBet: () => void;
 }
 
-export const ChatArea: React.FC<ChatAreaProps> = ({ 
-  messages, 
-  currentUserId, 
-  onSendMessage, 
-  onProposeBet 
+export const ChatArea: React.FC<ChatAreaProps> = ({
+  messages,
+  currentUserId,
+  onSendMessage,
+  onProposeBet,
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -30,51 +31,27 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     messageInputRef.current?.focus();
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return "Today";
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday";
-    } else {
-      return date.toLocaleDateString([], { month: "short", day: "numeric" });
-    }
-  };
-
-  const groupedMessages = messages.reduce<{ [date: string]: Message[] }>(
-    (groups, message) => {
-      const dateStr = new Date(message.timestamp).toDateString();
-      if (!groups[dateStr]) { groups[dateStr] = []; }
-      groups[dateStr].push(message);
-      return groups;
-    },
-    {}
-  );
-
   return (
     <div className="chat-container">
       <div className="messages-container">
-        {Object.entries(groupedMessages).map(([date, msgs]) => (
-          <div key={date} className="message-group">
+        {Object.entries(
+          groupByDateLabel(
+            messages.map((m) => ({ ...m, timestamp: m.timestamp }))
+          )
+        ).map(([label, msgs]) => (
+          <div key={label} className="message-group">
             <div className="date-divider">
-              <span>{formatDate(msgs[0].timestamp)}</span>
+              <span>{label}</span>
             </div>
 
             {msgs.map((message) => (
-              <TextMessage 
+              <TextMessage
                 key={message.id}
                 message={message}
                 isOwnMessage={message.senderUserId === currentUserId}
-                formatTimestamp={formatTimestamp}
+                formatTimestamp={(timestamp: string) =>
+                  formatTimeOfDay(timestamp) || "N/A"
+                }
               />
             ))}
           </div>
@@ -89,11 +66,11 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           className="message-input"
         />
         <div className="action-buttons-row">
-          <button 
+          <button
             className="send-button"
             onClick={handleSendMessage}
             disabled={!newMessage.trim()}
@@ -107,5 +84,4 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       </div>
     </div>
   );
-
 };
