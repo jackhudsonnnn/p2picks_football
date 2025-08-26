@@ -13,7 +13,7 @@ export interface BetProposalFormValues {
   time_limit_seconds: number;
   mode: ModeKey;
   description: string;
-  [key: string]: any; // dynamic mode fields
+  [key: string]: any;
 }
 
 interface BetProposalFormProps { onSubmit: (values: BetProposalFormValues) => void; loading?: boolean; }
@@ -22,7 +22,7 @@ type NflGame = { nfl_game_id: string; shortName: string; start_time: string; sta
 
 const MODE_OPTIONS: { value: ModeKey; label: string }[] = Object.values(modeRegistry).map(m => ({ value: m.key, label: m.label }));
 
-export const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) => {
+const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) => {
   const [step, setStep] = useState(0);
   const [mode, setMode] = useState<ModeKey>('');
   const [selectedGameId, setSelectedGameId] = useState('');
@@ -143,3 +143,5 @@ export const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, load
     </div>
   );
 };
+
+export default BetProposalForm;

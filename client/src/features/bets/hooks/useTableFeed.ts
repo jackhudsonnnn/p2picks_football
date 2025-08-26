@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getTableFeed, subscribeToBetProposals, subscribeToFeedItems } from '@shared/api/tableService';
+import { formatDateTime } from '@shared/utils/dateTime';
 import type { ChatMessage } from '@shared/types/chat';
 
 // Centralized feed mapping reused by PrivateTableView
@@ -39,25 +40,20 @@ export async function mapFeedItemsToChatMessages(items: any[]): Promise<ChatMess
           if (Array.isArray(bet.users)) username = bet.users[0]?.username || 'Unknown';
           else username = (bet.users as any).username || 'Unknown';
         }
-        const desc: string = bet.description || (() => {
-          if (bet.mode_key === 'best_of_best' && bet.bet_mode_best_of_best) {
-            const cfg = Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best;
-            return `Best of the Best • ${cfg?.stat} • ${cfg?.resolve_after} — ${cfg?.player1_name ?? 'Player 1'} vs ${cfg?.player2_name ?? 'Player 2'}`;
-          } else if (bet.mode_key === 'one_leg_spread') {
-            return `1 Leg Spread`;
-          }
-          return 'Bet';
-        })();
-        return {
+
+        const description = bet.description || 'Bet';
+
+        // Primary system-style proposal card (no long description text)
+        const proposalMessage: ChatMessage = {
           id: item.feed_item_id,
           type: 'bet_proposal',
           senderUserId: bet.proposer_user_id,
           senderUsername: username,
-          text: desc,
+          text: '',
           timestamp: bet.proposal_time,
           betProposalId: bet.bet_id,
           betDetails: {
-            description: desc,
+            description,
             wager_amount: bet.wager_amount,
             time_limit_seconds: bet.time_limit_seconds,
             winning_condition: bet.winning_condition,
@@ -70,11 +66,43 @@ export async function mapFeedItemsToChatMessages(items: any[]): Promise<ChatMess
             nfl_game_id: bet.nfl_game_id,
           },
           tableId: bet.table_id,
-        } as ChatMessage;
+        };
+
+        // Follow-up user chat message with instructions & details
+        const betIdShort = bet.bet_id?.slice(0, 8) ?? '';
+        const closeTimeText = formatDateTime(bet.close_time, { includeTime: true });
+
+        const detailLines: string[] = [
+          `Join my bet #${betIdShort}.`,
+          `${bet.wager_amount} pt(s) | ${bet.time_limit_seconds}s to pick`,
+          bet.mode_key,
+          description,
+          closeTimeText ? `Closes at ${closeTimeText}` : null,
+        ].filter(Boolean) as string[];
+        const detailMessage: ChatMessage = {
+          id: `${item.feed_item_id}-details`,
+          type: 'chat',
+          senderUserId: bet.proposer_user_id,
+            senderUsername: username,
+          text: detailLines.join('\n'),
+          timestamp: bet.proposal_time,
+          tableId: bet.table_id,
+        };
+        return [proposalMessage, detailMessage] as unknown as ChatMessage; // flattened below
       }
       return null;
     });
-  return mapped.filter(Boolean) as ChatMessage[];
+  // Flatten because bet proposals now return two messages
+  const flat: ChatMessage[] = [];
+  for (const m of mapped) {
+    if (!m) continue;
+    if (Array.isArray(m as any)) {
+      (m as any).forEach((x: ChatMessage) => flat.push(x));
+    } else {
+      flat.push(m as ChatMessage);
+    }
+  }
+  return flat;
 }
 
 export function useTableFeed(tableId?: string, enabled: boolean = true) {

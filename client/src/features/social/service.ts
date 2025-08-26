@@ -1,4 +1,4 @@
-import { supabase } from '../../shared/api/supabaseClient';
+import { supabase } from '@shared/api/supabaseClient';
 import type { Friend, FriendRelation, UserProfile } from './types';
 
 export async function getAuthUserProfile(): Promise<UserProfile | null> {

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@features/auth";
-import { useAuthProfile, useUsernameUpdater } from "../../hooks";
+import { useAuthProfile, useUsernameUpdater } from "@features/social/hooks";
 import "./ProfileCard.css";
 
 export const ProfileCard: React.FC = () => {

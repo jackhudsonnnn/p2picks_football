@@ -67,12 +67,6 @@
   border-bottom: none;
 }
 
-.member-row:hover {
-  background-color: var(--neutral-700);
-  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.03);
-  cursor: pointer;
-}
-
 .member-info {
   display: flex;
   align-items: center;

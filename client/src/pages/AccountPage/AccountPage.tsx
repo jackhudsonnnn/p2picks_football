@@ -1,6 +1,7 @@
 import React from 'react';
 import './AccountPage.css';
-import { ProfileCard, FriendsManager } from '@features/social';
+import { ProfileCard } from '@components/Social/ProfileCard/ProfileCard';
+import { FriendsManager } from '@components/Social/FriendsManager/FriendsManager'
 
 export const AccountPage: React.FC = () => (
   <div className="container account-page">

@@ -208,6 +208,14 @@
 }
 
 @media (max-width: 600px) {
+  .message-text {
+    font-size: var(--font-size-md) !important;
+  }
+
+  .system-message {
+    font-size: var(--font-size-md) !important;
+  }
+
   .bet-proposal-message {
     padding: var(--spacing-sm) var(--spacing-md);
     min-width: 0;

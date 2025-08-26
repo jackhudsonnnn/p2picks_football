@@ -72,20 +72,3 @@
   height: 2px;
   background-color: transparent;
 }
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-  .nav-host-tag {
-    width: 100%;
-    margin-left: 0;
-    margin-bottom: var(--spacing-xs);
-    padding: var(--spacing-xs) 0;
-    background-color: transparent;
-    justify-content: right;
-  }
-  
-  .tab-section {
-    width: 100%;
-    justify-content: space-between;
-  }
-}

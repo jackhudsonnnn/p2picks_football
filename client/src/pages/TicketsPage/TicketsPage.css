@@ -44,6 +44,7 @@
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   margin-bottom: 4px;
+  min-width: 50px;
 }
 
 .status-settled {

@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
-import { Navbar } from '@/components/index';
+import { Navbar } from '@components/Navbar/Navbar';
 
 const HomePage = lazy(() => import('./pages/HomePage/HomePage').then(m => ({ default: m.HomePage })));
 const TablesListPage = lazy(() => import('./pages/TablesListPage/TablesListPage').then(m => ({ default: m.TablesListPage })));

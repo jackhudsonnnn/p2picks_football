@@ -5,6 +5,7 @@ import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
 import { SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@shared/widgets";
 import { useTablesList } from "@features/tables/hooks";
+import { formatDateTime } from "@shared/utils/dateTime";
 
 export const TablesListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -44,11 +45,8 @@ export const TablesListPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-  };
+  const formatDate = (dateString: string): string =>
+    formatDateTime(dateString, { includeTime: true }) || "N/A";
 
   return (
     <div className="tables-list-page">
