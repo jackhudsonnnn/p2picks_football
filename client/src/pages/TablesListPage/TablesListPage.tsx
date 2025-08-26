@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
 import { SearchBar, FilterBar, type FilterOption, Modal } from "@shared/widgets";
+import AddIcon from "@shared/widgets/icons/AddIcon";
 import { useTablesList } from "@features/tables/hooks";
 import { formatDateTime } from "@shared/utils/dateTime";
 
@@ -54,7 +55,8 @@ export const TablesListPage: React.FC = () => {
         <div className="page-title"><h1>My Tables</h1></div>
         <div className="page-action">
           <button className="create-button" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
-            Create Table
+            <AddIcon className="btn-icon" title="Add" />
+            <span>Create Table</span>
           </button>
         </div>
       </div>

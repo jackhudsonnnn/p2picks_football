@@ -180,6 +180,47 @@
   transform: scale(1.05);
 }
 
+/* Create button (page header) */
+.create-button {
+  background-color: var(--primary);
+  color: var(--text-light);
+  border: none;
+  padding: calc(var(--spacing-sm, 8px) + 4px) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition), transform 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: var(--shadow-sm);
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-button .btn-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  display: inline-block;
+}
+
+.create-button:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.create-button:disabled {
+  background-color: var(--neutral-700);
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.create-button:focus {
+  outline: 3px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  outline-offset: 2px;
+}
+
 /* Empty state */
 .empty-state {
   padding: var(--spacing-lg);

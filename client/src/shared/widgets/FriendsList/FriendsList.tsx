@@ -32,7 +32,7 @@ interface StaticProps extends BaseProps {
 
 type FriendsListProps = SelectableProps | StaticProps;
 
-const FriendsList: React.FC<FriendsListProps> = (props) => {
+export const FriendsList: React.FC<FriendsListProps> = (props) => {
   const {
     friends,
     emptyMessage = 'No friends found.',
@@ -103,5 +103,3 @@ const FriendsList: React.FC<FriendsListProps> = (props) => {
     </div>
   );
 };
-
-export default FriendsList;

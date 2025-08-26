@@ -10,6 +10,9 @@
   background: var(--neutral-700);
   border: 1px solid var(--neutral-600);
   border-radius: var(--radius-md, 8px);
+  /* scrollbar styling to match ChatArea */
+  scrollbar-width: thin;
+  scrollbar-color: var(--neutral-600) var(--neutral-800);
 }
 
 .friends-list-shared.empty {
@@ -128,7 +131,6 @@
   opacity: 1;
 }
 
-/* also give a subtle avatar pop on selected to match account page enlargement */
 .friends-list-shared.selectable .friend-row.action.selected .friend-row-avatar,
 .friends-list-shared.selectable
   .friend-row.action[aria-pressed="true"]
@@ -153,4 +155,15 @@
   .friend-row-symbol {
     font-size: 1rem;
   }
+}
+
+.friends-list-shared::-webkit-scrollbar {
+  width: 6px;
+}
+.friends-list-shared::-webkit-scrollbar-track {
+  background: var(--neutral-800);
+}
+.friends-list-shared::-webkit-scrollbar-thumb {
+  background-color: var(--neutral-600);
+  border-radius: 20px;
 }
