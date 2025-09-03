@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
-import { SearchBar, FilterBar, type FilterOption, PageHeader, Modal } from "@shared/widgets";
-import { useTablesList } from "@features/tables/hooks";
+import { SearchBar, FilterBar, type FilterOption, Modal } from "@shared/widgets";
+import AddIcon from "@shared/widgets/icons/AddIcon";
+import { useTablesList } from "@features/tables/hooks/useTablesList";
 import { formatDateTime } from "@shared/utils/dateTime";
 
 export const TablesListPage: React.FC = () => {
@@ -50,11 +51,15 @@ export const TablesListPage: React.FC = () => {
 
   return (
     <div className="tables-list-page">
-      <PageHeader title="My Tables" actionButton={
-        <button className="create-button" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
-          Create Table
-        </button>
-      } />
+      <div className="page-header">
+        <div className="page-title"><h1>My Tables</h1></div>
+        <div className="page-action">
+          <button className="create-button" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
+            <AddIcon className="btn-icon" title="Add" />
+            <span>Create Table</span>
+          </button>
+        </div>
+      </div>
 
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Table" footer={
         <>

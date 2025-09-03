@@ -30,3 +30,9 @@
     height: var(--account-control-height); 
     box-sizing: border-box; 
 }
+
+@media (max-width: 768px) { 
+    .add-friend-form { 
+        gap: var(--space-sm); 
+    }
+}

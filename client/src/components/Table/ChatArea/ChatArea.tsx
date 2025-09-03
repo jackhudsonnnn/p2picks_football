@@ -1,10 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { TextMessage, Message } from "../TextMessage/TextMessage";
+import { useState } from "react";
+import { TextMessage } from "../TextMessage/TextMessage";
 import "./ChatArea.css";
-import { formatTimeOfDay, groupByDateLabel } from "@shared/utils/dateTime";
+import { formatTimeOfDay } from "@shared/utils/dateTime";
+import type { ChatMessage } from "@shared/types/chat";
+import { useGroupedMessages } from "@features/tables/chat/useGroupedMessages";
+import { useAutoScroll } from "@features/tables/chat/useAutoScroll";
 
 interface ChatAreaProps {
-  messages: Message[];
+  messages: ChatMessage[];
   currentUserId: string;
   onSendMessage: (message: string) => void;
   onProposeBet: () => void;
@@ -17,51 +20,37 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onProposeBet,
 }) => {
   const [newMessage, setNewMessage] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messageInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const bottomRef = useAutoScroll([messages.length]);
+  const grouped = useGroupedMessages(messages);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     onSendMessage(newMessage.trim());
     setNewMessage("");
-    messageInputRef.current?.focus();
+  // input focus intentionally omitted after refactor (could add ref back if needed)
   };
 
   return (
     <div className="chat-container">
       <div className="messages-container">
-        {Object.entries(
-          groupByDateLabel(
-            messages.map((m) => ({ ...m, timestamp: m.timestamp }))
-          )
-        ).map(([label, msgs]) => (
-          <div key={label} className="message-group">
-            <div className="date-divider">
-              <span>{label}</span>
-            </div>
-
-            {msgs.map((message) => (
+        {grouped.map(group => (
+          <div key={group.dateLabel} className="message-group">
+            <div className="date-divider"><span>{group.dateLabel}</span></div>
+            {group.messages.map(message => (
               <TextMessage
                 key={message.id}
                 message={message}
                 isOwnMessage={message.senderUserId === currentUserId}
-                formatTimestamp={(timestamp: string) =>
-                  formatTimeOfDay(timestamp) || "N/A"
-                }
+                formatTimestamp={(timestamp: string) => formatTimeOfDay(timestamp) || "N/A"}
               />
             ))}
           </div>
         ))}
-        <div ref={messagesEndRef} />
+        <div ref={bottomRef} />
       </div>
 
       <div className="message-input-container">
-        <input
-          ref={messageInputRef}
+  <input
           type="text"
           placeholder="Type a message..."
           value={newMessage}

@@ -1,23 +1,10 @@
 import React from "react";
 import "./TextMessage.css";
-import { BetProposalMessage } from "@shared/types/chat";
+import { BetProposalMessage, ChatMessage } from "@shared/types/chat";
 import BetProposalCard from "@components/Bet/BetProposalCard/BetProposalCard";
 
-export type MessageType = "chat" | "system" | "bet_proposal";
-
-export interface Message {
-  id: string;
-  type: MessageType;
-  senderUserId: string;
-  senderUsername: string;
-  text: string;
-  timestamp: string;
-  betProposalId?: string;
-  tableId?: string;
-}
-
 interface TextMessageProps {
-  message: Message;
+  message: ChatMessage;
   isOwnMessage: boolean;
   formatTimestamp: (timestamp: string) => string;
 }
