@@ -56,7 +56,6 @@ export async function mapFeedItemsToChatMessages(items: any[]): Promise<ChatMess
             description,
             wager_amount: bet.wager_amount,
             time_limit_seconds: bet.time_limit_seconds,
-            winning_condition: bet.winning_condition,
             bet_status: bet.bet_status,
             close_time: bet.close_time,
             winning_choice: bet.winning_choice,

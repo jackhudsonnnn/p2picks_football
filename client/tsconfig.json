@@ -27,7 +27,8 @@
       "@pages*": ["src/pages/*"],
       "@features*": ["src/features/*"],
       "@components*": ["src/components/*"],
-      "@shared*": ["src/shared/*"]
+      "@shared*": ["src/shared/*"],
+      "@data-updater*": ["src/data-updater/*"]
     }
   },
   "include": ["src", "tsconfig.node.json"],

@@ -1,16 +1,30 @@
-/* Main container */
 .tables-list-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
 }
 
-/* Deprecated shared header styles (inlined) */
-.tables-list-page .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--spacing-lg); flex-wrap:wrap; gap: var(--spacing-md); }
-.tables-list-page .page-title h1 { margin-bottom:0; font-weight:600; font-size:2.5rem; padding: var(--spacing-sm) 0; }
-.tables-list-page .page-action { display:flex; align-items:center; }
+.tables-list-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
 
-/* Grid layout for tables */
+.tables-list-page .page-title h1 {
+  margin-bottom: 0;
+  font-weight: 600;
+  font-size: 2.5rem;
+  padding: var(--spacing-sm) 0;
+}
+
+.tables-list-page .page-action {
+  display: flex;
+  align-items: center;
+}
+
 .tables-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -55,7 +69,6 @@
   border-top: 1px solid var(--neutral-700);
 }
 
-/* Table header styling */
 .table-header-left {
   display: flex;
   flex-direction: column;
@@ -93,7 +106,6 @@
   color: var(--text-secondary);
 }
 
-/* Table stats */
 .table-stats {
   display: flex;
   gap: var(--spacing-md);
@@ -120,7 +132,6 @@
   color: var(--text-secondary);
 }
 
-/* Table activity */
 .table-activity {
   margin-top: var(--spacing-sm);
   font-size: var(--font-size-sm);
@@ -151,7 +162,6 @@
   margin-bottom: var(--spacing-xs);
 }
 
-/* View table button */
 .view-table-container {
   display: flex;
   flex-direction: column;
@@ -180,7 +190,6 @@
   transform: scale(1.05);
 }
 
-/* Create button (page header) */
 .create-button {
   background-color: var(--primary);
   color: var(--text-light);
@@ -189,7 +198,8 @@
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
-  transition: background-color var(--transition), transform 0.12s ease, box-shadow 0.12s ease;
+  transition: background-color var(--transition), transform 0.12s ease,
+    box-shadow 0.12s ease;
   box-shadow: var(--shadow-sm);
   height: 44px;
   display: inline-flex;
@@ -221,7 +231,6 @@
   outline-offset: 2px;
 }
 
-/* Empty state */
 .empty-state {
   padding: var(--spacing-lg);
   text-align: center;
@@ -277,7 +286,6 @@
   text-align: center;
 }
 
-/* Responsive styles */
 @media (max-width: 768px) {
   .tables-list-page {
     padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md);

@@ -39,7 +39,6 @@ export interface ChatMessage {
     description: string;
     wager_amount: number;
     time_limit_seconds: number;
-    winning_condition: string;
     bet_status: string;
     close_time?: string | null;
     winning_choice?: string | null;

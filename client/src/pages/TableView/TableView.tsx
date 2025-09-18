@@ -34,8 +34,6 @@ export const TableView: React.FC = () => {
   };
   const handleBetCancel = () => setShowBetModal(false);
 
-  // sendMessage provided by useTableChat
-
   if (!user)
     return (
       <div className="loading">You must be logged in to view this table.</div>

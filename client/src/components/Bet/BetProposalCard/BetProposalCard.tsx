@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@features/auth";
 import { acceptBetProposal, getBetProposalDetails, hasUserAcceptedBet } from '@features/bets/service';
 import type { BetProposalMessage } from '@shared/types/chat';
 import { supabase } from '@shared/api/supabaseClient';
+import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import './BetProposalCard.css';
+import { useBetPhase } from '@shared/hooks/useBetPhase';
 
 interface BetProposalCardProps {
   message: BetProposalMessage;
@@ -15,9 +17,12 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [accepted, setAccepted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [phase, setPhase] = useState<'active' | 'pending' | 'resolved' | 'washed'>('active');
   const [participants, setParticipants] = useState<number>(0);
+
+  const { phase, timeLeft } = useBetPhase({
+    closeTime: message.betDetails?.close_time,
+    rawStatus: message.betDetails?.bet_status,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -34,52 +39,6 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
       mounted = false;
     };
   }, [user, message.betProposalId]);
-
-  useEffect(() => {
-    const closeAt = message.betDetails?.close_time
-      ? new Date(message.betDetails.close_time).getTime()
-      : null;
-
-    const computePhaseFromStatus = (status?: string) => {
-      switch (status) {
-        case 'pending':
-          return 'pending' as const;
-        case 'resolved':
-          return 'resolved' as const;
-        case 'washed':
-          return 'washed' as const;
-        case 'active':
-        default:
-          return 'active' as const;
-      }
-    };
-
-    const update = () => {
-      const status = message.betDetails?.bet_status;
-      if (status && status !== 'active') {
-        setPhase(computePhaseFromStatus(status));
-        setTimeLeft(0);
-        return;
-      }
-      if (closeAt) {
-        const now = Date.now();
-        if (now < closeAt) {
-          setPhase('active');
-          setTimeLeft(Math.max(0, (closeAt - now) / 1000));
-        } else {
-          setPhase('pending');
-          setTimeLeft(0);
-        }
-      } else {
-        setPhase(computePhaseFromStatus(message.betDetails?.bet_status));
-        setTimeLeft(null);
-      }
-    };
-
-    update();
-    const interval = setInterval(update, 100);
-    return () => clearInterval(interval);
-  }, [message]);
 
   useEffect(() => {
     let active = true;
@@ -137,32 +96,13 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
   };
 
   const clickable = phase === 'active' && !accepted;
-
   const betIdShort = message.betProposalId.slice(0, 8);
-  const statusLabel = phase === 'active' && timeLeft !== null
-    ? `${timeLeft.toFixed(1)}s`
-    : phase === 'pending'
-    ? 'Pending'
-    : phase === 'washed'
-    ? 'Washed'
-    : 'Resolved';
-
-  const timerRef = useRef<HTMLSpanElement | null>(null);
-
-  useEffect(() => {
-    if (phase === 'active' && timeLeft !== null && timerRef.current) {
-      timerRef.current.textContent = `${timeLeft.toFixed(1)}s`;
-    } else if (timerRef.current) {
-      timerRef.current.textContent = statusLabel;
-    }
-  }, [phase, timeLeft, statusLabel]);
 
   const containerClasses = [
     'bet-proposal-card',
     `state-${phase}`,
     clickable ? 'is-clickable' : '',
     accepted ? 'is-joined' : '',
-    'bet-proposal-system-card',
     'simple',
     clickable ? 'clickable' : '',
   ].filter(Boolean).join(' ');
@@ -184,7 +124,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
           <span className="bp-wager">{Number(message.betDetails.wager_amount).toFixed(0)} pt(s)</span>
         </div>
         <div className="bp-header-right">
-          <span ref={timerRef} className={`bp-status status-${phase}`}>{statusLabel}</span>
+          <BetStatus phase={phase} timeLeft={timeLeft} />
           <span className="bp-participants">{participants} joined</span>
         </div>
       </div>
@@ -195,7 +135,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
           {clickable ? (
             <span className="bp-hint">Click to join before lock • Opens tickets</span>
           ) : (
-            <span className="bp-hint inactive">{accepted ? 'View your ticket' : 'Bet locked'}</span>
+            <span className="bp-hint inactive">{accepted ? 'View ticket' : 'Bet locked'}</span>
           )}
         </div>
         <div className="bp-footer-right">

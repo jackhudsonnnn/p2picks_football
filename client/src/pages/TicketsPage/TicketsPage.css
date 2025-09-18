@@ -1,19 +1,47 @@
-/* Main container */
 .tickets-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
 }
 
-/* Deprecated shared header styles (inlined) */
-.tickets-page .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--spacing-lg); flex-wrap:wrap; gap: var(--spacing-md); }
-.tickets-page .page-title h1 { margin-bottom:0; font-weight:600; font-size:2.5rem; padding: var(--spacing-sm) 0; }
-.tickets-page .page-stats { display:flex; gap: var(--spacing-md); flex-wrap:wrap; }
-.tickets-page .stat { background-color: var(--bg-surface); border-radius: var(--radius-md); padding: var(--spacing-sm) var(--spacing-md); text-align:center; min-width:100px; }
-.tickets-page .stat-value { display:block; font-size: var(--font-size-xl); font-weight:600; color: var(--text-light); margin-bottom:2px; }
-.tickets-page .stat-label { font-size: var(--font-size-sm); color: var(--text-secondary); }
+.tickets-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+.tickets-page .page-title h1 {
+  margin-bottom: 0;
+  font-weight: 600;
+  font-size: 2.5rem;
+  padding: var(--spacing-sm) 0;
+}
+.tickets-page .page-stats {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+.tickets-page .stat {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: center;
+  min-width: 100px;
+}
+.tickets-page .stat-value {
+  display: block;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 2px;
+}
+.tickets-page .stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
 
-/* Grid layout for tickets */
 .tickets-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -24,331 +52,7 @@
   margin-top: var(--spacing-lg);
 }
 
-/* Ticket header styling */
-.ticket-header-left {
-  display: flex;
-  flex-direction: column;
-}
-
-.ticket-id {
-  font-weight: 600;
-  color: var(--text-light);
-  margin-bottom: 2px;
-}
-
-.ticket-date {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.ticket-header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.ticket-status {
-  font-size: var(--font-size-sm);
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 4px;
-  min-width: 50px;
-}
-
-.status-settled {
-  background-color: rgba(255, 179, 0, 0.2);
-  color: var(--primary-100);
-}
-.status-pending {
-  background-color: rgba(100, 116, 139, 0.2);
-  color: var(--primary-100);
-}
-.status-active {
-  background-color: rgba(61, 90, 254, 0.2);
-  color: var(--primary-100);
-}
-.status-washed {
-  background-color: rgba(254, 61, 61, 0.2);
-  color: var(--primary-100);
-}
-
-.ticket-type {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-/* Content styling */
-.game-context {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  background-color: rgba(100, 116, 139, 0.2);
-  margin-bottom: 2px;
-  padding: 2px 8px;
-  display: inline-block;
-  border-radius: var(--radius-sm);
-  width: fit-content;
-  max-width: 100%;
-  word-wrap: break-word;
-}
-
-.bet-details {
-  color: var(--text-light);
-  font-weight: 500;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  padding: 0;
-}
-
-/* Finance information */
-.ticket-finance {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--spacing-xs);
-}
-
-.ticket-result-text {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 4px;
-  background-color: rgba(100, 116, 139, 0.2);
-  color: var(--primary-100);
-}
-
-.outcome-win .ticket-result-text {
-  background-color: rgba(0, 200, 83, 0.2);
-}
-.outcome-loss .ticket-result-text {
-  background-color: rgba(244, 67, 54, 0.2);
-}
-.outcome-wash .ticket-result-text {
-  background-color: rgba(148, 163, 184, 0.2);
-}
-
-.points-earned {
-  font-size: var(--font-size-md);
-  color: var(--accent-victory);
-  font-weight: 600;
-}
-
-.points-lost {
-  font-size: var(--font-size-md);
-  color: var(--accent-power);
-  font-weight: 600;
-}
-
-.points-returned {
-  font-size: var(--font-size-md);
-  color: var(--neutral-400);
-  font-weight: 600;
-}
-
-.potential-points {
-  font-size: var(--font-size-md);
-  color: var(--primary-300);
-  font-weight: 600;
-}
-
-.wager-amount {
-  font-size: var(--font-size-md);
-  color: var(--accent-energy);
-  font-weight: 600;
-}
-
-/* Betting options */
-.ticket-bet-options {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  width: 90%;
-}
-
-.bet-option {
-  padding: var(--spacing-sm);
-  background-color: var(--neutral-700);
-  border: 1px solid var(--neutral-600);
-  color: var(--text-light);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-  flex: 1;
-  min-width: 50px;
-}
-
-.bet-option:hover {
-  background-color: var(--neutral-600);
-}
-
-.bet-option.selected {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: var(--text-light);
-}
-
-.bet-timer {
-  padding: var(--spacing-sm);
-  background-color: var(--neutral-800);
-  border: 1px solid var(--neutral-600);
-  color: var(--accent-energy);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  text-align: center;
-  font-family: monospace;
-}
-
-/* User guess display */
-.user-guess-display {
-  display: flex;
-  flex-direction: column;
-}
-
-.guess-value {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--primary-300);
-}
-
-/* Mobile betting */
-.mobile-bet-container {
-  display: flex;
-  flex-direction: row; /* Changed from column to row */
-  width: 100%;
-  gap: var(--spacing-sm);
-  align-items: center; /* Align items vertically */
-}
-
-.mobile-bet-dropdown {
-  flex: 1;
-  padding: var(--spacing-sm);
-  background-color: var(--neutral-700);
-  border: 1px solid var(--neutral-600);
-  color: var(--text-light);
-  border-radius: var(--radius-sm);
-}
-
-.bet-timer {
-  padding: var(--spacing-xl);
-  background-color: var(--neutral-800);
-  border: 1px solid var(--neutral-600);
-  color: var(--accent-energy);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  text-align: center;
-  font-family: monospace;
-  min-width: 70px;
-}
-
-/* Ticket details */
-.ticket-details h4 {
-  margin-bottom: var(--spacing-sm);
-  color: var(--text-light);
-}
-
-.detail-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-sm);
-  background-color: var(--neutral-700);
-  border-radius: var(--radius-sm);
-}
-
-.detail-label {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.detail-value {
-  color: var(--text-light);
-  font-weight: 500;
-  text-align: right;
-  flex: 1;
-  margin-left: var(--spacing-md);
-}
-
-/* Empty state */
-.empty-state {
-  padding: var(--spacing-lg);
-  text-align: center;
-  color: var(--text-secondary);
-  background-color: var(--bg-surface);
-  border-radius: var(--radius-md);
-  grid-column: 1 / -1;
-  margin-top: var(--spacing-lg);
-}
-
-/* Pagination controls */
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: var(--spacing-lg);
-  padding-bottom: var(--spacing-lg);
-  gap: var(--spacing-sm);
-}
-
-.pagination-button {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--neutral-700);
-  color: var(--text-light);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition);
-  font-weight: 500;
-  font-size: var(--font-size-md);
-  min-width: 90px;
-  text-align: center;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: var(--neutral-700);
-  border-color: var(--neutral-600);
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  color: var(--text-secondary);
-  font-size: var(--font-size-md);
-  min-width: 80px;
-  text-align: center;
-}
-
-.card-footer-left .ticket-bet-options {
-  width: 100%;
-}
-
-.card-footer .bet-option {
-  font-size: var(--font-size-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-}
-
-.card-footer .bet-timer {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-sm);
-}
-
-/* Responsive styles */
+/* Responsive styles for the page */
 @media (max-width: 768px) {
   .tickets-page {
     padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md);
@@ -368,9 +72,5 @@
     min-width: 70px;
     height: 44px;
     font-size: var(--font-size-base);
-  }
-
-  .card-footer-left .mobile-bet-container {
-    width: 100%;
   }
 }

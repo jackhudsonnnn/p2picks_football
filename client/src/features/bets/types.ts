@@ -1,6 +1,6 @@
 // Domain types for the bets feature
 
-export type BetModeKey = 'best_of_best' | 'one_leg_spread' | (string & { _brand?: 'BetModeKey' });
+export type BetModeKey = 'best_of_best' | 'one_leg_spread' | 'scorcerer' | 'choose_their_fate' | (string & { _brand?: 'BetModeKey' });
 export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
 
 // Input shape for creating a bet proposal (frontend domain)
@@ -10,11 +10,8 @@ export interface BetProposalInput {
   time_limit_seconds: number; // 10-60
   mode: BetModeKey;
   description: string;
-  // mode-specific (best_of_best)
-  player1_name?: string;
-  player2_name?: string;
-  stat?: 'Receptions' | 'Receiving Yards' | 'Touchdowns';
-  resolve_after?: 'Q1 ends' | 'Q2 ends' | 'Q3 ends' | 'Q4 ends';
+  // allow modes to tack on their own fields without polluting global types
+  [key: string]: any;
 }
 
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
@@ -30,12 +27,13 @@ export interface BetRecord {
   proposal_time?: string | null;
   bet_status?: BetStatus | string | null;
   close_time?: string | null;
-  winning_condition?: string | null;
   winning_choice?: string | null;
   resolution_time?: string | null;
   total_pot?: number | null;
   bet_mode_best_of_best?: any;
   bet_mode_one_leg_spread?: any;
+  bet_mode_scorcerer?: any;
+  bet_mode_choose_their_fate?: any;
   tables?: { table_name?: string } | null;
 }
 
@@ -58,14 +56,12 @@ export interface Ticket {
   proposalTime?: string;
   timeLimitSeconds?: number;
   modeKey?: BetModeKey | string;
-  player1Name?: string;
-  player2Name?: string;
-  stat?: 'Receptions' | 'Receiving Yards' | 'Touchdowns' | string;
-  resolve_after?: 'Q1 ends' | 'Q2 ends' | 'Q3 ends' | 'Q4 ends' | string;
   betStatus?: string;
   closeTime?: string | null;
   winningChoice?: string | null;
   resolutionTime?: string | null;
+  // Attach raw bet for mode-scoped rendering/logic to inspect as needed
+  betRecord?: BetRecord;
 }
 
 export interface TicketCounts {

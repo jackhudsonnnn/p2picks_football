@@ -35,8 +35,7 @@
   display: inline-block;
 }
 
-.chat-message,
-.bet-proposal-message {
+.chat-message {
   border-radius: var(--radius-md);
   padding: var(--spacing-sm) var(--spacing-md);
   box-shadow: var(--shadow-sm);
@@ -61,151 +60,8 @@
   margin-left: var(--spacing-sm);
 }
 
-.bet-proposal-message {
-  margin: var(--spacing-md) 0;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--neutral-800);
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
-  border-radius: var(--radius-lg);
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.bet-proposal-message.clickable {
-  cursor: pointer;
-}
-
-.bet-proposal-message.clickable:hover {
-  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.5);
-  transition: box-shadow 0.4s;
-}
-
-.bet-proposal-content {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--spacing-lg);
-  border-left: 4px solid var(--accent-victory);
-  padding-left: var(--spacing-md);
-  margin-bottom: var(--spacing-xs);
-}
-
-.bet-proposal-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.wager-amount {
-  font-size: var(--font-size-lg);
-  color: var(--accent-victory) !important;
-  font-weight: 700;
-  margin-bottom: var(--spacing-xs);
-}
-
-.game-context {
-  font-size: var(--font-size-md) !important;
-  color: var(--text-light);
-  margin-top: var(--spacing-xs);
-  font-weight: 500;
-}
-
-.bet-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-  gap: var(--spacing-xl);;
-}
-
-.accept-bet {
-  font-family: monospace;
-  background-color: var(--accent-victory);
-  color: var(--neutral-900);
-  border: none;
-  padding: 8px 18px;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  cursor: pointer;
-  margin: 0 var(--spacing-sm) var(--spacing-sm) 0;
-  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.08);
-  transition: background 0.15s;
-  gap: var(--spacing-xl);
-}
-
-.accept-bet:hover {
-  background-color: var(--accent-victory-dark, #b2ff59);
-}
-
-.decline-bet {
-  background-color: transparent;
-  border: 1px solid var(--accent-power);
-  color: var(--accent-power);
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.message-text {
-  font-size: var(--font-size-xl);
-}
-
-.bet-proposal-flex {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-}
-
-.bet-actions.bet-actions-flex-end {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-end;
-  gap: var(--spacing-xs);
-  flex: 0 0 auto;
-  min-width: 120px;
-}
-
-.bet-timer {
-  padding: 4px 10px !important;
-  background-color: var(--neutral-800) !important;
-  border: 1.5px solid var(--neutral-600) !important;
-  color: var(--accent-energy) !important;
-  border-radius: var(--radius-md) !important;
-  font-size: var(--font-size-sm)  !important;
-  font-weight: 600  !important;
-  text-align: center !important;
-  font-family: monospace !important;
-  margin: 0 !important;
-  margin-top: var(--spacing-xs) !important;
-  display: inline-block !important;
-  max-width: 100% !important;
-}
-
-.bet-details.bet-details-full {
-  width: 100%;
-  margin-top: var(--spacing-sm);
-  margin-bottom: 0;
-  font-size: var(--font-size-md);
-  color: var(--accent-energy) !important;
-  font-weight: 600;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  text-align: center;
-  background: rgba(255,255,255,0.03);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-xs) var(--spacing-md);
-  letter-spacing: 0.01em;
-}
+/* Bet proposal presentation moved to `BetProposalCard` component and its CSS.
+  Legacy selectors removed from here to avoid duplication. */
 
 @media (max-width: 600px) {
   .message-text {
@@ -214,16 +70,6 @@
 
   .system-message {
     font-size: var(--font-size-md) !important;
-  }
-
-  .bet-proposal-message {
-    padding: var(--spacing-sm) var(--spacing-md);
-    min-width: 0;
-  }
-  .bet-proposal-content {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    padding-left: var(--spacing-sm);
   }
   .bet-actions.bet-actions-flex-end {
     align-items: stretch;

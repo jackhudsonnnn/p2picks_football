@@ -36,6 +36,12 @@
   --warning: var(--accent-energy);
   --info: var(--accent-focus);
 
+  /* Status background tokens (use rgba variants for subtle backgrounds) */
+  --status-neutral-bg: rgba(100, 116, 139, 0.15);
+  --status-win-bg: rgba(0, 200, 83, 0.12);
+  --status-loss-bg: rgba(244, 67, 54, 0.12);
+  --status-wash-bg: rgba(148, 163, 184, 0.12);
+
   /* Typography */
   --font-family: 'Apercu Mono', monospace, sans-serif;
   --font-size-xs: 0.75rem;

@@ -14,6 +14,19 @@ export default defineConfig({
       '@features': path.resolve(__dirname, './src/features'),
       '@components': path.resolve(__dirname, './src/components'),
       '@shared': path.resolve(__dirname, './src/shared'),
+      '@data-updater': path.resolve(__dirname, './src/data-updater'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
     },
   },
 })

@@ -40,12 +40,84 @@
     "key_info": ""
   },
   {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "baseline_player1",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "baseline_player2",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "baseline_captured_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "player1_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "player2_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
     "table_name": "bet_mode_one_leg_spread",
     "column_name": "bet_id",
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
     "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "column_name": "home_team_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "column_name": "home_team_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "column_name": "away_team_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_one_leg_spread",
+    "column_name": "away_team_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
   },
   {
     "table_name": "bet_modes",
@@ -235,6 +307,14 @@
     "table_name": "bet_proposals",
     "column_name": "winning_choice",
     "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "resolution_meta",
+    "data_type": "jsonb",
     "is_nullable": "YES",
     "column_default": null,
     "key_info": ""

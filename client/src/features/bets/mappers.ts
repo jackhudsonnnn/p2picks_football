@@ -21,9 +21,6 @@ export function getBetDescription(bet: BetRecord): string {
 export function mapParticipationRowToTicket(row: any): Ticket {
   const bet = row.bet_proposals as BetRecord;
   const description = getBetDescription(bet);
-  const cfg = bet?.bet_mode_best_of_best
-    ? (Array.isArray(bet.bet_mode_best_of_best) ? bet.bet_mode_best_of_best[0] : bet.bet_mode_best_of_best)
-    : undefined;
   const closeTime = bet?.close_time ?? null;
   const betStatus = (bet?.bet_status as string) ?? 'active';
   return {
@@ -44,13 +41,10 @@ export function mapParticipationRowToTicket(row: any): Ticket {
     proposalTime: bet?.proposal_time ?? undefined,
     timeLimitSeconds: bet?.time_limit_seconds ?? undefined,
     modeKey: (bet?.mode_key as any) ?? undefined,
-    player1Name: cfg?.player1_name,
-    player2Name: cfg?.player2_name,
-    stat: cfg?.stat,
-    resolveAfter: cfg?.resolve_after,
     betStatus,
     closeTime,
     winningChoice: bet?.winning_choice ?? null,
     resolutionTime: bet?.resolution_time ?? null,
+    betRecord: bet,
   } as Ticket;
 }
