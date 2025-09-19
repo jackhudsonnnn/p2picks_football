@@ -80,6 +80,62 @@
     "key_info": ""
   },
   {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "possession_team_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "possession_team_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "possession_down",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "possession_distance",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "possession_field_position",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "baseline_captured_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
     "table_name": "bet_mode_one_leg_spread",
     "column_name": "bet_id",
     "data_type": "uuid",
@@ -120,18 +176,34 @@
     "key_info": ""
   },
   {
-    "table_name": "bet_modes",
-    "column_name": "mode_key",
-    "data_type": "text",
+    "table_name": "bet_mode_scorcerer",
+    "column_name": "bet_id",
+    "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
     "key_info": "PRIMARY KEY"
   },
   {
-    "table_name": "bet_modes",
-    "column_name": "mode_name",
-    "data_type": "text",
-    "is_nullable": "NO",
+    "table_name": "bet_mode_scorcerer",
+    "column_name": "baseline_home_score",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_scorcerer",
+    "column_name": "baseline_away_score",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_scorcerer",
+    "column_name": "baseline_captured_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
     "column_default": null,
     "key_info": ""
   },
@@ -241,14 +313,6 @@
   },
   {
     "table_name": "bet_proposals",
-    "column_name": "winning_condition",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_proposals",
     "column_name": "total_pot",
     "data_type": "numeric",
     "is_nullable": "YES",
@@ -285,7 +349,7 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_modes(mode_key)"
+    "key_info": ""
   },
   {
     "table_name": "bet_proposals",
@@ -393,46 +457,6 @@
   },
   {
     "table_name": "friends",
-    "column_name": "created_at",
-    "data_type": "timestamp with time zone",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "key_info": ""
-  },
-  {
-    "table_name": "resolution_history",
-    "column_name": "id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "resolution_history",
-    "column_name": "bet_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
-  },
-  {
-    "table_name": "resolution_history",
-    "column_name": "event_type",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "resolution_history",
-    "column_name": "payload",
-    "data_type": "jsonb",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "resolution_history",
     "column_name": "created_at",
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",

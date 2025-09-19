@@ -11,6 +11,26 @@
   },
   {
     "table_schema": "public",
+    "table_name": "bet_mode_choose_their_fate",
+    "trigger_schema": "public",
+    "trigger_name": "trg_enforce_bm_ctf",
+    "event": "INSERT",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION enforce_mode_row_invariants()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_mode_scorcerer",
+    "trigger_schema": "public",
+    "trigger_name": "trg_enforce_bm_scorcerer",
+    "event": "INSERT",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION enforce_mode_row_invariants()"
+  },
+  {
+    "table_schema": "public",
     "table_name": "bet_participations",
     "trigger_schema": "public",
     "trigger_name": "trg_enforce_immutable_bet_participation_fields",
@@ -54,7 +74,7 @@
     "table_name": "bet_proposals",
     "trigger_schema": "public",
     "trigger_name": "trg_set_bet_close_time",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION set_bet_close_time()"
@@ -81,6 +101,46 @@
   },
   {
     "table_schema": "storage",
+    "table_name": "buckets",
+    "trigger_schema": "storage",
+    "trigger_name": "enforce_bucket_name_length_trigger",
+    "event": "UPDATE,INSERT",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION storage.enforce_bucket_name_length()"
+  },
+  {
+    "table_schema": "storage",
+    "table_name": "objects",
+    "trigger_schema": "storage",
+    "trigger_name": "objects_delete_delete_prefix",
+    "event": "DELETE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger()"
+  },
+  {
+    "table_schema": "storage",
+    "table_name": "objects",
+    "trigger_schema": "storage",
+    "trigger_name": "objects_insert_create_prefix",
+    "event": "INSERT",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION storage.objects_insert_prefix_trigger()"
+  },
+  {
+    "table_schema": "storage",
+    "table_name": "objects",
+    "trigger_schema": "storage",
+    "trigger_name": "objects_update_create_prefix",
+    "event": "UPDATE",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION storage.objects_update_prefix_trigger()"
+  },
+  {
+    "table_schema": "storage",
     "table_name": "objects",
     "trigger_schema": "storage",
     "trigger_name": "update_objects_updated_at",
@@ -88,5 +148,25 @@
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION storage.update_updated_at_column()"
+  },
+  {
+    "table_schema": "storage",
+    "table_name": "prefixes",
+    "trigger_schema": "storage",
+    "trigger_name": "prefixes_create_hierarchy",
+    "event": "INSERT",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION storage.prefixes_insert_trigger()"
+  },
+  {
+    "table_schema": "storage",
+    "table_name": "prefixes",
+    "trigger_schema": "storage",
+    "trigger_name": "prefixes_delete_hierarchy",
+    "event": "DELETE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger()"
   }
 ]

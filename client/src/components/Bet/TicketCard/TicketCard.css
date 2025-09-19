@@ -307,13 +307,6 @@
   font-size: var(--font-size-sm);
 }
 
-/* Responsive tweaks used by the component */
-@media (max-width: 768px) {
-  .card-footer-left .mobile-bet-container {
-    width: 100%;
-  }
-}
-
 /* State color mapping (match BetProposalCard) */
 .ticket-card.state-active {
   border-left-color: var(--accent-energy);
@@ -327,3 +320,11 @@
 .ticket-card.state-washed {
   border-left-color: var(--neutral-600);
 }
+
+/* Responsive tweaks used by the component */
+@media (max-width: 768px) {
+  .card-footer-left .mobile-bet-container {
+    width: 100%;
+  }
+}
+
