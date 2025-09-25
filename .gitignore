@@ -48,5 +48,4 @@ __pycache__
 nfl_raw_live_stats/
 nfl_refined_live_stats/
 nfl_rosters/
-test_nfl_data/
 saved/
