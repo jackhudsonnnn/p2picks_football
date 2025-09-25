@@ -45,7 +45,6 @@ venv/
 __pycache__
 
 # Data directories
-nfl_raw_live_stats/
-nfl_refined_live_stats/
-nfl_rosters/
-saved/
+server/src/data/nfl_raw_live_stats/
+server/src/data/nfl_refined_live_stats/
+server/src/data/nfl_rosters/
