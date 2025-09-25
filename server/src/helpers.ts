@@ -13,7 +13,8 @@ export type StatCategory =
   | 'kickReturns'
   | 'puntReturns'
   | 'kicking'
-  | 'punting';
+  | 'punting'
+  | 'scoring';
 
 export interface StatsByCategory {
   [category: string]: Record<string, unknown>;

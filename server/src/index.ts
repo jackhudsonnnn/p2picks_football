@@ -8,6 +8,7 @@ import {
   getTeamCategoryStats,
   getGameTeams,
   getCurrentPossession,
+  getTeamScoreStats,
 } from './get-functioins';
 
 const app = express();
@@ -53,13 +54,21 @@ app.get('/api/games/:gameId/teams', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/games/:gameId/player/:playerId/:category', async (req: Request, res: Response) => {
+// Place score-stats route BEFORE the generic team category route to avoid it being captured as a category.
+app.get('/api/games/:gameId/team/:teamId/score-stats', async (req: Request, res: Response) => {
   try {
-    const { gameId, playerId, category } = req.params as any;
-    const data = await getPlayerCategoryStats(gameId, playerId, category as any);
+    const { gameId, teamId } = req.params as any;
+    const start = Date.now();
+    const data = await getTeamScoreStats(gameId, teamId);
+    if (process.env.DEBUG_SCORE_STATS === '1' || process.env.DEBUG_SCORE_STATS === 'true') {
+      console.log('[route:/score-stats] params', { gameId, teamId }, 'response', data, 'ms', Date.now() - start);
+    }
     res.json(data);
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'failed to get player stats' });
+    if (process.env.DEBUG_SCORE_STATS === '1' || process.env.DEBUG_SCORE_STATS === 'true') {
+      console.error('[route:/score-stats] error', e);
+    }
+    res.status(500).json({ error: e?.message || 'failed to get team score stats' });
   }
 });
 
@@ -70,6 +79,16 @@ app.get('/api/games/:gameId/team/:teamId/:category', async (req: Request, res: R
     res.json(data);
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to get team stats' });
+  }
+});
+
+app.get('/api/games/:gameId/player/:playerId/:category', async (req: Request, res: Response) => {
+  try {
+    const { gameId, playerId, category } = req.params as any;
+    const data = await getPlayerCategoryStats(gameId, playerId, category as any);
+    res.json(data);
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'failed to get player stats' });
   }
 });
 

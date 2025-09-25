@@ -15,15 +15,15 @@
   --neutral-500: #64748B;
   --neutral-600: #475569;
   --neutral-700: #334155;
-  --neutral-800: #1E293B; 
-  --neutral-850: #192231; 
+  --neutral-800: #1E293B;
+  --neutral-850: #192231;
   --neutral-900: #0F172A;
   --neutral-1000: #0d1322;
 
   /* Accent Colors - Sports themes */
   --accent-victory: #00C853;
   --accent-energy: #FFB300;
-  --accent-power: #F44336; 
+  --accent-power: #F44336;
   --accent-focus: #3D5AFE;
   --accent-success: var(--accent-victory);
   --accent-danger: var(--accent-power);

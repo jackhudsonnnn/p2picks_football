@@ -1,5 +1,13 @@
 // Domain types for the bets feature
 
+export interface BetModeScorcererConfig {
+  bet_id: string;
+  baseline_touchdowns?: number | null;
+  baseline_field_goals?: number | null;
+  baseline_safeties?: number | null;
+  baseline_captured_at?: string | null;
+}
+
 export type BetModeKey = 'best_of_best' | 'one_leg_spread' | 'scorcerer' | 'choose_their_fate' | (string & { _brand?: 'BetModeKey' });
 export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
 

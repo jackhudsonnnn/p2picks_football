@@ -48,21 +48,34 @@ Implementation notes (server-first):
 
 #### Mode 1: Best of the Best
 This mode is a prop bet comparing the performance of two players.
-
 * **Proposer Configuration:**
     * Selects **two unique players** (WR, TE, or RB).
     * Selects the **stat** to compare: Receptions, Receiving Yards, or Touchdowns.
     * Selects when the bet should **resolve after**: Q1 ends, Q2 ends, Q3 ends, or Q4 ends.
-* **Participant Choices:** `pass`, `Player 1`, `Player 2`.
+* **Participant Choices:** `pass`, `{Player 1}`, `{Player 2}`.
 * **Winning Condition:** The winning choice is the player who achieves the **largest net increase** in the selected stat from the moment the bet is placed until the "settle at" time.
 
 #### Mode 2: 1 Leg Spread
-This mode is a bet on the final point spread of a game.
-
+This mode is a bet on the final point difference of a game.
 * **Proposer Configuration:** None beyond the standard bet parameters.
 * **Participant Choices:** `pass`, `0-3`, `4-10`, `11-25`, `26+`.
 * **Winning Condition:** The winning choice is the range (inclusive) that includes the final, absolute point difference of the game score. All ranges are inclusive.
     * *Example:* If the final score is 30-24, the spread is $|30 - 24| = 6$. The winning choice is **'4-10'**.
+
+#### Mode 3: Choose their Fate
+This mode is a bet on the current drive outcome.
+* **Proposer Configuration:** None beyond the standard bet parameters.
+* **Participant Choices:** `pass`, `Touchdown`, `Field Goal`, `Safety`, `Turnover`.
+* **Winning Condition:** The winning choice is the outcome of the current drive given the participant choices.
+    * *Example:* the offensive team's quarterback threw an interception. The winning choice is **'Turnover'**.
+
+#### Mode 4: Scorcerer
+This mode is a bet on the next score type.
+* **Proposer Configuration:** None beyond the standard bet parameters.
+* **Participant Choices:** `pass`, `TD`, `FG`, `Safety`.
+* **Winning Condition:** The winning choice is the type of the next score given the participant choices.
+    * *Example:* a team's kicker makes a field goal. The winning choice is **'FG'**.
+
 * **Considerations:** This app will scale to accept many different game modes.
 
 ---

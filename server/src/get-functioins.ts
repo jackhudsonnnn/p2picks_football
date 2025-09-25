@@ -203,3 +203,90 @@ export async function getCurrentPossession(gameId: string): Promise<Record<strin
   if (!pos || typeof pos !== 'object') return null;
   return pos as Record<string, unknown>;
 }
+
+export async function getTeamScoreStats(gameId: string, teamId: string): Promise<{
+  score: number;
+  touchdowns: number;
+  fieldGoalsMade: number;
+  extraPointsMade: number;
+  safeties: number;
+}> {
+  const debug = process.env.DEBUG_SCORE_STATS === '1' || process.env.DEBUG_SCORE_STATS === 'true';
+  const log = (...args: any[]) => {
+    if (debug) console.log('[score-stats]', ...args);
+  };
+
+  log('requested', { gameId, teamId });
+  let doc: any = null;
+  try {
+    doc = await loadRefinedGame(gameId);
+  } catch (err) {
+    log('error loading game', err);
+  }
+  if (!doc) {
+    log('no game doc found');
+    return { score: 0, touchdowns: 0, fieldGoalsMade: 0, extraPointsMade: 0, safeties: 0 };
+  }
+  const team: any = findTeam(doc, teamId);
+  if (!team) {
+    log('team not found among teams', (doc.teams || []).map((t: any) => ({ teamId: t.teamId, abbreviation: t.abbreviation })));
+    return { score: 0, touchdowns: 0, fieldGoalsMade: 0, extraPointsMade: 0, safeties: 0 };
+  }
+
+  const stats = (team as any).stats || {};
+  const scoringCat = stats?.scoring;
+  log('raw team score + stats keys', { score: team.score, statCategories: Object.keys(stats) });
+  let touchdowns: number;
+  let fieldGoalsMade: number | undefined;
+  let safeties: number | undefined;
+  if (scoringCat) {
+    touchdowns = Number(scoringCat.touchdowns || 0);
+    fieldGoalsMade = Number(scoringCat.fieldGoals || 0);
+    safeties = Number(scoringCat.safeties || 0);
+    log('using scoring category', { touchdowns, fieldGoalsMade, safeties });
+  } else {
+    const rushingTD = Number(stats?.rushing?.rushingTouchdowns || 0);
+    const receivingTD = Number(stats?.receiving?.receivingTouchdowns || 0);
+    const defensiveTD = Number(stats?.defensive?.defensiveTouchdowns || 0);
+    const kickRetTD = Number(stats?.kickReturns?.kickReturnTouchdowns || 0);
+    const puntRetTD = Number(stats?.puntReturns?.puntReturnTouchdowns || 0);
+    touchdowns = rushingTD + receivingTD + defensiveTD + kickRetTD + puntRetTD;
+    safeties = 0; // legacy path guesses later
+    log('touchdown breakdown (legacy path)', { rushingTD, receivingTD, defensiveTD, kickRetTD, puntRetTD, total: touchdowns });
+  }
+
+  const kicking = stats?.kicking || {};
+  const fgRaw: string = kicking['fieldGoalsMade/fieldGoalAttempts'] || '0/0';
+  const xpRaw: string = kicking['extraPointsMade/extraPointAttempts'] || '0/0';
+  const fieldGoalsMadeKicking = parseInt(String(fgRaw).split('/')[0]) || 0;
+  const extraPointsMade = parseInt(String(xpRaw).split('/')[0]) || 0;
+  // If scoring category already gave us fieldGoals, trust that count; else derive from kicking stats
+  if (scoringCat) {
+    // ensure fieldGoalsMade aligns with kicks made if mismatch (keep scoring count authoritative)
+    if (typeof fieldGoalsMade === 'number' && fieldGoalsMade !== fieldGoalsMadeKicking) {
+      log('field goal count mismatch', { scoringCatFieldGoals: fieldGoalsMade, kickingDerived: fieldGoalsMadeKicking });
+    }
+  } else {
+    fieldGoalsMade = fieldGoalsMadeKicking;
+  }
+  // Ensure fieldGoalsMade is defined
+  if (typeof fieldGoalsMade !== 'number') fieldGoalsMade = fieldGoalsMadeKicking;
+  if (typeof safeties !== 'number') safeties = 0;
+  log('kicking parsed', { fgRaw, xpRaw, fieldGoalsMade, extraPointsMade });
+
+  const score: number = Number(team.score || 0);
+  const pointsFromTDs = touchdowns * 6;
+  const pointsFromFGs = fieldGoalsMade * 3;
+  const pointsFromXPs = extraPointsMade * 1;
+  const remainder = score - (pointsFromTDs + pointsFromFGs + pointsFromXPs);
+  let inferredSafeties = 0;
+  if (!scoringCat) { // only infer safeties in legacy path
+    if (remainder >= 2) inferredSafeties = Math.floor(remainder / 2);
+    if (!safeties) safeties = inferredSafeties;
+  }
+  log('computed distribution', { score, pointsFromTDs, pointsFromFGs, pointsFromXPs, remainder, safeties });
+
+  const payload = { score, touchdowns, fieldGoalsMade, extraPointsMade, safeties: safeties || 0 };
+  log('return payload', payload);
+  return payload;
+}

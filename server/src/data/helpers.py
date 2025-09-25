@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional, List, Dict
 
 # Paths
-NFL_LIVE_DIR = "nfl_live_stats"
+NFL_LIVE_DIR = "nfl_raw_live_stats"
 NFL_REFINED_DIR = "nfl_refined_live_stats"
 NFL_ROSTERS_DIR = "nfl_rosters"
 SAVED_DIR = "saved"
@@ -18,7 +18,7 @@ DEFAULT_CATEGORIES: Dict[str, Dict[str, Any]] = {
         "yardsPerPassAttempt": 0,
         "passingTouchdowns": 0,
         "interceptions": 0,
-    "sacks-sackYardsLost": "0-0",
+        "sacks-sackYardsLost": "0-0",
         "adjQBR": 0,
         "QBRating": 0,
     },
@@ -74,7 +74,7 @@ DEFAULT_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "fieldGoalsMade/fieldGoalAttempts": "0/0",
         "fieldGoalPct": 0,
         "longFieldGoalMade": 0,
-    "extraPointsMade/extraPointAttempts": "0/0",
+        "extraPointsMade/extraPointAttempts": "0/0",
         "totalKickingPoints": 0,
     },
     "punting": {

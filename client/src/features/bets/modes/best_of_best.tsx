@@ -150,7 +150,7 @@ const BestOfBestStatResolveStep: ModeStepRenderer = ({
       try {
         setLoading(true);
         setError(null);
-        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL || "http://localhost:5001";
+        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
         // Modes available on server that contain the keys we care about
         const modes = [
           "passing",
@@ -316,7 +316,7 @@ export const bestOfBestMode: ModeDefinition = {
 
     if (gameId && category && (c.player1_id || c.player1_name) && (c.player2_id || c.player2_name)) {
       try {
-        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL || "http://localhost:5001";
+        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
         const p1 = c.player1_id || (c.player1_name ? `name:${c.player1_name}` : undefined);
         const p2 = c.player2_id || (c.player2_name ? `name:${c.player2_name}` : undefined);
         // Fetch category stat objects for each player

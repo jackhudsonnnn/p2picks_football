@@ -95,8 +95,8 @@ export async function getUserTickets(userId: string) {
         total_pot,
         bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_name, player2_name, stat, resolve_after, baseline_player1, baseline_player2, baseline_captured_at),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id, home_team_id, home_team_name, away_team_id, away_team_name),
-        bet_mode_scorcerer!bet_mode_scorcerer_bet_id_fkey (bet_id, baseline_home_score, baseline_away_score, baseline_captured_at),
-        bet_mode_choose_their_fate!bet_mode_choose_their_fate_bet_id_fkey (bet_id, possession_team_id, possession_team_name, possession_down, possession_distance, possession_field_position, baseline_captured_at),
+        bet_mode_scorcerer!bet_mode_scorcerer_bet_id_fkey (bet_id, baseline_touchdowns, baseline_field_goals, baseline_safeties, baseline_captured_at),
+        bet_mode_choose_their_fate!bet_mode_choose_their_fate_bet_id_fkey (bet_id, possession_team_id, possession_team_name, baseline_captured_at),
         tables:table_id (table_name)
       )
     `

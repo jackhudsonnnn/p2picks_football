@@ -28,7 +28,7 @@ export const oneLegSpreadMode: ModeDefinition = {
     const gameId = (c as any).nfl_game_id || (bet as any).nfl_game_id;
     if (gameId) {
       try {
-        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL || 'http://localhost:5001';
+        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
         const resp = await fetch(`${base}/api/games/${encodeURIComponent(gameId)}/teams`);
         if (resp.ok) {
           const teams = await resp.json();

@@ -22,16 +22,14 @@ from helpers import (
 
 UPDATE_INTERVAL_SECONDS = 60
 LOG = get_logger("refined_live_stats")
-CURRENT_OUTPUT_DIR = OUTPUT_DIR
-
 
 def set_output_dir(path: str) -> None:
-    global CURRENT_OUTPUT_DIR
-    CURRENT_OUTPUT_DIR = path
+    global OUTPUT_DIR
+    OUTPUT_DIR = path
 
 
 def ensure_output_dir() -> None:
-    ensure_dir(CURRENT_OUTPUT_DIR)
+    ensure_dir(OUTPUT_DIR)
 
 
 def now_iso() -> str:
@@ -40,44 +38,44 @@ def now_iso() -> str:
 
 def write_json(data: dict, filename: str) -> None:
     try:
-        write_json_to_dir(data, CURRENT_OUTPUT_DIR, filename, indent=2)
+        write_json_to_dir(data, OUTPUT_DIR, filename, indent=2)
         LOG.debug("Saved %s", filename)
     except Exception as e:
         LOG.error("Error writing %s: %s", filename, e)
 
 
-def load_env_testing_flag() -> bool:
-    """Lightweight .env reader to get testing flag without extra deps."""
-    base_dir = os.path.dirname(__file__)
-    env_path = os.path.join(base_dir, ".env")
-    val = None
-    try:
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" not in line:
-                    continue
-                k, v = line.split("=", 1)
-                if k.strip().lower() == "testing":
-                    val = v.strip().strip('"').strip("'")
-                    break
-    except FileNotFoundError:
-        return False
-    if val is None:
-        return False
-    return val.lower() in {"1", "true", "yes", "y", "on"}
-
-
 def list_source_games() -> List[str]:
-    """Return list of game_ids found under nfl_live_stats/*.json"""
+    """Return list of game_ids found under nfl_raw_live_stats/*.json"""
     src_dir = SOURCE_LIVE_DIR
     try:
         files = [f for f in os.listdir(src_dir) if f.lower().endswith(".json")]
     except FileNotFoundError:
         return []
     return [os.path.splitext(f)[0] for f in files]
+
+
+def cleanup_orphan_refined_games() -> int:
+    """Remove refined game JSON files whose source live JSON no longer exists.
+
+    Returns number of files deleted.
+    """
+    source_ids = set(list_source_games())
+    deleted = 0
+    try:
+        files = [f for f in os.listdir(OUTPUT_DIR) if f.lower().endswith('.json')]
+    except FileNotFoundError:
+        return 0
+    for fname in files:
+        gid = os.path.splitext(fname)[0]
+        if gid not in source_ids:
+            fpath = os.path.join(OUTPUT_DIR, fname)
+            try:
+                os.remove(fpath)
+                deleted += 1
+                LOG.info("Removed orphan refined file %s (no matching live source)", fname)
+            except OSError:
+                continue
+    return deleted
 
 
 def _get_boxscore_root(data: dict) -> Optional[dict]:
@@ -448,9 +446,52 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
                 _apply_category_mappings(temp_player_targets[athlete_key], cat_name, parsed)
 
     # Convert players dict -> list for stable/portable JSON
+    # --- Scoring Plays Aggregation (touchdowns / field goals / safeties) ---
+    try:
+        scoring_plays = raw.get("scoringPlays") or raw.get("scoringplays") or []
+        if isinstance(scoring_plays, list) and scoring_plays:
+            # Initialize counts per team present in teams_out
+            scoring_counts: Dict[str, Dict[str, int]] = {}
+            for tid in teams_out.keys():
+                scoring_counts[tid] = {"touchdowns": 0, "fieldGoals": 0, "safeties": 0}
+
+            for sp in scoring_plays:
+                if not isinstance(sp, dict):
+                    continue
+                team_obj = sp.get("team") or {}
+                tid = str(team_obj.get("id")) if team_obj.get("id") is not None else ""
+                if not tid or tid not in teams_out:
+                    continue
+                # Prefer scoringType.abbreviation then fallback to type.abbreviation
+                st = sp.get("scoringType") or {}
+                tp = sp.get("type") or {}
+                abbr = (st.get("abbreviation") or tp.get("abbreviation") or "").strip().upper()
+                if abbr == "TD":
+                    scoring_counts[tid]["touchdowns"] += 1
+                elif abbr == "FG":
+                    scoring_counts[tid]["fieldGoals"] += 1
+                elif abbr == "S":
+                    scoring_counts[tid]["safeties"] += 1
+
+            # Attach to each team's stats under new 'scoring' category
+            for tid, counts in scoring_counts.items():
+                team_stats = teams_out[tid].setdefault("stats", {})
+                team_stats["scoring"] = {
+                    "touchdowns": counts["touchdowns"],
+                    "fieldGoals": counts["fieldGoals"],
+                    "safeties": counts["safeties"],
+                }
+    except Exception:
+        # Swallow errors; scoring stats are additive convenience
+        pass
+
+    # After adding scoring stats, convert players collections
     for t in teams_out.values():
         if isinstance(t.get("players"), dict):
             t["players"] = list(t["players"].values())
+
+    # Extract possession BEFORE constructing the refined dict to avoid UnboundLocalError
+    possession = _extract_current_possession(raw)
 
     refined = {
         "eventId": event_id,
@@ -459,11 +500,6 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
         "possession": possession,
         "teams": list(teams_out.values()),
     }
-
-    # Attach a lightweight possession snapshot for current drive
-    possession = _extract_current_possession(raw)
-    if possession:
-        refined["possession"] = possession
 
     return refined
 
@@ -476,25 +512,10 @@ def read_raw_from_source(event_id: str) -> Optional[dict]:
     return data
 
 
-def process_event(event_id: str) -> Optional[dict]:
-    raw = read_raw_from_source(event_id)
-    if raw is None:
-            LOG.info("Skipping %s: source not found in %s", event_id, SOURCE_LIVE_DIR)
-            return None
-    refined_players = refine_boxscore(raw, event_id)
-    # Convert any team players dicts back to lists for stable output
-    for team in refined_players.get("teams", []):
-        players = team.get("players")
-        if isinstance(players, dict):
-            team["players"] = list(players.values())
-    return refined_players
-
-
 def _load_roster_players() -> Dict[str, Dict[str, Any]]:
     """Map teamAbbr -> { athleteId(str) -> meta }. Uses nfl_rosters/*.json.
     We try to derive athleteId (string). If missing, we still create entries keyed by name to ensure zero init.
     """
-    base_dir = os.path.dirname(__file__)
     roster_dir = ROSTERS_DIR
     result: Dict[str, Dict[str, Any]] = {}
     try:
@@ -644,18 +665,22 @@ def _merge_roster_zero_init(refined_players: dict, roster_map: Dict[str, Dict[st
 
 def main_loop(interval: int, max_ticks: Optional[int]) -> None:
     ensure_output_dir()
-    LOG.info("Refined live stats will be saved in '%s'. Reading from '%s'.", CURRENT_OUTPUT_DIR, SOURCE_LIVE_DIR)
+    LOG.info("Refined live stats will be saved in '%s'. Reading from '%s'.", OUTPUT_DIR, SOURCE_LIVE_DIR)
     LOG.info("Starting refined live stats poller. Interval=%ss max_ticks=%s", interval, max_ticks)
     tick = 0
     while True:
         LOG.info("Tick %d @ %s", tick + 1, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         try:
-            # Process all games present in nfl_live_stats/
+            # Process all games present in nfl_raw_live_stats/
             ids = list_source_games()
             if not ids:
-                LOG.info("No source game files in nfl_live_stats/ yet.")
+                LOG.info("No source game files in nfl_raw_live_stats/ yet.")
+            # First, remove any refined files that no longer have a source counterpart
+            removed = cleanup_orphan_refined_games()
+            if removed:
+                LOG.debug("Orphan refined cleanup removed %d file(s)", removed)
             for gid in ids:
-                LOG.info("Refining game %s from nfl_live_stats…", gid)
+                LOG.info("Refining game %s from nfl_raw_live_stats…", gid)
                 raw = read_raw_from_source(gid)
                 if not raw:
                     continue
