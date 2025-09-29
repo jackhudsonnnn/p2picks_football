@@ -231,6 +231,42 @@ def _init_target_stats() -> Dict[str, Dict[str, Any]]:
     return out
 
 
+def _ensure_team_entry(
+    teams: Dict[str, Dict[str, Any]],
+    team_id: str,
+    abbr: str,
+    name: str,
+    scores: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Ensure a team container exists in teams_out with baseline fields populated."""
+    if team_id in teams:
+        entry = teams[team_id]
+        if abbr and not entry.get("abbreviation"):
+            entry["abbreviation"] = abbr
+        if name and not entry.get("displayName"):
+            entry["displayName"] = name
+        if not entry.get("teamId"):
+            entry["teamId"] = team_id
+        if entry.get("score") is None:
+            entry["score"] = scores.get(team_id, 0)
+        if not isinstance(entry.get("stats"), dict):
+            entry["stats"] = _init_target_stats()
+        if not isinstance(entry.get("players"), dict):
+            entry["players"] = {}
+        return entry
+
+    entry = {
+        "teamId": team_id,
+        "abbreviation": abbr,
+        "displayName": name,
+        "score": scores.get(team_id, 0),
+        "stats": _init_target_stats(),
+        "players": {},
+    }
+    teams[team_id] = entry
+    return entry
+
+
 def _apply_category_mappings(target: Dict[str, Dict[str, Any]], cat_name: str, parsed: Dict[str, Any]) -> None:
     """Map ESPN category+keys into our target schema."""
     if not parsed:
@@ -402,15 +438,7 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
         team_id, abbr, name = _extract_team_meta(team_meta)
         if not team_id:
             continue
-        if team_id not in teams_out:
-            teams_out[team_id] = {
-                "teamId": team_id,
-                "abbreviation": abbr,
-                "displayName": name,
-                "score": scores.get(team_id, 0),
-                "stats": _init_target_stats(),
-                "players": {}, 
-            }
+        team_entry = _ensure_team_entry(teams_out, team_id, abbr, name, scores)
 
         # Build index: athleteId -> target stats buckets
         temp_player_targets: Dict[str, Dict[str, Dict[str, Any]]] = {}
@@ -420,7 +448,7 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
             # First, process team-level totals for this category into team stats
             team_totals_parsed = _parse_category_totals(stat_cat)
             if team_totals_parsed:
-                _apply_category_mappings(teams_out[team_id]["stats"], cat_name, team_totals_parsed)
+                _apply_category_mappings(team_entry["stats"], cat_name, team_totals_parsed)
             for a in stat_cat.get("athletes", []):
                 meta = _extract_athlete_meta(a)
                 raw_aid = meta.get("athleteId") or ""
@@ -428,7 +456,7 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
                 athlete_key = raw_aid if raw_aid else f"name:{meta.get('fullName','')}"
 
                 # Init player container if needed
-                team_players = teams_out[team_id]["players"]
+                team_players = team_entry["players"]
                 if athlete_key not in team_players:
                     team_players[athlete_key] = {
                         "athleteId": raw_aid,
@@ -444,6 +472,20 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
 
                 parsed = _parse_athlete_stats_for_category(stat_cat, a)
                 _apply_category_mappings(temp_player_targets[athlete_key], cat_name, parsed)
+
+    # Ensure teams are initialized even if no player stats are present (e.g., pre-game state)
+    for team_block in box.get("teams", []):
+        team_meta = team_block.get("team", {}) or {}
+        team_id, abbr, name = _extract_team_meta(team_meta)
+        if not team_id:
+            continue
+        team_entry = _ensure_team_entry(teams_out, team_id, abbr, name, scores)
+        home_away = team_block.get("homeAway")
+        if home_away:
+            team_entry["homeAway"] = home_away
+        display_order = team_block.get("displayOrder")
+        if display_order is not None:
+            team_entry["displayOrder"] = display_order
 
     # Convert players dict -> list for stable/portable JSON
     # --- Scoring Plays Aggregation (touchdowns / field goals / safeties) ---
@@ -493,10 +535,37 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
     # Extract possession BEFORE constructing the refined dict to avoid UnboundLocalError
     possession = _extract_current_possession(raw)
 
+    # Extract a normalized status string similar to ESPN's STATUS_* names
+    def _extract_status(payload: dict) -> str:
+        try:
+            stype = (
+                (payload.get("header") or {})
+                .get("competitions", [{}])[0]
+                .get("status", {})
+                .get("type", {})
+            )
+            name = (stype.get("name") or "").strip().upper()
+            if name:
+                return name  # e.g., STATUS_IN_PROGRESS, STATUS_FINAL, STATUS_HALFTIME
+            # Fallback to 'state' mapping if 'name' missing
+            state = (stype.get("state") or "").strip().lower()
+            mapping = {
+                "pre": "STATUS_SCHEDULED",
+                "in": "STATUS_IN_PROGRESS",
+                "post": "STATUS_FINAL",
+                "halftime": "STATUS_HALFTIME",
+            }
+            return mapping.get(state, "STATUS_UNKNOWN")
+        except Exception:
+            return "STATUS_UNKNOWN"
+
+    status = _extract_status(raw)
+
     refined = {
         "eventId": event_id,
         "generatedAt": now_iso(),
         "source": "espn-nfl-boxscore",
+        "status": status,
         "possession": possession,
         "teams": list(teams_out.values()),
     }
@@ -519,17 +588,39 @@ def _load_roster_players() -> Dict[str, Dict[str, Any]]:
     roster_dir = ROSTERS_DIR
     result: Dict[str, Dict[str, Any]] = {}
     try:
-        files = [f for f in os.listdir(roster_dir) if f.endswith("_roster.json")]
+        files = [f for f in os.listdir(roster_dir) if f.lower().endswith(".json")]
     except FileNotFoundError:
         return result
 
     for fname in files:
-        abbr = fname.split("_", 1)[0]
         fpath = os.path.join(roster_dir, fname)
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except Exception:
+            continue
+
+        inferred_abbr: Optional[str] = None
+        inferred_team_id: Optional[str] = None
+        if fname.endswith("_roster.json"):
+            inferred_abbr = fname.split("_", 1)[0]
+
+        team_meta = data.get("team") or {}
+        if isinstance(team_meta, dict):
+            inferred_team_id = (
+                str(team_meta.get("id")) if team_meta.get("id") is not None else None
+            )
+            abbr_candidate = team_meta.get("abbreviation") or team_meta.get("slug")
+            if not inferred_abbr and isinstance(abbr_candidate, str):
+                inferred_abbr = abbr_candidate
+        if not inferred_abbr:
+            inferred_abbr = os.path.splitext(fname)[0]
+
+        if inferred_abbr:
+            inferred_abbr = inferred_abbr.strip().upper()
+        if inferred_team_id:
+            inferred_team_id = inferred_team_id.strip()
+        if not inferred_abbr and not inferred_team_id:
             continue
 
         team_players: Dict[str, Any] = {}
@@ -569,7 +660,10 @@ def _load_roster_players() -> Dict[str, Dict[str, Any]]:
                 "headshot": headshot,
             }
 
-        result[abbr] = team_players
+        if inferred_abbr:
+            result[inferred_abbr] = team_players
+        if inferred_team_id:
+            result[inferred_team_id] = team_players
     return result
 
 
@@ -597,12 +691,11 @@ def _merge_roster_zero_init(refined_players: dict, roster_map: Dict[str, Dict[st
                 for k in stats.keys():
                     category_fields_union[cat].add(k)
 
-    # Build a mapping teamAbbr -> team container
-    abbr_to_team = {}
+    # Build a mapping (teamId/abbr variants) -> team container
+    team_lookup: Dict[str, Dict[str, Any]] = {}
     for team in refined_players.get("teams", []):
         abbr = team.get("abbreviation")
-        if not abbr:
-            continue
+        team_id = team.get("teamId")
         # Normalize players container to dict keyed by athleteId or name:Full Name
         players = team.get("players") or []
         if isinstance(players, list):
@@ -617,12 +710,21 @@ def _merge_roster_zero_init(refined_players: dict, roster_map: Dict[str, Dict[st
         else:
             team["players"] = {}
 
-        abbr_to_team[abbr] = team
+        if isinstance(abbr, str) and abbr:
+            team_lookup[abbr] = team
+            team_lookup[abbr.upper()] = team
+        if isinstance(team_id, str) and team_id:
+            team_lookup[team_id] = team
+        elif team_id is not None:
+            team_lookup[str(team_id)] = team
 
     all_categories = set(DEFAULT_CATEGORIES.keys()) | set(category_fields_union.keys())
 
-    for abbr, roster_players in roster_map.items():
-        team = abbr_to_team.get(abbr)
+    for key, roster_players in roster_map.items():
+        lookup_key = key if isinstance(key, str) else str(key)
+        team = team_lookup.get(lookup_key)
+        if not team and isinstance(lookup_key, str):
+            team = team_lookup.get(lookup_key.upper())
         if not team:
             # Skip teams not in this game
             continue
@@ -660,6 +762,18 @@ def _merge_roster_zero_init(refined_players: dict, roster_map: Dict[str, Dict[st
                     if k not in current:
                         current[k] = v
                 players[pid]["stats"][cat] = current
+
+    # Convert players dicts back to lists for stable output ordering
+    for team in refined_players.get("teams", []):
+        players_container = team.get("players")
+        if isinstance(players_container, dict):
+            team["players"] = sorted(
+                players_container.values(),
+                key=lambda p: (
+                    (p.get("fullName") or "").lower(),
+                    p.get("athleteId") or "",
+                ),
+            )
     return refined_players
 
 

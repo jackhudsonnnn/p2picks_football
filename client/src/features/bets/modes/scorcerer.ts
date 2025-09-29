@@ -1,5 +1,6 @@
 import { supabase } from '@shared/api/supabaseClient';
 import { ModeDefinition } from './base';
+import { safeFetchJSON } from '@shared/utils/http';
 
 export interface ScorcererConfig {
   baseline_touchdowns?: number | null;
@@ -25,42 +26,33 @@ export const scorcererMode: ModeDefinition = {
     let baseline_captured_at: string | null = null;
 
     if (gameId) {
-      try {
-        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
-        // Get teams first
-        const teamsResp = await fetch(`${base}/api/games/${encodeURIComponent(gameId)}/teams`);
-        if (teamsResp.ok) {
-          const teams = await teamsResp.json();
-          if (Array.isArray(teams)) {
-            let touchdownsSum = 0;
-            let fieldGoalsSum = 0;
-            let safetiesSum = 0;
-            await Promise.all(
-              teams.map(async (t: any) => {
-                if (!t || !t.teamId) return;
-                try {
-                  const scoreResp = await fetch(
-                    `${base}/api/games/${encodeURIComponent(gameId)}/team/${encodeURIComponent(t.teamId)}/score-stats`
-                  );
-                  if (scoreResp.ok) {
-                    const s = await scoreResp.json();
-                    touchdownsSum += Number(s?.touchdowns || 0);
-                    fieldGoalsSum += Number(s?.fieldGoalsMade || 0);
-                    safetiesSum += Number(s?.safeties || 0);
-                  }
-                } catch {
-                  // ignore per team error
-                }
-              })
-            );
-            baseline_touchdowns = touchdownsSum;
-            baseline_field_goals = fieldGoalsSum;
-            baseline_safeties = safetiesSum;
-            baseline_captured_at = new Date().toISOString();
-          }
+      const base = import.meta.env.VITE_STATS_SERVER_URL;
+      if (base) {
+        const teamsUrl = `${base}/api/games/${encodeURIComponent(gameId)}/teams`;
+        const teams = await safeFetchJSON<any[]>(teamsUrl, { previewBytes: 80 });
+        if (Array.isArray(teams)) {
+          let touchdownsSum = 0;
+          let fieldGoalsSum = 0;
+          let safetiesSum = 0;
+          await Promise.all(
+            teams.map(async (t: any) => {
+              if (!t || !t.teamId) return;
+              const scoreUrl = `${base}/api/games/${encodeURIComponent(gameId)}/team/${encodeURIComponent(t.teamId)}/score-stats`;
+              const s = await safeFetchJSON<any>(scoreUrl, { previewBytes: 80 });
+              if (s) {
+                touchdownsSum += Number(s?.touchdowns || 0);
+                fieldGoalsSum += Number(s?.fieldGoalsMade || 0);
+                safetiesSum += Number(s?.safeties || 0);
+              }
+            })
+          );
+          baseline_touchdowns = touchdownsSum;
+          baseline_field_goals = fieldGoalsSum;
+          baseline_safeties = safetiesSum;
+          baseline_captured_at = new Date().toISOString();
         }
-      } catch {
-        // ignore network errors
+      } else {
+        console.warn('[scorcerer] VITE_STATS_SERVER_URL not set; skipping baseline capture');
       }
     }
 

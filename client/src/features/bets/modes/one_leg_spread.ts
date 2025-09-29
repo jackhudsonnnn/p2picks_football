@@ -1,5 +1,6 @@
 import { supabase } from '@shared/api/supabaseClient';
 import { ModeDefinition } from './base';
+import { safeFetchJSON } from '@shared/utils/http';
 
 export interface OneLegSpreadConfig {
   home_team_id?: string;
@@ -27,27 +28,24 @@ export const oneLegSpreadMode: ModeDefinition = {
     // If nfl_game_id is provided, try to fetch teams from the server and fill missing values
     const gameId = (c as any).nfl_game_id || (bet as any).nfl_game_id;
     if (gameId) {
-      try {
-        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
-        const resp = await fetch(`${base}/api/games/${encodeURIComponent(gameId)}/teams`);
-        if (resp.ok) {
-          const teams = await resp.json();
-          // Prefer existing config values; otherwise use teams array: first=home, second=away
-          if ((!payload.home_team_id || !payload.home_team_name) && Array.isArray(teams) && teams.length >= 1) {
+      const base = import.meta.env.VITE_STATS_SERVER_URL;
+      if (base) {
+        const url = `${base}/api/games/${encodeURIComponent(gameId)}/teams`;
+        const teams = await safeFetchJSON<any[]>(url, { previewBytes: 80 });
+        if (Array.isArray(teams)) {
+          if ((!payload.home_team_id || !payload.home_team_name) && teams.length >= 1) {
             const t = teams[0];
             payload.home_team_id = payload.home_team_id || t.teamId || t.abbreviation || null;
             payload.home_team_name = payload.home_team_name || t.displayName || null;
           }
-          if ((!payload.away_team_id || !payload.away_team_name) && Array.isArray(teams) && teams.length >= 2) {
+          if ((!payload.away_team_id || !payload.away_team_name) && teams.length >= 2) {
             const t = teams[1];
             payload.away_team_id = payload.away_team_id || t.teamId || t.abbreviation || null;
             payload.away_team_name = payload.away_team_name || t.displayName || null;
           }
-        } else {
-          console.warn('[one_leg_spread] teams API returned not-ok', { gameId, status: resp.status });
         }
-      } catch (e) {
-        console.warn('[one_leg_spread] failed to fetch teams', { gameId, err: e });
+      } else {
+        console.warn('[one_leg_spread] VITE_STATS_SERVER_URL not set; skipping teams enrichment');
       }
     }
 

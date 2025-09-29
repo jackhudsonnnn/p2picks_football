@@ -8,13 +8,7 @@ export interface BestOfBestConfig {
   player1_name?: string;
   player2_id?: string;
   player2_name?: string;
-  /**
-   * Stat key from server, e.g. "passingYards", "receptions", etc.
-   */
   stat?: string;
-  /**
-   * Human-readable label for the selected stat; not persisted, UI-only helper.
-   */
   stat_label?: string;
   resolve_after?: "Q1 ends" | "Q2 ends" | "Q3 ends" | "Q4 ends";
 }
@@ -150,7 +144,38 @@ const BestOfBestStatResolveStep: ModeStepRenderer = ({
       try {
         setLoading(true);
         setError(null);
-        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
+        
+        const base = import.meta.env.VITE_STATS_SERVER_URL;
+        if (!base) {
+          throw new Error(
+            "VITE_STATS_SERVER_URL is not defined – set it in your .env file"
+          );
+        }
+
+        async function fetchJSON(url: string) {
+          const res = await fetch(url, { headers: { Accept: "application/json" } });
+          if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(
+              `Failed (${res.status}) fetching ${url} :: ${text.slice(0,140)}`
+            );
+          }
+          const ct = res.headers.get("content-type") || "";
+          const raw = await res.text();
+            // Some dev servers return HTML (index.html) for unmatched routes – catch that early
+          if (!ct.includes("application/json") || raw.trim().startsWith("<!DOCTYPE") || raw.trim().startsWith("<html")) {
+            throw new Error(
+              `Non-JSON response from ${url}. content-type='${ct}'. First chars: '${raw.trim().slice(0,60)}'`
+            );
+          }
+          try {
+            return JSON.parse(raw);
+          } catch (e: any) {
+            throw new Error(
+              `JSON parse error for ${url}: ${e?.message}. First chars: '${raw.slice(0,80)}'`
+            );
+          }
+        }
         // Modes available on server that contain the keys we care about
         const modes = [
           "passing",
@@ -163,14 +188,11 @@ const BestOfBestStatResolveStep: ModeStepRenderer = ({
           "punting",
         ];
         const results = await Promise.all(
-          modes.map((m) =>
-            fetch(`${base}/api/modes/${m}`)
-              .then((r) => {
-                if (!r.ok) throw new Error(`Failed to load mode ${m}`);
-                return r.json();
-              })
-              .then((obj) => ({ mode: m, obj }))
-          )
+          modes.map(async (m) => {
+            const url = `${base}/api/modes/${m}`;
+            const obj = await fetchJSON(url);
+            return { mode: m, obj } as const;
+          })
         );
 
         const options: StatOption[] = [];
@@ -316,21 +338,43 @@ export const bestOfBestMode: ModeDefinition = {
 
     if (gameId && category && (c.player1_id || c.player1_name) && (c.player2_id || c.player2_name)) {
       try {
-        const base = (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
-        const p1 = c.player1_id || (c.player1_name ? `name:${c.player1_name}` : undefined);
-        const p2 = c.player2_id || (c.player2_name ? `name:${c.player2_name}` : undefined);
-        // Fetch category stat objects for each player
-        const [s1, s2] = await Promise.all([
-          p1 ? fetch(`${base}/api/games/${gameId}/player/${encodeURIComponent(p1)}/${encodeURIComponent(category)}`).then((r) => r.json()) : Promise.resolve({}),
-          p2 ? fetch(`${base}/api/games/${gameId}/player/${encodeURIComponent(p2)}/${encodeURIComponent(category)}`).then((r) => r.json()) : Promise.resolve({}),
-        ]);
-        const v1 = (s1 as any)?.[statKey!];
-        const v2 = (s2 as any)?.[statKey!];
-        baseline_player1 = typeof v1 === "number" ? v1 : Number.isFinite(Number(v1)) ? Number(v1) : null;
-        baseline_player2 = typeof v2 === "number" ? v2 : Number.isFinite(Number(v2)) ? Number(v2) : null;
-        baseline_captured_at = new Date().toISOString();
+  const base = import.meta.env.VITE_STATS_SERVER_URL;
+        if (base) {
+          async function safeFetch(url: string) {
+            try {
+              const res = await fetch(url, { headers: { Accept: "application/json" } });
+              if (!res.ok) return {};
+              const ct = res.headers.get("content-type") || "";
+              const text = await res.text();
+              if (!ct.includes("application/json") || text.trim().startsWith("<")) {
+                console.warn("Baseline fetch non-JSON", { url, ct, preview: text.slice(0,80) });
+                return {};
+              }
+              try {
+                return JSON.parse(text);
+              } catch (e) {
+                console.warn("Baseline JSON parse error", { url, error: (e as any)?.message });
+                return {};
+              }
+            } catch (e) {
+              console.warn("Baseline fetch failed", { url, error: (e as any)?.message });
+              return {};
+            }
+          }
+          const p1 = c.player1_id || (c.player1_name ? `name:${c.player1_name}` : undefined);
+          const p2 = c.player2_id || (c.player2_name ? `name:${c.player2_name}` : undefined);
+          const [s1, s2] = await Promise.all([
+            p1 ? safeFetch(`${base}/api/games/${gameId}/player/${encodeURIComponent(p1)}/${encodeURIComponent(category)}`) : Promise.resolve({}),
+            p2 ? safeFetch(`${base}/api/games/${gameId}/player/${encodeURIComponent(p2)}/${encodeURIComponent(category)}`) : Promise.resolve({}),
+          ]);
+          const v1 = (s1 as any)?.[statKey!];
+          const v2 = (s2 as any)?.[statKey!];
+          baseline_player1 = typeof v1 === "number" ? v1 : Number.isFinite(Number(v1)) ? Number(v1) : null;
+          baseline_player2 = typeof v2 === "number" ? v2 : Number.isFinite(Number(v2)) ? Number(v2) : null;
+          baseline_captured_at = new Date().toISOString();
+        }
       } catch (e) {
-        // swallow for now
+        console.warn("Failed capturing baselines", e);
       }
     }
     const payload = {
@@ -381,7 +425,7 @@ export const bestOfBestMode: ModeDefinition = {
   winningConditionText: (c: BestOfBestConfig) => {
     const p1 = c.player1_name || c.player1_id || "Player 1";
     const p2 = c.player2_name || c.player2_id || "Player 2";
-  const stat = c.stat_label || c.stat || "stat";
+    const stat = c.stat_label || c.stat || "stat";
     const until = c.resolve_after || "selected time";
     return `${p1} vs ${p2} largest increase in ${stat} until ${until}`;
   },

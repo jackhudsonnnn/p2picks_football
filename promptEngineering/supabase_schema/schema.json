@@ -43,7 +43,7 @@
     "table_name": "bet_mode_best_of_best",
     "column_name": "baseline_player1",
     "data_type": "numeric",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -51,7 +51,7 @@
     "table_name": "bet_mode_best_of_best",
     "column_name": "baseline_player2",
     "data_type": "numeric",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -98,30 +98,6 @@
   {
     "table_name": "bet_mode_choose_their_fate",
     "column_name": "possession_team_name",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "possession_down",
-    "data_type": "integer",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "possession_distance",
-    "data_type": "integer",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "possession_field_position",
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
@@ -195,7 +171,7 @@
     "table_name": "bet_mode_scorcerer",
     "column_name": "baseline_field_goals",
     "data_type": "integer",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -203,7 +179,7 @@
     "table_name": "bet_mode_scorcerer",
     "column_name": "baseline_safeties",
     "data_type": "integer",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -211,7 +187,7 @@
     "table_name": "bet_mode_scorcerer",
     "column_name": "baseline_touchdowns",
     "data_type": "integer",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -525,6 +501,14 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "table_members",
+    "column_name": "balence",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": "'0'::bigint",
     "key_info": ""
   },
   {

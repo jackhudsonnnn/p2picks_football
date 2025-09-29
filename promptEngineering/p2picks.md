@@ -72,7 +72,7 @@ This mode is a bet on the current drive outcome.
 #### Mode 4: Scorcerer
 This mode is a bet on the next score type.
 * **Proposer Configuration:** None beyond the standard bet parameters.
-* **Participant Choices:** `pass`, `TD`, `FG`, `Safety`.
+* **Participant Choices:** `pass`, `TD`, `FG`, `Safety`, `No More Scores`.
 * **Winning Condition:** The winning choice is the type of the next score given the participant choices.
     * *Example:* a team's kicker makes a field goal. The winning choice is **'FG'**.
 

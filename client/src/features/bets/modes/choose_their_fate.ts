@@ -1,5 +1,6 @@
 import { supabase } from "@shared/api/supabaseClient";
 import { ModeDefinition } from "./base";
+import { safeFetchJSON } from "@shared/utils/http";
 
 export interface ChooseTheirFateConfig {
   // capture possession metadata if available at creation time
@@ -26,21 +27,17 @@ export const chooseTheirFateMode: ModeDefinition = {
 
     // Best-effort pull current possession metadata
     if (gameId) {
-      try {
-        const base =
-          (import.meta as any)?.env?.VITE_STATS_SERVER_URL;
-        const resp = await fetch(
-          `${base}/api/games/${encodeURIComponent(gameId)}/possession`
-        );
-        if (resp.ok) {
-          const pos = await resp.json();
+      const base = import.meta.env.VITE_STATS_SERVER_URL;
+      if (base) {
+        const url = `${base}/api/games/${encodeURIComponent(gameId)}/possession`;
+        const pos = await safeFetchJSON<any>(url, { previewBytes: 80 });
+        if (pos) {
           payload.possession_team_id = pos?.teamId ?? pos?.team_id ?? null;
-          payload.possession_team_name =
-            pos?.teamName ?? pos?.team_name ?? null;
+          payload.possession_team_name = pos?.teamName ?? pos?.team_name ?? null;
           payload.baseline_captured_at = new Date().toISOString();
         }
-      } catch {
-        // ignore network errors
+      } else {
+        console.warn('[choose_their_fate] VITE_STATS_SERVER_URL not set; skipping possession baseline');
       }
     }
 

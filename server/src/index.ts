@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import 'dotenv/config';;
 import {
   listAvailableGames,
   listPlayers,
@@ -10,6 +11,7 @@ import {
   getCurrentPossession,
   getTeamScoreStats,
 } from './get-functioins';
+import { scorcererValidator } from './validators/scorcererValidator';
 
 const app = express();
 const PORT = Number(process.env.PORT || 5001);
@@ -107,5 +109,5 @@ app.get('/api/games/:gameId/possession', async (req: Request, res: Response) => 
 });
 
 app.listen(PORT, () => {
-  console.log(`[server] listening on http://localhost:${PORT}`);
+  scorcererValidator.start();
 });

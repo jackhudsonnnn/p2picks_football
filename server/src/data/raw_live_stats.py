@@ -28,7 +28,6 @@ from requests.adapters import HTTPAdapter, Retry
 
 from helpers import (
 	configure_logging as helpers_configure_logging,
-	SAVED_DIR,  # retained for backward compatibility; not used now for testing
 	NFL_LIVE_DIR,
 	NFL_ROSTERS_DIR,
 	get_logger,
@@ -124,7 +123,7 @@ def _get_live_events() -> List[dict]:
 	for ev in events:
 		try:
 			state = ev.get("status", {}).get("type", {}).get("state")
-			if state == "in":
+			if state == "in" or state == "pre":
 				live_events.append(ev)
 		except Exception:
 			LOG.debug("Malformed event skipped: %s", ev)

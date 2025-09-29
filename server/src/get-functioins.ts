@@ -7,6 +7,7 @@ import {
   getCategory,
   loadRefinedGame,
   REFINED_DIR,
+  RefinedGameDoc,
 } from './helpers';
 
 export async function listAvailableGames(): Promise<Record<string, string>> {
@@ -22,6 +23,7 @@ export async function listAvailableGames(): Promise<Record<string, string>> {
       jsonFiles.map(async (gameId: string) => {
         try {
           const doc = await loadRefinedGame(gameId);
+          console.log(doc);
           if (doc && Array.isArray(doc.teams) && doc.teams.length >= 2) {
             const a = (doc.teams[0] as any)?.displayName || '';
             const b = (doc.teams[1] as any)?.displayName || '';
@@ -30,9 +32,11 @@ export async function listAvailableGames(): Promise<Record<string, string>> {
             const a = (doc.teams[0] as any)?.displayName || '';
             results[gameId] = `${a}`;
           } else {
+            console.warn(`Warning: Refined game file for gameId ${gameId} has no teams array`);
             results[gameId] = gameId;
           }
         } catch {
+          console.warn(`Warning: Could not load or parse refined game file for gameId ${gameId}`);
           results[gameId] = gameId;
         }
       })
@@ -204,7 +208,11 @@ export async function getCurrentPossession(gameId: string): Promise<Record<strin
   return pos as Record<string, unknown>;
 }
 
-export async function getTeamScoreStats(gameId: string, teamId: string): Promise<{
+export async function getTeamScoreStats(
+  gameId: string,
+  teamId: string,
+  prefetchedDoc?: RefinedGameDoc | null,
+): Promise<{
   score: number;
   touchdowns: number;
   fieldGoalsMade: number;
@@ -217,11 +225,13 @@ export async function getTeamScoreStats(gameId: string, teamId: string): Promise
   };
 
   log('requested', { gameId, teamId });
-  let doc: any = null;
-  try {
-    doc = await loadRefinedGame(gameId);
-  } catch (err) {
-    log('error loading game', err);
+  let doc: any = prefetchedDoc ?? null;
+  if (!doc) {
+    try {
+      doc = await loadRefinedGame(gameId);
+    } catch (err) {
+      log('error loading game', err);
+    }
   }
   if (!doc) {
     log('no game doc found');
