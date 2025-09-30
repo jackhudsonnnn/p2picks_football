@@ -23,7 +23,6 @@ export async function listAvailableGames(): Promise<Record<string, string>> {
       jsonFiles.map(async (gameId: string) => {
         try {
           const doc = await loadRefinedGame(gameId);
-          console.log(doc);
           if (doc && Array.isArray(doc.teams) && doc.teams.length >= 2) {
             const a = (doc.teams[0] as any)?.displayName || '';
             const b = (doc.teams[1] as any)?.displayName || '';

@@ -30,10 +30,6 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     await supabase.from('bet_proposals').delete().eq('bet_id', bet.bet_id);
     throw cfgError;
   }
-  const { error: feedError } = await supabase
-    .from('feed_items')
-    .insert([{ table_id: tableId, item_type: 'bet_proposal', bet_proposal_id: bet.bet_id, item_created_at: bet.proposal_time }]);
-  if (feedError) throw feedError;
   return bet;
 }
 
@@ -92,7 +88,6 @@ export async function getUserTickets(userId: string) {
         close_time,
         winning_choice,
         resolution_time,
-        total_pot,
         bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_name, player2_name, stat, resolve_after, baseline_player1, baseline_player2, baseline_captured_at),
         bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id, home_team_id, home_team_name, away_team_id, away_team_name),
         bet_mode_scorcerer!bet_mode_scorcerer_bet_id_fkey (bet_id, baseline_touchdowns, baseline_field_goals, baseline_safeties, baseline_captured_at),

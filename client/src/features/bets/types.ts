@@ -37,7 +37,6 @@ export interface BetRecord {
   close_time?: string | null;
   winning_choice?: string | null;
   resolution_time?: string | null;
-  total_pot?: number | null;
   bet_mode_best_of_best?: any;
   bet_mode_one_leg_spread?: any;
   bet_mode_scorcerer?: any;
