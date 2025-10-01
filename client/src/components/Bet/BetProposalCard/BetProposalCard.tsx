@@ -133,7 +133,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
       <div className="bp-footer">
         <div className="bp-footer-left">
           {clickable ? (
-            <span className="bp-hint">Click to join before lock • Opens tickets</span>
+            <span className="bp-hint">Click to join</span>
           ) : (
             <span className="bp-hint inactive">{accepted ? 'View ticket' : 'Bet locked'}</span>
           )}
