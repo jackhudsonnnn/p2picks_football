@@ -71,7 +71,7 @@ export class ScorcererValidatorService {
 		if (this.redisClient) return this.redisClient;
 		if (this.redisInitAttempted) return this.redisClient;
 		this.redisInitAttempted = true;
-		const url = process.env.SCORCERER_REDIS_URL || process.env.REDIS_URL;
+		const url = process.env.REDIS_URL;
 		if (!url) {
 			console.error('[scorcerer] redis url not configured; scorcerer validator requires Redis');
 			return null;

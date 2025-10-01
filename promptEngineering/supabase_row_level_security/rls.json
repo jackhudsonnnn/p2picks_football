@@ -112,41 +112,6 @@
     "check_expression": "((proposer_user_id = auth.uid()) AND ((close_time IS NULL) OR (now() < close_time)))"
   },
   {
-    "table_name": "feed_items",
-    "policy_name": "Feed items updates are restricted",
-    "command": "UPDATE",
-    "using_expression": "false",
-    "check_expression": null
-  },
-  {
-    "table_name": "feed_items",
-    "policy_name": "Users can delete their own feed items; hosts can delete any",
-    "command": "DELETE",
-    "using_expression": "(is_table_member(table_id, auth.uid()) AND ((auth.uid() = get_table_host_user_id(table_id)) OR ((item_type = 'text_message'::text) AND (EXISTS ( SELECT 1\n   FROM text_messages txt\n  WHERE ((txt.text_message_id = feed_items.text_message_id) AND (txt.user_id = auth.uid()))))) OR ((item_type = 'bet_proposal'::text) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = feed_items.bet_proposal_id) AND (bp.proposer_user_id = auth.uid())))))))",
-    "check_expression": null
-  },
-  {
-    "table_name": "feed_items",
-    "policy_name": "Users can insert their own content as feed items",
-    "command": "INSERT",
-    "using_expression": null,
-    "check_expression": "(is_table_member(table_id, auth.uid()) AND (((item_type = 'text_message'::text) AND (text_message_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM text_messages txt\n  WHERE ((txt.text_message_id = feed_items.text_message_id) AND (txt.user_id = auth.uid()))))) OR ((item_type = 'bet_proposal'::text) AND (bet_proposal_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = feed_items.bet_proposal_id) AND (bp.proposer_user_id = auth.uid())))))))"
-  },
-  {
-    "table_name": "feed_items",
-    "policy_name": "Users can view feed items from their tables",
-    "command": "SELECT",
-    "using_expression": "is_table_member(table_id, auth.uid())",
-    "check_expression": null
-  },
-  {
-    "table_name": "feed_items",
-    "policy_name": "feed_items_insert_system",
-    "command": "INSERT",
-    "using_expression": null,
-    "check_expression": "(is_table_member(table_id, auth.uid()) AND (item_type = 'system_message'::text) AND (system_message_id IS NOT NULL))"
-  },
-  {
     "table_name": "friends",
     "policy_name": "Allow users to add friends",
     "command": "INSERT",
@@ -186,13 +151,6 @@
     "policy_name": "System notifications updates are restricted",
     "command": "UPDATE",
     "using_expression": "false",
-    "check_expression": null
-  },
-  {
-    "table_name": "system_messages",
-    "policy_name": "Users can view system_notifications linked to tables they are m",
-    "command": "SELECT",
-    "using_expression": "(EXISTS ( SELECT 1\n   FROM (feed_items fi\n     JOIN table_members tm ON ((fi.table_id = tm.table_id)))\n  WHERE ((fi.system_message_id = system_messages.system_message_id) AND (tm.user_id = auth.uid()))))",
     "check_expression": null
   },
   {
@@ -285,13 +243,6 @@
     "command": "UPDATE",
     "using_expression": "(auth.uid() = user_id)",
     "check_expression": "(auth.uid() = user_id)"
-  },
-  {
-    "table_name": "text_messages",
-    "policy_name": "Users can view text messages linked to tables they are members ",
-    "command": "SELECT",
-    "using_expression": "((EXISTS ( SELECT 1\n   FROM (feed_items fi\n     JOIN table_members tm ON ((fi.table_id = tm.table_id)))\n  WHERE ((fi.text_message_id = text_messages.text_message_id) AND (tm.user_id = auth.uid())))) OR (auth.uid() = user_id))",
-    "check_expression": null
   },
   {
     "table_name": "users",

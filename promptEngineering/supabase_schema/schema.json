@@ -80,6 +80,22 @@
     "key_info": ""
   },
   {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "result_player1",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_best_of_best",
+    "column_name": "result_player2",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
     "table_name": "bet_mode_choose_their_fate",
     "column_name": "bet_id",
     "data_type": "uuid",
@@ -107,6 +123,14 @@
     "table_name": "bet_mode_choose_their_fate",
     "column_name": "baseline_captured_at",
     "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_choose_their_fate",
+    "column_name": "outcome",
+    "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
     "key_info": ""
@@ -188,6 +212,30 @@
     "column_name": "baseline_touchdowns",
     "data_type": "integer",
     "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_scorcerer",
+    "column_name": "result_field_goals",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_scorcerer",
+    "column_name": "result_touchdowns",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_mode_scorcerer",
+    "column_name": "result_safeties",
+    "data_type": "numeric",
+    "is_nullable": "YES",
     "column_default": null,
     "key_info": ""
   },
@@ -283,7 +331,7 @@
     "table_name": "bet_proposals",
     "column_name": "proposal_time",
     "data_type": "timestamp with time zone",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": "now()",
     "key_info": ""
   },
@@ -293,14 +341,6 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": "'active'::text",
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_proposals",
-    "column_name": "total_pot",
-    "data_type": "numeric",
-    "is_nullable": "YES",
-    "column_default": "0.00",
     "key_info": ""
   },
   {
@@ -323,7 +363,7 @@
     "table_name": "bet_proposals",
     "column_name": "nfl_game_id",
     "data_type": "text",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -331,7 +371,7 @@
     "table_name": "bet_proposals",
     "column_name": "mode_key",
     "data_type": "text",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -339,7 +379,7 @@
     "table_name": "bet_proposals",
     "column_name": "close_time",
     "data_type": "timestamp with time zone",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -366,62 +406,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "key_info": ""
-  },
-  {
-    "table_name": "feed_items",
-    "column_name": "feed_item_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "feed_items",
-    "column_name": "table_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> tables(table_id)"
-  },
-  {
-    "table_name": "feed_items",
-    "column_name": "item_created_at",
-    "data_type": "timestamp with time zone",
-    "is_nullable": "YES",
-    "column_default": "now()",
-    "key_info": ""
-  },
-  {
-    "table_name": "feed_items",
-    "column_name": "item_type",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "feed_items",
-    "column_name": "text_message_id",
-    "data_type": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> text_messages(text_message_id)"
-  },
-  {
-    "table_name": "feed_items",
-    "column_name": "system_message_id",
-    "data_type": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> system_messages(system_message_id)"
-  },
-  {
-    "table_name": "feed_items",
-    "column_name": "bet_proposal_id",
-    "data_type": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
   },
   {
     "table_name": "friends",
@@ -472,6 +456,14 @@
     "key_info": ""
   },
   {
+    "table_name": "system_messages",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> tables(table_id)"
+  },
+  {
     "table_name": "table_members",
     "column_name": "member_id",
     "data_type": "uuid",
@@ -505,7 +497,7 @@
   },
   {
     "table_name": "table_members",
-    "column_name": "balence",
+    "column_name": "balance",
     "data_type": "bigint",
     "is_nullable": "NO",
     "column_default": "'0'::bigint",
@@ -582,6 +574,14 @@
     "is_nullable": "YES",
     "column_default": "now()",
     "key_info": ""
+  },
+  {
+    "table_name": "text_messages",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> tables(table_id)"
   },
   {
     "table_name": "users",
