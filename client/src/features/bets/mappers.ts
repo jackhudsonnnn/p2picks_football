@@ -1,5 +1,6 @@
 import { BetModeKey, BetRecord, BetStatus, Ticket } from './types';
 import { modeRegistry } from './modes';
+import { normalizeToHundredth } from '@shared/utils/number';
 
 export function deriveBetState(bet: BetRecord): BetStatus {
   const s = (bet?.bet_status || 'active').toString().toLowerCase();
@@ -34,8 +35,8 @@ export function mapParticipationRowToTicket(row: any): Ticket {
     gameContext: description,
     betDetails: description,
     myGuess: row.user_guess || 'pass',
-    wager: bet?.wager_amount || 0,
-    payout: bet?.wager_amount ? (bet.wager_amount as number) * 2 : 0,
+  wager: bet?.wager_amount != null ? normalizeToHundredth(bet.wager_amount) : 0,
+  payout: bet?.wager_amount ? normalizeToHundredth((bet.wager_amount as number) * 2) : 0,
     result: bet?.winning_choice ?? null,
     settledStatus: betStatus === 'resolved' || betStatus === 'washed',
     proposalTime: bet?.proposal_time ?? undefined,

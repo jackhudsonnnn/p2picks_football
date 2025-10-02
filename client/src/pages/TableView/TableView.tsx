@@ -74,7 +74,7 @@ export const TableView: React.FC = () => {
         )}
         {activeTab === "members" && (
           <MemberList
-            members={members.map(m => ({ ...m, balance: 0 }))}
+            members={members}
             hostUserId={table.host_user_id}
             currentUserId={user.id}
           />

@@ -3,6 +3,7 @@ import './TicketCard.css';
 import type { Ticket } from '@features/bets/types';
 import { modeRegistry } from '@features/bets/modes';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
+import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
 
 export interface TicketCardProps {
@@ -42,7 +43,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
 
   const Actions = () => (
     <div className="ticket-card-actions">
-      <span className="ticket-finance">{ticket.wager} pt(s)</span>
+  <span className="ticket-finance">{formatToHundredth(ticket.wager)} pt(s)</span>
     </div>
   );
 

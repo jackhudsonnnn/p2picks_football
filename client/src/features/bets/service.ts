@@ -1,6 +1,7 @@
 import { supabase } from '@shared/api/supabaseClient';
 import { BetProposalInput } from './types';
 import { modeRegistry } from './modes';
+import { normalizeToHundredth } from '@shared/utils/number';
 
 // Create a bet proposal and insert a feed item
 export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalInput) {
@@ -12,7 +13,7 @@ export async function createBetProposal(tableId: string, proposerUserId: string,
     nfl_game_id: form.nfl_game_id ?? null,
     mode_key: form.mode ?? null,
     description,
-    wager_amount: form.wager_amount,
+  wager_amount: normalizeToHundredth(form.wager_amount),
     time_limit_seconds: form.time_limit_seconds,
     bet_status: 'active',
   };

@@ -23,5 +23,4 @@ export type BetProposal = {
 	bet_status: 'active' | 'pending' | 'resolved' | 'washed' | string;
 	description: string;
 	winning_choice: string | null;
-	resolution_meta: any | null;
 };

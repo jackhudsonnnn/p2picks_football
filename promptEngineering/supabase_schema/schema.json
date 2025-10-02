@@ -400,14 +400,6 @@
     "key_info": ""
   },
   {
-    "table_name": "bet_proposals",
-    "column_name": "resolution_meta",
-    "data_type": "jsonb",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
     "table_name": "friends",
     "column_name": "user_id1",
     "data_type": "uuid",

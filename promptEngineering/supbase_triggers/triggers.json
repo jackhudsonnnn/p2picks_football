@@ -94,7 +94,7 @@
     "table_name": "bet_proposals",
     "trigger_schema": "public",
     "trigger_name": "trg_set_bet_close_time",
-    "event": "UPDATE,INSERT",
+    "event": "INSERT,UPDATE",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION set_bet_close_time()"
@@ -114,7 +114,7 @@
     "table_name": "subscription",
     "trigger_schema": "realtime",
     "trigger_name": "tr_check_filters",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION realtime.subscription_check_filters()"

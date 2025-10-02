@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { getTable, subscribeToTableMembers } from '@shared/api/tableService';
 import type { TableMember } from '../types';
+import { normalizeToHundredth } from '@shared/utils/number';
 
 export function useTableMembers(tableId?: string, userId?: string) {
   const [rawTable, setRawTable] = useState<any | null>(null);
@@ -25,6 +26,8 @@ export function useTableMembers(tableId?: string, userId?: string) {
     (rawTable?.table_members || []).map((tm: any) => ({
       user_id: tm.user_id,
       username: tm.users?.username || tm.user_id,
+      // table_members.balance is double precision in the DB; ensure it's a number here
+      balance: tm.balance != null ? normalizeToHundredth(Number(tm.balance)) : 0,
     }))
   ), [rawTable]);
 

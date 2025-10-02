@@ -3,6 +3,7 @@ import "./BetProposalForm.css";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { modeRegistry } from "@features/bets/modes";
 import { mergeConfig } from "@features/bets/modes/base";
+import { formatToHundredth, normalizeToHundredth } from '@shared/utils/number';
 
 type ModeKey = string;
 
@@ -32,7 +33,8 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
   const [step, setStep] = useState(0);
   const [mode, setMode] = useState<ModeKey>("");
   const [selectedGameId, setSelectedGameId] = useState("");
-  const [wagerAmount, setWagerAmount] = useState<number>(1);
+  // default to 0.25 pts, UI increments by 0.25, max 5.00
+  const [wagerAmount, setWagerAmount] = useState<number>(0.25);
   const [timeLimit, setTimeLimit] = useState<number>(30);
   const [modeConfig, setModeConfig] = useState<any>({});
   const [availableGames, setAvailableGames] = useState<GameOption[]>([]);
@@ -76,6 +78,10 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
     setModeConfig({});
   }, [selectedGameId]);
 
+  useEffect(() => {
+    // no-op; kept for parity if needed in future
+  }, [wagerAmount]);
+
   const selectedGame = useMemo(
     () => availableGames.find((g) => g.id === selectedGameId),
     [availableGames, selectedGameId]
@@ -105,7 +111,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
       }
     }
     if (step === totalSteps - 2)
-      return wagerAmount >= 1 && timeLimit >= 10 && timeLimit <= 60;
+      return wagerAmount >= 0.25 && wagerAmount <= 5 && timeLimit >= 10 && timeLimit <= 60;
     return true;
   }, [
     step,
@@ -199,16 +205,30 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
             <label className="form-label" htmlFor="wager_amount">
               Wager (pts)
             </label>
-            <input
+            <select
               id="wager_amount"
-              className="form-input"
-              type="number"
-              min={1}
-              step={1}
-              value={wagerAmount}
-              onChange={(e) => setWagerAmount(Number(e.target.value))}
+              className="form-select"
+              value={String(wagerAmount)}
+              onChange={(e) => {
+                const parsed = Number(e.target.value);
+                const clamped = Math.min(Math.max(parsed, 0.25), 5);
+                const normalized = normalizeToHundredth(clamped);
+                setWagerAmount(normalized);
+              }}
               required
-            />
+            >
+              <option value="" disabled>
+                Select wager
+              </option>
+              {Array.from({ length: 20 }).map((_, i) => {
+                const val = normalizeToHundredth(0.25 * (i + 1));
+                return (
+                  <option key={val} value={Number(val)}>
+                    {formatToHundredth(val)}
+                  </option>
+                );
+              })}
+            </select>
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="time_limit_seconds">
@@ -236,7 +256,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
             <strong>{selectedGame?.label || "Selected Matchup"}</strong>
           </div>
           <div>
-            <strong>{wagerAmount} pt(s)</strong> • {timeLimit}s window
+            <strong>{formatToHundredth(wagerAmount)} pt(s)</strong> • {timeLimit}s window
           </div>
           <div>{def?.summary({ config: modeConfig })}</div>
           <div>{description2}</div>
@@ -257,9 +277,10 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({
       ? def.buildDescription(modeConfig)
       : "Bet";
     const description2 = def?.buildSecondaryDescription?.(modeConfig);
+    const normalizedWager = normalizeToHundredth(Math.min(Math.max(wagerAmount, 0.25), 5));
     onSubmit({
       nfl_game_id: selectedGameId,
-      wager_amount: wagerAmount,
+      wager_amount: normalizedWager,
       time_limit_seconds: timeLimit,
       mode,
       description,

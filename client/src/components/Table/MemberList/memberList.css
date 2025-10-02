@@ -174,8 +174,12 @@
   color: var(--accent-success);
   background: rgba(46, 204, 113, 0.09);
 }
-
 .member-balance.negative .balance-badge {
   color: var(--accent-danger);
   background: rgba(231, 76, 60, 0.09);
+}
+
+.member-balance.zero .balance-badge {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.03);
 }

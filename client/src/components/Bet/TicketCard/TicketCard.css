@@ -114,7 +114,7 @@
 }
 
 .bet-details {
-  color: var(--text-light);
+  color: var(--neutral-300);
   font-weight: 500;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -122,11 +122,11 @@
 }
 
 .ticket-finance {
+  color: var(--accent-victory);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: var(--spacing-xs);
-  background-color: #0d48a17a;
   padding: 0 var(--spacing-sm);
   border-radius: var(--radius-sm);
 }

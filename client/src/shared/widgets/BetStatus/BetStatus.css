@@ -1,5 +1,6 @@
 /* Unified Bet Status widget styling */
-.bet-status, .widget-bet-status {
+.bet-status,
+.widget-bet-status {
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   background: var(--neutral-700);
@@ -12,10 +13,26 @@
   text-align: center;
   box-sizing: border-box;
 }
-.bet-status.status-active { color: var(--accent-energy); }
-.bet-status.status-pending { color: var(--accent-power); }
-.bet-status.status-resolved { color: var(--accent-victory); }
-.bet-status.status-washed { color: var(--text-secondary); text-decoration: line-through; }
+
+.bet-status.status-active {
+  color: var(--accent-energy);
+}
+
+.bet-status.status-pending {
+  color: var(--accent-power);
+}
+
+.bet-status.status-resolved {
+  color: var(--accent-victory);
+}
+
+.bet-status.status-washed {
+  color: var(--text-secondary);
+}
 
 /* Allow parent containers to override sizing */
-.bet-status.compact { font-size: 10px; padding: 2px 4px; min-width: 36px; }
+.bet-status.compact {
+  font-size: 10px;
+  padding: 2px 4px;
+  min-width: 36px;
+}

@@ -5,6 +5,7 @@ import { acceptBetProposal, getBetProposalDetails, hasUserAcceptedBet } from '@f
 import type { BetProposalMessage } from '@shared/types/chat';
 import { supabase } from '@shared/api/supabaseClient';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
+import { formatToHundredth } from '@shared/utils/number';
 import './BetProposalCard.css';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
 
@@ -121,7 +122,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
       <div className="bp-header">
         <div className="bp-header-left">
           <span className="bp-id">#{betIdShort}</span>
-          <span className="bp-wager">{Number(message.betDetails.wager_amount).toFixed(0)} pt(s)</span>
+          <span className="bp-wager">{formatToHundredth(message.betDetails.wager_amount)} pt(s)</span>
         </div>
         <div className="bp-header-right">
           <BetStatus phase={phase} timeLeft={timeLeft} />

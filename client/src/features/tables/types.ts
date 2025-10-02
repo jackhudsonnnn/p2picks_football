@@ -10,7 +10,7 @@ export interface Table {
 export interface TableMember {
   user_id: string;
   username: string;
-  balance?: number; // future: include balance when available
+  balance?: number;
 }
 
 export interface TableListItem {
