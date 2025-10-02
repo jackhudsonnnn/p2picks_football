@@ -232,17 +232,24 @@
   },
   {
     "table_name": "text_messages",
-    "policy_name": "Users can insert their own text messages",
-    "command": "INSERT",
-    "using_expression": null,
-    "check_expression": "(auth.uid() = user_id)"
-  },
-  {
-    "table_name": "text_messages",
     "policy_name": "Users can update their own text messages",
     "command": "UPDATE",
     "using_expression": "(auth.uid() = user_id)",
     "check_expression": "(auth.uid() = user_id)"
+  },
+  {
+    "table_name": "text_messages",
+    "policy_name": "text_messages_insert_for_members",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((auth.uid() = user_id) AND is_user_member_of_table(table_id, auth.uid()))"
+  },
+  {
+    "table_name": "text_messages",
+    "policy_name": "text_messages_select_for_members",
+    "command": "SELECT",
+    "using_expression": "is_user_member_of_table(table_id, auth.uid())",
+    "check_expression": null
   },
   {
     "table_name": "users",

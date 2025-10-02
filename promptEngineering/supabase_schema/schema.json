@@ -432,6 +432,46 @@
     "key_info": ""
   },
   {
+    "table_name": "resolution_history",
+    "column_name": "resolution_history_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "event_type",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "payload",
+    "data_type": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "key_info": ""
+  },
+  {
+    "table_name": "resolution_history",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
     "table_name": "system_messages",
     "column_name": "system_message_id",
     "data_type": "uuid",
@@ -498,9 +538,9 @@
   {
     "table_name": "table_members",
     "column_name": "balance",
-    "data_type": "bigint",
+    "data_type": "double precision",
     "is_nullable": "NO",
-    "column_default": "'0'::bigint",
+    "column_default": "'0'::double precision",
     "key_info": ""
   },
   {

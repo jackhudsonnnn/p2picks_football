@@ -36,6 +36,12 @@ export class ScorcererValidatorService {
 	private redisClient: Redis | null = null;
 	private redisInitAttempted = false;
 	private readonly redisSnapshotTtlSeconds = 60 * 60 * 6;
+	private readonly storeRawSnapshots = process.env.SCORCERER_STORE_RAW === '1' || process.env.SCORCERER_STORE_RAW === 'true';
+
+	// in-memory fallback (key -> { hash: valueStored, expiresAt })
+	// memorySnapshots maps key -> { storedValue: string; canonicalHash: string; expiresAt }
+	private readonly memorySnapshots = new Map<string, { storedValue: string; canonicalHash: string; expiresAt: number }>();
+	private memorySnapshotsWarned = false;
 
 	start() {
 		// Watch-mode only: trigger validation when refined JSON files are added/changed
@@ -50,6 +56,7 @@ export class ScorcererValidatorService {
 			this.redisClient = null;
 			this.redisInitAttempted = false;
 		}
+		this.memorySnapshots.clear();
 	}
 
 	private startWatcher() {
@@ -90,22 +97,30 @@ export class ScorcererValidatorService {
 
 	private async recordSnapshotSignature(gameId: string, snapshot: GameSnapshot): Promise<SnapshotRecord | null> {
 		const redis = this.getRedis();
-		if (!redis) return null;
+		if (!redis) {
+			return this.recordSnapshotSignatureInMemory(gameId, snapshot);
+		}
 		try {
 			const key = this.redisSnapshotKey(gameId);
-			const previous = await redis.getset(key, snapshot.signatureHash);
+			const valueToStore = this.storeRawSnapshots ? snapshot.signatureJson : snapshot.signatureHash;
+			const previous = await redis.getset(key, valueToStore);
 			await redis.expire(key, this.redisSnapshotTtlSeconds);
-			return { shouldProcess: previous !== snapshot.signatureHash, previousHash: previous };
+			const previousHash = previous;
+			const shouldProcess = previousHash !== valueToStore;
+			return { shouldProcess, previousHash };
 		} catch (err: unknown) {
 			console.error('[scorcerer] redis snapshot error', err);
-			return null;
+			return this.recordSnapshotSignatureInMemory(gameId, snapshot);
 		}
 	}
 
 	private async restoreSnapshotOnFailure(gameId: string, newHash: string, record: SnapshotRecord | null) {
 		if (!record) return;
 		const redis = this.getRedis();
-		if (!redis) return;
+		if (!redis) {
+			this.restoreSnapshotInMemory(gameId, newHash, record);
+			return;
+		}
 		try {
 			const key = this.redisSnapshotKey(gameId);
 			const stored = await redis.get(key);
@@ -123,11 +138,57 @@ export class ScorcererValidatorService {
 
 	private async invalidateSnapshot(gameId: string) {
 		const redis = this.getRedis();
-		if (!redis) return;
+		if (!redis) {
+			this.invalidateSnapshotInMemory(gameId);
+			return;
+		}
 		try {
 			await redis.del(this.redisSnapshotKey(gameId));
 		} catch (err: unknown) {
 			console.error('[scorcerer] failed to clear redis snapshot', err);
+		}
+	}
+
+	private recordSnapshotSignatureInMemory(gameId: string, snapshot: GameSnapshot): SnapshotRecord {
+		this.cleanupMemorySnapshots();
+		const key = this.redisSnapshotKey(gameId);
+		const previous = this.memorySnapshots.get(key);
+		const previousStored = previous?.storedValue ?? null;
+		const previousCanonical = previous?.canonicalHash ?? null;
+		const expiresAt = Date.now() + this.redisSnapshotTtlSeconds * 1000;
+		const storedValue = this.storeRawSnapshots ? snapshot.signatureJson : snapshot.signatureHash;
+		this.memorySnapshots.set(key, { storedValue, canonicalHash: snapshot.signatureHash, expiresAt });
+		if (!this.memorySnapshotsWarned) {
+			console.warn('[scorcerer] falling back to in-memory snapshot tracking; Redis disabled or unavailable');
+			this.memorySnapshotsWarned = true;
+		}
+		return { shouldProcess: previousStored !== storedValue, previousHash: previousStored };
+	}
+
+	private restoreSnapshotInMemory(gameId: string, newHash: string, record: SnapshotRecord) {
+		const key = this.redisSnapshotKey(gameId);
+		const entry = this.memorySnapshots.get(key);
+		if (!entry) return;
+		// entry.storedValue is what we compare to when deciding whether to process
+		if (entry.storedValue !== newHash) return;
+		if (record.previousHash) {
+			this.memorySnapshots.set(key, { storedValue: record.previousHash, canonicalHash: entry.canonicalHash, expiresAt: Date.now() + this.redisSnapshotTtlSeconds * 1000 });
+		} else {
+			this.memorySnapshots.delete(key);
+		}
+	}
+
+	private invalidateSnapshotInMemory(gameId: string) {
+		const key = this.redisSnapshotKey(gameId);
+		this.memorySnapshots.delete(key);
+	}
+
+	private cleanupMemorySnapshots() {
+		const now = Date.now();
+		for (const [key, entry] of this.memorySnapshots) {
+			if (entry.expiresAt <= now) {
+				this.memorySnapshots.delete(key);
+			}
 		}
 	}
 
@@ -160,7 +221,7 @@ export class ScorcererValidatorService {
 				.eq('nfl_game_id', gameId);
 			if (error) {
 				console.error('[scorcerer] list bets (watch) error', error);
-				await this.restoreSnapshotOnFailure(gameId, builtSnapshot.signatureHash, record);
+				await this.restoreSnapshotOnFailure(gameId, this.storeRawSnapshots ? builtSnapshot.signatureJson : builtSnapshot.signatureHash, record);
 				return;
 			}
 			const group = (bets as BetProposal[]) || [];
@@ -170,7 +231,7 @@ export class ScorcererValidatorService {
 		} catch (e: unknown) {
 			console.error('[scorcerer] onFileChanged error', { filePath }, e);
 			if (snapshot && snapshotRecord?.shouldProcess) {
-				await this.restoreSnapshotOnFailure(gameId, snapshot.signatureHash, snapshotRecord);
+				await this.restoreSnapshotOnFailure(gameId, this.storeRawSnapshots ? snapshot.signatureJson : snapshot.signatureHash, snapshotRecord);
 			}
 		}
 	}
