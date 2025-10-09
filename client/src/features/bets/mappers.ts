@@ -1,23 +1,35 @@
 import { BetModeKey, BetRecord, BetStatus, Ticket } from './types';
 import { normalizeToHundredth } from '@shared/utils/number';
 
-export function extractModeConfig(bet?: BetRecord | null): any {
+export function extractModeConfig(bet?: BetRecord | null): Record<string, unknown> | undefined {
   if (!bet) return undefined;
+
   const direct = (bet as any).mode_config ?? (bet as any).modeConfig;
-  if (direct) return direct;
-  const mode = bet.mode_key as BetModeKey | null | undefined;
-  if (mode === 'best_of_best' && (bet as any).bet_mode_best_of_best) {
-    const legacy = (bet as any).bet_mode_best_of_best;
-    return Array.isArray(legacy) ? legacy[0] : legacy;
+  if (direct && typeof direct === 'object') {
+    return direct as Record<string, unknown>;
   }
-  if (mode === 'one_leg_spread' && (bet as any).bet_mode_one_leg_spread) {
-    const legacy = (bet as any).bet_mode_one_leg_spread;
-    return Array.isArray(legacy) ? legacy[0] : legacy;
+
+  const modeKey = bet.mode_key ? String(bet.mode_key) : '';
+  if (modeKey) {
+    const legacyKey = `bet_mode_${modeKey}`;
+    const legacy = (bet as any)[legacyKey];
+    if (legacy) {
+      return Array.isArray(legacy) ? (legacy[0] as Record<string, unknown>) : (legacy as Record<string, unknown>);
+    }
   }
-  if (mode === 'choose_their_fate' && (bet as any).bet_mode_choose_their_fate) {
-    const legacy = (bet as any).bet_mode_choose_their_fate;
-    return Array.isArray(legacy) ? legacy[0] : legacy;
+
+  const fallbackEntry = Object.entries(bet).find(([key, value]) => key.startsWith('bet_mode_') && value);
+  if (fallbackEntry) {
+    const [, value] = fallbackEntry;
+    if (Array.isArray(value)) {
+      const first = value[0];
+      return first && typeof first === 'object' ? (first as Record<string, unknown>) : undefined;
+    }
+    if (typeof value === 'object') {
+      return value as Record<string, unknown>;
+    }
   }
+
   return undefined;
 }
 
