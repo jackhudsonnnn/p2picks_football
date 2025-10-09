@@ -1,37 +1,33 @@
 import { supabase } from '@shared/api/supabaseClient';
-import { BetProposalInput } from './types';
-import { modeRegistry } from './modes';
-import { normalizeToHundredth } from '@shared/utils/number';
+import { fetchModeConfigs } from '@shared/api/modeConfig';
 
 // Create a bet proposal and insert a feed item
-export async function createBetProposal(tableId: string, proposerUserId: string, form: BetProposalInput) {
-  const modeDef = form.mode ? modeRegistry[form.mode] : undefined;
-  const description = form.description || (modeDef?.buildDescription ? modeDef.buildDescription(form) : 'Bet');
-  const payload: any = {
-    table_id: tableId,
-    proposer_user_id: proposerUserId,
-    nfl_game_id: form.nfl_game_id ?? null,
-    mode_key: form.mode ?? null,
-    description,
-  wager_amount: normalizeToHundredth(form.wager_amount),
-    time_limit_seconds: form.time_limit_seconds,
-    bet_status: 'active',
-  };
-  const { data: bet, error: betError } = await supabase
-    .from('bet_proposals')
-    .insert([payload])
-    .select()
-    .single();
-  if (betError) throw betError;
-  try {
-    if (modeDef?.persistConfig) {
-      await modeDef.persistConfig({ bet, config: form, tableId, proposerUserId });
-    }
-  } catch (cfgError) {
-    await supabase.from('bet_proposals').delete().eq('bet_id', bet.bet_id);
-    throw cfgError;
+export interface BetProposalRequestPayload {
+  nfl_game_id: string;
+  mode_key: string;
+  mode_config?: Record<string, unknown>;
+  wager_amount: number;
+  time_limit_seconds: number;
+}
+
+export async function createBetProposal(
+  tableId: string,
+  proposerUserId: string,
+  payload: BetProposalRequestPayload & { preview?: unknown }
+) {
+  const { preview: _preview, ...rest } = payload;
+  const response = await fetch(`/api/tables/${encodeURIComponent(tableId)}/bets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ proposer_user_id: proposerUserId, ...rest }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`Failed to create bet proposal (${response.status}): ${text.slice(0, 120)}`);
   }
-  return bet;
+
+  return response.json();
 }
 
 // Debug function to get bet proposal details
@@ -89,10 +85,6 @@ export async function getUserTickets(userId: string) {
         close_time,
         winning_choice,
         resolution_time,
-        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_name, player2_name, stat, resolve_after, baseline_player1, baseline_player2, baseline_captured_at),
-        bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id, home_team_id, home_team_name, away_team_id, away_team_name),
-        bet_mode_scorcerer!bet_mode_scorcerer_bet_id_fkey (bet_id, baseline_touchdowns, baseline_field_goals, baseline_safeties, baseline_captured_at),
-        bet_mode_choose_their_fate!bet_mode_choose_their_fate_bet_id_fkey (bet_id, possession_team_id, possession_team_name, baseline_captured_at),
         tables:table_id (table_name)
       )
     `
@@ -100,7 +92,25 @@ export async function getUserTickets(userId: string) {
     .eq('user_id', userId)
     .order('participation_time', { ascending: false });
   if (error) throw error;
-  return data;
+
+  const rows = data ?? [];
+  const betIds = Array.from(new Set(rows.map((row: any) => row.bet_id).filter(Boolean))) as string[];
+  if (betIds.length) {
+    try {
+      const configs = await fetchModeConfigs(betIds);
+      rows.forEach((row: any) => {
+        const bet = row?.bet_proposals;
+        if (!bet) return;
+        const record = configs[bet.bet_id];
+        if (record && (!bet.mode_key || record.mode_key === bet.mode_key)) {
+          (bet as any).mode_config = record.data;
+        }
+      });
+    } catch (cfgErr) {
+      console.warn('[getUserTickets] failed to hydrate mode config', cfgErr);
+    }
+  }
+  return rows;
 }
 
 // Check if a user has already accepted a bet proposal

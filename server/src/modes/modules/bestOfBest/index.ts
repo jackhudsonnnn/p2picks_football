@@ -1,0 +1,1 @@
+export { bestOfBestModule } from './definition';

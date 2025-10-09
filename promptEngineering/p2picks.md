@@ -91,7 +91,7 @@ This feature provides a mechanism for a Table to "cash out" and end a session.
 
 #### Example Settlement Ledger:
 
-> **Table Settlement Summary - August 10, 2025**
+> **Table Settlement Summary**
 > **Host:** `Chris_P_Bacon`: -20 points
 >
 > **Winners (To Receive from Host):**

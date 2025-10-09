@@ -11,26 +11,6 @@
   },
   {
     "table_schema": "public",
-    "table_name": "bet_mode_choose_their_fate",
-    "trigger_schema": "public",
-    "trigger_name": "trg_enforce_bm_ctf",
-    "event": "INSERT",
-    "activation": "BEFORE",
-    "condition": null,
-    "definition": "EXECUTE FUNCTION enforce_mode_row_invariants()"
-  },
-  {
-    "table_schema": "public",
-    "table_name": "bet_mode_scorcerer",
-    "trigger_schema": "public",
-    "trigger_name": "trg_enforce_bm_scorcerer",
-    "event": "INSERT",
-    "activation": "BEFORE",
-    "condition": null,
-    "definition": "EXECUTE FUNCTION enforce_mode_row_invariants()"
-  },
-  {
-    "table_schema": "public",
     "table_name": "bet_participations",
     "trigger_schema": "public",
     "trigger_name": "trg_enforce_immutable_bet_participation_fields",
@@ -73,16 +53,6 @@
     "table_schema": "public",
     "table_name": "bet_proposals",
     "trigger_schema": "public",
-    "trigger_name": "trg_bet_status_change_system_message",
-    "event": "UPDATE",
-    "activation": "AFTER",
-    "condition": "((old.bet_status IS DISTINCT FROM new.bet_status) AND ((new.bet_status = 'pending'::text) OR (new.bet_status = 'resolved'::text)))",
-    "definition": "EXECUTE FUNCTION create_system_message_on_bet_status_change()"
-  },
-  {
-    "table_schema": "public",
-    "table_name": "bet_proposals",
-    "trigger_schema": "public",
     "trigger_name": "trg_enforce_resolve_no_winner_wash",
     "event": "UPDATE",
     "activation": "BEFORE",
@@ -94,7 +64,7 @@
     "table_name": "bet_proposals",
     "trigger_schema": "public",
     "trigger_name": "trg_set_bet_close_time",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION set_bet_close_time()"

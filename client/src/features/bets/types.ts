@@ -1,13 +1,5 @@
 // Domain types for the bets feature
 
-export interface BetModeScorcererConfig {
-  bet_id: string;
-  baseline_touchdowns?: number | null;
-  baseline_field_goals?: number | null;
-  baseline_safeties?: number | null;
-  baseline_captured_at?: string | null;
-}
-
 export type BetModeKey = 'best_of_best' | 'one_leg_spread' | 'scorcerer' | 'choose_their_fate' | (string & { _brand?: 'BetModeKey' });
 export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
 
@@ -18,8 +10,9 @@ export interface BetProposalInput {
   time_limit_seconds: number; // 10-60
   mode: BetModeKey;
   description: string;
-  // allow modes to tack on their own fields without polluting global types
-  [key: string]: any;
+  mode_config?: Record<string, unknown>;
+  
+  [key: string]: any; // allow modes to tack on their own fields without polluting global types
 }
 
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
@@ -37,10 +30,7 @@ export interface BetRecord {
   close_time?: string | null;
   winning_choice?: string | null;
   resolution_time?: string | null;
-  bet_mode_best_of_best?: any;
-  bet_mode_one_leg_spread?: any;
-  bet_mode_scorcerer?: any;
-  bet_mode_choose_their_fate?: any;
+  mode_config?: Record<string, unknown> | null;
   tables?: { table_name?: string } | null;
 }
 

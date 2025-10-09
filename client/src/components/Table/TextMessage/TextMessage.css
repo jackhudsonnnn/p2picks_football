@@ -33,6 +33,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   display: inline-block;
+  white-space: pre-wrap;
 }
 
 .chat-message {

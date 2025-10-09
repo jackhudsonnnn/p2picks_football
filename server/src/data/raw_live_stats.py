@@ -222,7 +222,7 @@ def _cleanup_old_games(now: Optional[datetime] = None) -> None:
 
 
 # ---------------- Testing Mode Support ----------------
-def _copy_test_data_games_and_rosters() -> None:
+def _copy_test_data_games_and_rosters(fetch_rosters: bool = True) -> None:
 	"""Copy mock game & roster JSONs from test_nfl_data/ structure.
 
 	Expected layout under server/src/data/test_nfl_data/:
@@ -257,15 +257,19 @@ def _copy_test_data_games_and_rosters() -> None:
 		roster_files = [f for f in os.listdir(rosters_src) if f.endswith('.json')]
 	except FileNotFoundError:
 		roster_files = []
-	for fname in roster_files:
-		src = os.path.join(rosters_src, fname)
-		try:
-			with open(src, 'r', encoding='utf-8') as f:
-				data = json.load(f)
-			_write_json_atomic(data, ROSTERS_DIR, fname, log_info=False)
-			roster_count += 1
-		except Exception as e:
-			LOG.warning("Testing mode: skip roster %s: %s", fname, e)
+	if fetch_rosters:
+		for fname in roster_files:
+			src = os.path.join(rosters_src, fname)
+			try:
+				with open(src, 'r', encoding='utf-8') as f:
+					data = json.load(f)
+				_write_json_atomic(data, ROSTERS_DIR, fname, log_info=False)
+				roster_count += 1
+			except Exception as e:
+				LOG.warning("Testing mode: skip roster %s: %s", fname, e)
+	else:
+		if roster_files:
+			LOG.info("Testing mode: roster copying disabled; found %d roster file(s) but skipping", len(roster_files))
 
 	LOG.info("Testing mode: copied %d game file(s), %d roster file(s) from test_nfl_data/", game_count, roster_count)
 
@@ -290,10 +294,10 @@ def _purge_initial(first_tick: bool) -> None:
 		LOG.info("Initial purge: removed %d existing game file(s)", removed)
 
 
-def run_tick(testing: bool, first_tick: bool) -> None:
+def run_tick(testing: bool, first_tick: bool, fetch_rosters: bool = True) -> None:
 	_purge_initial(first_tick)
 	if testing:
-		_copy_test_data_games_and_rosters()
+		_copy_test_data_games_and_rosters(fetch_rosters=fetch_rosters)
 		return
 
 	live_events = _get_live_events()
@@ -312,22 +316,28 @@ def run_tick(testing: bool, first_tick: bool) -> None:
 			LOG.info("Skipping %s: failed to fetch boxscore/summary", event_id)
 			continue
 		_write_json_atomic(box, LIVE_STATS_DIR, f"{event_id}.json")
-		_update_rosters_for_game(box, refreshed_rosters)
+		if fetch_rosters:
+			_update_rosters_for_game(box, refreshed_rosters)
+		else:
+			LOG.debug("Roster fetching disabled; skipping roster update for game %s", event_id)
 
 
 # ---------------- Loop ----------------
-def main_loop(interval: int, max_ticks: Optional[int], jitter_percent: float, testing: bool) -> None:
+def main_loop(interval: int, max_ticks: Optional[int], jitter_percent: float, testing: bool, fetch_rosters: bool) -> None:
 	_ensure_dirs()
 	LOG.info("Live game stats directory: %s", LIVE_STATS_DIR)
 	LOG.info("Rosters directory: %s", ROSTERS_DIR)
 	if testing:
-		LOG.info("Testing mode enabled (using test_nfl_data/ mock games & rosters)")
-	LOG.info("Starting unified poller interval=%ss max_ticks=%s jitter=±%s%%", interval, max_ticks, jitter_percent)
+		if fetch_rosters:
+			LOG.info("Testing mode enabled (using test_nfl_data/ mock games & rosters)")
+		else:
+			LOG.info("Testing mode enabled (using test_nfl_data/) - roster fetching disabled")
+	LOG.info("Starting unified poller interval=%ss max_ticks=%s jitter=±%s%% rosters=%s", interval, max_ticks, jitter_percent, fetch_rosters)
 	tick = 0
 	while True:
 		LOG.info("Tick %d @ %s", tick + 1, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 		try:
-			run_tick(testing=testing, first_tick=(tick == 0))
+			run_tick(testing=testing, first_tick=(tick == 0), fetch_rosters=fetch_rosters)
 			_cleanup_old_games()
 		except Exception as e:
 			LOG.exception("Unexpected error during tick: %s", e)
@@ -352,6 +362,7 @@ def parse_args() -> argparse.Namespace:
 	p.add_argument("--once", action="store_true", help="Run a single tick then exit")
 	p.add_argument("--ticks", type=int, default=None, help="Run N ticks then exit (overrides --once)")
 	p.add_argument("--testing", action="store_true", help="Use saved/ JSONs for games and rosters (no network)")
+	p.add_argument("--no-rosters", action="store_true", help="Disable roster fetching and copying (testing mode will skip roster files)")
 	p.add_argument("--jitter", type=float, default=10.0, help="Jitter percent (±N%%), 0 disables (default 10)")
 	p.add_argument("-v", action="count", default=0, help="Increase verbosity (-v, -vv)")
 	return p.parse_args()
@@ -362,7 +373,10 @@ def main() -> None:
 	configure_logging(args.v)
 	interval = max(10, min(args.interval, 300))
 	max_ticks = 1 if args.once and args.ticks is None else args.ticks
-	main_loop(interval=interval, max_ticks=max_ticks, jitter_percent=args.jitter, testing=args.testing)
+	fetch_rosters = not bool(args.no_rosters)
+	if args.no_rosters:
+		LOG.info("Roster fetching disabled via --no-rosters flag")
+	main_loop(interval=interval, max_ticks=max_ticks, jitter_percent=args.jitter, testing=args.testing, fetch_rosters=fetch_rosters)
 
 
 if __name__ == "__main__":

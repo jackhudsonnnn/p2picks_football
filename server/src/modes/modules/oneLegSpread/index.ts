@@ -1,0 +1,1 @@
+export { oneLegSpreadModule } from './definition';

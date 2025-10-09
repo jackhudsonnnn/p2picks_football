@@ -117,6 +117,12 @@
   gap: 8px;
 }
 
+.form-hint {
+  font-size: 0.85rem;
+  color: var(--neutral-300, #c0c6d4);
+  text-align: left;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;

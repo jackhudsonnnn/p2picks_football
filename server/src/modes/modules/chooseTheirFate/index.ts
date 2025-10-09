@@ -1,0 +1,1 @@
+export { chooseTheirFateModule } from './definition';

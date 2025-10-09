@@ -56,20 +56,6 @@
     "check_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_one_leg_spread.bet_id) AND (bp.proposer_user_id = auth.uid()) AND (bp.bet_status = 'active'::text))))"
   },
   {
-    "table_name": "bet_mode_scorcerer",
-    "policy_name": "bm_scorcerer_insert_by_proposer",
-    "command": "INSERT",
-    "using_expression": null,
-    "check_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_mode_scorcerer.bet_id) AND (bp.proposer_user_id = auth.uid()))))"
-  },
-  {
-    "table_name": "bet_mode_scorcerer",
-    "policy_name": "bm_scorcerer_select_for_table_members",
-    "command": "SELECT",
-    "using_expression": "(EXISTS ( SELECT 1\n   FROM (bet_proposals bp\n     JOIN table_members tm ON ((tm.table_id = bp.table_id)))\n  WHERE ((bp.bet_id = bet_mode_scorcerer.bet_id) AND (tm.user_id = auth.uid()))))",
-    "check_expression": null
-  },
-  {
     "table_name": "bet_participations",
     "policy_name": "Participations are updatable by users",
     "command": "UPDATE",

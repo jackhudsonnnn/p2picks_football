@@ -3,6 +3,8 @@ import { supabase } from '@shared/api/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { ChatMessage } from '@shared/types/chat';
 import { formatTimeOfDay } from '@shared/utils/dateTime';
+import { fetchModeConfigs } from '@shared/api/modeConfig';
+import { normalizeToHundredth } from '@shared/utils/number';
 
 export async function createTable(tableName: string, hostUserId: string) {
   const { data: table, error } = await supabase
@@ -55,6 +57,153 @@ export async function removeTableMember(tableId: string, userId: string) {
   if (error) throw error;
 }
 
+interface SettlementMemberRecord {
+  user_id: string;
+  username: string;
+  balance: number;
+}
+
+export interface TableSettlementResult {
+  summary: string;
+  messageId: string;
+  generatedAt: string;
+}
+
+function formatPointsDisplay(value: number): string {
+  const normalized = normalizeToHundredth(value);
+  if (normalized === 0) {
+    return '0 points';
+  }
+  const abs = Math.abs(normalized);
+  const formatted = Number.isInteger(abs) ? abs.toFixed(0) : abs.toFixed(2);
+  const sign = normalized > 0 ? '+' : '-';
+  return `${sign}${formatted} points`;
+}
+
+function buildSettlementSummary(
+  tableName: string | null,
+  host: SettlementMemberRecord,
+  others: SettlementMemberRecord[]
+): string {
+  const winners = others
+    .filter((member) => member.balance > 0)
+    .sort((a, b) => b.balance - a.balance);
+  const losers = others
+    .filter((member) => member.balance < 0)
+    .sort((a, b) => a.balance - b.balance);
+  const neutrals = others.filter((member) => member.balance === 0);
+
+  const lines: string[] = [];
+  lines.push('Table Settlement Summary');
+  if (tableName) {
+    lines.push(`Table: ${tableName}`);
+  }
+  lines.push(`Host: ${host.username}: ${formatPointsDisplay(host.balance)}`);
+  lines.push('');
+
+  lines.push('Winners (To Receive from Host):');
+  if (winners.length) {
+    winners.forEach((member) => {
+      lines.push(`- ${member.username}: ${formatPointsDisplay(member.balance)}`);
+    });
+  } else {
+    lines.push('- None');
+  }
+  lines.push('');
+
+  lines.push('Losers (To Pay Host):');
+  if (losers.length) {
+    losers.forEach((member) => {
+      lines.push(`- ${member.username}: ${formatPointsDisplay(member.balance)}`);
+    });
+  } else {
+    lines.push('- None');
+  }
+
+  if (neutrals.length) {
+    lines.push('');
+    lines.push('Members With No Balance Change:');
+    neutrals.forEach((member) => {
+      lines.push(`- ${member.username}: 0 points`);
+    });
+  }
+
+  return lines.join('\n');
+}
+
+export async function settleTable(tableId: string): Promise<TableSettlementResult> {
+  if (!tableId) {
+    throw new Error('tableId is required to settle a table');
+  }
+
+  const { data: tableRecord, error: tableError } = await supabase
+    .from('tables')
+    .select('table_id, table_name, host_user_id, table_members(user_id, balance, users(username))')
+    .eq('table_id', tableId)
+    .single();
+
+  if (tableError) throw tableError;
+  if (!tableRecord) throw new Error('Table not found');
+
+  const members: SettlementMemberRecord[] = (tableRecord.table_members || []).map((member: any) => ({
+    user_id: member.user_id,
+    username: member.users?.username ?? member.user_id,
+    balance: normalizeToHundredth(member.balance ?? 0),
+  }));
+
+  if (!members.length) {
+    throw new Error('Cannot settle a table with no members');
+  }
+
+  const hostMember = members.find((member) => member.user_id === tableRecord.host_user_id);
+  if (!hostMember) {
+    throw new Error('Host record missing from table members');
+  }
+
+  const nonHostMembers = members.filter((member) => member.user_id !== hostMember.user_id);
+  const summary = buildSettlementSummary(tableRecord.table_name ?? null, hostMember, nonHostMembers);
+
+  const originalBalances = members.map((member) => ({
+    user_id: member.user_id,
+    balance: member.balance,
+  }));
+
+  const { error: balanceError } = await supabase
+    .from('table_members')
+    .update({ balance: 0 })
+    .eq('table_id', tableId);
+
+  if (balanceError) throw balanceError;
+
+  const { data: messageData, error: messageError } = await supabase
+    .from('system_messages')
+    .insert([{ table_id: tableId, message_text: summary }])
+    .select('system_message_id, generated_at')
+    .single();
+
+  if (messageError) {
+    await Promise.all(
+      originalBalances.map(async ({ user_id, balance }) => {
+        const { error: rollbackError } = await supabase
+          .from('table_members')
+          .update({ balance })
+          .eq('table_id', tableId)
+          .eq('user_id', user_id);
+        if (rollbackError) {
+          console.error('[settleTable] Failed to rollback balance for user', user_id, rollbackError);
+        }
+      })
+    );
+    throw messageError;
+  }
+
+  return {
+    summary,
+    messageId: messageData?.system_message_id ?? '',
+    generatedAt: messageData?.generated_at ?? new Date().toISOString(),
+  };
+}
+
 export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
   const [
     { data: textData, error: textError },
@@ -87,11 +236,7 @@ export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
         close_time,
         winning_choice,
         resolution_time,
-        users:proposer_user_id (username),
-        bet_mode_best_of_best!bet_mode_best_of_best_bet_id_fkey (player1_name, player2_name, stat, resolve_after, baseline_player1, baseline_player2, baseline_captured_at),
-        bet_mode_one_leg_spread!bet_mode_one_leg_spread_bet_id_fkey (bet_id, home_team_id, home_team_name, away_team_id, away_team_name),
-        bet_mode_scorcerer!bet_mode_scorcerer_bet_id_fkey (bet_id, baseline_touchdowns, baseline_field_goals, baseline_safeties, baseline_captured_at),
-        bet_mode_choose_their_fate!bet_mode_choose_their_fate_bet_id_fkey (bet_id, possession_team_id, possession_team_name, baseline_captured_at)
+        users:proposer_user_id (username)
       `)
       .eq('table_id', tableId)
       .order('proposal_time', { ascending: true })
@@ -128,7 +273,23 @@ export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
     });
   });
 
-  (betData ?? []).forEach((bet: any) => {
+  const betRows = betData ?? [];
+  const betIds = Array.from(new Set(betRows.map((b: any) => b.bet_id).filter(Boolean))) as string[];
+  if (betIds.length) {
+    try {
+      const configs = await fetchModeConfigs(betIds);
+      betRows.forEach((bet: any) => {
+        const record = configs[bet.bet_id];
+        if (record && (!bet.mode_key || record.mode_key === bet.mode_key)) {
+          (bet as any).mode_config = record.data;
+        }
+      });
+    } catch (cfgErr) {
+      console.warn('[getTableFeed] failed to hydrate mode config', cfgErr);
+    }
+  }
+
+  betRows.forEach((bet: any) => {
     const username = bet?.users?.username ?? 'Unknown';
     const description = bet.description || 'Bet';
 
