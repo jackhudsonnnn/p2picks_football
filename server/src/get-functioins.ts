@@ -207,6 +207,23 @@ export async function getCurrentPossession(gameId: string): Promise<Record<strin
   return pos as Record<string, unknown>;
 }
 
+export async function getGameStatus(gameId: string, prefetchedDoc?: RefinedGameDoc | null): Promise<string | null> {
+  let doc: RefinedGameDoc | null = prefetchedDoc ?? null;
+  if (!doc) {
+    try {
+      doc = await loadRefinedGame(gameId);
+    } catch (err) {
+      return null;
+    }
+  }
+  if (!doc) return null;
+
+  const raw: any = (doc as any).status || null;
+  if (!raw) return null;
+
+  return String(raw);
+}
+
 export async function getTeamScoreStats(
   gameId: string,
   teamId: string,

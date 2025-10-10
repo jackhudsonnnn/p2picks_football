@@ -20,7 +20,7 @@ export type BetProposal = {
 	table_id: string;
 	nfl_game_id: string | null;
 	mode_key: string | null;
-	bet_status: 'active' | 'pending' | 'resolved' | 'washed' | string;
+	bet_status: 'active' | 'pending' | 'resolved' | 'washed';
 	description: string;
 	winning_choice: string | null;
 };

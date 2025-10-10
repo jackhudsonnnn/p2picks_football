@@ -7,12 +7,12 @@ export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
 export interface BetProposalInput {
   nfl_game_id: string;
   wager_amount: number;
-  time_limit_seconds: number; // 10-60
+  time_limit_seconds: number;
   mode: BetModeKey;
   description: string;
   mode_config?: Record<string, unknown>;
   
-  [key: string]: any; // allow modes to tack on their own fields without polluting global types
+  [key: string]: any;
 }
 
 // Normalized bet record (subset of bet_proposals with optional per-mode config)

@@ -128,7 +128,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     setConfigSelections([]);
     setPreview(null);
     setPreviewError(null);
-    setStep((current) => (current > 1 ? 1 : current));
+    setStep((current) => (current > 0 ? 0 : current));
   }, [gameId, modeKey]);
 
   useEffect(() => {
@@ -200,7 +200,8 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
   }, [gameId, modeKey]);
 
   const totalConfigSteps = configSteps.length;
-  const configStartIndex = 2;
+  // Now that NFL game + mode are selected together in step 0, config steps begin at index 1
+  const configStartIndex = 1;
   const generalStepIndex = configStartIndex + totalConfigSteps;
   const reviewStepIndex = generalStepIndex + 1;
   const totalSteps = reviewStepIndex + 1;
@@ -259,8 +260,8 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
   }, [step, reviewStepIndex, gameId, modeKey, configSignature, wagerAmount, timeLimit, totalConfigSteps, configSelectionsComplete]);
 
   const stepValid = useMemo(() => {
-    if (step === 0) return !!gameId;
-    if (step === 1) return !!modeKey;
+    // combined first step requires both game and mode
+    if (step === 0) return !!gameId && !!modeKey;
     if (step >= configStartIndex && step < generalStepIndex) {
       const localIndex = step - configStartIndex;
       return configSelections[localIndex] != null;
@@ -397,17 +398,15 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           <strong>{formatToHundredth(wagerAmount)} pt(s)</strong> • {timeLimit}s window
         </div>
         {preview.winningCondition && <div className="form-hint">Winning: {preview.winningCondition}</div>}
-        {preview.options?.length ? (
-          <div className="form-hint">Choices: {preview.options.join(' • ')}</div>
-        ) : null}
       </div>
     );
   };
 
   const renderStepContent = () => {
+    // Combined first step: select NFL game and mode in a single UI
     if (step === 0) {
       return (
-        <div className="form-step">
+        <div className="form-step combined-step">
           <div className="form-group">
             <label className="form-label" htmlFor="nfl_game_id">
               NFL Game
@@ -427,18 +426,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
               ))}
             </select>
           </div>
-          {bootstrapError && (
-            <div className="form-error" role="alert">
-              {bootstrapError}
-            </div>
-          )}
-        </div>
-      );
-    }
 
-    if (step === 1) {
-      return (
-        <div className="form-step">
           <div className="form-group">
             <label className="form-label" htmlFor="mode_key">
               Game Mode
@@ -458,6 +446,12 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
               ))}
             </select>
           </div>
+
+          {bootstrapError && (
+            <div className="form-error" role="alert">
+              {bootstrapError}
+            </div>
+          )}
         </div>
       );
     }
