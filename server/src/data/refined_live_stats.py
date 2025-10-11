@@ -237,6 +237,7 @@ def _ensure_team_entry(
     abbr: str,
     name: str,
     scores: Dict[str, Any],
+    possession_map: Dict[str, bool],
 ) -> Dict[str, Any]:
     """Ensure a team container exists in teams_out with baseline fields populated."""
     if team_id in teams:
@@ -249,6 +250,7 @@ def _ensure_team_entry(
             entry["teamId"] = team_id
         if entry.get("score") is None:
             entry["score"] = scores.get(team_id, 0)
+        entry["possession"] = bool(possession_map.get(team_id, False))
         if not isinstance(entry.get("stats"), dict):
             entry["stats"] = _init_target_stats()
         if not isinstance(entry.get("players"), dict):
@@ -262,6 +264,7 @@ def _ensure_team_entry(
         "score": scores.get(team_id, 0),
         "stats": _init_target_stats(),
         "players": {},
+    "possession": bool(possession_map.get(team_id, False)),
     }
     teams[team_id] = entry
     return entry
@@ -419,6 +422,7 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
 
     # Pre-extract scores from header.competitions[].competitors[]
     scores: Dict[str, Any] = {}
+    possession_map: Dict[str, bool] = {}
     try:
         comps = (raw.get("header") or {}).get("competitions") or []
         if isinstance(comps, list):
@@ -430,6 +434,7 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
                         sc = competitor.get("score")
                         if sc is not None:
                             scores[tid] = coerce_number(sc)
+                        possession_map[tid] = bool(competitor.get("possession"))
     except Exception:
         pass
 
@@ -438,7 +443,7 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
         team_id, abbr, name = _extract_team_meta(team_meta)
         if not team_id:
             continue
-        team_entry = _ensure_team_entry(teams_out, team_id, abbr, name, scores)
+        team_entry = _ensure_team_entry(teams_out, team_id, abbr, name, scores, possession_map)
 
         # Build index: athleteId -> target stats buckets
         temp_player_targets: Dict[str, Dict[str, Dict[str, Any]]] = {}
@@ -479,7 +484,7 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
         team_id, abbr, name = _extract_team_meta(team_meta)
         if not team_id:
             continue
-        team_entry = _ensure_team_entry(teams_out, team_id, abbr, name, scores)
+        team_entry = _ensure_team_entry(teams_out, team_id, abbr, name, scores, possession_map)
         home_away = team_block.get("homeAway")
         if home_away:
             team_entry["homeAway"] = home_away
@@ -532,9 +537,6 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
         if isinstance(t.get("players"), dict):
             t["players"] = list(t["players"].values())
 
-    # Extract possession BEFORE constructing the refined dict to avoid UnboundLocalError
-    possession = _extract_current_possession(raw)
-
     # Extract a normalized status string similar to ESPN's STATUS_* names
     def _extract_status(payload: dict) -> str:
         try:
@@ -566,7 +568,6 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
         "generatedAt": now_iso(),
         "source": "espn-nfl-boxscore",
         "status": status,
-        "possession": possession,
         "teams": list(teams_out.values()),
     }
 

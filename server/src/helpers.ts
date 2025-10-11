@@ -36,17 +36,9 @@ export interface Team {
   score: number;
   stats: StatsByCategory;
   players: Player[];
-}
-
-export interface PossessionSnapshot {
-  teamId?: string;
-  teamName?: string;
-  teamAbbreviation?: string;
-  down?: number | null;
-  distance?: number | null;
-  fieldPosition?: string | null;
-  period?: number | null;
-  clock?: string | null;
+  homeAway?: string;
+  displayOrder?: number;
+  possession?: boolean;
 }
 
 export interface RefinedGameDoc {
@@ -55,7 +47,6 @@ export interface RefinedGameDoc {
   source?: string;
   status?: string; // e.g., STATUS_IN_PROGRESS, STATUS_FINAL, STATUS_HALFTIME, STATUS_SCHEDULED
   teams: Team[];
-  possession?: PossessionSnapshot;
   note?: string;
 }
 

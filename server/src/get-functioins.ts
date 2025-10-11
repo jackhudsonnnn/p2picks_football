@@ -202,9 +202,16 @@ export async function getTeamCategoryStats(
 export async function getCurrentPossession(gameId: string): Promise<Record<string, unknown> | null> {
   const doc = await loadRefinedGame(gameId);
   if (!doc) return null;
-  const pos: any = (doc as any).possession || null;
-  if (!pos || typeof pos !== 'object') return null;
-  return pos as Record<string, unknown>;
+  const teamWithPossession = (doc.teams || []).find(
+    (team) => Boolean((team as any)?.possession),
+  ) as any;
+  if (!teamWithPossession) return null;
+  return {
+    teamId: teamWithPossession.teamId || teamWithPossession.abbreviation || '',
+    teamName: teamWithPossession.displayName || '',
+    teamAbbreviation: teamWithPossession.abbreviation || '',
+    possession: true,
+  };
 }
 
 export async function getGameStatus(gameId: string, prefetchedDoc?: RefinedGameDoc | null): Promise<string | null> {

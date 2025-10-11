@@ -1,5 +1,5 @@
 import { loadRefinedGame } from '../../../helpers';
-import { BEST_OF_BEST_ALLOWED_RESOLVE_AFTER, STAT_KEY_TO_CATEGORY } from './constants';
+import { EITHER_OR_ALLOWED_RESOLVE_AFTER, STAT_KEY_TO_CATEGORY } from './constants';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 
 type PlayerRecord = {
@@ -9,7 +9,7 @@ type PlayerRecord = {
   position?: string | null;
 };
 
-export async function buildBestOfBestUserConfig(input: {
+export async function buildEitherOrUserConfig(input: {
   nflGameId?: string | null;
 }): Promise<ModeUserConfigStep[]> {
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
@@ -51,7 +51,7 @@ export async function buildBestOfBestUserConfig(input: {
       } satisfies ModeUserConfigChoice;
     });
 
-  const resolveChoices: ModeUserConfigChoice[] = BEST_OF_BEST_ALLOWED_RESOLVE_AFTER.map((value) => ({
+  const resolveChoices: ModeUserConfigChoice[] = EITHER_OR_ALLOWED_RESOLVE_AFTER.map((value) => ({
     value,
     label: value,
     patch: { resolve_after: value },
@@ -103,7 +103,7 @@ async function loadPlayerRecords(gameId: string): Promise<PlayerRecord[]> {
 
     return records.sort((a, b) => a.name.localeCompare(b.name));
   } catch (err) {
-    console.warn('[bestOfBest] failed to load player records', { gameId, error: (err as Error).message });
+    console.warn('[eitherOr] failed to load player records', { gameId, error: (err as Error).message });
     return [];
   }
 }

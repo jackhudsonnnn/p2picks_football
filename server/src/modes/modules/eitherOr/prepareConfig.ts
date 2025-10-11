@@ -1,8 +1,8 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpers';
-import { BEST_OF_BEST_ALLOWED_RESOLVE_AFTER, STAT_KEY_TO_CATEGORY } from './constants';
+import { EITHER_OR_ALLOWED_RESOLVE_AFTER, STAT_KEY_TO_CATEGORY } from './constants';
 
-export async function prepareBestOfBestConfig({
+export async function prepareEitherOrConfig({
   bet,
   config,
 }: {
@@ -52,7 +52,7 @@ export async function prepareBestOfBestConfig({
       baseline_captured_at: new Date().toISOString(),
     };
   } catch (err) {
-    console.warn('[modes] failed to capture baselines for best_of_best', {
+    console.warn('[modes] failed to capture baselines for either_or', {
       bet_id: bet.bet_id,
       gameId,
       statKey,
@@ -117,9 +117,9 @@ function normalizeStatValue(raw: unknown): number | null {
   return null;
 }
 
-export function buildBestOfBestMetadata() {
+export function buildEitherOrMetadata() {
   return {
     statKeyToCategory: STAT_KEY_TO_CATEGORY,
-    allowedResolveAfter: BEST_OF_BEST_ALLOWED_RESOLVE_AFTER,
+    allowedResolveAfter: EITHER_OR_ALLOWED_RESOLVE_AFTER,
   } as Record<string, unknown>;
 }

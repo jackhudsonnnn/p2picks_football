@@ -8,7 +8,7 @@ import { loadRefinedGame, RefinedGameDoc, REFINED_DIR, findPlayer } from '../../
 
 type PlayerRef = { id?: string | null; name?: string | null };
 
-interface BestOfBestConfig {
+interface EitherOrConfig {
   player1_id?: string | null;
   player1_name?: string | null;
   player2_id?: string | null;
@@ -54,7 +54,7 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
   longPunt: { category: 'punting', field: 'longPunt' },
 };
 
-export class BestOfBestValidatorService {
+export class EitherOrValidatorService {
   private watcher: chokidar.FSWatcher | null = null;
   private pendingChannel: RealtimeChannel | null = null;
   private redisClient: Redis | null = null;
@@ -65,7 +65,7 @@ export class BestOfBestValidatorService {
 
   start() {
     this.startPendingMonitor();
-    this.syncPendingBaselines().catch((err: unknown) => console.error('[bestOfBest] baseline sync error', err));
+    this.syncPendingBaselines().catch((err: unknown) => console.error('[eitherOr] baseline sync error', err));
     this.startWatcher();
   }
 
@@ -73,11 +73,11 @@ export class BestOfBestValidatorService {
     if (this.watcher) this.watcher.close().catch(() => {});
     this.watcher = null;
     if (this.pendingChannel) {
-      this.pendingChannel.unsubscribe().catch((err: unknown) => console.error('[bestOfBest] pending channel unsubscribe error', err));
+      this.pendingChannel.unsubscribe().catch((err: unknown) => console.error('[eitherOr] pending channel unsubscribe error', err));
       this.pendingChannel = null;
     }
     if (this.redisClient) {
-      this.redisClient.quit().catch((err: unknown) => console.error('[bestOfBest] redis quit error', err));
+      this.redisClient.quit().catch((err: unknown) => console.error('[eitherOr] redis quit error', err));
       this.redisClient = null;
       this.redisInitAttempted = false;
     }
@@ -87,28 +87,28 @@ export class BestOfBestValidatorService {
   private startWatcher() {
     if (this.watcher) return;
     const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-    console.log('[bestOfBest] starting watcher on', dir);
+    console.log('[eitherOr] starting watcher on', dir);
     this.watcher = chokidar
       .watch(path.join(dir, '*.json'), { ignoreInitial: false, awaitWriteFinish: { stabilityThreshold: 250, pollInterval: 100 } })
       .on('add', (file) => this.onFileChanged(file))
       .on('change', (file) => this.onFileChanged(file))
-      .on('error', (err: unknown) => console.error('[bestOfBest] watcher error', err));
+      .on('error', (err: unknown) => console.error('[eitherOr] watcher error', err));
   }
 
   private startPendingMonitor() {
     if (this.pendingChannel) return;
     const supa = getSupabase();
     this.pendingChannel = supa
-      .channel('best-of-best-pending')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.best_of_best' }, (payload) => {
+      .channel('either-or-pending')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.either_or' }, (payload) => {
         void this.handleBetProposalUpdate(payload as RealtimePostgresChangesPayload<Record<string, unknown>>);
       })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.best_of_best' }, (payload) => {
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.either_or' }, (payload) => {
         void this.handleBetProposalDelete(payload as RealtimePostgresChangesPayload<Record<string, unknown>>);
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('[bestOfBest] pending monitor ready');
+          console.log('[eitherOr] pending monitor ready');
         }
       });
   }
@@ -128,7 +128,7 @@ export class BestOfBestValidatorService {
         await this.clearBaseline(newRow.bet_id);
       }
     } catch (err: unknown) {
-      console.error('[bestOfBest] pending update handler error', err);
+      console.error('[eitherOr] pending update handler error', err);
     }
   }
 
@@ -139,7 +139,7 @@ export class BestOfBestValidatorService {
         await this.clearBaseline(oldRow.bet_id);
       }
     } catch (err: unknown) {
-      console.error('[bestOfBest] pending delete handler error', err);
+      console.error('[eitherOr] pending delete handler error', err);
     }
   }
 
@@ -149,7 +149,7 @@ export class BestOfBestValidatorService {
       const { data, error } = await supa
         .from('bet_proposals')
         .select('bet_id, nfl_game_id, bet_status')
-        .eq('mode_key', 'best_of_best')
+        .eq('mode_key', 'either_or')
         .eq('bet_status', 'pending');
       if (error) throw error;
       for (const row of data || []) {
@@ -159,7 +159,7 @@ export class BestOfBestValidatorService {
         }
       }
     } catch (err: unknown) {
-      console.error('[bestOfBest] sync pending baselines failed', err);
+      console.error('[eitherOr] sync pending baselines failed', err);
     }
   }
 
@@ -172,7 +172,7 @@ export class BestOfBestValidatorService {
       if (status !== 'STATUS_FINAL') return;
       await this.processFinalGame(gameId, doc);
     } catch (err: unknown) {
-      console.error('[bestOfBest] onFileChanged error', { filePath }, err);
+      console.error('[eitherOr] onFileChanged error', { filePath }, err);
     }
   }
 
@@ -181,11 +181,11 @@ export class BestOfBestValidatorService {
     const { data, error } = await supa
       .from('bet_proposals')
       .select('*')
-      .eq('mode_key', 'best_of_best')
+      .eq('mode_key', 'either_or')
       .eq('bet_status', 'pending')
       .eq('nfl_game_id', gameId);
     if (error) {
-      console.error('[bestOfBest] list pending bets error', { gameId }, error);
+      console.error('[eitherOr] list pending bets error', { gameId }, error);
       return;
     }
     for (const bet of (data as BetProposal[]) || []) {
@@ -197,12 +197,12 @@ export class BestOfBestValidatorService {
     try {
       const config = await this.getConfigForBet(bet.bet_id);
       if (!config) {
-        console.warn('[bestOfBest] missing config; skipping bet', { bet_id: bet.bet_id });
+        console.warn('[eitherOr] missing config; skipping bet', { bet_id: bet.bet_id });
         return;
       }
       const baseline = (await this.getBaseline(bet.bet_id)) || (await this.captureBaselineForBet(bet, doc));
       if (!baseline) {
-        console.warn('[bestOfBest] baseline unavailable; skipping bet', { bet_id: bet.bet_id });
+        console.warn('[eitherOr] baseline unavailable; skipping bet', { bet_id: bet.bet_id });
         return;
       }
       const player1Final = this.getPlayerStatValue(doc, { id: config.player1_id, name: config.player1_name }, baseline.statKey);
@@ -210,7 +210,7 @@ export class BestOfBestValidatorService {
       const delta1 = player1Final - baseline.player1.value;
       const delta2 = player2Final - baseline.player2.value;
       if (Number.isNaN(delta1) || Number.isNaN(delta2)) {
-        console.warn('[bestOfBest] computed NaN delta; skipping bet', { bet_id: bet.bet_id, delta1, delta2 });
+        console.warn('[eitherOr] computed NaN delta; skipping bet', { bet_id: bet.bet_id, delta1, delta2 });
         return;
       }
       if (delta1 === delta2) {
@@ -231,10 +231,10 @@ export class BestOfBestValidatorService {
         .eq('bet_id', bet.bet_id)
         .is('winning_choice', null);
       if (updErr) {
-        console.error('[bestOfBest] failed to set winning_choice', { bet_id: bet.bet_id, winner }, updErr);
+        console.error('[eitherOr] failed to set winning_choice', { bet_id: bet.bet_id, winner }, updErr);
         return;
       }
-      await this.recordHistory(bet.bet_id, 'best_of_best_result', {
+      await this.recordHistory(bet.bet_id, 'either_or_result', {
         outcome: 'winner',
         winning_choice: winner,
         stat: baseline.statKey,
@@ -244,7 +244,7 @@ export class BestOfBestValidatorService {
       });
       await this.clearBaseline(bet.bet_id);
     } catch (err: unknown) {
-      console.error('[bestOfBest] resolve bet error', { bet_id: bet.bet_id }, err);
+      console.error('[eitherOr] resolve bet error', { bet_id: bet.bet_id }, err);
     }
   }
 
@@ -257,10 +257,10 @@ export class BestOfBestValidatorService {
     };
     const { error } = await supa.from('bet_proposals').update(updates).eq('bet_id', betId).eq('bet_status', 'pending');
     if (error) {
-      console.error('[bestOfBest] failed to wash bet', { betId }, error);
+      console.error('[eitherOr] failed to wash bet', { betId }, error);
       return;
     }
-    await this.recordHistory(betId, 'best_of_best_result', { outcome: 'wash', ...payload });
+    await this.recordHistory(betId, 'either_or_result', { outcome: 'wash', ...payload });
   }
 
   private async captureBaselineForBet(bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null }, prefetchedDoc?: RefinedGameDoc | null): Promise<BaselineRecord | null> {
@@ -268,22 +268,22 @@ export class BestOfBestValidatorService {
     if (existing) return existing;
     const config = await this.getConfigForBet(bet.bet_id);
     if (!config) {
-      console.warn('[bestOfBest] cannot capture baseline; missing config', { bet_id: bet.bet_id });
+      console.warn('[eitherOr] cannot capture baseline; missing config', { bet_id: bet.bet_id });
       return null;
     }
     const statKey = config.stat || '';
     if (!statKey) {
-      console.warn('[bestOfBest] config missing stat key', { bet_id: bet.bet_id });
+      console.warn('[eitherOr] config missing stat key', { bet_id: bet.bet_id });
       return null;
     }
     const spec = PLAYER_STAT_MAP[statKey];
     if (!spec) {
-      console.warn('[bestOfBest] unsupported stat key', { bet_id: bet.bet_id, statKey });
+      console.warn('[eitherOr] unsupported stat key', { bet_id: bet.bet_id, statKey });
       return null;
     }
     const gameId = config.nfl_game_id || bet.nfl_game_id;
     if (!gameId) {
-      console.warn('[bestOfBest] missing game id for baseline capture', { bet_id: bet.bet_id });
+      console.warn('[eitherOr] missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;
     }
     let doc = prefetchedDoc ?? null;
@@ -291,7 +291,7 @@ export class BestOfBestValidatorService {
       doc = await loadRefinedGame(gameId);
     }
     if (!doc) {
-      console.warn('[bestOfBest] refined doc unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
+      console.warn('[eitherOr] refined doc unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
       return null;
     }
     const player1Value = this.getPlayerStatValue(doc, { id: config.player1_id, name: config.player1_name }, statKey);
@@ -304,17 +304,17 @@ export class BestOfBestValidatorService {
       player2: { id: config.player2_id, name: config.player2_name, value: player2Value },
     };
     await this.setBaseline(bet.bet_id, baseline);
-    await this.recordHistory(bet.bet_id, 'best_of_best_baseline', baseline as unknown as Record<string, unknown>);
+    await this.recordHistory(bet.bet_id, 'either_or_baseline', baseline as unknown as Record<string, unknown>);
     return baseline;
   }
 
-  private async getConfigForBet(betId: string): Promise<BestOfBestConfig | null> {
+  private async getConfigForBet(betId: string): Promise<EitherOrConfig | null> {
     try {
       const record = await fetchModeConfig(betId);
-      if (!record || record.mode_key !== 'best_of_best') return null;
-      return record.data as BestOfBestConfig;
+      if (!record || record.mode_key !== 'either_or') return null;
+      return record.data as EitherOrConfig;
     } catch (err: unknown) {
-      console.error('[bestOfBest] fetch config error', { betId }, err);
+      console.error('[eitherOr] fetch config error', { betId }, err);
       return null;
     }
   }
@@ -356,7 +356,7 @@ export class BestOfBestValidatorService {
   }
 
   private baselineKey(betId: string): string {
-    return `bestofbest:baseline:${betId}`;
+    return `eitherOr:baseline:${betId}`;
   }
 
   private cleanupMemoryBaselines() {
@@ -377,13 +377,13 @@ export class BestOfBestValidatorService {
         await redis.set(key, value, 'EX', this.baselineTtlSeconds);
         return;
       } catch (err: unknown) {
-        console.error('[bestOfBest] redis baseline set error', { betId }, err);
+        console.error('[eitherOr] redis baseline set error', { betId }, err);
       }
     }
     this.cleanupMemoryBaselines();
     this.memoryBaselines.set(key, { baseline, expiresAt: Date.now() + this.baselineTtlSeconds * 1000 });
     if (!this.memoryBaselineWarned) {
-      console.warn('[bestOfBest] baseline fallback to in-memory storage; Redis disabled or unavailable');
+      console.warn('[eitherOr] baseline fallback to in-memory storage; Redis disabled or unavailable');
       this.memoryBaselineWarned = true;
     }
   }
@@ -396,7 +396,7 @@ export class BestOfBestValidatorService {
         const raw = await redis.get(key);
         if (raw) return JSON.parse(raw) as BaselineRecord;
       } catch (err: unknown) {
-        console.error('[bestOfBest] redis baseline get error', { betId }, err);
+        console.error('[eitherOr] redis baseline get error', { betId }, err);
       }
     }
     this.cleanupMemoryBaselines();
@@ -411,21 +411,21 @@ export class BestOfBestValidatorService {
       try {
         await redis.del(key);
       } catch (err: unknown) {
-        console.error('[bestOfBest] redis baseline clear error', { betId }, err);
+        console.error('[eitherOr] redis baseline clear error', { betId }, err);
       }
     }
     this.memoryBaselines.delete(key);
   }
 
-  private async recordHistory(betId: string, eventType: 'best_of_best_baseline' | 'best_of_best_result', payload: Record<string, unknown>): Promise<void> {
+  private async recordHistory(betId: string, eventType: 'either_or_baseline' | 'either_or_result', payload: Record<string, unknown>): Promise<void> {
     try {
       const supa = getSupabase();
       const { error } = await supa.from('resolution_history').insert([{ bet_id: betId, event_type: eventType, payload }]);
       if (error) {
-        console.error(`[bestOfBest] failed to record ${eventType}`, { betId }, error);
+        console.error(`[eitherOr] failed to record ${eventType}`, { betId }, error);
       }
     } catch (err: unknown) {
-      console.error(`[bestOfBest] history record error (${eventType})`, { betId }, err);
+      console.error(`[eitherOr] history record error (${eventType})`, { betId }, err);
     }
   }
 
@@ -435,20 +435,20 @@ export class BestOfBestValidatorService {
     this.redisInitAttempted = true;
     const url = process.env.REDIS_URL;
     if (!url) {
-      console.error('[bestOfBest] redis url not configured; validator requires Redis for durability');
+      console.error('[eitherOr] redis url not configured; validator requires Redis for durability');
       return null;
     }
     try {
       const client = new Redis(url);
-      client.on('error', (err: unknown) => console.error('[bestOfBest] redis error', err));
+      client.on('error', (err: unknown) => console.error('[eitherOr] redis error', err));
       this.redisClient = client;
-      console.log('[bestOfBest] redis client initialized');
+      console.log('[eitherOr] redis client initialized');
     } catch (err: unknown) {
-      console.error('[bestOfBest] failed to initialize redis client', err);
+      console.error('[eitherOr] failed to initialize redis client', err);
       this.redisClient = null;
     }
     return this.redisClient;
   }
 }
 
-export const bestOfBestValidator = new BestOfBestValidatorService();
+export const eitherOrValidator = new EitherOrValidatorService();

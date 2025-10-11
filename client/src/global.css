@@ -43,7 +43,7 @@
   --status-wash-bg: rgba(148, 163, 184, 0.12);
 
   /* Typography */
-  --font-family: 'Apercu Mono', monospace, sans-serif;
+  --font-family: monospace, sans-serif;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;

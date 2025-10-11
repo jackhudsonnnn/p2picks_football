@@ -176,7 +176,7 @@ export class ChooseTheirFateValidatorService {
       const currentScores = this.collectTeamScores(doc);
       const touchdownTeam = this.firstIncrease(baseline.teams, currentScores, 'touchdowns');
       const fieldGoalTeam = this.firstIncrease(baseline.teams, currentScores, 'fieldGoals');
-      const possessionTeam = this.normalizeTeamId((doc.possession as any)?.teamId ?? (doc.possession as any)?.team_id ?? null);
+  const possessionTeam = this.possessionTeamIdFromDoc(doc);
       if (touchdownTeam) {
         await this.setResult(bet.bet_id, 'TD', {
           outcome: 'TD',
@@ -276,7 +276,7 @@ export class ChooseTheirFateValidatorService {
       console.warn('[chooseTheirFate] refined doc unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
       return null;
     }
-    const possessionTeamId = this.normalizeTeamId((doc.possession as any)?.teamId ?? (doc.possession as any)?.team_id ?? config.possession_team_id ?? null);
+  const possessionTeamId = this.possessionTeamIdFromDoc(doc) ?? this.normalizeTeamId(config.possession_team_id ?? null);
     const baseline: ChooseFateBaseline = {
       gameId,
       possessionTeamId,
@@ -311,6 +311,17 @@ export class ChooseTheirFateValidatorService {
       if (Number.isFinite(num)) return num;
     }
     return 0;
+  }
+
+  private possessionTeamIdFromDoc(doc: RefinedGameDoc | null | undefined): string | null {
+    if (!doc || !Array.isArray(doc.teams)) return null;
+    for (const rawTeam of doc.teams) {
+      const team: any = rawTeam;
+      if (team && team.possession) {
+        return this.normalizeTeamId(team.teamId ?? team.abbreviation ?? null);
+      }
+    }
+    return null;
   }
 
   private normalizeTeamId(value: unknown): string | null {

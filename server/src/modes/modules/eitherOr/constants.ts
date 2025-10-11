@@ -20,4 +20,4 @@ export const STAT_KEY_TO_CATEGORY: Record<string, string> = {
   longPunt: 'punting',
 };
 
-export const BEST_OF_BEST_ALLOWED_RESOLVE_AFTER = ['Q1 ends', 'Q2 ends', 'Q3 ends', 'Q4 ends'];
+export const EITHER_OR_ALLOWED_RESOLVE_AFTER = ['Q1 ends', 'Q2 ends', 'Q3 ends', 'Q4 ends'];

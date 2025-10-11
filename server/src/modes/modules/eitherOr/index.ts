@@ -1,0 +1,1 @@
+export { eitherOrModule } from './definition';

@@ -1,12 +1,12 @@
 import type { ModeModule } from '../shared/types';
-import { bestOfBestModule } from './bestOfBest';
-import { oneLegSpreadModule } from './oneLegSpread';
+import { eitherOrModule } from './eitherOr';
+import { differenceInOpinionModule } from './differenceInOpinion';
 import { chooseTheirFateModule } from './chooseTheirFate';
 import { scorcererModule } from './scorcerer';
 
 export const MODE_MODULES: ModeModule[] = [
-  bestOfBestModule,
-  oneLegSpreadModule,
+  eitherOrModule,
+  differenceInOpinionModule,
   chooseTheirFateModule,
   scorcererModule,
 ];

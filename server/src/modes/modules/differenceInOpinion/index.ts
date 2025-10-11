@@ -1,0 +1,1 @@
+export { differenceInOpinionModule } from './definition';
