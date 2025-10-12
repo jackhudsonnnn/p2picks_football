@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import 'dotenv/config';;
 import {
-  listAvailableGames
+  listAvailableGames,
+  getGameStatus,
 } from './get-functioins';
 import { storeModeConfig, fetchModeConfig, fetchModeConfigs } from './services/modeConfig';
 import { listModeCatalog, findModeDefinition } from './services/modeCatalogService';
@@ -134,6 +135,25 @@ app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
       : {};
   if (nflGameId && !modeConfig.nfl_game_id) {
     modeConfig.nfl_game_id = nflGameId;
+  }
+
+  if (modeKey === 'choose_their_fate') {
+    const gameIdForCheck = typeof modeConfig.nfl_game_id === 'string' && modeConfig.nfl_game_id.trim().length
+      ? modeConfig.nfl_game_id.trim()
+      : null;
+    if (!gameIdForCheck) {
+      res.status(400).json({ error: 'choose_their_fate requires an nfl_game_id' });
+      return;
+    }
+    const rawStatus = await getGameStatus(gameIdForCheck);
+    const status = (rawStatus || '').trim().toUpperCase();
+    if (status !== 'STATUS_IN_PROGRESS') {
+      res.status(400).json({
+        error: 'Choose Their Fate bets can only be proposed while the game is in progress',
+        details: { game_id: gameIdForCheck, status: rawStatus ?? null },
+      });
+      return;
+    }
   }
 
   try {

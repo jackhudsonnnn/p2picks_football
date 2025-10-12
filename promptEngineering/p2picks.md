@@ -46,16 +46,16 @@ Implementation notes (server-first):
 
 ### Modes
 
-#### Mode 1: Best of the Best
+#### Mode 1: Either Or
 This mode is a prop bet comparing the performance of two players.
 * **Proposer Configuration:**
-    * Selects **two unique players** (WR, TE, or RB).
-    * Selects the **stat** to compare: Receptions, Receiving Yards, or Touchdowns.
-    * Selects when the bet should **resolve after**: Q1 ends, Q2 ends, Q3 ends, or Q4 ends.
+    * Selects **two unique players** .
+    * Selects the **stat** to compare: Receptions, Receiving Yards, Punts, ....
+    * Selects when the bet should **resolve after**: Halftime or End of Game.
 * **Participant Choices:** `pass`, `{Player 1}`, `{Player 2}`.
 * **Winning Condition:** The winning choice is the player who achieves the **largest net increase** in the selected stat from the moment the bet is placed until the "settle at" time.
 
-#### Mode 2: 1 Leg Spread
+#### Mode 2: Difference In Opinion
 This mode is a bet on the final point difference of a game.
 * **Proposer Configuration:** None beyond the standard bet parameters.
 * **Participant Choices:** `pass`, `0-3`, `4-10`, `11-25`, `26+`.

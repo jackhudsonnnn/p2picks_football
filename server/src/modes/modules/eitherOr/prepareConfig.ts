@@ -1,6 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpers';
-import { EITHER_OR_ALLOWED_RESOLVE_AFTER, STAT_KEY_TO_CATEGORY } from './constants';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY } from './constants';
 
 export async function prepareEitherOrConfig({
   bet,
@@ -17,12 +17,16 @@ export async function prepareEitherOrConfig({
     player2_name?: string | null;
     stat?: string | null;
     stat_label?: string | null;
-    resolve_after?: string | null;
+    resolve_at?: string | null;
     bet_id?: string | null;
   };
 
   if (!cfg.nfl_game_id) {
     cfg.nfl_game_id = bet.nfl_game_id ?? null;
+  }
+
+  if (!cfg.resolve_at || !EITHER_OR_ALLOWED_RESOLVE_AT.includes(String(cfg.resolve_at))) {
+    cfg.resolve_at = EITHER_OR_DEFAULT_RESOLVE_AT;
   }
 
   const statKey = cfg.stat ? String(cfg.stat) : '';
@@ -77,7 +81,7 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
     player2_name: config.player2_name ?? null,
     stat: config.stat ?? null,
     stat_label: config.stat_label ?? null,
-    resolve_after: config.resolve_after ?? null,
+    resolve_at: config.resolve_at ?? null,
   } as Record<string, unknown>;
 }
 
@@ -120,6 +124,6 @@ function normalizeStatValue(raw: unknown): number | null {
 export function buildEitherOrMetadata() {
   return {
     statKeyToCategory: STAT_KEY_TO_CATEGORY,
-    allowedResolveAfter: EITHER_OR_ALLOWED_RESOLVE_AFTER,
+    allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
   } as Record<string, unknown>;
 }

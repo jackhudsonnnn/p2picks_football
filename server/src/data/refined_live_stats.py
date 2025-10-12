@@ -537,37 +537,51 @@ def refine_boxscore(raw: dict, event_id: str) -> dict:
         if isinstance(t.get("players"), dict):
             t["players"] = list(t["players"].values())
 
-    # Extract a normalized status string similar to ESPN's STATUS_* names
-    def _extract_status(payload: dict) -> str:
+    # Extract normalized status string and current period (if applicable)
+    def _extract_status_and_period(payload: dict) -> Tuple[str, Optional[int]]:
+        status_name = "STATUS_UNKNOWN"
+        period_value: Optional[int] = None
         try:
-            stype = (
-                (payload.get("header") or {})
-                .get("competitions", [{}])[0]
-                .get("status", {})
-                .get("type", {})
-            )
-            name = (stype.get("name") or "").strip().upper()
-            if name:
-                return name  # e.g., STATUS_IN_PROGRESS, STATUS_FINAL, STATUS_HALFTIME
-            # Fallback to 'state' mapping if 'name' missing
-            state = (stype.get("state") or "").strip().lower()
-            mapping = {
-                "pre": "STATUS_SCHEDULED",
-                "in": "STATUS_IN_PROGRESS",
-                "post": "STATUS_FINAL",
-                "halftime": "STATUS_HALFTIME",
-            }
-            return mapping.get(state, "STATUS_UNKNOWN")
-        except Exception:
-            return "STATUS_UNKNOWN"
+            header = payload.get("header") or {}
+            competitions = header.get("competitions") or []
+            comp = competitions[0] if competitions else {}
+            status_obj = comp.get("status") or {}
+            status_type = status_obj.get("type") or {}
 
-    status = _extract_status(raw)
+            raw_name = (status_type.get("name") or "").strip().upper()
+            if raw_name:
+                status_name = raw_name
+            else:
+                state = (status_type.get("state") or "").strip().lower()
+                mapping = {
+                    "pre": "STATUS_SCHEDULED",
+                    "in": "STATUS_IN_PROGRESS",
+                    "post": "STATUS_FINAL",
+                    "halftime": "STATUS_HALFTIME",
+                }
+                status_name = mapping.get(state, "STATUS_UNKNOWN")
+
+            raw_period = None if status_name == "STATUS_SCHEDULED" else status_obj.get("period")
+            if raw_period is not None:
+                try:
+                    period_int = int(raw_period)
+                    if period_int > 0:
+                        period_value = period_int
+                except (TypeError, ValueError):
+                    period_value = None
+        except Exception:
+            pass
+
+        return status_name, period_value
+
+    status, period = _extract_status_and_period(raw)
 
     refined = {
         "eventId": event_id,
         "generatedAt": now_iso(),
         "source": "espn-nfl-boxscore",
         "status": status,
+        "period": period,
         "teams": list(teams_out.values()),
     }
 

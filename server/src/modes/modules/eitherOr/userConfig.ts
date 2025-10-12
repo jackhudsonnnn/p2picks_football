@@ -1,5 +1,5 @@
-import { loadRefinedGame } from '../../../helpers';
-import { EITHER_OR_ALLOWED_RESOLVE_AFTER, STAT_KEY_TO_CATEGORY } from './constants';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY } from './constants';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 
 type PlayerRecord = {
@@ -13,7 +13,8 @@ export async function buildEitherOrUserConfig(input: {
   nflGameId?: string | null;
 }): Promise<ModeUserConfigStep[]> {
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
-  const players = await loadPlayerRecords(gameId);
+  const { doc, players } = await loadGameContext(gameId);
+  const skipResolveStep = shouldSkipResolveStep(doc);
 
   const playerMap = playersById(players);
   const basePlayerChoices = players.map((player) => ({
@@ -47,29 +48,38 @@ export async function buildEitherOrUserConfig(input: {
         patch: {
           stat: statKey,
           stat_label: label,
+          ...(skipResolveStep ? { resolve_at: EITHER_OR_DEFAULT_RESOLVE_AT } : {}),
         },
       } satisfies ModeUserConfigChoice;
     });
 
-  const resolveChoices: ModeUserConfigChoice[] = EITHER_OR_ALLOWED_RESOLVE_AFTER.map((value) => ({
-    value,
-    label: value,
-    patch: { resolve_after: value },
-  }));
-
-  return [
+  const steps: ModeUserConfigStep[] = [
     ['Select Player 1', player1Choices],
     ['Select Player 2', player2Choices],
     ['Select Stat', statChoices],
-    ['Resolve After', resolveChoices],
   ];
+
+  if (!skipResolveStep) {
+    const resolveChoices: ModeUserConfigChoice[] = EITHER_OR_ALLOWED_RESOLVE_AT.map((value) => ({
+      value,
+      label: value,
+      patch: { resolve_at: value },
+    }));
+    steps.push(['Resolve At', resolveChoices]);
+  }
+
+  return steps;
 }
 
-async function loadPlayerRecords(gameId: string): Promise<PlayerRecord[]> {
-  if (!gameId) return [];
+async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | null; players: PlayerRecord[] }> {
+  if (!gameId) {
+    return { doc: null, players: [] };
+  }
   try {
     const doc = await loadRefinedGame(gameId);
-    if (!doc || !Array.isArray(doc.teams)) return [];
+    if (!doc || !Array.isArray(doc.teams)) {
+      return { doc, players: [] };
+    }
 
     const records: PlayerRecord[] = [];
     const seen = new Set<string>();
@@ -101,11 +111,19 @@ async function loadPlayerRecords(gameId: string): Promise<PlayerRecord[]> {
       }
     }
 
-    return records.sort((a, b) => a.name.localeCompare(b.name));
+    return { doc, players: records.sort((a, b) => a.name.localeCompare(b.name)) };
   } catch (err) {
     console.warn('[eitherOr] failed to load player records', { gameId, error: (err as Error).message });
-    return [];
+    return { doc: null, players: [] };
   }
+}
+
+function shouldSkipResolveStep(doc: RefinedGameDoc | null): boolean {
+  if (!doc) return false;
+  const status = typeof doc.status === 'string' ? doc.status.trim().toUpperCase() : '';
+  if (status === 'STATUS_HALFTIME') return true;
+  if (typeof doc.period === 'number' && doc.period >= 3) return true;
+  return false;
 }
 
 function playersById(players: PlayerRecord[]): Record<string, PlayerRecord> {

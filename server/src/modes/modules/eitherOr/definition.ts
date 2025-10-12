@@ -1,5 +1,5 @@
 import type { ModeModule } from '../../shared/types';
-import { EITHER_OR_ALLOWED_RESOLVE_AFTER, STAT_KEY_TO_CATEGORY } from './constants';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY } from './constants';
 import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
 import { buildEitherOrUserConfig } from './userConfig';
@@ -8,13 +8,13 @@ export const eitherOrModule: ModeModule = {
   definition: {
     key: 'either_or',
     label: 'Either Or',
-    summaryTemplate: '`Either Or • ${config.stat_label || config.stat || ""} • ${config.resolve_after || ""}`',
+    summaryTemplate: '`Either Or • ${config.stat_label || config.stat || ""} • ${config.resolve_at || ""}`',
     descriptionTemplate:
-      '`${config.player1_name || config.player1_id || "Player 1"} vs ${config.player2_name || config.player2_id || "Player 2"} largest increase in ${config.stat_label || config.stat || "stat"} until ${config.resolve_after || "selected time"}`',
+      '`${config.player1_name || config.player1_id || "Player 1"} vs ${config.player2_name || config.player2_id || "Player 2"} largest increase in ${config.stat_label || config.stat || "stat"} until ${config.resolve_at || "selected time"}`',
     secondaryDescriptionTemplate:
       '`${config.player1_name || config.player1_id || "Player 1"} vs ${config.player2_name || config.player2_id || "Player 2"}`',
     winningConditionTemplate:
-      '`Largest net increase in ${config.stat_label || config.stat || "stat"} between the selected players until ${config.resolve_after || "the selected time"}`',
+      '`Largest net increase in ${config.stat_label || config.stat || "stat"} between the selected players until ${config.resolve_at || "the selected time"}`',
     optionsExpression:
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); return opts; })()',
     configSteps: [
@@ -30,12 +30,12 @@ export const eitherOrModule: ModeModule = {
         component: 'eitherOr.statResolve',
         label: 'Stat & Resolve',
         props: {
-          allowedResolveAfter: EITHER_OR_ALLOWED_RESOLVE_AFTER,
+          allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
           statKeyToCategory: STAT_KEY_TO_CATEGORY,
           allowedStatKeys: Object.keys(STAT_KEY_TO_CATEGORY),
         },
         validatorExpression:
-          '(() => { const errors: string[] = []; if (!config.stat) errors.push("Stat required"); if (!config.resolve_after) errors.push("Resolve after required"); return errors; })()',
+          '(() => { const errors: string[] = []; if (!config.stat) errors.push("Stat required"); if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
       },
     ],
     finalizeValidatorExpression:

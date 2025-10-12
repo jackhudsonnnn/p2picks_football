@@ -17,6 +17,17 @@
   border: 1px solid var(--neutral-700);
 }
 
+.bet-error-modal-message {
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  text-align: center;
+  padding: var(--spacing-md);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .loading {
   display: flex;
   justify-content: center;

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import "./TableView.css";
+import "@shared/widgets/FriendsList/FriendsList.css";
 import { useAuth } from "@features/auth";
 import { ChatArea } from "@components/Table/ChatArea/ChatArea";
 import { MemberList } from "@components/Table/MemberList/memberList";
@@ -21,18 +22,36 @@ export const TableView: React.FC = () => {
     "chat"
   );
   const [showBetModal, setShowBetModal] = useState(false);
+  const [betError, setBetError] = useState<string | null>(null);
+  const [showBetErrorModal, setShowBetErrorModal] = useState(false);
   const { table, loading, error, members, isHost } = useTableView(
     tableId,
     user?.id
   );
   const { messages: chatFeed, sendMessage, proposeBet, betLoading } = useTableChat(tableId, user?.id);
 
-  const handleProposeBet = () => setShowBetModal(true);
+  const handleProposeBet = () => {
+    setBetError(null);
+    setShowBetModal(true);
+  };
   const handleBetSubmit = async (form: BetProposalFormValues) => {
-    await proposeBet(form);
-    setShowBetModal(false);
+    try {
+      await proposeBet(form);
+      setShowBetModal(false);
+      setBetError(null);
+      setShowBetErrorModal(false);
+    } catch (err) {
+      const message = err instanceof Error && err.message ? err.message : 'Failed to create bet proposal.';
+      setBetError(message);
+      setShowBetModal(false);
+      setShowBetErrorModal(true);
+    }
   };
   const handleBetCancel = () => setShowBetModal(false);
+  const handleBetErrorClose = () => {
+    setShowBetErrorModal(false);
+    setBetError(null);
+  };
 
   if (!user)
     return (
@@ -69,6 +88,20 @@ export const TableView: React.FC = () => {
                 onSubmit={handleBetSubmit}
                 loading={betLoading}
               />
+            </Modal>
+            <Modal
+              isOpen={showBetErrorModal && Boolean(betError)}
+              onClose={handleBetErrorClose}
+              title="Bet proposal unavailable"
+              footer={
+                <button type="button" className="btn btn-primary" onClick={handleBetErrorClose}>
+                  Close
+                </button>
+              }
+            >
+              <div className="friends-list-shared empty bet-error-modal-message" role="alert">
+                {betError ?? "Choose Their Fate bets can only be proposed while the game is in progress."}
+              </div>
             </Modal>
           </>
         )}

@@ -46,6 +46,7 @@ export interface RefinedGameDoc {
   generatedAt: string;
   source?: string;
   status?: string; // e.g., STATUS_IN_PROGRESS, STATUS_FINAL, STATUS_HALFTIME, STATUS_SCHEDULED
+  period?: number | null;
   teams: Team[];
   note?: string;
 }

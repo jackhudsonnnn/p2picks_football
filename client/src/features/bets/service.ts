@@ -23,8 +23,35 @@ export async function createBetProposal(
   });
 
   if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(`Failed to create bet proposal (${response.status}): ${text.slice(0, 120)}`);
+    let message = `Failed to create bet proposal (${response.status})`;
+    let payload: unknown = null;
+    let rawText = '';
+
+    try {
+      rawText = await response.text();
+      if (rawText) {
+        try {
+          const parsed = JSON.parse(rawText);
+          payload = parsed;
+          if (parsed && typeof parsed === 'object' && 'error' in parsed && parsed.error) {
+            message = String(parsed.error);
+          }
+        } catch (parseErr) {
+          message = `${message}: ${rawText.slice(0, 120)}`;
+        }
+      }
+    } catch (readErr) {
+      // ignore read errors, keep default message
+    }
+
+    const error = new Error(message);
+    (error as any).status = response.status;
+    if (payload !== null) {
+      (error as any).details = payload;
+    } else if (rawText) {
+      (error as any).details = rawText;
+    }
+    throw error;
   }
 
   return response.json();

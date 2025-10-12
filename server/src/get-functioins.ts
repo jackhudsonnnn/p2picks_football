@@ -225,10 +225,23 @@ export async function getGameStatus(gameId: string, prefetchedDoc?: RefinedGameD
   }
   if (!doc) return null;
 
-  const raw: any = (doc as any).status || null;
-  if (!raw) return null;
+  const status: any = (doc as any).status || null;
+  if (!status) return null;
 
-  return String(raw);
+  return String(status);
+}
+
+export async function getPeriod(gameId: string, prefetchedDoc?: RefinedGameDoc | null): Promise<number | null> {
+  let doc: RefinedGameDoc | null = prefetchedDoc ?? null;
+  if (!doc) {
+    try {
+      doc = await loadRefinedGame(gameId);
+    } catch (err) {
+      return null;
+    }
+  }
+  if (!doc) return null;
+  return doc.period ?? null;
 }
 
 export async function getTeamScoreStats(
