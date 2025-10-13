@@ -94,7 +94,7 @@
     "table_name": "buckets",
     "trigger_schema": "storage",
     "trigger_name": "enforce_bucket_name_length_trigger",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION storage.enforce_bucket_name_length()"

@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import 'dotenv/config';;
 import {
-  listAvailableGames,
+  getAvailableGames,
   getGameStatus,
 } from './get-functioins';
 import { storeModeConfig, fetchModeConfig, fetchModeConfigs } from './services/modeConfig';
@@ -15,6 +15,7 @@ import {
   validateModeConfig,
 } from './services/modeRuntimeService';
 import { startModeValidators } from './services/modeValidatorService';
+import { startNflGameStatusSync } from './services/nflGameStatusSyncService';
 import type { BetProposal } from './supabaseClient';
 import { getSupabase } from './supabaseClient';
 import { normalizeToHundredth } from './utils/number';
@@ -32,7 +33,7 @@ app.get('/health', (_req: Request, res: Response) => {
 app.get('/api/bet-proposals/bootstrap', async (_req: Request, res: Response) => {
   try {
     const [gameMap, modeList] = await Promise.all([
-      listAvailableGames(),
+      getAvailableGames(),
       Promise.resolve(listModeCatalog()),
     ]);
     const games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
@@ -111,7 +112,8 @@ app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
   const proposerUserId = typeof body.proposer_user_id === 'string' ? body.proposer_user_id : '';
   const modeKey = typeof body.mode_key === 'string' ? body.mode_key : '';
   const nflGameIdRaw = body.nfl_game_id;
-  const nflGameId = typeof nflGameIdRaw === 'string' && nflGameIdRaw.length ? nflGameIdRaw : null;
+  const nflGameId =
+    typeof nflGameIdRaw === 'string' && nflGameIdRaw.trim().length ? nflGameIdRaw.trim() : null;
 
   if (!proposerUserId) {
     res.status(400).json({ error: 'proposer_user_id required' });
@@ -133,8 +135,37 @@ app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
     rawConfig && typeof rawConfig === 'object'
       ? { ...(rawConfig as Record<string, unknown>) }
       : {};
-  if (nflGameId && !modeConfig.nfl_game_id) {
-    modeConfig.nfl_game_id = nflGameId;
+  let configGameId: string | null = null;
+  if (typeof (modeConfig as any).nfl_game_id === 'string') {
+    const trimmed = (modeConfig as any).nfl_game_id.trim();
+    if (trimmed.length) {
+      (modeConfig as any).nfl_game_id = trimmed;
+      configGameId = trimmed;
+    } else {
+      delete (modeConfig as any).nfl_game_id;
+    }
+  }
+  if (nflGameId && !configGameId) {
+    (modeConfig as any).nfl_game_id = nflGameId;
+    configGameId = nflGameId;
+  }
+
+  const gameIdsToCheck = new Set<string>();
+  if (configGameId) gameIdsToCheck.add(configGameId);
+  if (nflGameId) gameIdsToCheck.add(nflGameId);
+
+  const gameStatusCache = new Map<string, string | null>();
+  for (const gameId of gameIdsToCheck) {
+    const status = await getGameStatus(gameId);
+    gameStatusCache.set(gameId, status ?? null);
+    console.log('Checking game status', { gameId, status });
+    if (status === 'STATUS_FINAL') {
+      res.status(400).json({
+        error: 'Bets cannot be proposed for games that have already ended',
+        details: { game_id: gameId, status: status ?? null },
+      });
+      return;
+    }
   }
 
   if (modeKey === 'choose_their_fate') {
@@ -142,10 +173,12 @@ app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
       ? modeConfig.nfl_game_id.trim()
       : null;
     if (!gameIdForCheck) {
-      res.status(400).json({ error: 'choose_their_fate requires an nfl_game_id' });
+      res.status(400).json({ error: 'Choose Their Fate requires an nfl_game_id' });
       return;
     }
-    const rawStatus = await getGameStatus(gameIdForCheck);
+    const rawStatus = gameStatusCache.has(gameIdForCheck)
+      ? gameStatusCache.get(gameIdForCheck)
+      : await getGameStatus(gameIdForCheck);
     const status = (rawStatus || '').trim().toUpperCase();
     if (status !== 'STATUS_IN_PROGRESS') {
       res.status(400).json({
@@ -279,6 +312,7 @@ app.post('/api/mode-config/batch', async (req: Request, res: Response) => {
 
 app.listen(PORT, () => {
   startModeValidators();
+  startNflGameStatusSync();
 });
 
 function clampWager(value: number): number {

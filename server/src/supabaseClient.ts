@@ -18,8 +18,8 @@ export function getSupabase(): SupabaseClient {
 export type BetProposal = {
 	bet_id: string;
 	table_id: string;
-	nfl_game_id: string | null;
-	mode_key: string | null;
+	nfl_game_id: string;
+	mode_key: string;
 	bet_status: 'active' | 'pending' | 'resolved' | 'washed';
 	description: string;
 	winning_choice: string | null;

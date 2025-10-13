@@ -10,7 +10,7 @@ import {
   RefinedGameDoc,
 } from './helpers';
 
-export async function listAvailableGames(): Promise<Record<string, string>> {
+export async function getAvailableGames(): Promise<Record<string, string>> {
   try {
     const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
     const files = await fs.readdir(dir, { withFileTypes: true } as any);
@@ -46,33 +46,6 @@ export async function listAvailableGames(): Promise<Record<string, string>> {
     if (err?.code === 'ENOENT') return {};
     throw err;
   }
-}
-
-export async function listPlayers(gameId: string): Promise<Record<string, string>> {
-  const doc = await loadRefinedGame(gameId);
-  if (!doc) return {};
-  const result: Record<string, string> = {};
-  for (const team of (doc.teams as any) || []) {
-    const teamPlayers: any = (team as any).players;
-    if (!teamPlayers) continue;
-    if (Array.isArray(teamPlayers)) {
-      for (const p of teamPlayers as any[]) {
-        if (!p) continue;
-        const id = (p as any).athleteId;
-        const name = (p as any).fullName || '';
-        if (id) result[id] = name;
-        if (name) result[`name:${name}`] = name;
-      }
-    } else {
-      for (const [key, p] of Object.entries(teamPlayers as Record<string, any>)) {
-        const id = (p as any)?.athleteId || key;
-        const name = (p as any)?.fullName || String(key).replace(/^name:/, '');
-        if (id) result[id] = name;
-        result[key] = name;
-      }
-    }
-  }
-  return result;
 }
 
 export async function getGameTeams(gameId: string): Promise<Array<Record<string, string>>> {

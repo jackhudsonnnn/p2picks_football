@@ -93,14 +93,9 @@ export const TableView: React.FC = () => {
               isOpen={showBetErrorModal && Boolean(betError)}
               onClose={handleBetErrorClose}
               title="Bet proposal unavailable"
-              footer={
-                <button type="button" className="btn btn-primary" onClick={handleBetErrorClose}>
-                  Close
-                </button>
-              }
             >
               <div className="friends-list-shared empty bet-error-modal-message" role="alert">
-                {betError ?? "Choose Their Fate bets can only be proposed while the game is in progress."}
+                {betError ?? "Unable to create bet proposal."}
               </div>
             </Modal>
           </>

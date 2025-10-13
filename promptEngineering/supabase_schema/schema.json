@@ -1,181 +1,5 @@
 [
   {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "bet_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "stat",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "resolve_after",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "player1_name",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "player2_name",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "baseline_player1",
-    "data_type": "numeric",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "baseline_player2",
-    "data_type": "numeric",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "baseline_captured_at",
-    "data_type": "timestamp with time zone",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "player1_id",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "player2_id",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "result_player1",
-    "data_type": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_best_of_best",
-    "column_name": "result_player2",
-    "data_type": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "bet_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "possession_team_id",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "possession_team_name",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "baseline_captured_at",
-    "data_type": "timestamp with time zone",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_choose_their_fate",
-    "column_name": "outcome",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_one_leg_spread",
-    "column_name": "bet_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "bet_mode_one_leg_spread",
-    "column_name": "home_team_id",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_one_leg_spread",
-    "column_name": "home_team_name",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_one_leg_spread",
-    "column_name": "away_team_id",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_mode_one_leg_spread",
-    "column_name": "away_team_name",
-    "data_type": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
     "table_name": "bet_participations",
     "column_name": "participation_id",
     "data_type": "uuid",
@@ -298,10 +122,10 @@
   {
     "table_name": "bet_proposals",
     "column_name": "nfl_game_id",
-    "data_type": "text",
+    "data_type": "bigint",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "FOREIGN KEY -> nfl_games(nfl_game_id)"
   },
   {
     "table_name": "bet_proposals",
@@ -353,6 +177,30 @@
   },
   {
     "table_name": "friends",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "nfl_games",
+    "column_name": "nfl_game_id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "nfl_games",
+    "column_name": "status",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "nfl_games",
     "column_name": "created_at",
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
