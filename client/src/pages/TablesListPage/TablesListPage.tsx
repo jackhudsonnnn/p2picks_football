@@ -29,10 +29,6 @@ export const TablesListPage: React.FC = () => {
   const currentTables = filteredTables.slice(indexOfFirstTable, indexOfLastTable);
   const totalPages = Math.ceil(filteredTables.length / tablesPerPage);
 
-  const filterOptions: FilterOption[] = [
-    { id: "all", label: "All Tables", count: tables.length },
-  ];
-
   const handleCreateTable = async () => {
     if (!newTableName.trim()) return alert("Please enter a table name");
     if (!user) return alert("You must be logged in to create a table.");
@@ -72,9 +68,7 @@ export const TablesListPage: React.FC = () => {
           <input type="text" id="tableName" className="form-control" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} placeholder="Enter table name" autoFocus />
         </div>
       </Modal>
-
-      <FilterBar selectedFilter={filter} onFilterChange={(f) => { setFilter(f); setCurrentPage(1); }} options={filterOptions} />
-
+      
       <SearchBar value={searchQuery} onChange={(q) => { setSearchQuery(q); setCurrentPage(1); }} placeholder="Search tables..." />
 
       {filteredTables.length > 0 ? (

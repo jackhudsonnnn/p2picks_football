@@ -1,5 +1,5 @@
 import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY } from './constants';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 
 type PlayerRecord = {
@@ -12,9 +12,20 @@ type PlayerRecord = {
 export async function buildEitherOrUserConfig(input: {
   nflGameId?: string | null;
 }): Promise<ModeUserConfigStep[]> {
+  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const { doc, players } = await loadGameContext(gameId);
   const skipResolveStep = shouldSkipResolveStep(doc);
+
+  if (debug) {
+    console.log('[eitherOr][userConfig] building steps', {
+      gameId,
+      playerCount: players.length,
+      skipResolveStep,
+      status: doc?.status ?? null,
+      period: doc?.period ?? null,
+    });
+  }
 
   const playerMap = playersById(players);
   const basePlayerChoices = players.map((player) => ({
@@ -27,6 +38,8 @@ export async function buildEitherOrUserConfig(input: {
     patch: {
       player1_id: choice.value,
       player1_name: playerMap[choice.value]?.name ?? choice.label,
+      player1_team_name: playerMap[choice.value]?.team ?? null,
+      player1_team: playerMap[choice.value]?.team ?? null,
     },
   }));
 
@@ -35,13 +48,15 @@ export async function buildEitherOrUserConfig(input: {
     patch: {
       player2_id: choice.value,
       player2_name: playerMap[choice.value]?.name ?? choice.label,
+      player2_team_name: playerMap[choice.value]?.team ?? null,
+      player2_team: playerMap[choice.value]?.team ?? null,
     },
   }));
 
   const statChoices: ModeUserConfigChoice[] = Object.keys(STAT_KEY_TO_CATEGORY)
     .sort()
     .map((statKey) => {
-      const label = humanizeStatKey(statKey);
+      const label = STAT_KEY_LABELS[statKey] ?? humanizeStatKey(statKey);
       return {
         value: statKey,
         label,
@@ -68,6 +83,17 @@ export async function buildEitherOrUserConfig(input: {
     steps.push(['Resolve At', resolveChoices]);
   }
 
+  if (debug) {
+    console.log('[eitherOr][userConfig] steps prepared', {
+      gameId,
+      stepCount: steps.length,
+      samplePlayerChoices: {
+        player1: player1Choices.slice(0, 3),
+        player2: player2Choices.slice(0, 3),
+      },
+    });
+  }
+
   return steps;
 }
 
@@ -78,6 +104,9 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
   try {
     const doc = await loadRefinedGame(gameId);
     if (!doc || !Array.isArray(doc.teams)) {
+      if (process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true') {
+        console.warn('[eitherOr][userConfig] missing teams in refined game doc', { gameId });
+      }
       return { doc, players: [] };
     }
 

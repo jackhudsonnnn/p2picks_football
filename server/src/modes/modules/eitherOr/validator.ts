@@ -5,6 +5,7 @@ import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/
 import { getSupabase, BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
 import { loadRefinedGame, RefinedGameDoc, REFINED_DIR, findPlayer } from '../../../helpers';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from './constants';
 
 type PlayerRef = { id?: string | null; name?: string | null };
 
@@ -16,6 +17,7 @@ interface EitherOrConfig {
   stat?: string | null;
   stat_label?: string | null;
   nfl_game_id?: string | null;
+  resolve_at?: string | null;
 }
 
 interface PlayerSnapshot {
@@ -169,14 +171,23 @@ export class EitherOrValidatorService {
       const doc = await loadRefinedGame(gameId);
       if (!doc) return;
       const status = String(doc.status || '').toUpperCase();
-      if (status !== 'STATUS_FINAL') return;
-      await this.processFinalGame(gameId, doc);
+      const halftimeResolveAt =
+        EITHER_OR_ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
+      if (status === 'STATUS_HALFTIME') {
+        await this.processFinalGame(gameId, doc, halftimeResolveAt);
+        return;
+      }
+      if (status === 'STATUS_FINAL') {
+        await this.processFinalGame(gameId, doc, halftimeResolveAt);
+        await this.processFinalGame(gameId, doc, EITHER_OR_DEFAULT_RESOLVE_AT);
+        return;
+      }
     } catch (err: unknown) {
       console.error('[eitherOr] onFileChanged error', { filePath }, err);
     }
   }
 
-  private async processFinalGame(gameId: string, doc: RefinedGameDoc) {
+  private async processFinalGame(gameId: string, doc: RefinedGameDoc, resolveAt: string = EITHER_OR_DEFAULT_RESOLVE_AT) {
     const supa = getSupabase();
     const { data, error } = await supa
       .from('bet_proposals')
@@ -189,15 +200,19 @@ export class EitherOrValidatorService {
       return;
     }
     for (const bet of (data as BetProposal[]) || []) {
-      await this.resolveBet(bet, doc);
+      await this.resolveBet(bet, doc, resolveAt);
     }
   }
 
-  private async resolveBet(bet: BetProposal, doc: RefinedGameDoc) {
+  private async resolveBet(bet: BetProposal, doc: RefinedGameDoc, resolveAt: string) {
     try {
       const config = await this.getConfigForBet(bet.bet_id);
       if (!config) {
         console.warn('[eitherOr] missing config; skipping bet', { bet_id: bet.bet_id });
+        return;
+      }
+      const configResolveAt = String(config.resolve_at ?? EITHER_OR_DEFAULT_RESOLVE_AT).trim();
+      if (configResolveAt.toLowerCase() !== resolveAt.trim().toLowerCase()) {
         return;
       }
       const baseline = (await this.getBaseline(bet.bet_id)) || (await this.captureBaselineForBet(bet, doc));

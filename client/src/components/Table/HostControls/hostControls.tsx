@@ -100,7 +100,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
             setMutating(true);
             try {
               await addTableMember(tableId, userId);
-              setShowAdd(false); // realtime will update parent
+              setShowAdd(false);
             } catch (err) {
               console.error(err);
               alert('Failed to add member');

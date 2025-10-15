@@ -93,7 +93,37 @@ app.post('/api/bet-modes/:modeKey/preview', async (req: Request, res: Response) 
       config.nfl_game_id = nflGameId;
     }
 
-    const preview = buildModePreview(modeKey, config);
+    const betIdRaw = req.body?.bet_id;
+    const betId = typeof betIdRaw === 'string' && betIdRaw.trim().length ? betIdRaw.trim() : undefined;
+
+    let bet: BetProposal | null = null;
+    if (betId) {
+      try {
+        bet = await ensureModeKeyMatchesBet(betId, modeKey);
+      } catch (err: any) {
+        console.warn('[modePreview] failed to ensure bet/mode alignment', {
+          betId,
+          modeKey,
+          error: err?.message || String(err),
+        });
+      }
+      if (!config.player1_id || !config.player2_id) {
+        try {
+          const stored = await fetchModeConfig(betId);
+          if (stored && stored.mode_key === modeKey) {
+            Object.assign(config, { ...stored.data, ...config });
+          }
+        } catch (err: any) {
+          console.warn('[modePreview] failed to hydrate config from store', {
+            betId,
+            modeKey,
+            error: err?.message || String(err),
+          });
+        }
+      }
+    }
+
+    const preview = buildModePreview(modeKey, config, bet);
     res.json({ mode_key: modeKey, ...preview, config });
   } catch (e: any) {
     const status = /mode .* not found/i.test(String(e?.message || '')) ? 404 : 500;

@@ -233,8 +233,9 @@ export class ScorcererValidatorService {
   }
 
   private async processGameUpdate(gameId: string, doc: RefinedGameDoc) {
+    const isFinal = this.isFinalStatus(doc);
     const snapshot = await this.captureSnapshot(gameId, doc);
-    if (!snapshot.shouldProcess) {
+    if (!snapshot.shouldProcess && !isFinal) {
       return;
     }
     const supa = getSupabase();
@@ -250,7 +251,7 @@ export class ScorcererValidatorService {
     }
     const bets = (data as BetProposal[]) || [];
     for (const bet of bets) {
-      await this.evaluateBet(bet, doc, snapshot);
+      await this.evaluateBet(bet, doc, snapshot, isFinal);
     }
   }
 
@@ -309,7 +310,7 @@ export class ScorcererValidatorService {
     return totals;
   }
 
-  private async evaluateBet(bet: BetProposal, doc: RefinedGameDoc, snapshot: SnapshotRecord) {
+  private async evaluateBet(bet: BetProposal, doc: RefinedGameDoc, snapshot: SnapshotRecord, isFinal: boolean) {
     try {
       const baseline = (await this.getBaseline(bet.bet_id)) || (await this.captureBaselineForBet(bet, doc));
       if (!baseline) {
@@ -324,6 +325,9 @@ export class ScorcererValidatorService {
       };
       const choice = pickWinningChoice(delta);
       if (!choice) {
+        if (isFinal) {
+          await this.settleNoMoreScores(bet, totals, baseline, delta, snapshot);
+        }
         return;
       }
       const supa = getSupabase();
@@ -347,6 +351,39 @@ export class ScorcererValidatorService {
       await this.clearBaseline(bet.bet_id);
     } catch (err: unknown) {
       console.error('[scorcerer] evaluate bet error', { bet_id: bet.bet_id }, err);
+    }
+  }
+
+  private async settleNoMoreScores(
+    bet: BetProposal,
+    totals: AggregateTotals,
+    baseline: BaselineSnapshot,
+    delta: { td: number; fg: number; sfty: number },
+    snapshot: SnapshotRecord,
+  ) {
+    try {
+      const supa = getSupabase();
+      const { error: updErr } = await supa
+        .from('bet_proposals')
+        .update({ winning_choice: 'No More Scores' })
+        .eq('bet_id', bet.bet_id)
+        .is('winning_choice', null);
+      if (updErr) {
+        console.error('[scorcerer] failed to set no-more-scores outcome', { bet_id: bet.bet_id }, updErr);
+        return;
+      }
+      await this.recordHistory(bet.bet_id, 'scorcerer_result', {
+        outcome: 'No More Scores',
+        totals,
+        baseline,
+        delta,
+        captured_at: new Date().toISOString(),
+        snapshot_hash: snapshot.previousHash,
+        reason: 'game_final_no_more_scores',
+      });
+      await this.clearBaseline(bet.bet_id);
+    } catch (err: unknown) {
+      console.error('[scorcerer] settle no-more-scores error', { bet_id: bet.bet_id }, err);
     }
   }
 
@@ -404,6 +441,14 @@ export class ScorcererValidatorService {
 
   private snapshotKey(gameId: string): string {
     return `scorcerer:snapshot:${gameId}`;
+  }
+
+  private isFinalStatus(doc: RefinedGameDoc | null | undefined): boolean {
+    if (!doc) return false;
+    const status = String((doc as any)?.status ?? '').trim().toUpperCase();
+    if (!status) return false;
+    if (status === 'STATUS_FINAL') return true;
+    return status.startsWith('STATUS_FINAL');
   }
 
   private cleanupMemorySnapshots() {

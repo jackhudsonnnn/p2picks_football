@@ -51,13 +51,7 @@ export const TicketsPage: React.FC = () => {
     indexOfLastTicket
   );
   const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
-
   const ticketCounts = counts;
-
-  const filterOptions: FilterOption[] = [
-    { id: "all", label: "All", count: ticketCounts.total },
-    { id: "active", label: "active", count: ticketCounts.active },
-  ];
 
   if (loading) {
     return <div>Loading...</div>;
@@ -70,21 +64,10 @@ export const TicketsPage: React.FC = () => {
         <div className="page-stats">
           <div className="stat">
             <span className="stat-value">{ticketCounts.total}</span>
-            <span className="stat-label">Total Tickets</span>
-          </div>
-            <div className="stat">
-            <span className="stat-value">{ticketCounts.wins}</span>
-            <span className="stat-label">Total Wins</span>
+            <span className="stat-label">Tickets</span>
           </div>
         </div>
       </div>
-
-      {/* Use the generalized FilterBar */}
-      <FilterBar
-        selectedFilter={filter}
-        onFilterChange={setFilter}
-        options={filterOptions}
-      />
 
       {/* Use the generalized SearchBar */}
       <SearchBar

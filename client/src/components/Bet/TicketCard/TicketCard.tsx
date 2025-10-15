@@ -19,7 +19,8 @@ const previewCache = new Map<string, ModePreviewPayload>();
 async function fetchModePreview(
   modeKey: string,
   config: Record<string, unknown>,
-  nflGameId?: string | null
+  nflGameId?: string | null,
+  betId?: string | null
 ): Promise<ModePreviewPayload | null> {
   if (!modeKey) return null;
   const payloadConfig = { ...(config || {}) } as Record<string, unknown>;
@@ -28,13 +29,16 @@ async function fetchModePreview(
   if (gameId && !payloadConfig.nfl_game_id) {
     payloadConfig.nfl_game_id = gameId;
   }
-  const cacheKey = `${modeKey}:${JSON.stringify(payloadConfig)}`;
+  const cacheKey = `${modeKey}:${JSON.stringify(payloadConfig)}:${betId ?? ''}`;
   if (previewCache.has(cacheKey)) {
     return previewCache.get(cacheKey)!;
   }
   const body: Record<string, unknown> = { config: payloadConfig };
   if (gameId) {
     body.nfl_game_id = gameId;
+  }
+  if (betId) {
+    body.bet_id = betId;
   }
 
   const response = await fetch(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
@@ -80,7 +84,12 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     let cancelled = false;
     setPreviewError(null);
 
-    fetchModePreview(modeKey, modeConfig, ticket.betRecord?.nfl_game_id ?? null)
+    fetchModePreview(
+      modeKey,
+      modeConfig,
+      ticket.betRecord?.nfl_game_id ?? null,
+      (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null
+    )
       .then((data) => {
         if (!cancelled) {
           setPreview(data);
@@ -97,7 +106,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     return () => {
       cancelled = true;
     };
-  }, [modeKey, modeConfigSignature, ticket.betRecord?.nfl_game_id]);
+  }, [modeKey, modeConfigSignature, ticket.betRecord?.nfl_game_id, ticket.betRecord?.bet_id]);
 
   const summaryText = useMemo(() => {
     if (preview?.summary && preview.summary.trim().length) {

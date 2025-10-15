@@ -1,5 +1,5 @@
 import type { ModeModule } from '../../shared/types';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY } from './constants';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
 import { buildEitherOrUserConfig } from './userConfig';
@@ -10,11 +10,11 @@ export const eitherOrModule: ModeModule = {
     label: 'Either Or',
     summaryTemplate: '`Either Or • ${config.stat_label || config.stat || ""} • ${config.resolve_at || ""}`',
     descriptionTemplate:
-      '`${config.player1_name || config.player1_id || "Player 1"} vs ${config.player2_name || config.player2_id || "Player 2"} largest increase in ${config.stat_label || config.stat || "stat"} until ${config.resolve_at || "selected time"}`',
+      '`${(config.player1_name || config.player1_id || "Player 1")} (${config.player1_team_name || config.player1_team || "Team 1"}) vs ${(config.player2_name || config.player2_id || "Player 2")} (${config.player2_team_name || config.player2_team || "Team 2"})`',
     secondaryDescriptionTemplate:
-      '`${config.player1_name || config.player1_id || "Player 1"} vs ${config.player2_name || config.player2_id || "Player 2"}`',
+      '`Largest next increase of stats, baseline stats captured at bet close`',
     winningConditionTemplate:
-      '`Largest net increase in ${config.stat_label || config.stat || "stat"} between the selected players until ${config.resolve_at || "the selected time"}`',
+      '`Largest net increase in ${config.stat_label || config.stat || "stat"} between ${(config.player1_name || config.player1_id || "Player 1")} (${config.player1_team_name || config.player1_team || "Team 1"}) and ${(config.player2_name || config.player2_id || "Player 2")} (${config.player2_team_name || config.player2_team || "Team 2"}) in the ${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")} game until ${config.resolve_at || "the selected time"}`',
     optionsExpression:
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); return opts; })()',
     configSteps: [
@@ -23,7 +23,7 @@ export const eitherOrModule: ModeModule = {
         component: 'eitherOr.players',
         label: 'Select Players',
         validatorExpression:
-          '(() => { const errors: string[] = []; if (!config.player1_id) errors.push("Player 1 required"); if (!config.player2_id) errors.push("Player 2 required"); if (config.player1_id && config.player2_id && String(config.player1_id) === String(config.player2_id)) errors.push("Players must differ"); return errors; })()',
+          '(() => { const errors = []; if (!config.player1_id) errors.push("Player 1 required"); if (!config.player2_id) errors.push("Player 2 required"); if (config.player1_id && config.player2_id && String(config.player1_id) === String(config.player2_id)) errors.push("Players must differ"); return errors; })()',
       },
       {
         key: 'stat_resolve',
@@ -32,14 +32,15 @@ export const eitherOrModule: ModeModule = {
         props: {
           allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
           statKeyToCategory: STAT_KEY_TO_CATEGORY,
+          statKeyLabels: STAT_KEY_LABELS,
           allowedStatKeys: Object.keys(STAT_KEY_TO_CATEGORY),
         },
         validatorExpression:
-          '(() => { const errors: string[] = []; if (!config.stat) errors.push("Stat required"); if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
+          '(() => { const errors = []; if (!config.stat) errors.push("Stat required"); if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
       },
     ],
     finalizeValidatorExpression:
-      '(() => { const errors: string[] = []; if (!config.player1_id || !config.player2_id) errors.push("Two players required"); if (!config.stat) errors.push("Stat required"); return errors; })()',
+      '(() => { const errors = []; if (!config.player1_id || !config.player2_id) errors.push("Two players required"); if (!config.stat) errors.push("Stat required"); return errors; })()',
     metadata: buildEitherOrMetadata(),
   },
   prepareConfig: prepareEitherOrConfig,

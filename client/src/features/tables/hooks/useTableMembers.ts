@@ -15,9 +15,30 @@ export function useTableMembers(tableId?: string, userId?: string) {
   }, [tableId]);
 
   useEffect(() => {
+    if (!tableId) return;
+    (async () => {
+      try {
+        console.debug('[useTableMembers] initial getTable for', tableId);
+        const data = await getTable(tableId);
+        console.debug('[useTableMembers] initial getTable result:', data);
+        setRawTable(data);
+      } catch (err) {
+        console.debug('[useTableMembers] initial getTable failed', err);
+      }
+    })();
+  }, [tableId]);
+
+  useEffect(() => {
     if (!tableId || !userId) return;
-    const ch: RealtimeChannel = subscribeToTableMembers(tableId, async () => {
-      try { const updated = await getTable(tableId); setRawTable(updated); } catch {}
+    const ch: RealtimeChannel = subscribeToTableMembers(tableId, async (payload) => {
+      try {
+        console.debug('[useTableMembers] subscription triggered, payload:', payload);
+        const updated = await getTable(tableId);
+        console.debug('[useTableMembers] refetched table after subscription:', updated);
+        setRawTable(updated);
+      } catch (err) {
+        console.debug('[useTableMembers] failed to refetch table after subscription', err);
+      }
     });
     return () => { ch.unsubscribe(); };
   }, [tableId, userId]);

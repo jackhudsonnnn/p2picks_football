@@ -1,6 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpers';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY } from './constants';
+import { loadRefinedGame, findPlayer, type RefinedGameDoc, type Team } from '../../../helpers';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 
 export async function prepareEitherOrConfig({
   bet,
@@ -9,16 +9,25 @@ export async function prepareEitherOrConfig({
   bet: BetProposal;
   config: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
+  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const cfg = { ...config } as Record<string, unknown> & {
     nfl_game_id?: string | null;
     player1_id?: string | null;
     player1_name?: string | null;
+    player1_team_name?: string | null;
+    player1_team?: string | null;
     player2_id?: string | null;
     player2_name?: string | null;
+    player2_team_name?: string | null;
+    player2_team?: string | null;
     stat?: string | null;
     stat_label?: string | null;
     resolve_at?: string | null;
     bet_id?: string | null;
+    home_team_id?: string | null;
+    home_team_name?: string | null;
+    away_team_id?: string | null;
+    away_team_name?: string | null;
   };
 
   if (!cfg.nfl_game_id) {
@@ -29,24 +38,56 @@ export async function prepareEitherOrConfig({
     cfg.resolve_at = EITHER_OR_DEFAULT_RESOLVE_AT;
   }
 
+  if (debug) {
+    console.log('[eitherOr][prepareConfig] normalized base config', {
+      betId: bet.bet_id,
+      config: cfg,
+    });
+  }
+
   const statKey = cfg.stat ? String(cfg.stat) : '';
   const category = STAT_KEY_TO_CATEGORY[statKey];
   const gameId = cfg.nfl_game_id ? String(cfg.nfl_game_id) : '';
 
   if (!statKey || !category || !gameId) {
+    if (debug) {
+      console.warn('[eitherOr][prepareConfig] missing stat/category/gameId for baseline capture', {
+        betId: bet.bet_id,
+        statKey,
+        category,
+        gameId,
+      });
+    }
     return normalizeConfigPayload(cfg);
   }
 
   try {
     const doc = await loadRefinedGame(gameId);
     if (!doc) {
+      if (debug) {
+        console.warn('[eitherOr][prepareConfig] no refined game document found', {
+          betId: bet.bet_id,
+          gameId,
+        });
+      }
       return normalizeConfigPayload(cfg);
     }
+
+    enrichWithTeamContext(cfg, doc);
 
     const [baselinePlayer1, baselinePlayer2] = await Promise.all([
       getPlayerStatValue(doc, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
       getPlayerStatValue(doc, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
+
+    if (debug) {
+      console.log('[eitherOr][prepareConfig] captured baselines', {
+        betId: bet.bet_id,
+        statKey,
+        baselinePlayer1,
+        baselinePlayer2,
+      });
+    }
 
     return {
       ...normalizeConfigPayload(cfg),
@@ -77,23 +118,48 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
     nfl_game_id: config.nfl_game_id ?? null,
     player1_id: config.player1_id ?? null,
     player1_name: config.player1_name ?? null,
+    player1_team_name: config.player1_team_name ?? config.player1_team ?? null,
+    player1_team: config.player1_team ?? config.player1_team_name ?? null,
     player2_id: config.player2_id ?? null,
     player2_name: config.player2_name ?? null,
+    player2_team_name: config.player2_team_name ?? config.player2_team ?? null,
+    player2_team: config.player2_team ?? config.player2_team_name ?? null,
     stat: config.stat ?? null,
     stat_label: config.stat_label ?? null,
     resolve_at: config.resolve_at ?? null,
+    home_team_id: config.home_team_id ?? null,
+    home_team_name: config.home_team_name ?? null,
+    away_team_id: config.away_team_id ?? null,
+    away_team_name: config.away_team_name ?? null,
   } as Record<string, unknown>;
 }
 
 async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string, ref: PlayerRef): Promise<number | null> {
+  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
   const player = lookupPlayer(doc, ref);
-  if (!player) return null;
+  if (!player) {
+    if (debug) {
+      console.warn('[eitherOr][prepareConfig] player not found for baseline lookup', {
+        statKey,
+        playerId: ref.id ?? null,
+        playerName: ref.name ?? null,
+      });
+    }
+    return null;
+  }
   const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
   const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
   if (!categoryStats) return null;
   const raw = categoryStats[statKey];
+  if (debug) {
+    console.log('[eitherOr][prepareConfig] raw stat value', {
+      statKey,
+      playerId: ref.id ?? null,
+      raw,
+    });
+  }
   return normalizeStatValue(raw);
 }
 
@@ -121,9 +187,64 @@ function normalizeStatValue(raw: unknown): number | null {
   return null;
 }
 
+function enrichWithTeamContext(
+  cfg: {
+    home_team_id?: string | null;
+    home_team_name?: string | null;
+    away_team_id?: string | null;
+    away_team_name?: string | null;
+  },
+  doc: RefinedGameDoc,
+) {
+  const homeTeam = pickHomeTeam(doc);
+  const awayTeam = pickAwayTeam(doc, homeTeam);
+
+  if (!cfg.home_team_id) {
+    cfg.home_team_id = extractTeamId(homeTeam);
+  }
+  if (!cfg.home_team_name) {
+    cfg.home_team_name = extractTeamName(homeTeam);
+  }
+  if (!cfg.away_team_id) {
+    cfg.away_team_id = extractTeamId(awayTeam);
+  }
+  if (!cfg.away_team_name) {
+    cfg.away_team_name = extractTeamName(awayTeam);
+  }
+}
+
+function pickHomeTeam(doc: RefinedGameDoc): Team | null {
+  const teams = Array.isArray(doc.teams) ? doc.teams : [];
+  return (
+    teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'home') ||
+    teams[0] ||
+    null
+  );
+}
+
+function pickAwayTeam(doc: RefinedGameDoc, home: Team | null): Team | null {
+  const teams = Array.isArray(doc.teams) ? doc.teams : [];
+  const byFlag = teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'away');
+  if (byFlag) return byFlag;
+  return teams.find((team) => team !== home) || null;
+}
+
+function extractTeamId(team: Team | null): string | null {
+  if (!team) return null;
+  const rawId = (team as any)?.teamId || (team as any)?.abbreviation;
+  return rawId ? String(rawId) : null;
+}
+
+function extractTeamName(team: Team | null): string | null {
+  if (!team) return null;
+  const name = (team as any)?.displayName || (team as any)?.abbreviation || (team as any)?.teamId;
+  return name ? String(name) : null;
+}
+
 export function buildEitherOrMetadata() {
   return {
     statKeyToCategory: STAT_KEY_TO_CATEGORY,
     allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
+    statKeyLabels: STAT_KEY_LABELS,
   } as Record<string, unknown>;
 }

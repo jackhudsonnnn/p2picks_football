@@ -52,12 +52,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectTo = window.location.origin;
+      console.info('Starting Google sign-in, redirectTo:', redirectTo);
+      const res = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo,
         },
       });
+      console.info('signInWithOAuth response:', res);
+      const { error } = res;
       if (error) {
         console.error('Google sign-in error:', error.message);
         alert('Error signing in with Google: ' + error.message);

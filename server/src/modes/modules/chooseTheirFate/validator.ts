@@ -10,6 +10,10 @@ interface ChooseTheirFateConfig {
   possession_team_id?: string | null;
   possession_team_name?: string | null;
   nfl_game_id?: string | null;
+  home_team_id?: string | null;
+  home_team_name?: string | null;
+  away_team_id?: string | null;
+  away_team_name?: string | null;
 }
 
 interface TeamScoreSnapshot {

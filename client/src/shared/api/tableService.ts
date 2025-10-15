@@ -168,12 +168,28 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
     balance: member.balance,
   }));
 
-  const { error: balanceError } = await supabase
+  // Debug: log original balances so we can trace what will be rolled back if needed
+  console.log('[settleTable] originalBalances:', originalBalances);
+
+  // Update all balances to 0 - capture data + error to inspect Supabase response
+  const { data: balanceData, error: balanceError } = await supabase
     .from('table_members')
     .update({ balance: 0 })
     .eq('table_id', tableId);
 
+  console.log('[settleTable] update table_members result:', { data: balanceData, error: balanceError });
+
   if (balanceError) throw balanceError;
+
+  // Verify the update by fetching the table_members rows for this table
+  const { data: updatedMembers, error: fetchUpdatedError } = await supabase
+    .from('table_members')
+    .select('user_id, balance')
+    .eq('table_id', tableId);
+
+  console.debug('[settleTable] verify updated table_members:', { data: updatedMembers, error: fetchUpdatedError });
+
+  if (fetchUpdatedError) throw fetchUpdatedError;
 
   const { data: messageData, error: messageError } = await supabase
     .from('system_messages')
@@ -181,7 +197,10 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
     .select('system_message_id, generated_at')
     .single();
 
+  console.debug('[settleTable] insert system_messages result:', { data: messageData, error: messageError });
+
   if (messageError) {
+    console.error('[settleTable] Failed to insert system message, rolling back balances');
     await Promise.all(
       originalBalances.map(async ({ user_id, balance }) => {
         const { error: rollbackError } = await supabase
@@ -318,10 +337,9 @@ export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
     const betIdShort = bet.bet_id?.slice(0, 8) ?? '';
     const closeTimeText = formatTimeOfDay(bet.close_time, { includeSeconds: true });
     const detailLines: string[] = [
-      `Join my bet #${betIdShort}.`,
-      `${bet.wager_amount} pt(s) | ${bet.time_limit_seconds}s to pick`,
-      bet.mode_key,
-      description,
+      `Join my bet #${betIdShort}`,
+      `${bet.wager_amount} pt(s) | ${bet.time_limit_seconds}s`,
+      bet.mode_key.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
       closeTimeText ? `Closes at ${closeTimeText}` : null,
     ].filter(Boolean) as string[];
 
@@ -361,6 +379,8 @@ export function subscribeToTableMembers(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'table_members', filter: `table_id=eq.${tableId}` },
       (payload) => {
+        // Debug: surface the raw payload so we can inspect realtime events
+        console.debug('[subscribeToTableMembers] payload:', payload);
         const eventType = (payload as any).eventType as 'INSERT' | 'DELETE' | 'UPDATE';
         onChange({ eventType });
       }

@@ -22,3 +22,25 @@ export const STAT_KEY_TO_CATEGORY: Record<string, string> = {
 
 export const EITHER_OR_ALLOWED_RESOLVE_AT = ['Halftime', 'End of Game'];
 export const EITHER_OR_DEFAULT_RESOLVE_AT = 'End of Game';
+
+export const STAT_KEY_LABELS: Record<string, string> = {
+  passingYards: 'Passing Yards',
+  passingTouchdowns: 'Passing Touchdowns',
+  rushingYards: 'Rushing Yards',
+  rushingTouchdowns: 'Rushing Touchdowns',
+  longRushing: 'Longest Rush (Yards)',
+  receptions: 'Receptions',
+  receivingYards: 'Receiving Yards',
+  receivingTouchdowns: 'Receiving Touchdowns',
+  longReception: 'Longest Reception (Yards)',
+  totalTackles: 'Total Tackles',
+  sacks: 'Sacks',
+  passesDefended: 'Passes Defended',
+  interceptions: 'Interceptions Thrown',
+  kickReturnYards: 'Kick Return Yards',
+  longKickReturn: 'Longest Kick Return',
+  puntReturnYards: 'Punt Return Yards',
+  longPuntReturn: 'Longest Punt Return',
+  puntsInside20: 'Punts Inside 20 Yard Line',
+  longPunt: 'Longest Punt',
+};
