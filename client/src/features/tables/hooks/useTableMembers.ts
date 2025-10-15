@@ -1,58 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import { getTable, subscribeToTableMembers } from '@shared/api/tableService';
-import type { TableMember } from '../types';
+import { useMemo } from 'react';
+import type { TableMember, TableWithMembers } from '../types';
 import { normalizeToHundredth } from '@shared/utils/number';
 
-export function useTableMembers(tableId?: string, userId?: string) {
-  const [rawTable, setRawTable] = useState<any | null>(null);
+export function useTableMembers(table?: TableWithMembers | null, userId?: string) {
+  const members: TableMember[] = useMemo(() => {
+    if (!table?.table_members?.length) return [];
 
-  useEffect(() => {
-    if (!tableId) return;
-    (async () => {
-      try { const data = await getTable(tableId); setRawTable(data); } catch {}
-    })();
-  }, [tableId]);
-
-  useEffect(() => {
-    if (!tableId) return;
-    (async () => {
-      try {
-        console.debug('[useTableMembers] initial getTable for', tableId);
-        const data = await getTable(tableId);
-        console.debug('[useTableMembers] initial getTable result:', data);
-        setRawTable(data);
-      } catch (err) {
-        console.debug('[useTableMembers] initial getTable failed', err);
-      }
-    })();
-  }, [tableId]);
-
-  useEffect(() => {
-    if (!tableId || !userId) return;
-    const ch: RealtimeChannel = subscribeToTableMembers(tableId, async (payload) => {
-      try {
-        console.debug('[useTableMembers] subscription triggered, payload:', payload);
-        const updated = await getTable(tableId);
-        console.debug('[useTableMembers] refetched table after subscription:', updated);
-        setRawTable(updated);
-      } catch (err) {
-        console.debug('[useTableMembers] failed to refetch table after subscription', err);
-      }
+    return table.table_members.map((tm) => {
+      const rawBalance = tm.balance ?? 0;
+      const numericBalance = typeof rawBalance === 'string' ? Number(rawBalance) : rawBalance;
+      const safeBalance = Number.isFinite(numericBalance) ? numericBalance : 0;
+      return {
+        user_id: tm.user_id,
+        username: tm.users?.username ?? tm.user_id,
+        balance: normalizeToHundredth(safeBalance),
+      } satisfies TableMember;
     });
-    return () => { ch.unsubscribe(); };
-  }, [tableId, userId]);
+  }, [table]);
 
-  const members: TableMember[] = useMemo(() => (
-    (rawTable?.table_members || []).map((tm: any) => ({
-      user_id: tm.user_id,
-      username: tm.users?.username || tm.user_id,
-      // table_members.balance is double precision in the DB; ensure it's a number here
-      balance: tm.balance != null ? normalizeToHundredth(Number(tm.balance)) : 0,
-    }))
-  ), [rawTable]);
-
-  const isHost = useMemo(() => Boolean(rawTable && userId && rawTable.host_user_id === userId), [rawTable, userId]);
+  const isHost = useMemo(
+    () => Boolean(table && userId && table.host_user_id === userId),
+    [table, userId]
+  );
 
   return { members, isHost } as const;
 }

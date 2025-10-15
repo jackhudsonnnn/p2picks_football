@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@features/auth";
-import { acceptBetProposal, getBetProposalDetails, hasUserAcceptedBet } from '@features/bets/service';
+import { acceptBetProposal, hasUserAcceptedBet } from '@features/bets/service';
 import type { BetProposalMessage } from '@shared/types/chat';
 import { supabase } from '@shared/api/supabaseClient';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
@@ -11,7 +11,6 @@ import { useBetPhase } from '@shared/hooks/useBetPhase';
 
 interface BetProposalCardProps {
   message: BetProposalMessage;
-  isOwnMessage: boolean;
 }
 
 const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
@@ -42,15 +41,23 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
   }, [user, message.betProposalId]);
 
   useEffect(() => {
+    if (!message.betProposalId) return;
+
     let active = true;
     const load = async () => {
-      const { count } = await supabase
-        .from('bet_participations')
-        .select('participation_id', { count: 'exact', head: true })
-        .eq('bet_id', message.betProposalId);
-      if (active && typeof count === 'number') setParticipants(count);
+      try {
+        const { count, error } = await supabase
+          .from('bet_participations')
+          .select('participation_id', { count: 'exact', head: true })
+          .eq('bet_id', message.betProposalId);
+        if (error) throw error;
+        if (active && typeof count === 'number') setParticipants(count);
+      } catch (err) {
+        console.warn('[BetProposalCard] failed to load participants', err);
+        if (active) setParticipants(0);
+      }
     };
-    load();
+    void load();
     const channel = supabase
       .channel(`bet_participants:${message.betProposalId}`)
       .on(
@@ -67,12 +74,11 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
 
   const handleAccept = useCallback(async () => {
     if (!user) return;
-    if (!message.tableId) {
+    if (!message.tableId || !message.betProposalId) {
       alert('Table ID missing for this bet proposal.');
       return;
     }
     try {
-      await getBetProposalDetails(message.betProposalId);
       await acceptBetProposal({ betId: message.betProposalId, tableId: message.tableId, userId: user.id });
       setAccepted(true);
       navigate('/tickets');
@@ -104,8 +110,6 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
     `state-${phase}`,
     clickable ? 'is-clickable' : '',
     accepted ? 'is-joined' : '',
-    'simple',
-    clickable ? 'clickable' : '',
   ].filter(Boolean).join(' ');
 
   return (

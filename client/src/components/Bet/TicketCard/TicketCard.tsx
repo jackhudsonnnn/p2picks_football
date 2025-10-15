@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './TicketCard.css';
 import type { Ticket } from '@features/bets/types';
 import { extractModeConfig } from '@features/bets/mappers';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
- 
+
 type ModePreviewPayload = {
   summary?: string;
   description?: string;
@@ -64,7 +64,6 @@ export interface TicketCardProps {
 }
 
 const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess, onEnterTable }) => {
-  const selectRef = useRef<HTMLSelectElement | null>(null);
   const modeKey = ticket.modeKey ? String(ticket.modeKey) : '';
   const modeConfig = useMemo(() => {
     const raw = extractModeConfig(ticket.betRecord ?? undefined);
@@ -106,7 +105,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     return () => {
       cancelled = true;
     };
-  }, [modeKey, modeConfigSignature, ticket.betRecord?.nfl_game_id, ticket.betRecord?.bet_id]);
+  }, [modeKey, modeConfigSignature, ticket.betRecord?.nfl_game_id, ticket.betRecord?.bet_id, ticket.betId]);
 
   const summaryText = useMemo(() => {
     if (preview?.summary && preview.summary.trim().length) {
@@ -164,17 +163,18 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     suppressTicks: true,
   });
 
-  useEffect(() => {
-    if (selectRef.current) selectRef.current.disabled = phase !== 'active';
-  }, [phase]);
-
   const Header = () => (
     <div className="ticket-card-header">
       <div className="ticket-header-left">
         <span className="bet-details">{summaryText}</span>
       </div>
       <div className="ticket-header-right">
-  <BetStatus phase={phase} timeLeft={timeLeft} closeTime={ticket.closeTime || undefined} className="ticket-status-repl" />
+        <BetStatus
+          phase={phase}
+          timeLeft={timeLeft}
+          closeTime={ticket.closeTime || undefined}
+          className="ticket-status-repl"
+        />
       </div>
     </div>
   );
@@ -188,7 +188,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
 
   const Actions = () => (
     <div className="ticket-card-actions">
-  <span className="ticket-finance">{formatToHundredth(ticket.wager)} pt(s)</span>
+      <span className="ticket-finance">{formatToHundredth(ticket.wager)} pt(s)</span>
     </div>
   );
 
@@ -201,16 +201,14 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   };
 
   const FooterLeft = () => {
-    const initialDisabled = phase !== 'active';
     return (
       <div className="ticket-bet-options">
         <div className="mobile-bet-container">
           <select
-            ref={selectRef}
             className="mobile-bet-dropdown"
             value={ticket.myGuess}
             onChange={(e) => handleGuessChangeDropdown(ticket.id, e.target.value)}
-            disabled={initialDisabled}
+            disabled={phase !== 'active'}
           >
             {optionList.map((opt) => (
               <option key={opt} value={opt}>
@@ -224,7 +222,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   };
 
   const FooterRight = () => (
-    <button className="enter-table-btn" onClick={() => onEnterTable(ticket.tableId)}>
+    <button className="enter-table-btn" type="button" onClick={() => onEnterTable(ticket.tableId)}>
       {ticket.tableName} →
     </button>
   );

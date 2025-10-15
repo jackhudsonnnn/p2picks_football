@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { TextMessage } from "../TextMessage/TextMessage";
 import "./ChatArea.css";
 import { formatTimeOfDay } from "@shared/utils/dateTime";
@@ -9,7 +9,7 @@ import { useAutoScroll } from "@features/tables/chat/useAutoScroll";
 interface ChatAreaProps {
   messages: ChatMessage[];
   currentUserId: string;
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string) => Promise<void> | void;
   onProposeBet: () => void;
 }
 
@@ -20,15 +20,25 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onProposeBet,
 }) => {
   const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const bottomRef = useAutoScroll([messages.length]);
   const grouped = useGroupedMessages(messages);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    onSendMessage(newMessage.trim());
-    setNewMessage("");
-  // input focus intentionally omitted after refactor (could add ref back if needed)
-  };
+  const handleSendMessage = useCallback(async () => {
+    const trimmed = newMessage.trim();
+    if (!trimmed || isSending) return;
+
+    setIsSending(true);
+    try {
+      await onSendMessage(trimmed);
+      setNewMessage("");
+    } catch (err) {
+      console.error("[ChatArea] Failed to send message", err);
+    } finally {
+      setIsSending(false);
+    }
+    // input focus intentionally omitted after refactor (could add ref back if needed)
+  }, [isSending, newMessage, onSendMessage]);
 
   return (
     <div className="chat-container">
@@ -50,21 +60,26 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       </div>
 
       <div className="message-input-container">
-  <input
+        <input
           type="text"
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void handleSendMessage();
+            }
+          }}
           className="message-input"
         />
         <div className="action-buttons-row">
           <button
             className="send-button"
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
+            onClick={() => { void handleSendMessage(); }}
+            disabled={!newMessage.trim() || isSending}
           >
-            Send
+            {isSending ? "Sending…" : "Send"}
           </button>
           <button className="place-bet-button" onClick={onProposeBet}>
             Propose Bet

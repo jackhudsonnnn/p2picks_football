@@ -1,74 +1,6 @@
-.bet-proposal-card.simple {
-  align-self: center;
-  background: var(--neutral-800);
-  border: 1px solid var(--neutral-600);
-  border-left: 4px solid var(--accent-victory);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  margin: var(--spacing-sm) auto var(--spacing-md);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-  max-width: 520px;
-  font-size: var(--font-size-sm);
-  box-shadow: var(--shadow-sm);
-}
-
-.bet-proposal-card.simple.clickable {
-  cursor: pointer;
-}
-.bet-proposal-card.simple.clickable:hover {
-  background: var(--neutral-750, #2b3545);
-}
-
-.bet-proposal-card .bp-line {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
-}
-.bet-proposal-card .top-line {
-  font-weight: 600;
-}
-.bet-proposal-card .bp-id {
-  color: var(--text-light);
-  font-weight: 600;
-}
-.bet-proposal-card .bet-status {
-  margin-left: auto;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  font-family: monospace;
-  font-weight: 600;
-  background: var(--neutral-700);
-}
-/* Status colors handled by shared BetStatus widget */
-
-.bet-proposal-card .meta-line {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-.bet-proposal-card .bp-wager {
-  font-weight: 600;
-  color: var(--accent-victory);
-}
-.bet-proposal-card .bp-participants {
-  color: var(--text-light);
-}
-.bet-proposal-card .bp-sep {
-  opacity: 0.5;
-}
-.bet-proposal-card .hint-line {
-  font-size: var(--font-size-xs);
-  color: var(--accent-energy);
-}
-
-/* legacy class mapping removed; use .bet-proposal-card clickable state */
-.bet-proposal-card.clickable { cursor: pointer; }
-
 .bet-proposal-card {
   position: relative;
+  align-self: center;
   display: grid;
   grid-template-areas:
     "header header"
@@ -81,8 +13,10 @@
   border-left: 4px solid var(--accent-victory);
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
-  max-width: 60% !important;
+  margin: var(--spacing-sm) auto var(--spacing-md);
+  width: min(520px, 100%);
   box-sizing: border-box;
+  box-shadow: var(--shadow-sm);
   transition: background var(--transition), border-color var(--transition);
   font-size: var(--font-size-sm);
 }

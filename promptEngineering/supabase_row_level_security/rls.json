@@ -126,6 +126,13 @@
     "check_expression": null
   },
   {
+    "table_name": "table_members",
+    "policy_name": "allow_table_settlement_updates",
+    "command": "UPDATE",
+    "using_expression": "is_user_host_of_table(table_id, auth.uid())",
+    "check_expression": null
+  },
+  {
     "table_name": "tables",
     "policy_name": "Allow authenticated insert for tables",
     "command": "INSERT",

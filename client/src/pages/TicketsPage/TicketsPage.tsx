@@ -3,13 +3,12 @@ import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import TicketCard from "@components/Bet/TicketCard/TicketCard";
-import { SearchBar, FilterBar, type FilterOption } from "@shared/widgets";
+import { SearchBar } from "@shared/widgets";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
 
 export const TicketsPage: React.FC = () => {
   const { user } = useAuth();
-  const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 6;
@@ -34,14 +33,13 @@ export const TicketsPage: React.FC = () => {
   };
 
   const filteredTickets = tickets.filter((ticket) => {
-    const stateMatch =
-      filter === "all" || ticket.state.toLowerCase() === filter.toLowerCase();
-    const searchMatch =
-      searchQuery === "" ||
-      ticket.tableName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.gameContext.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.betDetails.toLowerCase().includes(searchQuery.toLowerCase());
-    return stateMatch && searchMatch;
+    if (!searchQuery) return true;
+    const normalizedQuery = searchQuery.toLowerCase();
+    return (
+      ticket.tableName.toLowerCase().includes(normalizedQuery) ||
+      ticket.gameContext.toLowerCase().includes(normalizedQuery) ||
+      ticket.betDetails.toLowerCase().includes(normalizedQuery)
+    );
   });
 
   const indexOfLastTicket = currentPage * ticketsPerPage;

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Modal } from "@shared/widgets";
 import { FriendsList } from "@shared/widgets/FriendsList/FriendsList";
-import { useAuth } from "@features/auth";
 import { useFriends } from "@features/social/hooks";
 import { addTableMember, removeTableMember, settleTable, type TableSettlementResult } from '@shared/api/tableService';
 import "./hostControls.css";
@@ -15,8 +14,7 @@ interface HostControlsProps {
 }
 
 export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, currentUserId }) => {
-  const { user } = useAuth(); // keep for auth context if needed later
-  const { friends, loading: friendsLoading } = useFriends(user?.id);
+  const { friends, loading: friendsLoading, refresh: refreshFriends } = useFriends(currentUserId);
   const [showAdd, setShowAdd] = useState(false);
   const [showRemove, setShowRemove] = useState(false);
   const [mutating, setMutating] = useState(false);
@@ -100,6 +98,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
             setMutating(true);
             try {
               await addTableMember(tableId, userId);
+              await refreshFriends();
               setShowAdd(false);
             } catch (err) {
               console.error(err);
@@ -124,6 +123,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
             setMutating(true);
             try {
               await removeTableMember(tableId, userId);
+              await refreshFriends();
               setShowRemove(false);
             } catch (err) {
               console.error(err);

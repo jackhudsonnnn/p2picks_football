@@ -57,17 +57,6 @@ export async function createBetProposal(
   return response.json();
 }
 
-// Debug function to get bet proposal details
-export async function getBetProposalDetails(betId: string) {
-  const { data, error } = await supabase
-    .from('bet_proposals')
-    .select('bet_id, table_id, bet_status, proposer_user_id, close_time, winning_choice, resolution_time')
-    .eq('bet_id', betId)
-    .single();
-  if (error) throw error;
-  return data;
-}
-
 // Accept a bet proposal: create a bet_participation for the user
 export async function acceptBetProposal({ betId, tableId, userId }: { betId: string; tableId: string; userId: string }) {
   const { data, error } = await supabase

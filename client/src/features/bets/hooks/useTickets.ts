@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@shared/api/supabaseClient';
 import { getUserTickets } from '../service';
@@ -10,29 +10,41 @@ export function useTickets(userId?: string) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const refresh = () => {
-    if (!userId) return;
+  const refresh = useCallback(async () => {
+    if (!userId) {
+      setTickets([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    getUserTickets(userId)
-      .then((data) => setTickets((data || []).map(mapParticipationRowToTicket)))
-      .finally(() => setLoading(false));
-  };
-
-  // initial load
-  useEffect(() => {
-    if (!userId) return;
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    try {
+      const data = await getUserTickets(userId);
+      setTickets((data || []).map(mapParticipationRowToTicket));
+    } catch (error) {
+      console.warn('[useTickets] failed to load tickets', error);
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
   }, [userId]);
 
-  // realtime subscriptions for bet status & my participations
   useEffect(() => {
-    if (!userId || tickets.length === 0) return;
-    const uniqueTables = Array.from(new Set(tickets.map((t) => t.tableId)));
-    const channels: RealtimeChannel[] = [];
+    void refresh();
+  }, [refresh]);
 
-    uniqueTables.forEach((tid) => {
-      const ch = subscribeToBetProposals(tid, ({ bet_id }) => {
+  const trackedTableIds = useMemo(() => {
+    return Array.from(new Set(tickets.map((t) => t.tableId))).sort();
+  }, [tickets]);
+  const trackedTableKey = trackedTableIds.join('|');
+
+  useEffect(() => {
+    if (!userId || !trackedTableKey) return;
+
+    const tableIds = trackedTableKey.split('|').filter(Boolean);
+    if (!tableIds.length) return;
+
+    const channels: RealtimeChannel[] = tableIds.map((tableId) =>
+      subscribeToBetProposals(tableId, ({ bet_id }) => {
         if (!bet_id) return;
         supabase
           .from('bet_proposals')
@@ -61,11 +73,18 @@ export function useTickets(userId?: string) {
               })
             );
           });
-      });
-      channels.push(ch);
-    });
+      })
+    );
 
-    const chMyParts = supabase
+    return () => {
+      channels.forEach((channel) => channel.unsubscribe());
+    };
+  }, [userId, trackedTableKey]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
       .channel(`my_participations:${userId}`)
       .on(
         'postgres_changes',
@@ -80,7 +99,9 @@ export function useTickets(userId?: string) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'bet_participations', filter: `user_id=eq.${userId}` },
-        () => refresh()
+        () => {
+          void refresh();
+        }
       )
       .on(
         'postgres_changes',
@@ -93,11 +114,9 @@ export function useTickets(userId?: string) {
       .subscribe();
 
     return () => {
-      channels.forEach((c) => c.unsubscribe());
-      chMyParts.unsubscribe();
+      channel.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, tickets]);
+  }, [userId, refresh]);
 
   const counts: TicketCounts = useMemo(() => {
     return {
@@ -121,7 +140,7 @@ export function useTickets(userId?: string) {
       if (updated) {
         setTickets((prev) => prev.map((t) => (t.id === updated.participation_id ? { ...t, myGuess: updated.user_guess } : t)));
       }
-      refresh();
+      await refresh();
     } catch (e) {
       throw e;
     }

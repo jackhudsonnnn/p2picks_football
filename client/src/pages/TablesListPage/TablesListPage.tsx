@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
-import { SearchBar, FilterBar, type FilterOption, Modal } from "@shared/widgets";
+import { SearchBar, Modal } from "@shared/widgets";
 import AddIcon from "@shared/widgets/icons/AddIcon";
 import { useTablesList } from "@features/tables/hooks/useTablesList";
 import { formatDateTime } from "@shared/utils/dateTime";
@@ -11,7 +11,6 @@ import { formatDateTime } from "@shared/utils/dateTime";
 export const TablesListPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const tablesPerPage = 6;
@@ -69,7 +68,7 @@ export const TablesListPage: React.FC = () => {
         </div>
       </Modal>
       
-      <SearchBar value={searchQuery} onChange={(q) => { setSearchQuery(q); setCurrentPage(1); }} placeholder="Search tables..." />
+  <SearchBar value={searchQuery} onChange={(q) => { setSearchQuery(q); setCurrentPage(1); }} placeholder="Search tables..." />
 
       {filteredTables.length > 0 ? (
         <div className="tables-list">

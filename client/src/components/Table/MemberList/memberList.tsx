@@ -3,9 +3,7 @@ import "./memberList.css";
 import type { TableMember } from "@features/tables/types";
 import { formatToHundredth, normalizeToHundredth } from "@shared/utils/number";
 
-export interface MemberListMember extends TableMember {
-  balance?: number; // extend with numeric balance (no string)
-}
+export type MemberListMember = TableMember;
 
 interface MemberListProps {
   members: MemberListMember[];
@@ -28,9 +26,9 @@ export const MemberList: React.FC<MemberListProps> = ({ members, hostUserId, cur
       </header>
       {members.map((member, idx) => {
         const balanceValue = normalizeToHundredth(member.balance);
-  const isNegative = balanceValue < 0;
-  const isZero = balanceValue === 0;
-  const balanceClass = isZero ? " zero" : isNegative ? " negative" : " positive";
+        const isNegative = balanceValue < 0;
+        const isZero = balanceValue === 0;
+        const balanceClass = isZero ? " zero" : isNegative ? " negative" : " positive";
         const balanceLabel = formatToHundredth(balanceValue, { showPlus: true });
         return (
           <div key={member.user_id} className={`member-row${idx % 2 === 1 ? " member-row-alt" : ""}`}>
