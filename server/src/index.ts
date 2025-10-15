@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import 'dotenv/config';;
 import {
   getAvailableGames,
   getGameStatus,
-} from './get-functioins';
+} from './services/gameDataService';
 import { storeModeConfig, fetchModeConfig, fetchModeConfigs } from './services/modeConfig';
 import { listModeCatalog, findModeDefinition } from './services/modeCatalogService';
 import {
@@ -20,10 +20,13 @@ import type { BetProposal } from './supabaseClient';
 import { getSupabase } from './supabaseClient';
 import { normalizeToHundredth } from './utils/number';
 
+assertRequiredEnv();
+
 const app = express();
 const PORT = Number(process.env.PORT || 5001);
 
-app.use(cors());
+const corsOptions: CorsOptions = buildCorsOptions();
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/health', (_req: Request, res: Response) => {
@@ -354,4 +357,46 @@ function clampTimeLimit(value: number): number {
   if (!Number.isFinite(value)) return 30;
   const rounded = Math.round(value);
   return Math.min(Math.max(rounded, 10), 60);
+}
+
+function assertRequiredEnv(): void {
+  const missing: string[] = [];
+  if (!process.env.SUPABASE_URL) missing.push('SUPABASE_URL');
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (!process.env.REDIS_URL) missing.push('REDIS_URL');
+  if (missing.length) {
+    throw new Error(`Missing required environment variable(s): ${missing.join(', ')}`);
+  }
+}
+
+function buildCorsOptions(): CorsOptions {
+  const allowedOrigins = resolveAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS);
+  const allowAll = allowedOrigins.has('*');
+
+  return {
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      if (allowAll || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
+    credentials: true,
+  };
+}
+
+function resolveAllowedOrigins(raw: string | undefined): Set<string> {
+  if (raw && raw.trim().length) {
+    return new Set(
+      raw
+        .split(',')
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    );
+  }
+  return new Set(['http://localhost:5173', 'http://127.0.0.1:5173']);
 }

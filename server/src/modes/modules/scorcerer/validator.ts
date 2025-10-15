@@ -1,11 +1,10 @@
 import { getSupabase, BetProposal } from '../../../supabaseClient';
-import { getTeamScoreStats } from '../../../get-functioins';
-import { loadRefinedGame, REFINED_DIR, RefinedGameDoc } from '../../../helpers';
+import { getTeamScoreStats } from '../../../services/gameDataService';
+import { loadRefinedGame, RefinedGameDoc } from '../../../helpers';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import chokidar from 'chokidar';
 import Redis from 'ioredis';
 import { createHash } from 'crypto';
-import * as path from 'path';
+import { GameFeedEvent, getCachedGameDoc, subscribeToGameFeed } from '../../../services/gameFeedService';
 
 function pickWinningChoice(delta: { td: number; fg: number; sfty: number }): 'TD' | 'FG' | 'Safety' | null {
   if (delta.td > 0) return 'TD';
@@ -19,12 +18,6 @@ interface AggregateTotals {
   fieldGoals: number;
   safeties: number;
   teamCount: number;
-}
-
-interface GameSnapshot {
-  signatureJson: string;
-  signatureHash: string;
-  totals: AggregateTotals;
 }
 
 interface SnapshotRecord {
@@ -41,31 +34,26 @@ interface BaselineSnapshot {
 }
 
 export class ScorcererValidatorService {
-  private watcher: chokidar.FSWatcher | null = null;
+  private unsubscribe: (() => void) | null = null;
   private redisClient: Redis | null = null;
-  private redisInitAttempted = false;
   private readonly redisSnapshotTtlSeconds = 60 * 60 * 6;
   private readonly storeRawSnapshots = process.env.SCORCERER_STORE_RAW === '1' || process.env.SCORCERER_STORE_RAW === 'true';
   private pendingChannel: RealtimeChannel | null = null;
   private readonly baselineTtlSeconds = 60 * 60 * 12;
-
-  // in-memory fallback (key -> { hash: valueStored, expiresAt })
-  // memorySnapshots maps key -> { storedValue: string; canonicalHash: string; expiresAt }
-  private readonly memorySnapshots = new Map<string, { storedValue: string; canonicalHash: string; expiresAt: number }>();
-  private memorySnapshotsWarned = false;
-  private readonly memoryBaselines = new Map<string, { value: BaselineSnapshot; expiresAt: number }>();
-  private memoryBaselineWarned = false;
+  private lastSignatureByGame = new Map<string, string>();
 
   start() {
+    this.getRedis();
     this.startPendingMonitor();
     this.syncPendingBaselines().catch((err: unknown) => console.error('[scorcerer] baseline sync error', err));
-    // Watch-mode only: trigger validation when refined JSON files are added/changed
-    this.startWatcher();
+    this.startFeedSubscription();
   }
 
   stop() {
-    if (this.watcher) this.watcher.close().catch(() => {});
-    this.watcher = null;
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
     if (this.pendingChannel) {
       this.pendingChannel.unsubscribe().catch((err: unknown) => console.error('[scorcerer] pending channel unsubscribe error', err));
       this.pendingChannel = null;
@@ -73,21 +61,15 @@ export class ScorcererValidatorService {
     if (this.redisClient) {
       this.redisClient.quit().catch((err: unknown) => console.error('[scorcerer] redis quit error', err));
       this.redisClient = null;
-      this.redisInitAttempted = false;
     }
-    this.memorySnapshots.clear();
-    this.memoryBaselines.clear();
+    this.lastSignatureByGame.clear();
   }
 
-  private startWatcher() {
-    if (this.watcher) return;
-    const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-    console.log('[scorcerer] starting watcher on', dir);
-    this.watcher = chokidar
-      .watch(path.join(dir, '*.json'), { ignoreInitial: false, awaitWriteFinish: { stabilityThreshold: 250, pollInterval: 100 } })
-      .on('add', (file) => this.onFileChanged(file))
-      .on('change', (file) => this.onFileChanged(file))
-      .on('error', (err: unknown) => console.error('[scorcerer] watcher error', err));
+  private startFeedSubscription() {
+    if (this.unsubscribe) return;
+    this.unsubscribe = subscribeToGameFeed((event) => {
+      void this.handleGameFeedEvent(event);
+    });
   }
 
   private startPendingMonitor() {
@@ -163,72 +145,52 @@ export class ScorcererValidatorService {
     return `scorcerer:baseline:${betId}`;
   }
 
-  private cleanupMemoryBaselines() {
-    const now = Date.now();
-    for (const [key, entry] of this.memoryBaselines) {
-      if (entry.expiresAt <= now) {
-        this.memoryBaselines.delete(key);
-      }
-    }
-  }
-
   private async setBaseline(betId: string, baseline: BaselineSnapshot): Promise<void> {
     const redis = this.getRedis();
     const key = this.baselineKey(betId);
     const value = JSON.stringify(baseline);
-    if (redis) {
-      try {
-        await redis.set(key, value, 'EX', this.baselineTtlSeconds);
-        return;
-      } catch (err: unknown) {
-        console.error('[scorcerer] redis baseline set error', { betId }, err);
-      }
-    }
-    this.cleanupMemoryBaselines();
-    this.memoryBaselines.set(key, { value: baseline, expiresAt: Date.now() + this.baselineTtlSeconds * 1000 });
-    if (!this.memoryBaselineWarned) {
-      console.warn('[scorcerer] baseline fallback to in-memory storage; Redis disabled or unavailable');
-      this.memoryBaselineWarned = true;
+    try {
+      await redis.set(key, value, 'EX', this.baselineTtlSeconds);
+    } catch (err: unknown) {
+      console.error('[scorcerer] redis baseline set error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
   }
 
   private async getBaseline(betId: string): Promise<BaselineSnapshot | null> {
     const redis = this.getRedis();
     const key = this.baselineKey(betId);
-    if (redis) {
-      try {
-        const raw = await redis.get(key);
-        if (raw) return JSON.parse(raw) as BaselineSnapshot;
-      } catch (err: unknown) {
-        console.error('[scorcerer] redis baseline get error', { betId }, err);
-      }
+    try {
+      const raw = await redis.get(key);
+      if (raw) return JSON.parse(raw) as BaselineSnapshot;
+    } catch (err: unknown) {
+      console.error('[scorcerer] redis baseline get error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
-    this.cleanupMemoryBaselines();
-    const entry = this.memoryBaselines.get(key);
-    return entry ? entry.value : null;
+    return null;
   }
 
   private async clearBaseline(betId: string): Promise<void> {
     const redis = this.getRedis();
     const key = this.baselineKey(betId);
-    if (redis) {
-      try {
-        await redis.del(key);
-      } catch (err: unknown) {
-        console.error('[scorcerer] redis baseline clear error', { betId }, err);
-      }
+    try {
+      await redis.del(key);
+    } catch (err: unknown) {
+      console.error('[scorcerer] redis baseline clear error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
-    this.memoryBaselines.delete(key);
   }
 
-  private async onFileChanged(filePath: string) {
-    const gameId = path.basename(filePath, '.json');
+  private async handleGameFeedEvent(event: GameFeedEvent): Promise<void> {
     try {
-      const doc = await loadRefinedGame(gameId);
-      if (!doc) return;
+      const { gameId, doc, signature } = event;
+      if (this.lastSignatureByGame.get(gameId) === signature) {
+        return;
+      }
+      this.lastSignatureByGame.set(gameId, signature);
       await this.processGameUpdate(gameId, doc);
     } catch (err: unknown) {
-      console.error('[scorcerer] onFileChanged error', { filePath }, err);
+      console.error('[scorcerer] game feed event error', { gameId: event.gameId }, err);
     }
   }
 
@@ -262,33 +224,26 @@ export class ScorcererValidatorService {
     const cacheKey = this.snapshotKey(gameId);
 
     const redis = this.getRedis();
-    if (redis) {
-      try {
-        const raw = await redis.get(cacheKey);
-        if (raw) {
-          const parsed = JSON.parse(raw) as { signatureHash: string; signatureJson?: string };
-          if (parsed.signatureHash === signatureHash) {
-            return { shouldProcess: false, previousHash: signatureHash };
-          }
+    try {
+      const raw = await redis.get(cacheKey);
+      let previousHash: string | null = null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as { signatureHash: string; signatureJson?: string };
+        previousHash = parsed.signatureHash ?? null;
+        if (parsed.signatureHash === signatureHash) {
+          return { shouldProcess: false, previousHash };
         }
-        await redis.set(cacheKey, JSON.stringify({ signatureHash, signatureJson: this.storeRawSnapshots ? signatureJson : undefined }), 'EX', this.redisSnapshotTtlSeconds);
-        return { shouldProcess: true, previousHash: null };
-      } catch (err: unknown) {
-        console.error('[scorcerer] redis snapshot error', { gameId }, err);
       }
+      const payload = {
+        signatureHash,
+        signatureJson: this.storeRawSnapshots ? signatureJson : undefined,
+      };
+      await redis.set(cacheKey, JSON.stringify(payload), 'EX', this.redisSnapshotTtlSeconds);
+      return { shouldProcess: true, previousHash };
+    } catch (err: unknown) {
+      console.error('[scorcerer] redis snapshot error', { gameId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
-
-    const entry = this.memorySnapshots.get(cacheKey);
-    if (entry && entry.canonicalHash === signatureHash) {
-      return { shouldProcess: false, previousHash: signatureHash };
-    }
-    this.cleanupMemorySnapshots();
-    this.memorySnapshots.set(cacheKey, { storedValue: this.storeRawSnapshots ? signatureJson : '', canonicalHash: signatureHash, expiresAt: Date.now() + this.redisSnapshotTtlSeconds * 1000 });
-    if (!this.memorySnapshotsWarned) {
-      console.warn('[scorcerer] snapshot fallback to in-memory storage; Redis disabled or unavailable');
-      this.memorySnapshotsWarned = true;
-    }
-    return { shouldProcess: true, previousHash: entry?.canonicalHash ?? null };
   }
 
   private async collectTotals(doc: RefinedGameDoc, gameId: string): Promise<AggregateTotals> {
@@ -395,7 +350,7 @@ export class ScorcererValidatorService {
       console.warn('[scorcerer] missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;
     }
-    let doc = prefetchedDoc ?? null;
+    let doc = prefetchedDoc ?? getCachedGameDoc(gameId) ?? null;
     if (!doc) {
       doc = await loadRefinedGame(gameId);
     }
@@ -451,15 +406,6 @@ export class ScorcererValidatorService {
     return status.startsWith('STATUS_FINAL');
   }
 
-  private cleanupMemorySnapshots() {
-    const now = Date.now();
-    for (const [key, entry] of this.memorySnapshots) {
-      if (entry.expiresAt <= now) {
-        this.memorySnapshots.delete(key);
-      }
-    }
-  }
-
   private normalizeNumber(value: unknown): number {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
     if (typeof value === 'string') {
@@ -469,25 +415,21 @@ export class ScorcererValidatorService {
     return 0;
   }
 
-  private getRedis(): Redis | null {
+  private getRedis(): Redis {
     if (this.redisClient) return this.redisClient;
-    if (this.redisInitAttempted) return this.redisClient;
-    this.redisInitAttempted = true;
     const url = process.env.REDIS_URL;
     if (!url) {
-      console.error('[scorcerer] redis url not configured; validator requires Redis for durability');
-      return null;
+      throw new Error('[scorcerer] REDIS_URL not configured; Redis is required');
     }
     try {
       const client = new Redis(url);
       client.on('error', (err: unknown) => console.error('[scorcerer] redis error', err));
       this.redisClient = client;
       console.log('[scorcerer] redis client initialized');
+      return client;
     } catch (err: unknown) {
-      console.error('[scorcerer] failed to initialize redis client', err);
-      this.redisClient = null;
+      throw new Error(`[scorcerer] failed to initialize redis client: ${String(err)}`);
     }
-    return this.redisClient;
   }
 }
 

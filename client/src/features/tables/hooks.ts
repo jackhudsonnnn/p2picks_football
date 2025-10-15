@@ -1,6 +1,3 @@
-// Aggregated exports for tables feature hooks.
-// Prefer importing individual hooks (tree-shaking friendly), but this maintains a convenient barrel.
-
 export { useTablesList } from './hooks/useTablesList';
 export { useTable } from './hooks/useTable';
 export { useTableMembers } from './hooks/useTableMembers';

@@ -1,8 +1,7 @@
-import chokidar from 'chokidar';
-import * as path from 'path';
 import { getSupabase, BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
-import { loadRefinedGame, RefinedGameDoc, REFINED_DIR, findTeam } from '../../../helpers';
+import { RefinedGameDoc, findTeam } from '../../../helpers';
+import { GameFeedEvent, subscribeToGameFeed } from '../../../services/gameFeedService';
 
 interface DifferenceInOpinionConfig {
   home_team_id?: string | null;
@@ -13,38 +12,36 @@ interface DifferenceInOpinionConfig {
 }
 
 export class DifferenceInOpinionValidatorService {
-  private watcher: chokidar.FSWatcher | null = null;
+  private unsubscribe: (() => void) | null = null;
+  private lastSignatureByGame = new Map<string, string>();
 
   start() {
-    this.startWatcher();
+    if (this.unsubscribe) return;
+    this.unsubscribe = subscribeToGameFeed((event) => {
+      void this.handleGameFeedEvent(event);
+    });
   }
 
   stop() {
-    if (this.watcher) this.watcher.close().catch(() => {});
-    this.watcher = null;
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+    this.lastSignatureByGame.clear();
   }
 
-  private startWatcher() {
-    if (this.watcher) return;
-    const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-    console.log('[differenceInOpinion] starting watcher on', dir);
-    this.watcher = chokidar
-      .watch(path.join(dir, '*.json'), { ignoreInitial: false, awaitWriteFinish: { stabilityThreshold: 250, pollInterval: 100 } })
-      .on('add', (file) => this.onFileChanged(file))
-      .on('change', (file) => this.onFileChanged(file))
-      .on('error', (err: unknown) => console.error('[differenceInOpinion] watcher error', err));
-  }
-
-  private async onFileChanged(filePath: string) {
-    const gameId = path.basename(filePath, '.json');
+  private async handleGameFeedEvent(event: GameFeedEvent): Promise<void> {
     try {
-      const doc = await loadRefinedGame(gameId);
-      if (!doc) return;
+      const { gameId, doc, signature } = event;
+      if (this.lastSignatureByGame.get(gameId) === signature) {
+        return;
+      }
+      this.lastSignatureByGame.set(gameId, signature);
       const status = String(doc.status || '').toUpperCase();
       if (status !== 'STATUS_FINAL') return;
       await this.processFinalGame(gameId, doc);
     } catch (err: unknown) {
-      console.error('[differenceInOpinion] onFileChanged error', { filePath }, err);
+      console.error('[differenceInOpinion] game feed error', { gameId: event.gameId }, err);
     }
   }
 

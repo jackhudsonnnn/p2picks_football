@@ -1,11 +1,10 @@
-import chokidar from 'chokidar';
 import Redis from 'ioredis';
-import * as path from 'path';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { getSupabase, BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
-import { loadRefinedGame, RefinedGameDoc, REFINED_DIR, findPlayer } from '../../../helpers';
+import { loadRefinedGame, RefinedGameDoc, findPlayer } from '../../../helpers';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from './constants';
+import { GameFeedEvent, getCachedGameDoc, subscribeToGameFeed } from '../../../services/gameFeedService';
 
 type PlayerRef = { id?: string | null; name?: string | null };
 
@@ -57,23 +56,24 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
 };
 
 export class EitherOrValidatorService {
-  private watcher: chokidar.FSWatcher | null = null;
+  private unsubscribe: (() => void) | null = null;
   private pendingChannel: RealtimeChannel | null = null;
   private redisClient: Redis | null = null;
-  private redisInitAttempted = false;
   private readonly baselineTtlSeconds = 60 * 60 * 12;
-  private readonly memoryBaselines = new Map<string, { baseline: BaselineRecord; expiresAt: number }>();
-  private memoryBaselineWarned = false;
+  private lastSignatureByGame = new Map<string, string>();
 
   start() {
+    this.getRedis();
     this.startPendingMonitor();
     this.syncPendingBaselines().catch((err: unknown) => console.error('[eitherOr] baseline sync error', err));
-    this.startWatcher();
+    this.startFeedSubscription();
   }
 
   stop() {
-    if (this.watcher) this.watcher.close().catch(() => {});
-    this.watcher = null;
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
     if (this.pendingChannel) {
       this.pendingChannel.unsubscribe().catch((err: unknown) => console.error('[eitherOr] pending channel unsubscribe error', err));
       this.pendingChannel = null;
@@ -81,20 +81,15 @@ export class EitherOrValidatorService {
     if (this.redisClient) {
       this.redisClient.quit().catch((err: unknown) => console.error('[eitherOr] redis quit error', err));
       this.redisClient = null;
-      this.redisInitAttempted = false;
     }
-    this.memoryBaselines.clear();
+    this.lastSignatureByGame.clear();
   }
 
-  private startWatcher() {
-    if (this.watcher) return;
-    const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-    console.log('[eitherOr] starting watcher on', dir);
-    this.watcher = chokidar
-      .watch(path.join(dir, '*.json'), { ignoreInitial: false, awaitWriteFinish: { stabilityThreshold: 250, pollInterval: 100 } })
-      .on('add', (file) => this.onFileChanged(file))
-      .on('change', (file) => this.onFileChanged(file))
-      .on('error', (err: unknown) => console.error('[eitherOr] watcher error', err));
+  private startFeedSubscription() {
+    if (this.unsubscribe) return;
+    this.unsubscribe = subscribeToGameFeed((event) => {
+      void this.handleGameFeedEvent(event);
+    });
   }
 
   private startPendingMonitor() {
@@ -165,25 +160,29 @@ export class EitherOrValidatorService {
     }
   }
 
-  private async onFileChanged(filePath: string) {
-    const gameId = path.basename(filePath, '.json');
+  private async handleGameFeedEvent(event: GameFeedEvent): Promise<void> {
     try {
-      const doc = await loadRefinedGame(gameId);
-      if (!doc) return;
+      const { gameId, doc, signature } = event;
+      if (this.lastSignatureByGame.get(gameId) === signature) {
+        return;
+      }
+      this.lastSignatureByGame.set(gameId, signature);
+
       const status = String(doc.status || '').toUpperCase();
       const halftimeResolveAt =
         EITHER_OR_ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
+
       if (status === 'STATUS_HALFTIME') {
         await this.processFinalGame(gameId, doc, halftimeResolveAt);
         return;
       }
+
       if (status === 'STATUS_FINAL') {
         await this.processFinalGame(gameId, doc, halftimeResolveAt);
         await this.processFinalGame(gameId, doc, EITHER_OR_DEFAULT_RESOLVE_AT);
-        return;
       }
     } catch (err: unknown) {
-      console.error('[eitherOr] onFileChanged error', { filePath }, err);
+      console.error('[eitherOr] game feed event error', { gameId: event.gameId }, err);
     }
   }
 
@@ -301,7 +300,7 @@ export class EitherOrValidatorService {
       console.warn('[eitherOr] missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;
     }
-    let doc = prefetchedDoc ?? null;
+    let doc = prefetchedDoc ?? getCachedGameDoc(gameId) ?? null;
     if (!doc) {
       doc = await loadRefinedGame(gameId);
     }
@@ -374,62 +373,40 @@ export class EitherOrValidatorService {
     return `eitherOr:baseline:${betId}`;
   }
 
-  private cleanupMemoryBaselines() {
-    const now = Date.now();
-    for (const [key, entry] of this.memoryBaselines) {
-      if (entry.expiresAt <= now) {
-        this.memoryBaselines.delete(key);
-      }
-    }
-  }
-
   private async setBaseline(betId: string, baseline: BaselineRecord): Promise<void> {
-    const redis = this.getRedis();
     const key = this.baselineKey(betId);
     const value = JSON.stringify(baseline);
-    if (redis) {
-      try {
-        await redis.set(key, value, 'EX', this.baselineTtlSeconds);
-        return;
-      } catch (err: unknown) {
-        console.error('[eitherOr] redis baseline set error', { betId }, err);
-      }
-    }
-    this.cleanupMemoryBaselines();
-    this.memoryBaselines.set(key, { baseline, expiresAt: Date.now() + this.baselineTtlSeconds * 1000 });
-    if (!this.memoryBaselineWarned) {
-      console.warn('[eitherOr] baseline fallback to in-memory storage; Redis disabled or unavailable');
-      this.memoryBaselineWarned = true;
+    const redis = this.getRedis();
+    try {
+      await redis.set(key, value, 'EX', this.baselineTtlSeconds);
+    } catch (err: unknown) {
+      console.error('[eitherOr] redis baseline set error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
   }
 
   private async getBaseline(betId: string): Promise<BaselineRecord | null> {
     const key = this.baselineKey(betId);
     const redis = this.getRedis();
-    if (redis) {
-      try {
-        const raw = await redis.get(key);
-        if (raw) return JSON.parse(raw) as BaselineRecord;
-      } catch (err: unknown) {
-        console.error('[eitherOr] redis baseline get error', { betId }, err);
-      }
+    try {
+      const raw = await redis.get(key);
+      if (raw) return JSON.parse(raw) as BaselineRecord;
+    } catch (err: unknown) {
+      console.error('[eitherOr] redis baseline get error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
-    this.cleanupMemoryBaselines();
-    const entry = this.memoryBaselines.get(key);
-    return entry ? entry.baseline : null;
+    return null;
   }
 
   private async clearBaseline(betId: string): Promise<void> {
     const key = this.baselineKey(betId);
     const redis = this.getRedis();
-    if (redis) {
-      try {
-        await redis.del(key);
-      } catch (err: unknown) {
-        console.error('[eitherOr] redis baseline clear error', { betId }, err);
-      }
+    try {
+      await redis.del(key);
+    } catch (err: unknown) {
+      console.error('[eitherOr] redis baseline clear error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
-    this.memoryBaselines.delete(key);
   }
 
   private async recordHistory(betId: string, eventType: 'either_or_baseline' | 'either_or_result', payload: Record<string, unknown>): Promise<void> {
@@ -444,25 +421,21 @@ export class EitherOrValidatorService {
     }
   }
 
-  private getRedis(): Redis | null {
+  private getRedis(): Redis {
     if (this.redisClient) return this.redisClient;
-    if (this.redisInitAttempted) return this.redisClient;
-    this.redisInitAttempted = true;
     const url = process.env.REDIS_URL;
     if (!url) {
-      console.error('[eitherOr] redis url not configured; validator requires Redis for durability');
-      return null;
+      throw new Error('[eitherOr] REDIS_URL not configured; Redis is required');
     }
     try {
       const client = new Redis(url);
       client.on('error', (err: unknown) => console.error('[eitherOr] redis error', err));
       this.redisClient = client;
       console.log('[eitherOr] redis client initialized');
+      return client;
     } catch (err: unknown) {
-      console.error('[eitherOr] failed to initialize redis client', err);
-      this.redisClient = null;
+      throw new Error(`[eitherOr] failed to initialize redis client: ${String(err)}`);
     }
-    return this.redisClient;
   }
 }
 

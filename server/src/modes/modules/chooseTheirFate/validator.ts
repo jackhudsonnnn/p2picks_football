@@ -1,10 +1,9 @@
-import chokidar from 'chokidar';
 import Redis from 'ioredis';
-import * as path from 'path';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { getSupabase, BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
-import { loadRefinedGame, RefinedGameDoc, REFINED_DIR } from '../../../helpers';
+import { loadRefinedGame, RefinedGameDoc } from '../../../helpers';
+import { GameFeedEvent, getCachedGameDoc, subscribeToGameFeed } from '../../../services/gameFeedService';
 
 interface ChooseTheirFateConfig {
   possession_team_id?: string | null;
@@ -29,23 +28,24 @@ interface ChooseFateBaseline {
 }
 
 export class ChooseTheirFateValidatorService {
-  private watcher: chokidar.FSWatcher | null = null;
+  private unsubscribe: (() => void) | null = null;
   private pendingChannel: RealtimeChannel | null = null;
   private redisClient: Redis | null = null;
-  private redisInitAttempted = false;
   private readonly baselineTtlSeconds = 60 * 60 * 6;
-  private readonly memoryBaselines = new Map<string, { baseline: ChooseFateBaseline; expiresAt: number }>();
-  private memoryBaselineWarned = false;
+  private lastSignatureByGame = new Map<string, string>();
 
   start() {
+    this.getRedis();
     this.startPendingMonitor();
     this.syncPendingBaselines().catch((err: unknown) => console.error('[chooseTheirFate] baseline sync error', err));
-    this.startWatcher();
+    this.startFeedSubscription();
   }
 
   stop() {
-    if (this.watcher) this.watcher.close().catch(() => {});
-    this.watcher = null;
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
     if (this.pendingChannel) {
       this.pendingChannel.unsubscribe().catch((err: unknown) => console.error('[chooseTheirFate] pending channel unsubscribe error', err));
       this.pendingChannel = null;
@@ -53,20 +53,15 @@ export class ChooseTheirFateValidatorService {
     if (this.redisClient) {
       this.redisClient.quit().catch((err: unknown) => console.error('[chooseTheirFate] redis quit error', err));
       this.redisClient = null;
-      this.redisInitAttempted = false;
     }
-    this.memoryBaselines.clear();
+    this.lastSignatureByGame.clear();
   }
 
-  private startWatcher() {
-    if (this.watcher) return;
-    const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-    console.log('[chooseTheirFate] starting watcher on', dir);
-    this.watcher = chokidar
-      .watch(path.join(dir, '*.json'), { ignoreInitial: false, awaitWriteFinish: { stabilityThreshold: 250, pollInterval: 100 } })
-      .on('add', (file) => this.onFileChanged(file))
-      .on('change', (file) => this.onFileChanged(file))
-      .on('error', (err: unknown) => console.error('[chooseTheirFate] watcher error', err));
+  private startFeedSubscription() {
+    if (this.unsubscribe) return;
+    this.unsubscribe = subscribeToGameFeed((event) => {
+      void this.handleGameFeedEvent(event);
+    });
   }
 
   private startPendingMonitor() {
@@ -137,14 +132,16 @@ export class ChooseTheirFateValidatorService {
     }
   }
 
-  private async onFileChanged(filePath: string) {
-    const gameId = path.basename(filePath, '.json');
+  private async handleGameFeedEvent(event: GameFeedEvent): Promise<void> {
     try {
-      const doc = await loadRefinedGame(gameId);
-      if (!doc) return;
+      const { gameId, doc, signature } = event;
+      if (this.lastSignatureByGame.get(gameId) === signature) {
+        return;
+      }
+      this.lastSignatureByGame.set(gameId, signature);
       await this.processGameUpdate(gameId, doc);
     } catch (err: unknown) {
-      console.error('[chooseTheirFate] onFileChanged error', { filePath }, err);
+      console.error('[chooseTheirFate] game feed event error', { gameId: event.gameId }, err);
     }
   }
 
@@ -283,7 +280,7 @@ export class ChooseTheirFateValidatorService {
       console.warn('[chooseTheirFate] missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;
     }
-    let doc = prefetchedDoc ?? null;
+    let doc = prefetchedDoc ?? getCachedGameDoc(gameId) ?? null;
     if (!doc) {
       doc = await loadRefinedGame(gameId);
     }
@@ -360,62 +357,40 @@ export class ChooseTheirFateValidatorService {
     return `choosefate:baseline:${betId}`;
   }
 
-  private cleanupMemoryBaselines() {
-    const now = Date.now();
-    for (const [key, entry] of this.memoryBaselines) {
-      if (entry.expiresAt <= now) {
-        this.memoryBaselines.delete(key);
-      }
-    }
-  }
-
   private async setBaseline(betId: string, baseline: ChooseFateBaseline): Promise<void> {
     const key = this.baselineKey(betId);
     const redis = this.getRedis();
     const value = JSON.stringify(baseline);
-    if (redis) {
-      try {
-        await redis.set(key, value, 'EX', this.baselineTtlSeconds);
-        return;
-      } catch (err: unknown) {
-        console.error('[chooseTheirFate] redis baseline set error', { betId }, err);
-      }
-    }
-    this.cleanupMemoryBaselines();
-    this.memoryBaselines.set(key, { baseline, expiresAt: Date.now() + this.baselineTtlSeconds * 1000 });
-    if (!this.memoryBaselineWarned) {
-      console.warn('[chooseTheirFate] baseline fallback to in-memory storage; Redis disabled or unavailable');
-      this.memoryBaselineWarned = true;
+    try {
+      await redis.set(key, value, 'EX', this.baselineTtlSeconds);
+    } catch (err: unknown) {
+      console.error('[chooseTheirFate] redis baseline set error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
   }
 
   private async getBaseline(betId: string): Promise<ChooseFateBaseline | null> {
     const key = this.baselineKey(betId);
     const redis = this.getRedis();
-    if (redis) {
-      try {
-        const raw = await redis.get(key);
-        if (raw) return JSON.parse(raw) as ChooseFateBaseline;
-      } catch (err: unknown) {
-        console.error('[chooseTheirFate] redis baseline get error', { betId }, err);
-      }
+    try {
+      const raw = await redis.get(key);
+      if (raw) return JSON.parse(raw) as ChooseFateBaseline;
+    } catch (err: unknown) {
+      console.error('[chooseTheirFate] redis baseline get error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
-    this.cleanupMemoryBaselines();
-    const entry = this.memoryBaselines.get(key);
-    return entry ? entry.baseline : null;
+    return null;
   }
 
   private async clearBaseline(betId: string): Promise<void> {
     const key = this.baselineKey(betId);
     const redis = this.getRedis();
-    if (redis) {
-      try {
-        await redis.del(key);
-      } catch (err: unknown) {
-        console.error('[chooseTheirFate] redis baseline clear error', { betId }, err);
-      }
+    try {
+      await redis.del(key);
+    } catch (err: unknown) {
+      console.error('[chooseTheirFate] redis baseline clear error', { betId }, err);
+      throw err instanceof Error ? err : new Error(String(err));
     }
-    this.memoryBaselines.delete(key);
   }
 
   private async washBet(betId: string, payload: Record<string, unknown>): Promise<void> {
@@ -466,25 +441,21 @@ export class ChooseTheirFateValidatorService {
     }
   }
 
-  private getRedis(): Redis | null {
+  private getRedis(): Redis {
     if (this.redisClient) return this.redisClient;
-    if (this.redisInitAttempted) return this.redisClient;
-    this.redisInitAttempted = true;
     const url = process.env.REDIS_URL;
     if (!url) {
-      console.error('[chooseTheirFate] redis url not configured; validator requires Redis for durability');
-      return null;
+      throw new Error('[chooseTheirFate] REDIS_URL not configured; Redis is required');
     }
     try {
       const client = new Redis(url);
       client.on('error', (err: unknown) => console.error('[chooseTheirFate] redis error', err));
       this.redisClient = client;
       console.log('[chooseTheirFate] redis client initialized');
+      return client;
     } catch (err: unknown) {
-      console.error('[chooseTheirFate] failed to initialize redis client', err);
-      this.redisClient = null;
+      throw new Error(`[chooseTheirFate] failed to initialize redis client: ${String(err)}`);
     }
-    return this.redisClient;
   }
 }
 

@@ -1,4 +1,4 @@
-import { getAvailableGames, getGameStatus } from '../get-functioins';
+import { getAvailableGames, getGameStatus } from './gameDataService';
 import { getSupabase } from '../supabaseClient';
 
 type StatusCache = Map<string, string | null>;
