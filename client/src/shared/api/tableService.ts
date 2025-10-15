@@ -91,14 +91,14 @@ function buildSettlementSummary(
   const losers = others
     .filter((member) => member.balance < 0)
     .sort((a, b) => a.balance - b.balance);
-  const neutrals = others.filter((member) => member.balance === 0);
 
   const lines: string[] = [];
-  lines.push('Table Settlement Summary');
-  if (tableName) {
-    lines.push(`Table: ${tableName}`);
-  }
-  lines.push(`Host: ${host.username}: ${formatPointsDisplay(host.balance)}`);
+  lines.push(`${tableName ?? 'Table'} Settlement Summary`);
+  lines.push(`${new Date().toLocaleString()}`);
+  lines.push('');
+
+  lines.push(`Host:`);
+  lines.push(`- ${host.username}: ${formatPointsDisplay(host.balance)}`);
   lines.push('');
 
   lines.push('Winners (To Receive from Host):');
@@ -118,14 +118,6 @@ function buildSettlementSummary(
     });
   } else {
     lines.push('- None');
-  }
-
-  if (neutrals.length) {
-    lines.push('');
-    lines.push('Members With No Balance Change:');
-    neutrals.forEach((member) => {
-      lines.push(`- ${member.username}: 0 points`);
-    });
   }
 
   return lines.join('\n');
