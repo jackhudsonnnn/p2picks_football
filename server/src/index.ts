@@ -123,7 +123,7 @@ app.post('/api/bet-modes/:modeKey/preview', async (req: Request, res: Response) 
       }
     }
 
-    const preview = buildModePreview(modeKey, config, bet);
+  const preview = await buildModePreview(modeKey, config, bet);
     res.json({ mode_key: modeKey, ...preview, config });
   } catch (e: any) {
     const status = /mode .* not found/i.test(String(e?.message || '')) ? 404 : 500;
@@ -226,7 +226,7 @@ app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
       return;
     }
 
-    const preview = buildModePreview(modeKey, modeConfig);
+  const preview = await buildModePreview(modeKey, modeConfig);
     if (preview.errors.length) {
       res.status(400).json({ error: 'invalid mode config', details: preview.errors });
       return;
