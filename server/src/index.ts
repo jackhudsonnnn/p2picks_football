@@ -16,6 +16,8 @@ import {
 } from './services/modeRuntimeService';
 import { startModeValidators } from './services/modeValidatorService';
 import { startNflGameStatusSync } from './services/nflGameStatusSyncService';
+import { startNflDataIngestService } from './services/nflDataIngestService';
+import { startBetLifecycleService, registerBetLifecycle } from './services/betLifecycleService';
 import type { BetProposal } from './supabaseClient';
 import { normalizeToHundredth } from './utils/number';
 import { requireAuth } from './middleware/auth';
@@ -282,6 +284,8 @@ apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
     if (error) throw error;
 
     const typedBet = bet as BetProposal;
+    const closeTime = typeof (bet as any)?.close_time === 'string' ? (bet as any).close_time : null;
+    registerBetLifecycle(typedBet.bet_id, closeTime);
 
     try {
       if (Object.keys(modeConfig).length > 0) {
@@ -415,6 +419,8 @@ app.use('/api', requireAuth, apiRouter);
 app.listen(PORT, () => {
   startModeValidators();
   startNflGameStatusSync();
+  startBetLifecycleService();
+  startNflDataIngestService();
 });
 
 function clampWager(value: number): number {

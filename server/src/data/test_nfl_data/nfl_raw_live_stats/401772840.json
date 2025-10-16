@@ -12751,7 +12751,7 @@
           "period": 2,
           "type": {
             "id": "2",
-            "name": "STATUS_IN_PROGRESS",
+            "name": "STATUS_FINAL",
             "state": "in",
             "completed": false,
             "description": "In Progress",

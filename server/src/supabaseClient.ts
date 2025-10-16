@@ -55,9 +55,13 @@ export function createSupabaseClientForToken(accessToken: string): SupabaseClien
 export type BetProposal = {
 	bet_id: string;
 	table_id: string;
-	nfl_game_id: string;
+	nfl_game_id: string | null;
 	mode_key: string;
 	bet_status: 'active' | 'pending' | 'resolved' | 'washed';
 	description: string;
+	wager_amount: number;
+	time_limit_seconds: number;
+	close_time: string | null;
+	proposal_time: string;
 	winning_choice: string | null;
 };
