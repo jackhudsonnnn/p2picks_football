@@ -169,11 +169,21 @@ npm run dev
 
 This will start the application, which is typically accessible at **http://localhost:5173**.
 
-### Backend (Supabase)
+### Backend (Node + Supabase)
 
-The backend infrastructure is currently powered entirely by Supabase. There is no separate server application to run locally. All database, authentication, and API services are managed live on the Supabase platform.
+The repository ships with a lightweight Node server (`/server`) that acts as a trusted gateway in front of Supabase. It performs mode validation, interacts with Redis-backed validators, and calls Supabase using the service role key.
 
-> **🔮 Future Plans:** A dedicated Node.js server may be added to the `/server` directory to handle more complex backend logic.
+To run it locally:
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+> **Security note:**
+> - `SUPABASE_SERVICE_ROLE_KEY` must remain on the server only—it bypasses all Row Level Security policies.
+> - `SUPABASE_ANON_KEY` is also required so the server can mint user-scoped clients when acting on behalf of signed-in users. Do **not** ship the service role key to the client.
 
 ---
 

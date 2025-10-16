@@ -1,4 +1,4 @@
-import { getSupabase } from '../supabaseClient';
+import { getSupabaseAdmin } from '../supabaseClient';
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -18,7 +18,7 @@ function setCache(betId: string, record: ModeConfigRecord) {
 }
 
 export async function storeModeConfig(betId: string, modeKey: string, data: Record<string, unknown>): Promise<void> {
-  const supa = getSupabase();
+  const supa = getSupabaseAdmin();
   const payload = { mode_key: modeKey, data };
   const { error } = await supa.from('resolution_history').insert([{ bet_id: betId, event_type: 'mode_config', payload }]);
   if (error) throw error;
@@ -30,7 +30,7 @@ export async function fetchModeConfig(betId: string): Promise<ModeConfigRecord |
   if (cached && cached.expiresAt > Date.now()) {
     return { mode_key: cached.mode_key, data: cached.data };
   }
-  const supa = getSupabase();
+  const supa = getSupabaseAdmin();
   const { data, error } = await supa
     .from('resolution_history')
     .select('payload')
@@ -62,7 +62,7 @@ export async function fetchModeConfigs(betIds: string[]): Promise<Record<string,
     }
   }
   if (missing.length === 0) return result;
-  const supa = getSupabase();
+  const supa = getSupabaseAdmin();
   const { data, error } = await supa
     .from('resolution_history')
     .select('bet_id, payload, created_at')

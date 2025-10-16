@@ -5,6 +5,7 @@ import { extractModeConfig } from '@features/bets/mappers';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
+import { fetchJSON } from '@shared/utils/http';
 
 type ModePreviewPayload = {
   summary?: string;
@@ -41,18 +42,11 @@ async function fetchModePreview(
     body.bet_id = betId;
   }
 
-  const response = await fetch(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
+  const data = await fetchJSON<ModePreviewPayload>(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(`Failed to load mode preview (${response.status}): ${text.slice(0, 120)}`);
-  }
-
-  const data = (await response.json()) as ModePreviewPayload;
   previewCache.set(cacheKey, data);
   return data;
 }

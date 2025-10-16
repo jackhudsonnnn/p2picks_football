@@ -1,4 +1,4 @@
-import { getSupabase, BetProposal } from '../../../supabaseClient';
+import { getSupabaseAdmin, BetProposal } from '../../../supabaseClient';
 import { getTeamScoreStats } from '../../../services/gameDataService';
 import { loadRefinedGame, RefinedGameDoc } from '../../../helpers';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
@@ -74,7 +74,7 @@ export class ScorcererValidatorService {
 
   private startPendingMonitor() {
     if (this.pendingChannel) return;
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const channel = supa
       .channel('scorcerer-pending')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.scorcerer' }, (payload) => {
@@ -93,7 +93,7 @@ export class ScorcererValidatorService {
 
   private async syncPendingBaselines(): Promise<void> {
     try {
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { data, error } = await supa
         .from('bet_proposals')
         .select('bet_id, nfl_game_id, bet_status, winning_choice')
@@ -200,7 +200,7 @@ export class ScorcererValidatorService {
     if (!snapshot.shouldProcess && !isFinal) {
       return;
     }
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const { data, error } = await supa
       .from('bet_proposals')
       .select('*')
@@ -285,7 +285,7 @@ export class ScorcererValidatorService {
         }
         return;
       }
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error: updErr } = await supa
         .from('bet_proposals')
         .update({ winning_choice: choice })
@@ -317,7 +317,7 @@ export class ScorcererValidatorService {
     snapshot: SnapshotRecord,
   ) {
     try {
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error: updErr } = await supa
         .from('bet_proposals')
         .update({ winning_choice: 'No More Scores' })
@@ -382,7 +382,7 @@ export class ScorcererValidatorService {
     payload: Record<string, unknown>,
   ): Promise<void> {
     try {
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error } = await supa
         .from('resolution_history')
         .insert([{ bet_id: betId, event_type: eventType, payload }]);

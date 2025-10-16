@@ -1,18 +1,55 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let client: SupabaseClient | null = null;
+const SUPABASE_URL = process.env.SUPABASE_URL ?? '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? '';
 
-export function getSupabase(): SupabaseClient {
-	if (client) return client;
-	const url = process.env.SUPABASE_URL;
-	const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-	if (!url || !key) {
-		throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-	}
-	client = createClient(url, key, {
-		auth: { persistSession: false },
+if (!SUPABASE_URL) {
+	throw new Error('Missing SUPABASE_URL environment variable');
+}
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+	throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+}
+if (!SUPABASE_ANON_KEY) {
+	throw new Error('Missing SUPABASE_ANON_KEY environment variable');
+}
+
+let serviceClient: SupabaseClient | null = null;
+
+export function getSupabaseAdmin(): SupabaseClient {
+	if (serviceClient) return serviceClient;
+	serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+		auth: {
+			persistSession: false,
+			autoRefreshToken: false,
+			detectSessionInUrl: false,
+		},
+		global: {
+			headers: {
+				'X-Client-Info': 'p2picks-server-admin',
+			},
+		},
 	});
-	return client;
+	return serviceClient;
+}
+
+export function createSupabaseClientForToken(accessToken: string): SupabaseClient {
+	if (!accessToken || !accessToken.trim()) {
+		throw new Error('Access token required to create scoped Supabase client');
+	}
+	return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+		auth: {
+			persistSession: false,
+			autoRefreshToken: false,
+			detectSessionInUrl: false,
+		},
+		global: {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+				'X-Client-Info': 'p2picks-server-user',
+			},
+		},
+	});
 }
 
 export type BetProposal = {

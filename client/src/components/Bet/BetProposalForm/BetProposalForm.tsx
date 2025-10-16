@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import './BetProposalForm.css';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { formatToHundredth, normalizeToHundredth } from '@shared/utils/number';
+import { fetchJSON } from '@shared/utils/http';
 
 type GameOption = { id: string; label: string };
 type ModeOption = { key: string; label: string };
@@ -75,14 +76,9 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       try {
         setBootstrapLoading(true);
         setBootstrapError(null);
-        const res = await fetch('/api/bet-proposals/bootstrap', {
+        const payload = await fetchJSON('/api/bet-proposals/bootstrap', {
           signal: controller.signal,
         });
-        if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          throw new Error(`Failed to load data (${res.status}): ${text.slice(0, 120)}`);
-        }
-        const payload = await res.json();
         if (cancelled) return;
 
         const gameEntries: GameOption[] = Array.isArray(payload?.games)
@@ -142,17 +138,12 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       try {
         setConfigLoading(true);
         setConfigError(null);
-        const res = await fetch(`/api/bet-modes/${encodeURIComponent(modeKey)}/user-config`, {
+        const payload = await fetchJSON(`/api/bet-modes/${encodeURIComponent(modeKey)}/user-config`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nfl_game_id: gameId, config: baseConfig }),
           signal: controller.signal,
         });
-        if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          throw new Error(`Failed to load mode configuration (${res.status}): ${text.slice(0, 120)}`);
-        }
-        const payload = await res.json();
         if (cancelled) return;
 
         const steps: ConfigStep[] = Array.isArray(payload?.steps)
@@ -230,17 +221,12 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           wager_amount: normalizeToHundredth(wagerAmount),
           time_limit_seconds: timeLimit,
         };
-        const res = await fetch(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
+        const data: ModePreview = await fetchJSON(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
-        if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          throw new Error(`Failed to build preview (${res.status}): ${text.slice(0, 120)}`);
-        }
-        const data: ModePreview = await res.json();
         if (cancelled) return;
         setPreview(data);
       } catch (err: any) {

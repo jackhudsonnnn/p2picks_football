@@ -1,4 +1,4 @@
-import { getSupabase, BetProposal } from '../../../supabaseClient';
+import { getSupabaseAdmin, BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
 import { RefinedGameDoc, findTeam } from '../../../helpers';
 import { GameFeedEvent, subscribeToGameFeed } from '../../../services/gameFeedService';
@@ -46,7 +46,7 @@ export class DifferenceInOpinionValidatorService {
   }
 
   private async processFinalGame(gameId: string, doc: RefinedGameDoc) {
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const { data, error } = await supa
       .from('bet_proposals')
       .select('*')
@@ -80,7 +80,7 @@ export class DifferenceInOpinionValidatorService {
       const scoreB = this.normalizeScore((teamB as any)?.score);
       const diff = Math.abs(scoreA - scoreB);
       const bucket = this.bucketForDiff(diff);
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error: updErr } = await supa
         .from('bet_proposals')
         .update({ winning_choice: bucket })
@@ -147,7 +147,7 @@ export class DifferenceInOpinionValidatorService {
 
   private async recordHistory(betId: string, payload: Record<string, unknown>): Promise<void> {
     try {
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error } = await supa
         .from('resolution_history')
         .insert([{ bet_id: betId, event_type: 'difference_in_opinion_result', payload }]);

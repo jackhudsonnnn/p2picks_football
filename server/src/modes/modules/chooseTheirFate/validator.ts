@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { getSupabase, BetProposal } from '../../../supabaseClient';
+import { getSupabaseAdmin, BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
 import { loadRefinedGame, RefinedGameDoc } from '../../../helpers';
 import { GameFeedEvent, getCachedGameDoc, subscribeToGameFeed } from '../../../services/gameFeedService';
@@ -66,7 +66,7 @@ export class ChooseTheirFateValidatorService {
 
   private startPendingMonitor() {
     if (this.pendingChannel) return;
-    const supa = getSupabase();
+    const supa = getSupabaseAdmin();
     this.pendingChannel = supa
       .channel('choose-their-fate-pending')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.choose_their_fate' }, (payload) => {
@@ -114,7 +114,7 @@ export class ChooseTheirFateValidatorService {
 
   private async syncPendingBaselines(): Promise<void> {
     try {
-      const supa = getSupabase();
+      const supa = getSupabaseAdmin();
       const { data, error } = await supa
         .from('bet_proposals')
         .select('bet_id, nfl_game_id')
@@ -146,7 +146,7 @@ export class ChooseTheirFateValidatorService {
   }
 
   private async processGameUpdate(gameId: string, doc: RefinedGameDoc) {
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const { data, error } = await supa
       .from('bet_proposals')
       .select('*')
@@ -254,7 +254,7 @@ export class ChooseTheirFateValidatorService {
   }
 
   private async setResult(betId: string, winningChoice: 'TD' | 'FG' | 'Turnover', payload: Record<string, unknown>): Promise<void> {
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const { error } = await supa
       .from('bet_proposals')
       .update({ winning_choice: winningChoice })
@@ -394,7 +394,7 @@ export class ChooseTheirFateValidatorService {
   }
 
   private async washBet(betId: string, payload: Record<string, unknown>): Promise<void> {
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const updates = {
       bet_status: 'washed' as const,
       winning_choice: null as string | null,
@@ -429,7 +429,7 @@ export class ChooseTheirFateValidatorService {
     payload: Record<string, unknown>,
   ): Promise<void> {
     try {
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error } = await supa
         .from('resolution_history')
         .insert([{ bet_id: betId, event_type: eventType, payload }]);

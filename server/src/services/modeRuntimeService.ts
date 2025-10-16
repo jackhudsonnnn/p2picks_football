@@ -2,7 +2,8 @@ import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../m
 import type { ModeDefinitionDTO, ModeUserConfigStep } from '../modes/shared/types';
 import { computeModeOptions, renderModeTemplate, runModeValidator } from '../modes/shared/utils';
 import type { BetProposal } from '../supabaseClient';
-import { getSupabase } from '../supabaseClient';
+import { getSupabaseAdmin } from '../supabaseClient';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadRefinedGame, type RefinedGameDoc, type Team } from '../helpers';
 
 export type ModeUserConfigInput = {
@@ -183,8 +184,12 @@ function extractTeamName(team: Team | null): string | null {
   return name ? String(name) : null;
 }
 
-export async function ensureModeKeyMatchesBet(betId: string, modeKey?: string): Promise<BetProposal> {
-  const supabase = getSupabase();
+export async function ensureModeKeyMatchesBet(
+  betId: string,
+  modeKey?: string,
+  client?: SupabaseClient,
+): Promise<BetProposal> {
+  const supabase = client ?? getSupabaseAdmin();
   const { data, error } = await supabase
     .from('bet_proposals')
     .select('*')

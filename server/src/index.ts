@@ -17,12 +17,13 @@ import {
 import { startModeValidators } from './services/modeValidatorService';
 import { startNflGameStatusSync } from './services/nflGameStatusSyncService';
 import type { BetProposal } from './supabaseClient';
-import { getSupabase } from './supabaseClient';
 import { normalizeToHundredth } from './utils/number';
+import { requireAuth } from './middleware/auth';
 
 assertRequiredEnv();
 
 const app = express();
+const apiRouter = express.Router();
 const PORT = Number(process.env.PORT || 5001);
 
 const corsOptions: CorsOptions = buildCorsOptions();
@@ -33,7 +34,7 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-app.get('/api/bet-proposals/bootstrap', async (_req: Request, res: Response) => {
+apiRouter.get('/bet-proposals/bootstrap', async (_req: Request, res: Response) => {
   try {
     const [gameMap, modeList] = await Promise.all([
       getAvailableGames(),
@@ -46,11 +47,11 @@ app.get('/api/bet-proposals/bootstrap', async (_req: Request, res: Response) => 
   }
 });
 
-app.get('/api/bet-modes', (_req: Request, res: Response) => {
+apiRouter.get('/bet-modes', (_req: Request, res: Response) => {
   res.json(listModeCatalog());
 });
 
-app.get('/api/bet-modes/:modeKey', (req: Request, res: Response) => {
+apiRouter.get('/bet-modes/:modeKey', (req: Request, res: Response) => {
   const def = findModeDefinition(req.params.modeKey);
   if (!def) {
     res.status(404).json({ error: 'mode not found' });
@@ -59,7 +60,7 @@ app.get('/api/bet-modes/:modeKey', (req: Request, res: Response) => {
   res.json(def);
 });
 
-app.post('/api/bet-modes/:modeKey/user-config', async (req: Request, res: Response) => {
+apiRouter.post('/bet-modes/:modeKey/user-config', async (req: Request, res: Response) => {
   try {
     const { modeKey } = req.params as any;
     if (!modeKey) {
@@ -79,7 +80,7 @@ app.post('/api/bet-modes/:modeKey/user-config', async (req: Request, res: Respon
   }
 });
 
-app.post('/api/bet-modes/:modeKey/preview', async (req: Request, res: Response) => {
+apiRouter.post('/bet-modes/:modeKey/preview', async (req: Request, res: Response) => {
   try {
     const { modeKey } = req.params as any;
     if (!modeKey) {
@@ -102,7 +103,7 @@ app.post('/api/bet-modes/:modeKey/preview', async (req: Request, res: Response) 
     let bet: BetProposal | null = null;
     if (betId) {
       try {
-        bet = await ensureModeKeyMatchesBet(betId, modeKey);
+  bet = await ensureModeKeyMatchesBet(betId, modeKey, req.supabase);
       } catch (err: any) {
         console.warn('[modePreview] failed to ensure bet/mode alignment', {
           betId,
@@ -134,7 +135,7 @@ app.post('/api/bet-modes/:modeKey/preview', async (req: Request, res: Response) 
   }
 });
 
-app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
+apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
   const { tableId } = req.params as any;
   if (!tableId || typeof tableId !== 'string') {
     res.status(400).json({ error: 'tableId required' });
@@ -156,8 +157,35 @@ app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'mode_key required' });
     return;
   }
+  const supabase = req.supabase;
+  const authUser = req.authUser;
+  if (!supabase || !authUser) {
+    res.status(500).json({ error: 'Authentication context missing' });
+    return;
+  }
+  if (authUser.id !== proposerUserId) {
+    res.status(403).json({ error: 'proposer_user_id must match authenticated user' });
+    return;
+  }
 
-  const supabase = getSupabase();
+  const { data: isMember, error: membershipError } = await supabase.rpc('is_user_member_of_table', {
+    p_table_id: tableId,
+    p_user_id: authUser.id,
+  });
+  if (membershipError) {
+    console.error('[betProposal] membership check failed', {
+      tableId,
+      userId: authUser.id,
+      error: membershipError.message,
+    });
+    res.status(500).json({ error: 'failed to validate table membership' });
+    return;
+  }
+  if (!isMember) {
+    res.status(403).json({ error: 'You must be a table member to propose bets' });
+    return;
+  }
+
   const wagerAmountRaw = Number(body.wager_amount ?? 0);
   const wagerAmount = clampWager(normalizeToHundredth(wagerAmountRaw));
   const timeLimitSecondsRaw = Number(body.time_limit_seconds ?? 30);
@@ -278,7 +306,7 @@ app.post('/api/tables/:tableId/bets', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/bets/:betId/mode-config', async (req: Request, res: Response) => {
+apiRouter.post('/bets/:betId/mode-config', async (req: Request, res: Response) => {
   try {
     const { betId } = req.params as any;
     const { mode_key: modeKeyRaw, data } = req.body || {};
@@ -291,8 +319,14 @@ app.post('/api/bets/:betId/mode-config', async (req: Request, res: Response) => 
       return;
     }
 
+    const supabase = req.supabase;
+    if (!supabase) {
+      res.status(500).json({ error: 'Authentication context missing' });
+      return;
+    }
+
     const requestedModeKey = typeof modeKeyRaw === 'string' && modeKeyRaw.length ? modeKeyRaw : undefined;
-    const bet = await ensureModeKeyMatchesBet(betId, requestedModeKey);
+    const bet = await ensureModeKeyMatchesBet(betId, requestedModeKey, supabase);
     const resolvedModeKey = requestedModeKey || (bet.mode_key as string | null) || '';
     if (!resolvedModeKey) {
       res.status(400).json({ error: 'mode_key required' });
@@ -310,11 +344,24 @@ app.post('/api/bets/:betId/mode-config', async (req: Request, res: Response) => 
   }
 });
 
-app.get('/api/bets/:betId/mode-config', async (req: Request, res: Response) => {
+apiRouter.get('/bets/:betId/mode-config', async (req: Request, res: Response) => {
   try {
     const { betId } = req.params as any;
     if (!betId || typeof betId !== 'string') {
       res.status(400).json({ error: 'betId required' });
+      return;
+    }
+    const supabase = req.supabase;
+    if (!supabase) {
+      res.status(500).json({ error: 'Authentication context missing' });
+      return;
+    }
+    try {
+      await ensureModeKeyMatchesBet(betId, undefined, supabase);
+    } catch (authErr: any) {
+      const message = String(authErr?.message || 'bet not found');
+      const status = /not found/i.test(message) ? 404 : 403;
+      res.status(status).json({ error: status === 404 ? 'bet not found' : 'access denied' });
       return;
     }
     const config = await fetchModeConfig(betId);
@@ -328,20 +375,42 @@ app.get('/api/bets/:betId/mode-config', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/mode-config/batch', async (req: Request, res: Response) => {
+apiRouter.post('/mode-config/batch', async (req: Request, res: Response) => {
   try {
     const betIds: unknown = req.body?.betIds;
     if (!Array.isArray(betIds) || betIds.length === 0) {
       res.status(400).json({ error: 'betIds array required' });
       return;
     }
+    const supabase = req.supabase;
+    if (!supabase) {
+      res.status(500).json({ error: 'Authentication context missing' });
+      return;
+    }
     const ids = betIds.filter((id) => typeof id === 'string') as string[];
-    const configs = await fetchModeConfigs(ids);
+    const { data, error } = await supabase
+      .from('bet_proposals')
+      .select('bet_id')
+      .in('bet_id', ids);
+    if (error) {
+      console.error('[modeConfigBatch] failed to list accessible bets', error.message);
+      res.status(500).json({ error: 'failed to validate bet access' });
+      return;
+    }
+    const allowedIds = new Set((data ?? []).map((row: any) => row.bet_id).filter(Boolean));
+    const filteredIds = ids.filter((id) => allowedIds.has(id));
+    if (!filteredIds.length) {
+      res.json({});
+      return;
+    }
+    const configs = await fetchModeConfigs(filteredIds);
     res.json(configs);
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to fetch mode configs' });
   }
 });
+
+app.use('/api', requireAuth, apiRouter);
 
 app.listen(PORT, () => {
   startModeValidators();
@@ -363,6 +432,7 @@ function assertRequiredEnv(): void {
   const missing: string[] = [];
   if (!process.env.SUPABASE_URL) missing.push('SUPABASE_URL');
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (!process.env.SUPABASE_ANON_KEY) missing.push('SUPABASE_ANON_KEY');
   if (!process.env.REDIS_URL) missing.push('REDIS_URL');
   if (missing.length) {
     throw new Error(`Missing required environment variable(s): ${missing.join(', ')}`);

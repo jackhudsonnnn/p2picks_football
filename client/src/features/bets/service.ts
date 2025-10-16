@@ -1,5 +1,6 @@
 import { supabase } from '@shared/api/supabaseClient';
 import { fetchModeConfigs } from '@shared/api/modeConfig';
+import { fetchJSON } from '@shared/utils/http';
 
 // Create a bet proposal and insert a feed item
 export interface BetProposalRequestPayload {
@@ -16,45 +17,11 @@ export async function createBetProposal(
   payload: BetProposalRequestPayload & { preview?: unknown }
 ) {
   const { preview: _preview, ...rest } = payload;
-  const response = await fetch(`/api/tables/${encodeURIComponent(tableId)}/bets`, {
+  return fetchJSON(`/api/tables/${encodeURIComponent(tableId)}/bets`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ proposer_user_id: proposerUserId, ...rest }),
   });
-
-  if (!response.ok) {
-    let message = `Failed to create bet proposal (${response.status})`;
-    let payload: unknown = null;
-    let rawText = '';
-
-    try {
-      rawText = await response.text();
-      if (rawText) {
-        try {
-          const parsed = JSON.parse(rawText);
-          payload = parsed;
-          if (parsed && typeof parsed === 'object' && 'error' in parsed && parsed.error) {
-            message = String(parsed.error);
-          }
-        } catch (parseErr) {
-          message = `${message}: ${rawText.slice(0, 120)}`;
-        }
-      }
-    } catch (readErr) {
-      // ignore read errors, keep default message
-    }
-
-    const error = new Error(message);
-    (error as any).status = response.status;
-    if (payload !== null) {
-      (error as any).details = payload;
-    } else if (rawText) {
-      (error as any).details = rawText;
-    }
-    throw error;
-  }
-
-  return response.json();
 }
 
 // Accept a bet proposal: create a bet_participation for the user

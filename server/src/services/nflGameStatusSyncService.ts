@@ -1,5 +1,5 @@
 import { getAvailableGames, getGameStatus } from './gameDataService';
-import { getSupabase } from '../supabaseClient';
+import { getSupabaseAdmin } from '../supabaseClient';
 
 type StatusCache = Map<string, string | null>;
 
@@ -21,7 +21,7 @@ function getPollInterval(): number {
 async function hydrateCache(): Promise<void> {
   if (cacheHydrated) return;
   try {
-    const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('nfl_games')
       .select('nfl_game_id, status');
@@ -79,7 +79,7 @@ async function performSync(): Promise<void> {
 
     if (!updates.length) return;
 
-    const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
     const { error } = await supabase
       .from('nfl_games')
       .upsert(updates, { onConflict: 'nfl_game_id' });

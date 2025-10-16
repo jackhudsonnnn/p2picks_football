@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { getSupabase, BetProposal } from '../../../supabaseClient';
+import { getSupabaseAdmin, BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
 import { loadRefinedGame, RefinedGameDoc, findPlayer } from '../../../helpers';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from './constants';
@@ -94,7 +94,7 @@ export class EitherOrValidatorService {
 
   private startPendingMonitor() {
     if (this.pendingChannel) return;
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     this.pendingChannel = supa
       .channel('either-or-pending')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.either_or' }, (payload) => {
@@ -142,7 +142,7 @@ export class EitherOrValidatorService {
 
   private async syncPendingBaselines(): Promise<void> {
     try {
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { data, error } = await supa
         .from('bet_proposals')
         .select('bet_id, nfl_game_id, bet_status')
@@ -187,7 +187,7 @@ export class EitherOrValidatorService {
   }
 
   private async processFinalGame(gameId: string, doc: RefinedGameDoc, resolveAt: string = EITHER_OR_DEFAULT_RESOLVE_AT) {
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const { data, error } = await supa
       .from('bet_proposals')
       .select('*')
@@ -238,7 +238,7 @@ export class EitherOrValidatorService {
         return;
       }
       const winner = delta1 > delta2 ? (config.player1_name || baseline.player1.name || 'Player 1') : (config.player2_name || baseline.player2.name || 'Player 2');
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error: updErr } = await supa
         .from('bet_proposals')
         .update({ winning_choice: winner })
@@ -263,7 +263,7 @@ export class EitherOrValidatorService {
   }
 
   private async washBet(betId: string, payload: Record<string, unknown>): Promise<void> {
-    const supa = getSupabase();
+  const supa = getSupabaseAdmin();
     const updates = {
       bet_status: 'washed' as const,
       winning_choice: null as string | null,
@@ -411,7 +411,7 @@ export class EitherOrValidatorService {
 
   private async recordHistory(betId: string, eventType: 'either_or_baseline' | 'either_or_result', payload: Record<string, unknown>): Promise<void> {
     try {
-      const supa = getSupabase();
+  const supa = getSupabaseAdmin();
       const { error } = await supa.from('resolution_history').insert([{ bet_id: betId, event_type: eventType, payload }]);
       if (error) {
         console.error(`[eitherOr] failed to record ${eventType}`, { betId }, error);
