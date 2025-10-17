@@ -115,7 +115,7 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
 
     for (const team of doc.teams as any[]) {
       if (!team) continue;
-      const teamName = team.abbreviation || team.displayName || '';
+      const teamName = team.abbreviation || team.name || '';
       const rawPlayers = (team as any).players;
       if (!rawPlayers) continue;
 

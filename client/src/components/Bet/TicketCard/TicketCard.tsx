@@ -5,51 +5,7 @@ import { extractModeConfig } from '@features/bets/mappers';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
-import { fetchJSON } from '@shared/utils/http';
-
-type ModePreviewPayload = {
-  summary?: string;
-  description?: string;
-  secondary?: string;
-  winningCondition?: string;
-  options?: string[];
-};
-
-const previewCache = new Map<string, ModePreviewPayload>();
-
-async function fetchModePreview(
-  modeKey: string,
-  config: Record<string, unknown>,
-  nflGameId?: string | null,
-  betId?: string | null
-): Promise<ModePreviewPayload | null> {
-  if (!modeKey) return null;
-  const payloadConfig = { ...(config || {}) } as Record<string, unknown>;
-  const gameId =
-    nflGameId || (typeof payloadConfig.nfl_game_id === 'string' ? (payloadConfig.nfl_game_id as string) : undefined);
-  if (gameId && !payloadConfig.nfl_game_id) {
-    payloadConfig.nfl_game_id = gameId;
-  }
-  const cacheKey = `${modeKey}:${JSON.stringify(payloadConfig)}:${betId ?? ''}`;
-  if (previewCache.has(cacheKey)) {
-    return previewCache.get(cacheKey)!;
-  }
-  const body: Record<string, unknown> = { config: payloadConfig };
-  if (gameId) {
-    body.nfl_game_id = gameId;
-  }
-  if (betId) {
-    body.bet_id = betId;
-  }
-
-  const data = await fetchJSON<ModePreviewPayload>(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  previewCache.set(cacheKey, data);
-  return data;
-}
+import { fetchModePreview, type ModePreviewPayload } from '@shared/api/modePreview';
 
 export interface TicketCardProps {
   ticket: Ticket;
@@ -157,6 +113,25 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     suppressTicks: true,
   });
 
+  const normalizedTicketState = (ticket.state ?? '').toLowerCase();
+  const normalizedPhase = (phase ?? '').toLowerCase();
+  const isWashed = normalizedTicketState === 'washed' || normalizedPhase === 'washed';
+  const isResolved = !isWashed && (normalizedTicketState === 'resolved' || normalizedPhase === 'resolved');
+  const normalizedWinningChoice =
+    ticket.winningChoice != null ? String(ticket.winningChoice).trim().toLowerCase() : null;
+  const normalizedGuess = ticket.myGuess != null ? String(ticket.myGuess).trim().toLowerCase() : null;
+  const hasGuess = Boolean(normalizedGuess && normalizedGuess.length > 0 && normalizedGuess !== 'pass');
+  const isCorrectGuess = Boolean(
+    isResolved && hasGuess && normalizedWinningChoice && normalizedGuess === normalizedWinningChoice
+  );
+  const isIncorrectGuess = Boolean(
+    isResolved && hasGuess && normalizedWinningChoice && normalizedGuess !== normalizedWinningChoice
+  );
+  const stateClass = `state-${(ticket.state || phase).toLowerCase()}`;
+  const resolutionClass = isCorrectGuess ? 'guess-correct' : isIncorrectGuess ? 'guess-incorrect' : '';
+  const cardClassName = ['ticket-card', stateClass].filter(Boolean).join(' ');
+  const betContainerClassName = ['bet-container', resolutionClass].filter(Boolean).join(' ');
+
   const Header = () => (
     <div className="ticket-card-header">
       <div className="ticket-header-left">
@@ -197,9 +172,9 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const FooterLeft = () => {
     return (
       <div className="ticket-bet-options">
-        <div className="mobile-bet-container">
+  <div className={betContainerClassName}>
           <select
-            className="mobile-bet-dropdown"
+            className="bet-dropdown"
             value={ticket.myGuess}
             onChange={(e) => handleGuessChangeDropdown(ticket.id, e.target.value)}
             disabled={phase !== 'active'}
@@ -222,7 +197,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   );
 
   return (
-    <div className={`ticket-card state-${(ticket.state || phase).toLowerCase()}`}>
+  <div className={cardClassName}>
       <Header />
       <Content />
       <Actions />

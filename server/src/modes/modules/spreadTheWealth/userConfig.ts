@@ -31,14 +31,14 @@ function buildLineChoices(): ModeUserConfigChoice[] {
   const choices: ModeUserConfigChoice[] = [];
   for (let value = LINE_MIN; value <= LINE_MAX; value += LINE_STEP) {
     const numeric = Number(value.toFixed(1));
-    const display = numeric.toFixed(1);
+    const name = numeric.toFixed(1);
     choices.push({
-      value: display,
-      label: display,
+      value: name,
+      label: name,
       patch: {
-        line: display,
+        line: name,
         line_value: numeric,
-        line_label: display,
+        line_label: name,
       },
     });
   }
@@ -63,6 +63,6 @@ function pickAwayTeam(doc: RefinedGameDoc, home: unknown) {
 
 function extractTeamName(team: unknown): string | null {
   if (!team) return null;
-  const name = (team as any)?.displayName || (team as any)?.abbreviation || (team as any)?.teamId;
+  const name = (team as any)?.name || (team as any)?.abbreviation || (team as any)?.teamId;
   return name ? String(name) : null;
 }

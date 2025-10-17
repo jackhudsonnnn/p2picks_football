@@ -10,7 +10,7 @@ export const eitherOrModule: ModeModule = {
     label: 'Either Or',
     summaryTemplate: '`Either Or • ${config.stat_label || config.stat || ""} • ${config.resolve_at || ""}`',
     descriptionTemplate:
-      '`${(config.player1_name || config.player1_id || "Player 1")} (${config.player1_team_name || config.player1_team || "Team 1"}) vs ${(config.player2_name || config.player2_id || "Player 2")} (${config.player2_team_name || config.player2_team || "Team 2"})`',
+      '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate:
       '`Largest next increase of stats, baseline stats captured at bet close`',
     winningConditionTemplate:

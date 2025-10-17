@@ -375,15 +375,14 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     }
     return (
       <div className="form-step centered-step">
+        <div><strong>{preview.description}</strong></div>
         <div>
-          <strong>{preview.summary}</strong>
+          {formatToHundredth(wagerAmount)} pt(s)• {timeLimit}s window
         </div>
-        <div>{preview.description}</div>
-        {preview.secondary && <div>{preview.secondary}</div>}
         <div>
-          <strong>{formatToHundredth(wagerAmount)} pt(s)</strong> • {timeLimit}s window
+          {preview.summary}
         </div>
-        {preview.winningCondition && <div className="form-hint">Winning: {preview.winningCondition}</div>}
+        {preview.winningCondition}
       </div>
     );
   };

@@ -149,9 +149,9 @@ export class GiveAndTakeValidatorService {
       const target = String(name).trim().toLowerCase();
       if (target) {
         for (const team of doc.teams || []) {
-          const display = String((team as any)?.displayName || '').trim().toLowerCase();
+          const name = String((team as any)?.name || '').trim().toLowerCase();
           const abbrev = String((team as any)?.abbreviation || '').trim().toLowerCase();
-          if (display === target || abbrev === target) return team;
+          if (name === target || abbrev === target) return team;
         }
       }
     }

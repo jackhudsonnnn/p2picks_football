@@ -111,8 +111,8 @@ export class DifferenceInOpinionValidatorService {
     if (name) {
       const lower = String(name).toLowerCase();
       for (const team of doc.teams || []) {
-        const display = String((team as any)?.displayName || '').toLowerCase();
-        if (display === lower) return team;
+        const name = String((team as any)?.name || '').toLowerCase();
+        if (name === lower) return team;
       }
     }
     return null;

@@ -19,6 +19,7 @@ type TeamEntry = {
   teamId: string;
   abbreviation: string;
   displayName: string;
+  name: string;
   score: number;
   stats: Record<string, PlayerStats>;
   players: Record<string, PlayerEntry>;
@@ -561,19 +562,22 @@ function ensureTeamEntry(
   teams: Map<string, TeamEntry>,
   teamId: string,
   abbr: string,
+  displayName: string,
   name: string,
   scores: Map<string, number>,
 ): TeamEntry {
   const existing = teams.get(teamId);
   if (existing) {
     if (abbr && !existing.abbreviation) existing.abbreviation = abbr;
-    if (name && !existing.displayName) existing.displayName = name;
+    if (displayName && !existing.displayName) existing.displayName = displayName;
+    if (name && !existing.name) existing.name = name;
     return existing;
   }
   const entry: TeamEntry = {
     teamId,
     abbreviation: abbr,
-    displayName: name,
+    displayName,
+    name: name || displayName,
     score: scores.get(teamId) ?? 0,
     stats: initTargetStats(),
     players: {},
@@ -603,9 +607,10 @@ function refineBoxscore(
     const teamInfo = block?.team ?? {};
     const teamId = String(teamInfo?.id ?? '');
     if (!teamId) continue;
-    const abbr = teamInfo?.abbreviation ?? '';
-    const name = teamInfo?.displayName ?? teamInfo?.name ?? '';
-    const teamEntry = ensureTeamEntry(teams, teamId, abbr, name, scores);
+  const abbr = teamInfo?.abbreviation ?? '';
+  const displayName = teamInfo?.displayName ?? teamInfo?.name ?? '';
+  const name = teamInfo?.name ?? teamInfo?.shortDisplayName ?? displayName;
+  const teamEntry = ensureTeamEntry(teams, teamId, abbr, displayName, name, scores);
     teamEntry.possession = Boolean(possession.get(teamId));
 
     const statistics = Array.isArray(block?.statistics) ? block.statistics : [];
@@ -630,9 +635,10 @@ function refineBoxscore(
     const team = block?.team ?? {};
     const teamId = String(team?.id ?? '');
     if (!teamId) continue;
-    const abbr = team?.abbreviation ?? '';
-    const name = team?.displayName ?? team?.name ?? '';
-    const teamEntry = ensureTeamEntry(teams, teamId, abbr, name, scores);
+  const abbr = team?.abbreviation ?? '';
+  const displayName = team?.displayName ?? team?.name ?? '';
+  const name = team?.name ?? team?.shortDisplayName ?? displayName;
+  const teamEntry = ensureTeamEntry(teams, teamId, abbr, displayName, name, scores);
     const totalsBlock = Array.isArray(block?.statistics) ? block.statistics : [];
     for (const statCat of totalsBlock) {
       const catName = String(statCat?.name ?? '').toLowerCase();
@@ -661,6 +667,7 @@ function refineBoxscore(
     teamId: team.teamId,
     abbreviation: team.abbreviation,
     displayName: team.displayName,
+    name: team.name,
     score: team.score,
     stats: team.stats,
     players: Object.values(team.players),

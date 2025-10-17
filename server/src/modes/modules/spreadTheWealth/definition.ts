@@ -8,7 +8,7 @@ export const spreadTheWealthModule: ModeModule = {
     key: 'spread_the_wealth',
     label: 'Spread The Wealth',
     summaryTemplate:
-      '`Spread The Wealth${config.line_label || config.line ? " • O/U " + (config.line_label || config.line) : ""}`',
+      '`Spread The Wealth${config.line_label || config.line ? " • " + (config.line_label || config.line) : ""}`',
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate: '`Total points compared to the selected line`',

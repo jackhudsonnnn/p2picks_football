@@ -237,7 +237,7 @@ function extractTeamId(team: Team | null): string | null {
 
 function extractTeamName(team: Team | null): string | null {
   if (!team) return null;
-  const name = (team as any)?.displayName || (team as any)?.abbreviation || (team as any)?.teamId;
+  const name = (team as any)?.name || (team as any)?.abbreviation || (team as any)?.teamId;
   return name ? String(name) : null;
 }
 

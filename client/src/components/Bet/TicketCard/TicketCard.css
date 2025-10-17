@@ -48,6 +48,11 @@
   flex-direction: column;
   justify-content: center;
 }
+.ticket-card-footer-left {
+  /* allow the left footer area to grow/shrink so the dropdown can take available space */
+  flex: 1 1 auto;
+  min-width: 0; /* allow children (like .bet-container/.bet-dropdown) to shrink inside flex parent */
+}
 .ticket-card-footer-right {
   display: flex;
   align-items: center;
@@ -194,7 +199,7 @@
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
-  width: 90%;
+  width: 100%; /* allow child controls to span full available width */
 }
 
 .bet-option {
@@ -246,22 +251,48 @@
   color: var(--primary-300);
 }
 
-/* Mobile betting */
-.mobile-bet-container {
+.bet-container {
   display: flex;
   flex-direction: row; /* Changed from column to row */
   width: 100%;
   gap: var(--spacing-sm);
   align-items: center; /* Align items vertically */
+  position: relative;
+  flex: 1; /* ensure it expands to fill the parent flex container */
 }
 
-.mobile-bet-dropdown {
-  flex: 1;
-  padding: var(--spacing-sm);
+.bet-dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background-color: var(--neutral-700);
-  border: 1px solid var(--neutral-600);
+  border: 2px solid var(--neutral-500);
+  padding: var(--spacing-sm) var(--spacing-md);
+  width: 80%;
+  font-size: var(--font-size-md);
+  font-weight: 600;
   color: var(--text-light);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box; /* include padding & border in width calculation */
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.bet-dropdown:focus,
+.bet-dropdown:hover {
+  border-color: var(--primary-300);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.bet-dropdown:disabled {
+  background-color: var(--neutral-800);
+  border-color: var(--neutral-600);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  transform: none;
 }
 
 .ticket-details h4 {
@@ -329,9 +360,23 @@
   border-left-color: var(--neutral-600);
 }
 
+.bet-container.guess-correct .bet-dropdown,
+.bet-container.guess-incorrect .bet-dropdown {
+  position: relative;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.bet-container.guess-correct .bet-dropdown {
+  border-color: var(--accent-victory);
+}
+
+.bet-container.guess-incorrect .bet-dropdown {
+  border-color: var(--accent-power);
+}
+
 /* Responsive tweaks used by the component */
 @media (max-width: 768px) {
-  .card-footer-left .mobile-bet-container {
+  .card-footer-left .bet-container {
     width: 100%;
   }
 }

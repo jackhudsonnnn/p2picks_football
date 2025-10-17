@@ -17,11 +17,11 @@ export async function getAvailableGames(): Promise<Record<string, string>> {
         try {
           const doc = await loadRefinedGame(gameId);
           if (doc && Array.isArray(doc.teams) && doc.teams.length >= 2) {
-            const a = (doc.teams[0] as any)?.displayName || '';
-            const b = (doc.teams[1] as any)?.displayName || '';
+            const a = (doc.teams[0] as any)?.name || '';
+            const b = (doc.teams[1] as any)?.name || '';
             results[gameId] = `${a} vs ${b}`.trim();
           } else if (doc && Array.isArray(doc.teams) && doc.teams.length === 1) {
-            const a = (doc.teams[0] as any)?.displayName || '';
+            const a = (doc.teams[0] as any)?.name || '';
             results[gameId] = `${a}`;
           } else {
             console.warn(`Warning: Refined game file for gameId ${gameId} has no teams array`);
@@ -47,7 +47,7 @@ export async function getGameTeams(gameId: string): Promise<Array<Record<string,
   return (doc.teams as any[]).map((t) => ({
     teamId: (t as any).teamId || (t as any).abbreviation || '',
     abbreviation: (t as any).abbreviation || '',
-    displayName: (t as any).displayName || '',
+    name: (t as any).name || '',
   }));
 }
 

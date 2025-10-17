@@ -4,6 +4,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { ChatMessage } from '@shared/types/chat';
 import { formatTimeOfDay } from '@shared/utils/dateTime';
 import { fetchModeConfigs } from '@shared/api/modeConfig';
+import { fetchModePreview } from '@shared/api/modePreview';
 import { normalizeToHundredth } from '@shared/utils/number';
 
 export async function createTable(tableName: string, hostUserId: string) {
@@ -300,6 +301,42 @@ export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
     }
   }
 
+  const winningConditionByBetId = new Map<string, string>();
+  const previewResults = await Promise.all(
+    betRows.map(async (bet: any) => {
+      const modeKey = typeof bet.mode_key === 'string' ? bet.mode_key.trim() : '';
+      const betId = typeof bet.bet_id === 'string' ? bet.bet_id : '';
+      if (!modeKey || !betId) return null;
+
+      const rawConfig = (bet as any).mode_config;
+      const config = rawConfig && typeof rawConfig === 'object' ? (rawConfig as Record<string, unknown>) : {};
+      try {
+        const preview = await fetchModePreview(
+          modeKey,
+          config,
+          typeof bet.nfl_game_id === 'string' ? bet.nfl_game_id : null,
+          betId,
+        );
+        const winningCondition = preview?.winningCondition?.trim();
+        if (winningCondition) {
+          return { betId, winningCondition };
+        }
+      } catch (previewErr) {
+        console.warn('[getTableFeed] failed to load mode preview', {
+          betId,
+          error: (previewErr as Error)?.message ?? previewErr,
+        });
+      }
+      return null;
+    }),
+  );
+
+  previewResults.forEach((entry) => {
+    if (entry) {
+      winningConditionByBetId.set(entry.betId, entry.winningCondition);
+    }
+  });
+
   betRows.forEach((bet: any) => {
     const username = bet?.users?.username ?? 'Unknown';
     const description = bet.description || 'Bet';
@@ -328,10 +365,23 @@ export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
 
     const betIdShort = bet.bet_id?.slice(0, 8) ?? '';
     const closeTimeText = formatTimeOfDay(bet.close_time, { includeSeconds: true });
+    const modeLabel =
+      typeof bet.mode_key === 'string' && bet.mode_key.trim().length
+        ? bet.mode_key
+            .split('_')
+            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ')
+        : 'Bet Mode';
+    const winningCondition = typeof bet.bet_id === 'string' ? winningConditionByBetId.get(bet.bet_id) ?? null : null;
+    const wagerDisplay =
+      typeof bet.wager_amount === 'number' ? normalizeToHundredth(bet.wager_amount) : bet.wager_amount ?? '?';
+    const timerDisplay = typeof bet.time_limit_seconds === 'number' ? bet.time_limit_seconds : bet.time_limit_seconds ?? '?';
     const detailLines: string[] = [
       `Join my bet #${betIdShort}`,
-      `${bet.wager_amount} pt(s) | ${bet.time_limit_seconds}s`,
-      bet.mode_key.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      `${wagerDisplay} pt(s) | ${timerDisplay}s`,
+      typeof bet.description === 'string' && bet.description.trim().length ? bet.description : null,
+      modeLabel,
+      winningCondition,
       closeTimeText ? `Closes at ${closeTimeText}` : null,
     ].filter(Boolean) as string[];
 

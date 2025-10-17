@@ -82,11 +82,6 @@ export const ProfileCard: React.FC = () => {
               disabled={updating}
               maxLength={15}
             />
-            {showInvalid && (
-              <small style={{ color: "var(--accent-power)" }}>
-                3-15 chars, A-Z, 0-9, _
-              </small>
-            )}
             <div className="form-buttons">
               <button
                 type="submit"
