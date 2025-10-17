@@ -78,6 +78,22 @@ This mode is a bet on the next score type.
 
 * **Considerations:** This app will scale to accept many different game modes.
 
+#### Mode 5: Spread the Wealth
+Bet on whether the total points scored in the game will be over or under a specified value.
+* **Proposer Configuration:** Sets the over/under value (a numeric line, e.g. `47.5`).
+* **Participant Choices:** `pass`, `Over`, `Under`.
+* **Winning Condition:** Once the game is final, compute total points = homeScore + awayScore.
+    * If total points > line, `Over` wins.
+    * If total points < line, `Under` wins.
+
+#### Mode 6: Give And Take
+Bet on which team covers a specified point spread, applied to the home team (team 1).
+* **Proposer Configuration:** Sets the point spread (a numeric value that must end in .5). A spread is applied to the home teams score; the highest of the two scores wins/covers (e.g. `+3.5` means the away team must win by more than 3 points to cover, `-3.5` means the home team must win by more than 3 points to cover).
+* **Participant Choices:** `pass`, `{team 1}`, `{team 2}`
+* **Winning Condition:** Once the game is final, add the spread to the home team
+    * If {team 1 score} + spread > {team 2 score}, bet participants choosing {team 1} win
+    * If {team 1 score} + spread < {team 2 score}, bet participants choosing {team 2} win
+
 ---
 
 ### Table & Session Settlement

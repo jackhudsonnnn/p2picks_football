@@ -1,0 +1,1 @@
+export { spreadTheWealthModule } from './definition';

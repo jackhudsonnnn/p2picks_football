@@ -18,12 +18,6 @@ Bet on whether the home team will win, plus or minus a specified number of point
 * **Participant Choices:** `pass`, `Over`, `Under`.
 * **Winning Condition:** The total points scored compared to the set value.
 
-#### Red Zone Outcome
-Bet on the outcome of the next red zone possession.
-* **Proposer Configuration:** None beyond standard parameters.
-* **Participant Choices:** `pass`, `Touchdown`, `Field Goal`, `Turnover`, `No Score`.
-* **Winning Condition:** The result of the red zone possession.
-
 #### Shoot for the Stars
 Bet on whether a specific player will achieve a milestone during the game.
 * **Proposer Configuration:** Selects the player and milestone (e.g., 100 rushing yards).
