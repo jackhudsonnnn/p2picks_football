@@ -36,19 +36,6 @@ export const MemberList: React.FC<MemberListProps> = ({ members, hostUserId, cur
               <span className="member-avatar" aria-hidden="true">{getInitials(member.username)}</span>
               <span className="member-name" title={member.username}>
                 <span className="member-username">{member.username}</span>
-                {member.user_id === hostUserId && (
-                  <span className="host-badge" title="Host" aria-label="Host">
-                    <svg width="13" height="13" viewBox="0 0 16 16" className="badge-icon" aria-hidden="true"><path fill="currentColor" d="M8 2l1.76 3.57L14 6.18l-2.5 2.44.59 3.44L8 10.77l-3.09 1.29.59-3.44L3 6.18l4.24-.61z"/></svg>
-                  </span>
-                )}
-                {member.user_id === currentUserId && (
-                  <span className="you-badge" title="You" aria-label="You">
-                    <svg width="13" height="13" viewBox="0 0 16 16" className="badge-icon" aria-hidden="true">
-                      <circle cx="8" cy="6" r="3" fill="currentColor" />
-                      <path fill="currentColor" d="M2 14c0-2.21 2.91-4 6-4s6 1.79 6 4" />
-                    </svg>
-                  </span>
-                )}
               </span>
             </div>
             <span className={`member-balance${balanceClass}`} title={`${balanceLabel} pts`}>

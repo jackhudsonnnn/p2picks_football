@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
-import { SearchBar, Modal } from "@shared/widgets";
+import { Modal, PaginationControls, SearchBar } from "@shared/widgets";
 import AddIcon from "@shared/widgets/icons/AddIcon";
 import { useTablesList } from "@features/tables/hooks/useTablesList";
 import { formatDateTime } from "@shared/utils/dateTime";
@@ -99,11 +99,15 @@ export const TablesListPage: React.FC = () => {
       )}
 
       {filteredTables.length > tablesPerPage && (
-        <div className="pagination-controls">
-          <button className="pagination-button" onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} disabled={currentPage === 1}>Previous</button>
-          <span className="pagination-info">{currentPage} of {totalPages}</span>
-          <button className="pagination-button" onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Next</button>
-        </div>
+        <PaginationControls
+          className="tables-pagination"
+          current={currentPage}
+          total={totalPages}
+          onPrevious={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disablePrevious={currentPage === 1}
+          disableNext={currentPage === totalPages}
+        />
       )}
     </div>
   );

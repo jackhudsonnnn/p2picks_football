@@ -1,13 +1,16 @@
+.profile-section {
+    padding: var(--space-xl);
+    border: 1px solid var(--neutral-700);
+    border-radius: var(--radius-md);
+    background-color: var(--neutral-800);
+}
+
 .username-section { 
     margin-bottom: var(--space-xl); 
 }
 
 .current-username { 
     margin-bottom: var(--space-md); 
-}
-
-.change-username-btn { 
-    margin-top: var(--space-md); 
 }
 
 .username-form { 
@@ -50,6 +53,12 @@
 .form-buttons { 
     display: flex; 
     gap: var(--space-md); 
+}
+
+.username-hint {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--neutral-400);
 }
 
 .btn-primary { 

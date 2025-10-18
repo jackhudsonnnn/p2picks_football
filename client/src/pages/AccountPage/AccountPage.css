@@ -1,24 +1,40 @@
-.profile-container { 
-  margin-top:7%; 
-  max-width:600px; 
-  margin-left:auto; 
-  margin-right:auto; 
-  padding: var(--space-xl); 
-  background-color: var(--neutral-800); 
-  border-radius: var(--radius-md); 
-  box-shadow: var(--shadow-md); 
-  transition: transform .3s ease, box-shadow .3s ease; 
+.account-page {
+  padding: var(--space-xl) var(--space-md);
 }
 
-.profile-section { 
-  margin-bottom: var(--space-xl); 
+.account-content {
+  padding: var(--space-xl) var(--space-xl) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
 }
 
-@media (max-width:768px){ 
-  .profile-container { 
-    margin-top:80px; 
-    margin-left:var(--space-md); 
-    margin-right:var(--space-md); 
-    padding: var(--space-lg); 
-  } 
+.account-tab-panel {
+  width: 100%;
 }
+
+.account-placeholder {
+  padding: var(--space-lg);
+  border: 1px dashed var(--neutral-600);
+  border-radius: var(--radius-md);
+  background-color: var(--neutral-850);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.profile-section {
+  margin-bottom: 0;
+}
+
+.account-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+}
+
+

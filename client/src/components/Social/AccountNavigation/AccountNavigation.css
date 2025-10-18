@@ -1,0 +1,72 @@
+.account-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  border-bottom: 1px solid var(--neutral-700);
+  padding: var(--space-lg) var(--space-xl) var(--spacing-xs);
+}
+
+.account-greeting {
+  flex: 1 1 auto;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-light);
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.account-tab-section {
+  flex: 0 1 auto;
+}
+
+.account-tab-buttons {
+  display: flex;
+  gap: var(--spacing-xl);
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.account-tab-buttons::-webkit-scrollbar {
+  display: none;
+}
+
+.account-tab-button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  position: relative;
+  transition: color var(--transition);
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+}
+
+.account-tab-button:hover,
+.account-tab-button:focus-visible {
+  color: var(--text-light);
+  outline: none;
+}
+
+.account-tab-button.active {
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.account-tab-button.active::after {
+  content: "";
+  position: absolute;
+  left: var(--spacing-xs);
+  right: var(--spacing-xs);
+  bottom: -var(--spacing-xs);
+  height: 2px;
+  background-color: var(--primary-500);
+  border-radius: var(--radius-full);
+}

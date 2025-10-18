@@ -65,7 +65,7 @@ export const FriendsManager: React.FC = () => {
           onChange={(v: string) =>
             setFriendUsernameToAdd(v.replace(/[^a-zA-Z0-9_]/g, ""))
           }
-          placeholder="Enter friend's username"
+          placeholder="Enter username"
           inputClassName="profile-input"
           ariaLabel="Friend username input"
           className="add-friend-search"
@@ -75,7 +75,7 @@ export const FriendsManager: React.FC = () => {
           className="btn-primary"
           disabled={!isFriendUsernameValid || busy || loading}
         >
-          {busy ? "Adding..." : "Add Friend"}
+          {busy ? "Adding..." : "Add"}
         </button>
       </form>
       <div style={{ marginTop: "1rem" }}>

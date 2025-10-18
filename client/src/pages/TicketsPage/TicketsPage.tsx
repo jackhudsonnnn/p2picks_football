@@ -3,7 +3,7 @@ import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import TicketCard from "@components/Bet/TicketCard/TicketCard";
-import { SearchBar } from "@shared/widgets";
+import { PaginationControls, SearchBar } from "@shared/widgets";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
 
@@ -92,27 +92,15 @@ export const TicketsPage: React.FC = () => {
       )}
 
       {filteredTickets.length > ticketsPerPage && (
-        <div className="pagination-controls">
-          <button
-            className="pagination-button"
-            onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            {currentPage} of {totalPages}
-          </span>
-          <button
-            className="pagination-button"
-            onClick={() =>
-              handlePageChange(Math.min(currentPage + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
-        </div>
+        <PaginationControls
+          className="tickets-pagination"
+          current={currentPage}
+          total={totalPages}
+          onPrevious={() => handlePageChange(Math.max(currentPage - 1, 1))}
+          onNext={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+          disablePrevious={currentPage === 1}
+          disableNext={currentPage === totalPages}
+        />
       )}
     </div>
   );
