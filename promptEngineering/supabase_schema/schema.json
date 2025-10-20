@@ -184,6 +184,78 @@
     "key_info": ""
   },
   {
+    "table_name": "messages",
+    "column_name": "message_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "messages",
+    "column_name": "message_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "messages",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> tables(table_id)"
+  },
+  {
+    "table_name": "messages",
+    "column_name": "message_type",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "messages",
+    "column_name": "text_message_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> text_messages(text_message_id)"
+  },
+  {
+    "table_name": "messages",
+    "column_name": "system_message_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> system_messages(system_message_id)"
+  },
+  {
+    "table_name": "messages",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+  },
+  {
+    "table_name": "messages",
+    "column_name": "posted_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "timezone('utc'::text, now())",
+    "key_info": ""
+  },
+  {
+    "table_name": "messages",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "timezone('utc'::text, now())",
+    "key_info": ""
+  },
+  {
     "table_name": "nfl_games",
     "column_name": "nfl_game_id",
     "data_type": "bigint",

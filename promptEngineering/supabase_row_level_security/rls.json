@@ -63,6 +63,27 @@
     "check_expression": null
   },
   {
+    "table_name": "messages",
+    "policy_name": "messages_insert_for_members",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((auth.role() = 'service_role'::text) OR ((auth.uid() IS NOT NULL) AND is_user_member_of_table(table_id, auth.uid())))"
+  },
+  {
+    "table_name": "messages",
+    "policy_name": "messages_select_for_members",
+    "command": "SELECT",
+    "using_expression": "((auth.role() = 'service_role'::text) OR ((auth.uid() IS NOT NULL) AND is_user_member_of_table(table_id, auth.uid())))",
+    "check_expression": null
+  },
+  {
+    "table_name": "resolution_history",
+    "policy_name": "resolution_history_select_for_members",
+    "command": "SELECT",
+    "using_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = resolution_history.bet_id) AND ((bp.proposer_user_id = auth.uid()) OR (EXISTS ( SELECT 1\n           FROM table_members tm\n          WHERE ((tm.table_id = bp.table_id) AND (tm.user_id = auth.uid()))))))))",
+    "check_expression": null
+  },
+  {
     "table_name": "system_messages",
     "policy_name": "System notifications deletes are restricted",
     "command": "DELETE",

@@ -25,15 +25,25 @@ const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{title}</h2>
-          <button className="modal-close" onClick={onClose}>
-            &times;
-          </button>
+      <div
+        className="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-panel">
+          <div className="modal-header">
+            <h2>{title}</h2>
+            <button className="modal-close" onClick={onClose}>
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            <div className="modal-body-inner">{children}</div>
+          </div>
+          {footer && <div className="modal-footer">{footer}</div>}
         </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-footer">{footer}</div>}
       </div>
     </div>
   );

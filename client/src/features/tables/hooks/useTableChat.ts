@@ -6,7 +6,14 @@ import { useTableFeed } from '@features/bets/hooks/useTableFeed';
 import type { ChatMessage } from '@shared/types/chat';
 
 export function useTableChat(tableId?: string, userId?: string) {
-  const { messages, refresh } = useTableFeed(tableId, Boolean(tableId && userId));
+  const {
+    messages,
+    hasMore,
+    loadMore,
+    isLoading,
+    isLoadingMore,
+    refresh,
+  } = useTableFeed(tableId, Boolean(tableId && userId));
   const [betLoading, setBetLoading] = useState(false);
 
   const sendMessage = async (text: string) => {
@@ -26,5 +33,15 @@ export function useTableChat(tableId?: string, userId?: string) {
     }
   };
 
-  return { messages: messages as ChatMessage[], sendMessage, proposeBet, betLoading, refreshFeed: refresh } as const;
+  return {
+    messages: messages as ChatMessage[],
+    sendMessage,
+    proposeBet,
+    betLoading,
+    refreshFeed: refresh,
+    hasMore,
+    loadMore,
+    isLoading,
+    isLoadingMore,
+  } as const;
 }

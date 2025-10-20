@@ -117,6 +117,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const normalizedPhase = (phase ?? '').toLowerCase();
   const isWashed = normalizedTicketState === 'washed' || normalizedPhase === 'washed';
   const isResolved = !isWashed && (normalizedTicketState === 'resolved' || normalizedPhase === 'resolved');
+  const normalizedResult = (ticket.result ?? '').toLowerCase();
   const normalizedWinningChoice =
     ticket.winningChoice != null ? String(ticket.winningChoice).trim().toLowerCase() : null;
   const normalizedGuess = ticket.myGuess != null ? String(ticket.myGuess).trim().toLowerCase() : null;
@@ -128,8 +129,22 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     isResolved && hasGuess && normalizedWinningChoice && normalizedGuess !== normalizedWinningChoice
   );
   const stateClass = `state-${(ticket.state || phase).toLowerCase()}`;
+  const resolvedOutcome: 'win' | 'loss' | null = (() => {
+    if (!isResolved) return null;
+    if (normalizedResult === 'win') return 'win';
+    if (normalizedResult === 'loss') return 'loss';
+    if (isCorrectGuess) return 'win';
+    if (isIncorrectGuess) return 'loss';
+    return null;
+  })();
+  const outcomeClass = (() => {
+    if (isWashed || normalizedResult === 'washed') return 'outcome-washed';
+    if (resolvedOutcome === 'win') return 'outcome-win';
+    if (resolvedOutcome === 'loss') return 'outcome-loss';
+    return '';
+  })();
   const resolutionClass = isCorrectGuess ? 'guess-correct' : isIncorrectGuess ? 'guess-incorrect' : '';
-  const cardClassName = ['ticket-card', stateClass].filter(Boolean).join(' ');
+  const cardClassName = ['ticket-card', stateClass, outcomeClass].filter(Boolean).join(' ');
   const betContainerClassName = ['bet-container', resolutionClass].filter(Boolean).join(' ');
 
   const Header = () => (
@@ -142,6 +157,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
           phase={phase}
           timeLeft={timeLeft}
           closeTime={ticket.closeTime || undefined}
+          outcome={resolvedOutcome}
           className="ticket-status-repl"
         />
       </div>

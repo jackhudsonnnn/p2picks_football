@@ -190,8 +190,8 @@ export class ChooseTheirFateValidatorService {
       const fieldGoalTeam = this.firstIncrease(baseline.teams, currentScores, 'fieldGoals');
       const possessionTeam = this.possessionTeamIdFromDoc(doc);
       if (touchdownTeam) {
-        await this.setResult(bet.bet_id, 'TD', {
-          outcome: 'TD',
+        await this.setResult(bet.bet_id, 'Touchdown', {
+          outcome: 'Touchdown',
           scoring_team_id: touchdownTeam,
           captured_at: new Date().toISOString(),
         });
@@ -199,8 +199,8 @@ export class ChooseTheirFateValidatorService {
         return;
       }
       if (fieldGoalTeam) {
-        await this.setResult(bet.bet_id, 'FG', {
-          outcome: 'FG',
+        await this.setResult(bet.bet_id, 'Field Goal', {
+          outcome: 'Field Goal',
           scoring_team_id: fieldGoalTeam,
           captured_at: new Date().toISOString(),
         });
@@ -253,7 +253,7 @@ export class ChooseTheirFateValidatorService {
     return null;
   }
 
-  private async setResult(betId: string, winningChoice: 'TD' | 'FG' | 'Turnover', payload: Record<string, unknown>): Promise<void> {
+  private async setResult(betId: string, winningChoice: 'Touchdown' | 'Field Goal' | 'Turnover', payload: Record<string, unknown>): Promise<void> {
   const supa = getSupabaseAdmin();
     const { error } = await supa
       .from('bet_proposals')

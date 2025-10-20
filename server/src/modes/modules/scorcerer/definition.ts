@@ -12,7 +12,7 @@ export const scorcererModule: ModeModule = {
     secondaryDescriptionTemplate: '`TD • FG • Safety • No More Scores`',
     winningConditionTemplate:
       '`Predict the next score type`',
-    optionsExpression: "['pass','TD','FG','Safety','No More Scores']",
+    optionsExpression: "['pass','Touchdown','Field Goal','Safety','No More Scores']",
     configSteps: [],
   },
   prepareConfig: prepareScorcererConfig,

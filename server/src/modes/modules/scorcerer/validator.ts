@@ -6,9 +6,9 @@ import Redis from 'ioredis';
 import { createHash } from 'crypto';
 import { GameFeedEvent, getCachedGameDoc, subscribeToGameFeed } from '../../../services/gameFeedService';
 
-function pickWinningChoice(delta: { td: number; fg: number; sfty: number }): 'TD' | 'FG' | 'Safety' | null {
-  if (delta.td > 0) return 'TD';
-  if (delta.fg > 0) return 'FG';
+function pickWinningChoice(delta: { td: number; fg: number; sfty: number }): 'Touchdown' | 'Field Goal' | 'Safety' | null {
+  if (delta.td > 0) return 'Touchdown';
+  if (delta.fg > 0) return 'Field Goal';
   if (delta.sfty > 0) return 'Safety';
   return null;
 }

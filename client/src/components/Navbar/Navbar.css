@@ -89,7 +89,7 @@
   
   .navbar-logo {
     margin-right: var(--space-2xl);
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-xl);
   }
   
   .navbar-links {
@@ -127,12 +127,4 @@
   }
 }
 
-@media (max-width: 480px) {  
-  .navbar-logo {
-    margin-right: var(--space-sm);
-  }
-  
-  .navbar-links {
-    gap: var(--space-sm);
-  }
-}
+

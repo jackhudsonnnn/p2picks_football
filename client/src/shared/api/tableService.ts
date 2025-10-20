@@ -2,7 +2,6 @@
 import { supabase } from '@shared/api/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { ChatMessage } from '@shared/types/chat';
-import { formatTimeOfDay } from '@shared/utils/dateTime';
 import { fetchModeConfigs } from '@shared/api/modeConfig';
 import { fetchModePreview } from '@shared/api/modePreview';
 import { normalizeToHundredth } from '@shared/utils/number';
@@ -68,6 +67,22 @@ export interface TableSettlementResult {
   summary: string;
   messageId: string;
   generatedAt: string;
+}
+
+export interface TableFeedCursor {
+  postedAt: string;
+  messageId: string;
+}
+
+export interface TableFeedOptions {
+  limit?: number;
+  before?: TableFeedCursor | null;
+}
+
+export interface TableFeedPage {
+  messages: ChatMessage[];
+  nextCursor: TableFeedCursor | null;
+  hasMore: boolean;
 }
 
 function formatPointsDisplay(value: number): string {
@@ -216,25 +231,32 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
   };
 }
 
-export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
-  const [
-    { data: textData, error: textError },
-    { data: systemData, error: systemError },
-    { data: betData, error: betError }
-  ] = await Promise.all([
-    supabase
-      .from('text_messages')
-      .select('text_message_id, table_id, user_id, message_text, posted_at, users:user_id (username)')
-      .eq('table_id', tableId)
-      .order('posted_at', { ascending: true }),
-    supabase
-      .from('system_messages')
-      .select('system_message_id, table_id, message_text, generated_at')
-      .eq('table_id', tableId)
-      .order('generated_at', { ascending: true }),
-    supabase
-      .from('bet_proposals')
-      .select(`
+export async function getTableFeed(tableId: string, options: TableFeedOptions = {}): Promise<TableFeedPage> {
+  const { limit = 10, before } = options;
+  const effectiveLimit = Math.max(1, Math.min(limit, 100));
+
+  let query = supabase
+    .from('messages')
+    .select(`
+      message_id,
+      table_id,
+      message_type,
+      posted_at,
+      text_messages (
+        text_message_id,
+        table_id,
+        user_id,
+        message_text,
+        posted_at,
+        users:user_id (username)
+      ),
+      system_messages (
+        system_message_id,
+        table_id,
+        message_text,
+        generated_at
+      ),
+      bet_proposals (
         bet_id,
         table_id,
         proposer_user_id,
@@ -249,44 +271,55 @@ export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
         winning_choice,
         resolution_time,
         users:proposer_user_id (username)
-      `)
-      .eq('table_id', tableId)
-      .order('proposal_time', { ascending: true })
-  ]);
+      )
+    `)
+    .eq('table_id', tableId)
+    .order('posted_at', { ascending: false })
+    .order('message_id', { ascending: false })
+    .limit(effectiveLimit + 1);
 
-  if (textError) throw textError;
-  if (systemError) throw systemError;
-  if (betError) throw betError;
+  if (before) {
+    const postedAtIso = new Date(before.postedAt).toISOString();
+    query = query.or(
+      `and(posted_at.lt.${postedAtIso}),and(posted_at.eq.${postedAtIso},message_id.lt.${before.messageId})`
+    );
+  }
 
-  const messages: ChatMessage[] = [];
+  const { data, error } = await query;
+  if (error) throw error;
 
-  (textData ?? []).forEach((msg: any) => {
-    const username = msg?.users?.username ?? 'Unknown';
-    messages.push({
-      id: msg.text_message_id,
-      type: 'chat',
-      senderUserId: msg.user_id,
-      senderUsername: username,
-      text: msg.message_text,
-      timestamp: msg.posted_at,
-      tableId: msg.table_id,
-    });
-  });
+  let rows = (data ?? []) as any[];
+  const hasMore = rows.length > effectiveLimit;
+  if (hasMore) {
+    rows = rows.slice(0, effectiveLimit);
+  }
 
-  (systemData ?? []).forEach((msg: any) => {
-    messages.push({
-      id: msg.system_message_id,
-      type: 'system',
-      senderUserId: '',
-      senderUsername: '',
-      text: msg.message_text,
-      timestamp: msg.generated_at,
-      tableId: msg.table_id,
-    });
-  });
+  const normalizeTimestamp = (value: string | null | undefined) => {
+    if (!value) return new Date().toISOString();
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return new Date().toISOString();
+    }
+    return parsed.toISOString();
+  };
 
-  const betRows = betData ?? [];
-  const betIds = Array.from(new Set(betRows.map((b: any) => b.bet_id).filter(Boolean))) as string[];
+  const normalizedRows = rows.map((row) => ({
+    ...row,
+    posted_at: row.posted_at ?? row?.text_messages?.posted_at ?? row?.system_messages?.generated_at ?? null,
+  }));
+
+  const nextCursor = normalizedRows.length
+    ? {
+        postedAt: normalizeTimestamp(normalizedRows[normalizedRows.length - 1].posted_at),
+        messageId: normalizedRows[normalizedRows.length - 1].message_id as string,
+      }
+    : null;
+
+  const betRows = normalizedRows
+    .filter((row) => row.message_type === 'bet_proposal' && row.bet_proposals)
+    .map((row) => row.bet_proposals);
+
+  const betIds = Array.from(new Set(betRows.map((bet: any) => bet?.bet_id).filter(Boolean))) as string[];
   if (betIds.length) {
     try {
       const configs = await fetchModeConfigs(betIds);
@@ -337,68 +370,82 @@ export async function getTableFeed(tableId: string): Promise<ChatMessage[]> {
     }
   });
 
-  betRows.forEach((bet: any) => {
-    const username = bet?.users?.username ?? 'Unknown';
-    const description = bet.description || 'Bet';
+  const messages: ChatMessage[] = [];
 
-    messages.push({
-      id: bet.bet_id,
-      type: 'bet_proposal',
-      senderUserId: bet.proposer_user_id,
-      senderUsername: username,
-      text: '',
-      timestamp: bet.proposal_time,
-      betProposalId: bet.bet_id,
-      betDetails: {
-        description,
-        wager_amount: bet.wager_amount,
-        time_limit_seconds: bet.time_limit_seconds,
-        bet_status: bet.bet_status,
-        close_time: bet.close_time,
-        winning_choice: bet.winning_choice,
-        resolution_time: bet.resolution_time,
-        mode_key: bet.mode_key,
-        nfl_game_id: bet.nfl_game_id,
-      },
-      tableId: bet.table_id,
+  normalizedRows
+    .slice()
+    .reverse()
+    .forEach((row) => {
+      const timestampIso = normalizeTimestamp(row.posted_at);
+      if (row.message_type === 'chat') {
+        const txt = row.text_messages;
+        if (!txt) return;
+        const username = txt?.users?.username ?? 'Unknown';
+        messages.push({
+          id: row.message_id as string,
+          type: 'chat',
+          senderUserId: txt.user_id ?? '',
+          senderUsername: username,
+          text: txt.message_text ?? '',
+          timestamp: timestampIso,
+          tableId: txt.table_id ?? row.table_id,
+        });
+        return;
+      }
+
+      if (row.message_type === 'system') {
+        const sys = row.system_messages;
+        if (!sys) return;
+        messages.push({
+          id: row.message_id as string,
+          type: 'system',
+          senderUserId: '',
+          senderUsername: '',
+          text: sys.message_text ?? '',
+          timestamp: timestampIso,
+          tableId: sys.table_id ?? row.table_id,
+        });
+        return;
+      }
+
+      if (row.message_type === 'bet_proposal') {
+        const bet = row.bet_proposals;
+        if (!bet) return;
+
+        const username = bet?.users?.username ?? 'Unknown';
+        const description = typeof bet.description === 'string' && bet.description.length ? bet.description : 'Bet';
+        const winningCondition = typeof bet.bet_id === 'string' ? winningConditionByBetId.get(bet.bet_id) ?? null : null;
+
+        messages.push({
+          id: row.message_id as string,
+          type: 'bet_proposal',
+          senderUserId: bet.proposer_user_id ?? '',
+          senderUsername: username,
+          text: '',
+          timestamp: timestampIso,
+          tableId: bet.table_id ?? row.table_id,
+          betProposalId: bet.bet_id,
+          betDetails: {
+            description,
+            wager_amount: bet.wager_amount,
+            time_limit_seconds: bet.time_limit_seconds,
+            bet_status: bet.bet_status,
+            close_time: bet.close_time,
+            winning_choice: bet.winning_choice,
+            resolution_time: bet.resolution_time,
+            mode_key: bet.mode_key,
+            nfl_game_id: bet.nfl_game_id,
+            winning_condition_text: winningCondition,
+          },
+        });
+      }
     });
 
-    const betIdShort = bet.bet_id?.slice(0, 8) ?? '';
-    const closeTimeText = formatTimeOfDay(bet.close_time, { includeSeconds: true });
-    const modeLabel =
-      typeof bet.mode_key === 'string' && bet.mode_key.trim().length
-        ? bet.mode_key
-            .split('_')
-            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ')
-        : 'Bet Mode';
-    const winningCondition = typeof bet.bet_id === 'string' ? winningConditionByBetId.get(bet.bet_id) ?? null : null;
-    const wagerDisplay =
-      typeof bet.wager_amount === 'number' ? normalizeToHundredth(bet.wager_amount) : bet.wager_amount ?? '?';
-    const timerDisplay = typeof bet.time_limit_seconds === 'number' ? bet.time_limit_seconds : bet.time_limit_seconds ?? '?';
-    const detailLines: string[] = [
-      `Join my bet #${betIdShort}`,
-      `${wagerDisplay} pt(s) | ${timerDisplay}s`,
-      typeof bet.description === 'string' && bet.description.trim().length ? bet.description : null,
-      modeLabel,
-      winningCondition,
-      closeTimeText ? `Closes at ${closeTimeText}` : null,
-    ].filter(Boolean) as string[];
-
-    messages.push({
-      id: `${bet.bet_id}-details`,
-      type: 'chat',
-      senderUserId: bet.proposer_user_id,
-      senderUsername: username,
-      text: detailLines.join('\n'),
-      timestamp: bet.proposal_time,
-      tableId: bet.table_id,
-    });
-  });
-
-  messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-
-  return messages;
+  return {
+    messages,
+    nextCursor,
+    hasMore,
+  };
 }
 
 export async function sendTextMessage(tableId: string, userId: string, messageText: string) {
@@ -431,34 +478,17 @@ export function subscribeToTableMembers(
   return channel;
 }
 
-export function subscribeToTextMessages(
+export function subscribeToMessages(
   tableId: string,
-  onInsert: (payload: { eventType: 'INSERT'; text_message_id?: string }) => void
+  onInsert: (payload: { eventType: 'INSERT'; message_id?: string }) => void
 ): RealtimeChannel {
   const channel = supabase
-    .channel(`text_messages:${tableId}`)
+    .channel(`messages:${tableId}`)
     .on(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'text_messages', filter: `table_id=eq.${tableId}` },
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: `table_id=eq.${tableId}` },
       (payload) => {
-        onInsert({ eventType: 'INSERT', text_message_id: (payload.new as any)?.text_message_id });
-      }
-    )
-    .subscribe();
-  return channel;
-}
-
-export function subscribeToSystemMessages(
-  tableId: string,
-  onInsert: (payload: { eventType: 'INSERT'; system_message_id?: string }) => void
-): RealtimeChannel {
-  const channel = supabase
-    .channel(`system_messages:${tableId}`)
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'system_messages', filter: `table_id=eq.${tableId}` },
-      (payload) => {
-        onInsert({ eventType: 'INSERT', system_message_id: (payload.new as any)?.system_message_id });
+        onInsert({ eventType: 'INSERT', message_id: (payload.new as any)?.message_id });
       }
     )
     .subscribe();

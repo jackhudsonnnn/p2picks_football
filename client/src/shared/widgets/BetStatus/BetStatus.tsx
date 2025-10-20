@@ -3,6 +3,7 @@ import './BetStatus.css';
 import { useDomTimer } from '@shared/hooks/useDomTimer';
 
 type Phase = 'active' | 'pending' | 'resolved' | 'washed';
+type ResolvedOutcome = 'win' | 'loss' | 'washed';
 
 interface BetStatusProps {
   phase: Phase;
@@ -10,11 +11,11 @@ interface BetStatusProps {
   timeLeft?: number | null;
   /** Optional absolute lock/close time; when provided and phase is active we render an imperative DOM timer (no re-renders) */
   closeTime?: string | Date | null;
-  accepted?: boolean;
   className?: string;
+  outcome?: ResolvedOutcome | null;
 }
 
-const BetStatus: React.FC<BetStatusProps> = ({ phase, timeLeft = null, className, closeTime }) => {
+const BetStatus: React.FC<BetStatusProps> = ({ phase, timeLeft = null, className, closeTime, outcome }) => {
   const spanRef = useRef<HTMLSpanElement | null>(null);
 
   // Use DOM timer only while active and we have a closeTime.
@@ -33,10 +34,21 @@ const BetStatus: React.FC<BetStatusProps> = ({ phase, timeLeft = null, className
     return 'resolved';
   })();
 
+  const normalizedOutcome: ResolvedOutcome | null = (() => {
+    if (phase === 'washed') return 'washed';
+    if (phase === 'resolved') {
+      if (outcome === 'win' || outcome === 'loss') {
+        return outcome;
+      }
+    }
+    return null;
+  })();
+
   const classes = [
     'bet-status',
     'widget-bet-status',
     `status-${phase}`,
+    normalizedOutcome ? `outcome-${normalizedOutcome}` : '',
     className || ''
   ].filter(Boolean).join(' ');
 

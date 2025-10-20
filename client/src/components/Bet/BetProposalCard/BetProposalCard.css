@@ -52,11 +52,41 @@
   grid-area: content;
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-sm);
 }
 .bet-proposal-card .bp-tags {
   display: flex;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
+}
+
+.bet-proposal-card .bp-description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+}
+
+.bet-proposal-card .bp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.bet-proposal-card .bp-meta-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+}
+
+.bet-proposal-card .bp-winning {
+  font-size: var(--font-size-xs);
+  background: rgba(64, 192, 124, 0.08);
+  border-left: 3px solid var(--accent-victory);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
 }
 
 /* Footer */
@@ -106,13 +136,13 @@
 }
 
 .bet-proposal-card.state-active {
-  border-left-color: var(--accent-energy);
+  border-left-color: var(--primary-500);
 }
 .bet-proposal-card.state-pending {
-  border-left-color: var(--accent-power);
+  border-left-color: var(--accent-energy);
 }
 .bet-proposal-card.state-resolved {
-  border-left-color: var(--accent-victory);
+  border-left-color: var(--neutral-500);
 }
 .bet-proposal-card.state-washed {
   border-left-color: var(--neutral-600);

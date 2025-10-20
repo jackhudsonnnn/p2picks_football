@@ -79,6 +79,9 @@
   color: var(--text-light);
   margin-bottom: 2px;
   font-size: var(--font-size-lg);
+  justify-content: left;
+  padding-left: 0;
+  margin-left: 0;
 }
 
 .table-host {
@@ -140,12 +143,14 @@
 .activity-label {
   color: var(--text-secondary);
   margin-right: var(--spacing-sm);
+  justify-content: right;
 }
 
 .activity-time {
   color: var(--primary-300);
   font-weight: 400;
   font-size: var(--font-size-xs);
+  justify-content: right;
 }
 
 /* Table actions */

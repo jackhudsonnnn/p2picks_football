@@ -48,6 +48,9 @@ export const AccountPage: React.FC = () => {
           onTabChange={setActiveTab}
         />
         <section className="account-content" aria-live="polite">
+          <header className="account-welcome" aria-label="Account greeting">
+            <h2>Welcome back, {playerName}!</h2>
+          </header>
           <div
             id="account-profile-panel"
             role="tabpanel"

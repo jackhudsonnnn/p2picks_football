@@ -132,6 +132,12 @@ const DEFAULT_CATEGORIES: Record<string, Record<string, any>> = {
   },
 };
 
+const TEAM_SCORING_DEFAULT = {
+  touchdowns: 0,
+  fieldGoals: 0,
+  safeties: 0,
+};
+
 function buildLogger() {
   const prefix = '[nflDataIngest]';
   return {
@@ -550,10 +556,13 @@ function clampInterval(value: number): number {
   return Math.max(10, Math.min(300, value));
 }
 
-function initTargetStats(): Record<string, PlayerStats> {
+function initTargetStats(options: { includeScoring?: boolean } = {}): Record<string, PlayerStats> {
   const out: Record<string, PlayerStats> = {};
   for (const [cat, fields] of Object.entries(DEFAULT_CATEGORIES)) {
     out[cat] = { ...fields };
+  }
+  if (options.includeScoring) {
+    out.scoring = { ...TEAM_SCORING_DEFAULT };
   }
   return out;
 }
@@ -579,7 +588,7 @@ function ensureTeamEntry(
     displayName,
     name: name || displayName,
     score: scores.get(teamId) ?? 0,
-    stats: initTargetStats(),
+  stats: initTargetStats({ includeScoring: true }),
     players: {},
     possession: false,
   };
@@ -663,6 +672,10 @@ function refineBoxscore(
     }
   }
 
+  for (const teamEntry of teams.values()) {
+    populateTeamScoring(teamEntry);
+  }
+
   const teamsOut = Array.from(teams.values()).map((team) => ({
     teamId: team.teamId,
     abbreviation: team.abbreviation,
@@ -684,6 +697,68 @@ function refineBoxscore(
     period,
     teams: teamsOut,
   };
+}
+
+function populateTeamScoring(teamEntry: TeamEntry): void {
+  teamEntry.stats.scoring = computeTeamScoring(teamEntry);
+}
+
+function computeTeamScoring(teamEntry: TeamEntry): typeof TEAM_SCORING_DEFAULT {
+  const stats = teamEntry.stats as Record<string, any>;
+
+  const rushingTDs = numberOrZero(stats?.rushing?.rushingTouchdowns);
+  const receivingTDs = numberOrZero(stats?.receiving?.receivingTouchdowns);
+  const defensiveTDs = numberOrZero(stats?.defensive?.defensiveTouchdowns);
+  const interceptionTDs = numberOrZero(stats?.interceptions?.interceptionTouchdowns);
+  const kickReturnTDs = numberOrZero(stats?.kickReturns?.kickReturnTouchdowns);
+  const puntReturnTDs = numberOrZero(stats?.puntReturns?.puntReturnTouchdowns);
+
+  const defensiveTotal = Math.max(defensiveTDs, interceptionTDs);
+  const touchdowns = rushingTDs + receivingTDs + defensiveTotal + kickReturnTDs + puntReturnTDs;
+
+  const fieldGoals = parseMadeAttempts(stats?.kicking?.['fieldGoalsMade/fieldGoalAttempts']);
+  const extraPointsMade = parseMadeAttempts(stats?.kicking?.['extraPointsMade/extraPointAttempts']);
+
+  const baseScore = numberOrZero(teamEntry.score);
+  const pointsFromTDs = touchdowns * 6;
+  const pointsFromFGs = fieldGoals * 3;
+  const pointsFromXPs = extraPointsMade;
+  const remainder = baseScore - (pointsFromTDs + pointsFromFGs + pointsFromXPs);
+
+  let safeties = numberOrZero(stats?.scoring?.safeties);
+  if (remainder >= 2) {
+    const inferred = Math.floor(remainder / 2);
+    if (inferred > safeties) safeties = inferred;
+  }
+
+  return {
+    touchdowns,
+    fieldGoals,
+    safeties,
+  };
+}
+
+function parseMadeAttempts(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+  if (typeof value === 'string') {
+    const [made] = value.split('/', 1);
+    const parsed = Number(made);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function numberOrZero(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
 }
 
 function getBoxscoreRoot(data: any): any | null {

@@ -11,6 +11,10 @@ interface ChatAreaProps {
   currentUserId: string;
   onSendMessage: (message: string) => Promise<void> | void;
   onProposeBet: () => void;
+  onLoadMore?: () => Promise<void> | void;
+  hasMore?: boolean;
+  loading?: boolean;
+  loadingMore?: boolean;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -18,10 +22,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   currentUserId,
   onSendMessage,
   onProposeBet,
+  onLoadMore,
+  hasMore = false,
+  loading = false,
+  loadingMore = false,
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const bottomRef = useAutoScroll([messages.length]);
+  const newestMessageId = messages.length ? messages[messages.length - 1]?.id : undefined;
+  const bottomRef = useAutoScroll([newestMessageId]);
   const grouped = useGroupedMessages(messages);
 
   const handleSendMessage = useCallback(async () => {
@@ -43,19 +52,40 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   return (
     <div className="chat-container">
       <div className="messages-container">
-        {grouped.map(group => (
-          <div key={group.dateLabel} className="message-group">
-            <div className="date-divider"><span>{group.dateLabel}</span></div>
-            {group.messages.map(message => (
-              <TextMessage
-                key={message.id}
-                message={message}
-                isOwnMessage={message.senderUserId === currentUserId}
-                formatTimestamp={(timestamp: string) => formatTimeOfDay(timestamp) || "N/A"}
-              />
-            ))}
+        {hasMore && (
+          <div className="load-more-container">
+            <button
+              className="load-more-button"
+              onClick={() => { if (onLoadMore) void onLoadMore(); }}
+              disabled={loadingMore}
+            >
+              {loadingMore ? "Loading…" : "Load older messages"}
+            </button>
           </div>
-        ))}
+        )}
+
+        {loading && !messages.length ? (
+          <div className="messages-empty" role="status">Loading messages…</div>
+        ) : grouped.length ? (
+          grouped.map(group => (
+            <div key={group.dateLabel} className="message-group">
+              <div className="date-divider"><span>{group.dateLabel}</span></div>
+              {group.messages.map(message => (
+                <TextMessage
+                  key={message.id}
+                  message={message}
+                  isOwnMessage={message.senderUserId === currentUserId}
+                  formatTimestamp={(timestamp: string) => formatTimeOfDay(timestamp) || "N/A"}
+                />
+              ))}
+            </div>
+          ))
+        ) : (
+          <div className="messages-empty" role="status">No messages yet. Start the conversation!</div>
+        )}
+        {loading && messages.length > 0 && (
+          <div className="messages-status" role="status">Refreshing…</div>
+        )}
         <div ref={bottomRef} />
       </div>
 

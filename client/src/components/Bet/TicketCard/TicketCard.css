@@ -348,16 +348,28 @@
 
 /* State color mapping (match BetProposalCard) */
 .ticket-card.state-active {
-  border-left-color: var(--accent-energy);
+  border-left-color: var(--primary-500);
 }
 .ticket-card.state-pending {
-  border-left-color: var(--accent-power);
+  border-left-color: var(--accent-energy);
 }
 .ticket-card.state-resolved {
-  border-left-color: var(--accent-victory);
+  border-left-color: var(--neutral-500);
 }
 .ticket-card.state-washed {
   border-left-color: var(--neutral-600);
+}
+
+.ticket-card.outcome-win {
+  border-left-color: var(--accent-victory);
+}
+
+.ticket-card.outcome-loss {
+  border-left-color: var(--accent-power);
+}
+
+.ticket-card.outcome-washed {
+  border-left-color: var(--neutral-500);
 }
 
 .bet-container.guess-correct .bet-dropdown,

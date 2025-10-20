@@ -7,8 +7,6 @@ export type MemberListMember = TableMember;
 
 interface MemberListProps {
   members: MemberListMember[];
-  hostUserId: string;
-  currentUserId: string;
 }
 
 const getInitials = (name: string) => {
@@ -17,7 +15,7 @@ const getInitials = (name: string) => {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 };
 
-export const MemberList: React.FC<MemberListProps> = ({ members, hostUserId, currentUserId }) => (
+export const MemberList: React.FC<MemberListProps> = ({ members }) => (
   <section className="members-container" aria-label="Table members">
     <div className="members-list">
       <header className="members-header">
@@ -30,6 +28,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, hostUserId, cur
         const isZero = balanceValue === 0;
         const balanceClass = isZero ? " zero" : isNegative ? " negative" : " positive";
         const balanceLabel = formatToHundredth(balanceValue, { showPlus: true });
+
         return (
           <div key={member.user_id} className={`member-row${idx % 2 === 1 ? " member-row-alt" : ""}`}>
             <div className="member-info">

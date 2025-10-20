@@ -77,7 +77,7 @@ export const TablesListPage: React.FC = () => {
               <div className="table-card-header">
                 <div className="table-header-left">
                   <span className="table-name">{table.table_name}</span>
-                  <span className="table-host">Hosted by {table.host_username || table.host_user_id}</span>
+                  <span className="table-host">Host: {table.host_username || table.host_user_id}</span>
                 </div>
                 <div className="table-header-right">
                   <span className="activity-label">Last activity</span>

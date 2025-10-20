@@ -15,19 +15,28 @@
 }
 
 .bet-status.status-active {
-  color: var(--accent-energy);
+  color: var(--primary-500);
 }
 
 .bet-status.status-pending {
-  color: var(--accent-power);
+  color: var(--accent-energy);
 }
 
 .bet-status.status-resolved {
+  color: var(--neutral-300);
+}
+
+.bet-status.status-resolved.outcome-win {
   color: var(--accent-victory);
 }
 
-.bet-status.status-washed {
-  color: var(--text-secondary);
+.bet-status.status-resolved.outcome-loss {
+  color: var(--accent-power);
+}
+
+.bet-status.status-washed,
+.bet-status.outcome-washed {
+  color: var(--neutral-400);
 }
 
 /* Allow parent containers to override sizing */

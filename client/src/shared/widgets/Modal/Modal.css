@@ -13,13 +13,27 @@
 }
 
 .modal-content {
-  background-color: #010c1d65;
+  background-color: transparent;
   border-radius: var(--radius-md);
   width: 100%;
-  max-width: 500px;
+  max-width: 560px;
   max-height: 90vh;
-  overflow-y: auto;
+  padding: var(--spacing-md);
+  box-sizing: border-box;
+  display: flex;
+  overflow: hidden;
+}
+
+.modal-panel {
+  background-color: #010c1d65;
+  border-radius: inherit;
+  width: 100%;
+  max-height: 100%;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: saturate(120%);
 }
 
 .modal-header {
@@ -28,6 +42,7 @@
   align-items: center;
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--neutral-700);
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -58,6 +73,19 @@
 
 .modal-body {
   padding: var(--spacing-lg);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-body-inner {
+  background: #151f347a;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.1), 0 1.5px 4px 0 rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  border-radius: 10px;
+  width: 100%;
+  max-width: var(--modal-inner-max-width, 520px);
+  margin: 0 auto;
 }
 
 .modal-footer {
@@ -66,6 +94,7 @@
   padding: var(--spacing-md) var(--spacing-lg);
   border-top: 1px solid var(--neutral-700);
   gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .form-group {
@@ -102,7 +131,6 @@
   color: var(--text-light);
   font-size: var(--font-size-md);
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 1rem center;
   background-size: 1em;

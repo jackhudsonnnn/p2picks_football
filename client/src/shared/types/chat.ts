@@ -19,6 +19,7 @@ export interface ChatMessage {
     resolution_time?: string | null;
     mode_key?: string;
     nfl_game_id?: string;
+    winning_condition_text?: string | null;
   };
 }
 

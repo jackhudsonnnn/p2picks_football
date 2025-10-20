@@ -28,7 +28,16 @@ export const TableView: React.FC = () => {
     tableId,
     user?.id
   );
-  const { messages: chatFeed, sendMessage, proposeBet, betLoading } = useTableChat(tableId, user?.id);
+  const {
+    messages: chatFeed,
+    sendMessage,
+    proposeBet,
+    betLoading,
+    hasMore: hasMoreMessages,
+    loadMore,
+    isLoading,
+    isLoadingMore,
+  } = useTableChat(tableId, user?.id);
 
   const handleProposeBet = () => {
     setBetError(null);
@@ -78,6 +87,10 @@ export const TableView: React.FC = () => {
               currentUserId={user.id}
               onSendMessage={sendMessage}
               onProposeBet={handleProposeBet}
+              onLoadMore={loadMore}
+              hasMore={hasMoreMessages}
+              loading={isLoading}
+              loadingMore={isLoadingMore}
             />
             <Modal
               isOpen={showBetModal}
@@ -103,8 +116,6 @@ export const TableView: React.FC = () => {
         {activeTab === "members" && (
           <MemberList
             members={members}
-            hostUserId={table.host_user_id}
-            currentUserId={user.id}
           />
         )}
         {activeTab === "controls" && tableId && (
