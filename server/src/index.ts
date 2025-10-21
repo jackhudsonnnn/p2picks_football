@@ -18,7 +18,8 @@ import { startModeValidators } from './services/modeValidatorService';
 import { startNflGameStatusSync } from './services/nflGameStatusSyncService';
 import { startNflDataIngestService } from './services/nflDataIngestService';
 import { startBetLifecycleService, registerBetLifecycle } from './services/betLifecycleService';
-import type { BetProposal } from './supabaseClient';
+import { createBetProposalAnnouncement, type BetAnnouncementResult } from './services/betAnnouncementService';
+import { getSupabaseAdmin, type BetProposal } from './supabaseClient';
 import { normalizeToHundredth } from './utils/number';
 import { requireAuth } from './middleware/auth';
 
@@ -284,8 +285,19 @@ apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
     if (error) throw error;
 
     const typedBet = bet as BetProposal;
-    const closeTime = typeof (bet as any)?.close_time === 'string' ? (bet as any).close_time : null;
-    registerBetLifecycle(typedBet.bet_id, closeTime);
+
+    let announcement: BetAnnouncementResult | null = null;
+    try {
+      announcement = await createBetProposalAnnouncement({ bet: typedBet, preview });
+    } catch (announcementError) {
+      console.error('[betProposal] failed to create proposal announcement', {
+        betId: typedBet.bet_id,
+        tableId: typedBet.table_id,
+        error: (announcementError as any)?.message ?? announcementError,
+      });
+      await supabase.from('bet_proposals').delete().eq('bet_id', typedBet.bet_id);
+      throw announcementError;
+    }
 
     try {
       if (Object.keys(modeConfig).length > 0) {
@@ -293,9 +305,26 @@ apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
         await storeModeConfig(typedBet.bet_id, modeKey, prepared);
       }
     } catch (cfgError) {
+      if (announcement?.systemMessageId) {
+        try {
+          await getSupabaseAdmin()
+            .from('system_messages')
+            .delete()
+            .eq('system_message_id', announcement.systemMessageId);
+        } catch (cleanupError) {
+          console.warn('[betProposal] failed to clean up system message after config failure', {
+            betId: typedBet.bet_id,
+            systemMessageId: announcement.systemMessageId,
+            error: (cleanupError as any)?.message ?? cleanupError,
+          });
+        }
+      }
       await supabase.from('bet_proposals').delete().eq('bet_id', typedBet.bet_id);
       throw cfgError;
     }
+
+    const closeTime = typeof (bet as any)?.close_time === 'string' ? (bet as any).close_time : null;
+    registerBetLifecycle(typedBet.bet_id, closeTime);
 
     res.json({ bet: typedBet, preview, mode_config: modeConfig });
   } catch (e: any) {
