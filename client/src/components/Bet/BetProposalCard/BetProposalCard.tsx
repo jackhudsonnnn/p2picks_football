@@ -8,7 +8,6 @@ import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import './BetProposalCard.css';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
-import { formatTimeOfDay } from '@shared/utils/dateTime';
 
 interface BetProposalCardProps {
   message: BetProposalMessage;
@@ -24,23 +23,6 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
     closeTime: message.betDetails?.close_time,
     rawStatus: message.betDetails?.bet_status,
   });
-
-  const description = message.betDetails?.description?.trim().length
-    ? message.betDetails.description.trim()
-    : 'No additional description provided.';
-  const modeLabel = typeof message.betDetails?.mode_key === 'string' && message.betDetails.mode_key.trim().length
-    ? message.betDetails.mode_key
-        .split('_')
-        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-    : 'Bet Mode';
-  const timerDisplay = typeof message.betDetails?.time_limit_seconds === 'number'
-    ? `${message.betDetails.time_limit_seconds}s timer`
-    : null;
-  const closeTimeText = message.betDetails?.close_time
-    ? formatTimeOfDay(message.betDetails.close_time, { includeSeconds: true })
-    : null;
-  const winningConditionText = message.betDetails?.winning_condition_text ?? null;
 
   useEffect(() => {
     let mounted = true;
@@ -148,7 +130,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
         </div>
         <div className="bp-header-right">
           <BetStatus phase={phase} timeLeft={timeLeft} />
-          <span className="bp-participants">{participants} joined</span>
+          <span className="bp-participants">{participants} viewed</span>
         </div>
       </div>
 

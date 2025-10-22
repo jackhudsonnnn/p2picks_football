@@ -1,6 +1,6 @@
 // client/src/pages/TableView.tsx
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "./TableView.css";
 import "@shared/widgets/FriendsList/FriendsList.css";
@@ -8,19 +8,19 @@ import { useAuth } from "@features/auth";
 import { ChatArea } from "@components/Table/ChatArea/ChatArea";
 import { MemberList } from "@components/Table/MemberList/memberList";
 import { HostControls } from "@components/Table/HostControls/hostControls";
-import { Navigation } from "@components/Table/Navigation/Navigation";
+import { Navigation, TableNavigationTab } from "@components/Table/Navigation/Navigation";
+import { ModeReference } from "@components/Table/ModeReference/ModeReference";
 import BetProposalForm from "@components/Bet/BetProposalForm/BetProposalForm";
 import type { BetProposalFormValues } from "@components/Bet/BetProposalForm/BetProposalForm";
 import { Modal } from "@shared/widgets";
 import { useTableView } from "@features/tables/hooks";
 import { useTableChat } from "@features/tables/hooks/useTableChat";
+import { useModeCatalog } from "@features/bets/hooks/useModeCatalog";
 
 export const TableView: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"chat" | "members" | "controls">(
-    "chat"
-  );
+  const [activeTab, setActiveTab] = useState<TableNavigationTab>("chat");
   const [showBetModal, setShowBetModal] = useState(false);
   const [betError, setBetError] = useState<string | null>(null);
   const [showBetErrorModal, setShowBetErrorModal] = useState(false);
@@ -28,6 +28,12 @@ export const TableView: React.FC = () => {
     tableId,
     user?.id
   );
+  const {
+    overviews: modeOverviews,
+    loading: modeOverviewLoading,
+    error: modeOverviewError,
+    refresh: refreshModeOverviews,
+  } = useModeCatalog({ enabled: Boolean(user) });
   const {
     messages: chatFeed,
     sendMessage,
@@ -38,6 +44,12 @@ export const TableView: React.FC = () => {
     isLoading,
     isLoadingMore,
   } = useTableChat(tableId, user?.id);
+
+  useEffect(() => {
+    if (!isHost && activeTab === "controls") {
+      setActiveTab("chat");
+    }
+  }, [isHost, activeTab]);
 
   const handleProposeBet = () => {
     setBetError(null);
@@ -75,11 +87,22 @@ export const TableView: React.FC = () => {
       <Navigation
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        memberCount={members.length}
         isHost={isHost}
-        tableName={table.table_name}
       />
-      <section className="table-content" aria-live="polite">
+      <section
+        className="table-content"
+        role="tabpanel"
+        aria-live="polite"
+        id={
+          activeTab === "chat"
+            ? "chat-panel"
+            : activeTab === "members"
+            ? "members-panel"
+            : activeTab === "controls"
+            ? "controls-panel"
+            : "modes-panel"
+        }
+      >
         {activeTab === "chat" && (
           <>
             <ChatArea
@@ -91,6 +114,7 @@ export const TableView: React.FC = () => {
               hasMore={hasMoreMessages}
               loading={isLoading}
               loadingMore={isLoadingMore}
+              tableName={table.table_name}
             />
             <Modal
               isOpen={showBetModal}
@@ -116,6 +140,14 @@ export const TableView: React.FC = () => {
         {activeTab === "members" && (
           <MemberList
             members={members}
+          />
+        )}
+        {activeTab === "modes" && (
+          <ModeReference
+            overviews={modeOverviews}
+            loading={modeOverviewLoading}
+            error={modeOverviewError}
+            onRetry={refreshModeOverviews}
           />
         )}
         {activeTab === "controls" && tableId && (

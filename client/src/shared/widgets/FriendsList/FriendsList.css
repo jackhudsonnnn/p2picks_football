@@ -10,7 +10,6 @@
   background: var(--neutral-700);
   border: 1px solid var(--neutral-600);
   border-radius: var(--radius-md, 8px);
-  /* scrollbar styling to match ChatArea */
   scrollbar-width: thin;
   scrollbar-color: var(--neutral-600) var(--neutral-800);
 }

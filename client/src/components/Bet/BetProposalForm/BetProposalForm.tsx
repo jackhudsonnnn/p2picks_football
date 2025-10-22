@@ -254,7 +254,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     }
     if (step === generalStepIndex) {
       const wagerValid = wagerAmount >= 0.25 && wagerAmount <= 5;
-      const timeValid = timeLimit >= 10 && timeLimit <= 60;
+      const timeValid = timeLimit >= 15 && timeLimit <= 120;
       return wagerValid && timeValid;
     }
     return step <= reviewStepIndex;
@@ -305,7 +305,8 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       mode_key: modeKey,
       mode_config: { ...(config || {}) },
       wager_amount: normalizeToHundredth(Math.min(Math.max(wagerAmount, 0.25), 5)),
-      time_limit_seconds: Math.min(Math.max(Math.round(timeLimit), 10), 60),
+  time_limit_seconds: Math.min(Math.max(Math.round(timeLimit), 15), 120),
+
       preview,
     };
     onSubmit(payload);
@@ -483,18 +484,22 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
             <label className="form-label" htmlFor="time_limit">
               Time Limit (seconds)
             </label>
-            <input
+            <select
               id="time_limit"
-              className="form-input"
-              type="number"
-              min={10}
-              max={60}
-              value={timeLimit}
-              onChange={(event) => {
-                const next = Number(event.target.value || 0);
-                setTimeLimit(next);
-              }}
-            />
+              className="form-select"
+              value={String(timeLimit)}
+              onChange={(event) => setTimeLimit(Number(event.target.value))}
+            >
+              <option value="">Select time limit</option>
+              {Array.from({ length: 8 }).map((_, i) => {
+                const val = 15 * (i + 1); // 15,30,...,120
+                return (
+                  <option key={val} value={val}>
+                    {val}
+                  </option>
+                );
+              })}
+            </select>
           </div>
         </div>
       );

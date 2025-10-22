@@ -3,18 +3,19 @@ import { EITHER_OR_ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } f
 import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
 import { buildEitherOrUserConfig } from './userConfig';
+import { eitherOrOverview } from './overview';
 
 export const eitherOrModule: ModeModule = {
   definition: {
     key: 'either_or',
     label: 'Either Or',
-    summaryTemplate: '`Either Or • ${config.stat_label || config.stat || ""} • ${config.resolve_at || ""}`',
+    summaryTemplate: '`Either Or`',
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate:
       '`Largest next increase of stats, baseline stats captured at bet close`',
     winningConditionTemplate:
-      '`Largest net increase in ${config.stat_label || config.stat || "stat"} between ${(config.player1_name || config.player1_id || "Player 1")} (${config.player1_team_name || config.player1_team || "Team 1"}) and ${(config.player2_name || config.player2_id || "Player 2")} (${config.player2_team_name || config.player2_team || "Team 2"}) until ${config.resolve_at || "the selected time"}`',
+      '`Largest increase in ${config.stat_label || config.stat || "stat"} between ${(config.player1_name || config.player1_id || "Player 1")} (${config.player1_team_name || config.player1_team || "Team 1"}) and ${(config.player2_name || config.player2_id || "Player 2")} (${config.player2_team_name || config.player2_team || "Team 2"}) until ${config.resolve_at || "the selected time"}`',
     optionsExpression:
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); return opts; })()',
     configSteps: [
@@ -43,6 +44,7 @@ export const eitherOrModule: ModeModule = {
       '(() => { const errors = []; if (!config.player1_id || !config.player2_id) errors.push("Two players required"); if (!config.stat) errors.push("Stat required"); return errors; })()',
     metadata: buildEitherOrMetadata(),
   },
+  overview: eitherOrOverview,
   prepareConfig: prepareEitherOrConfig,
   validator: eitherOrValidator,
   buildUserConfig: async ({ nflGameId }) => buildEitherOrUserConfig({ nflGameId }),

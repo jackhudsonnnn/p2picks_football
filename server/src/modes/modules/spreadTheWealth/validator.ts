@@ -17,6 +17,7 @@ interface SpreadTheWealthConfig {
 export class SpreadTheWealthValidatorService {
   private unsubscribe: (() => void) | null = null;
   private lastSignatureByGame = new Map<string, string>();
+  private readonly modeLabel = 'Spread The Wealth';
 
   start(): void {
     if (this.unsubscribe) return;
@@ -73,24 +74,33 @@ export class SpreadTheWealthValidatorService {
       const line = this.normalizeLine(config);
       if (line == null) {
         console.warn('[spreadTheWealth] invalid line; washing bet', { bet_id: bet.bet_id, config });
-        await this.washBet(bet.bet_id, {
-          outcome: 'wash',
-          reason: 'invalid_line',
-          captured_at: new Date().toISOString(),
-          config,
-        });
+        const label = this.describeLine(config);
+        await this.washBet(
+          bet.bet_id,
+          {
+            outcome: 'wash',
+            reason: 'invalid_line',
+            captured_at: new Date().toISOString(),
+            config,
+          },
+          label ? `Invalid over/under line (${label}).` : 'Invalid over/under line configuration.',
+        );
         return;
       }
       const totalPoints = this.computeTotalPoints(doc);
       const delta = totalPoints - line;
       if (Math.abs(delta) < 1e-9) {
-        await this.washBet(bet.bet_id, {
-          outcome: 'wash',
-          reason: 'push',
-          total_points: totalPoints,
-          line,
-          captured_at: new Date().toISOString(),
-        });
+        await this.washBet(
+          bet.bet_id,
+          {
+            outcome: 'wash',
+            reason: 'push',
+            total_points: totalPoints,
+            line,
+            captured_at: new Date().toISOString(),
+          },
+          `Total points matched the line (${this.formatNumber(totalPoints)} vs ${this.formatNumber(line)}).`,
+        );
         return;
       }
       const winningChoice = delta > 0 ? 'Over' : 'Under';
@@ -145,6 +155,56 @@ export class SpreadTheWealthValidatorService {
     return null;
   }
 
+  private describeLine(config: SpreadTheWealthConfig): string | null {
+    const label = typeof config.line_label === 'string' ? config.line_label.trim() : '';
+    if (label.length) return label;
+    if (typeof config.line === 'string' && config.line.trim().length) {
+      return config.line.trim();
+    }
+    if (typeof config.line_value === 'number' && Number.isFinite(config.line_value)) {
+      return this.formatNumber(config.line_value);
+    }
+    return null;
+  }
+
+  private formatNumber(value: number | null | undefined): string {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return '0';
+    const fractional = Math.abs(value % 1) > 1e-9;
+    const formatter = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: fractional ? 1 : 0,
+      maximumFractionDigits: fractional ? 1 : 0,
+    });
+    return formatter.format(value);
+  }
+
+  private formatBetLabel(betId: string): string {
+    if (!betId) return 'UNKNOWN';
+    const trimmed = betId.trim();
+    if (!trimmed) return 'UNKNOWN';
+    const short = trimmed.length > 8 ? trimmed.slice(0, 8) : trimmed;
+    return short;
+  }
+
+  private async createWashSystemMessage(tableId: string, betId: string, explanation: string): Promise<void> {
+    const supa = getSupabaseAdmin();
+    const reason = explanation && explanation.trim().length ? explanation.trim() : 'See resolution history for details.';
+    const message = `Bet #${this.formatBetLabel(betId)} washed\n\n${reason}`;
+    try {
+      const { error } = await supa.from('system_messages').insert([
+        {
+          table_id: tableId,
+          message_text: message,
+          generated_at: new Date().toISOString(),
+        },
+      ]);
+      if (error) {
+        console.error('[spreadTheWealth] failed to create wash system message', { betId, tableId }, error);
+      }
+    } catch (err: unknown) {
+      console.error('[spreadTheWealth] wash system message error', { betId, tableId }, err);
+    }
+  }
+
   private async getConfigForBet(betId: string): Promise<SpreadTheWealthConfig | null> {
     try {
       const record = await fetchModeConfig(betId);
@@ -156,7 +216,7 @@ export class SpreadTheWealthValidatorService {
     }
   }
 
-  private async washBet(betId: string, payload: Record<string, unknown>): Promise<void> {
+  private async washBet(betId: string, payload: Record<string, unknown>, explanation: string): Promise<void> {
     try {
       const supa = getSupabaseAdmin();
       const updates = {
@@ -164,19 +224,30 @@ export class SpreadTheWealthValidatorService {
         winning_choice: null as string | null,
         resolution_time: new Date().toISOString(),
       };
-      const { error } = await supa
+      const { data, error } = await supa
         .from('bet_proposals')
         .update(updates)
         .eq('bet_id', betId)
-        .eq('bet_status', 'pending');
+        .eq('bet_status', 'pending')
+        .select('bet_id, table_id')
+        .maybeSingle();
       if (error) {
         console.error('[spreadTheWealth] failed to wash bet', { betId }, error);
+        return;
+      }
+      if (!data) {
+        console.warn('[spreadTheWealth] wash skipped; bet not pending', { betId });
         return;
       }
       await this.recordHistory(betId, {
         ...payload,
         event: 'spread_the_wealth_result',
       });
+      if (!data.table_id) {
+        console.warn('[spreadTheWealth] wash message skipped; table_id missing', { betId });
+        return;
+      }
+      await this.createWashSystemMessage(data.table_id, betId, explanation);
     } catch (err: unknown) {
       console.error('[spreadTheWealth] wash bet error', { betId }, err);
     }

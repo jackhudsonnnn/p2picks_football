@@ -53,6 +53,16 @@
     "table_schema": "public",
     "table_name": "bet_proposals",
     "trigger_schema": "public",
+    "trigger_name": "trg_create_system_message_on_bet_status_change",
+    "event": "UPDATE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION create_system_message_on_bet_status_change()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
     "trigger_name": "trg_enforce_resolve_no_winner_wash",
     "event": "UPDATE",
     "activation": "BEFORE",

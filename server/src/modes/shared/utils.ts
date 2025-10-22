@@ -1,7 +1,12 @@
-import type { ModeDefinitionDTO } from './types';
+import type { RefinedGameDoc, Team } from '../../helpers';
+import type { ModeDefinitionDTO, ModeOverview } from './types';
 
 export function cloneDefinition(definition: ModeDefinitionDTO): ModeDefinitionDTO {
   return JSON.parse(JSON.stringify(definition));
+}
+
+export function cloneOverview(overview: ModeOverview): ModeOverview {
+  return JSON.parse(JSON.stringify(overview));
 }
 
 type ModeExpressionContext = {
@@ -150,4 +155,49 @@ function dedupeOptions(options: string[]): string[] {
     result.push(value);
   });
   return result;
+}
+
+export function listTeams(doc: RefinedGameDoc | null | undefined): Team[] {
+  if (!doc || !Array.isArray(doc.teams)) return [];
+  return doc.teams as Team[];
+}
+
+export function pickHomeTeam(doc: RefinedGameDoc | null | undefined): Team | null {
+  const teams = listTeams(doc);
+  if (teams.length === 0) return null;
+  return teams.find((team) => isTeamSide(team, 'home')) ?? teams[0] ?? null;
+}
+
+export function pickAwayTeam(doc: RefinedGameDoc | null | undefined, homeTeam?: Team | null): Team | null {
+  const teams = listTeams(doc);
+  if (teams.length === 0) return null;
+  const flagged = teams.find((team) => isTeamSide(team, 'away'));
+  if (flagged) return flagged;
+  if (homeTeam) {
+    const fallback = teams.find((team) => team !== homeTeam);
+    if (fallback) return fallback;
+  }
+  return teams.length > 1 ? teams[1] : null;
+}
+
+export function extractTeamId(team: Team | null | undefined): string | null {
+  if (!team) return null;
+  const raw = (team as any)?.teamId ?? (team as any)?.abbreviation ?? (team as any)?.id;
+  if (raw === undefined || raw === null) return null;
+  const value = String(raw).trim();
+  return value.length ? value : null;
+}
+
+export function extractTeamName(team: Team | null | undefined): string | null {
+  if (!team) return null;
+  const raw = (team as any)?.name ?? (team as any)?.abbreviation ?? (team as any)?.teamId;
+  if (raw === undefined || raw === null) return null;
+  const value = String(raw).trim();
+  return value.length ? value : null;
+}
+
+function isTeamSide(team: Team, side: 'home' | 'away'): boolean {
+  const homeAway = (team as any)?.homeAway;
+  if (homeAway === undefined || homeAway === null) return false;
+  return String(homeAway).trim().toLowerCase() === side;
 }

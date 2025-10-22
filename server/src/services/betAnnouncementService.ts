@@ -54,7 +54,8 @@ export function formatBetAnnouncement(input: BetAnnouncementInput): string {
   const winningCondition = sanitizeLine(preview.winningCondition ?? '') || DEFAULT_WINNING_CONDITION;
 
   return [
-    `Bet #${betIdLabel}`,
+    `Bet #${betIdLabel} active`,
+    ``,
     `${wagerLabel} | ${timeLimitLabel}`,
     modeLabel,
     description,

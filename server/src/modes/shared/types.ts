@@ -22,6 +22,23 @@ export type ModeDefinitionDTO = {
   metadata?: Record<string, unknown>;
 };
 
+export interface ModeOverviewExample {
+  title?: string;
+  description: string;
+}
+
+export interface ModeOverview {
+  key: string;
+  label: string;
+  tagline: string;
+  description: string;
+  proposerConfiguration: string[];
+  participantChoices: string[];
+  winningCondition: string;
+  notes?: string[];
+  example?: ModeOverviewExample;
+}
+
 export interface ModeUserConfigChoice {
   value: string;
   label: string;
@@ -39,6 +56,7 @@ export interface ModeValidator {
 
 export interface ModeModule {
   definition: ModeDefinitionDTO;
+  overview?: ModeOverview;
   prepareConfig?: (input: {
     bet: BetProposal;
     config: Record<string, unknown>;

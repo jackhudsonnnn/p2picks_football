@@ -60,6 +60,7 @@ export class EitherOrValidatorService {
   private pendingChannel: RealtimeChannel | null = null;
   private redisClient: Redis | null = null;
   private readonly baselineTtlSeconds = 60 * 60 * 12;
+  private readonly modeLabel = 'Either Or';
   private lastSignatureByGame = new Map<string, string>();
 
   start() {
@@ -228,12 +229,19 @@ export class EitherOrValidatorService {
         return;
       }
       if (delta1 === delta2) {
-        await this.washBet(bet.bet_id, {
-          stat: baseline.statKey,
-          player1: { ...baseline.player1, final: player1Final, delta: delta1 },
-          player2: { ...baseline.player2, final: player2Final, delta: delta2 },
-          captured_at: new Date().toISOString(),
-        });
+        const player1Label = config.player1_name || baseline.player1.name || 'Player 1';
+        const player2Label = config.player2_name || baseline.player2.name || 'Player 2';
+        const statLabel = this.formatStatLabel(config, baseline.statKey);
+        await this.washBet(
+          bet.bet_id,
+          {
+            stat: baseline.statKey,
+            player1: { ...baseline.player1, final: player1Final, delta: delta1 },
+            player2: { ...baseline.player2, final: player2Final, delta: delta2 },
+            captured_at: new Date().toISOString(),
+          },
+          `${player1Label} and ${player2Label} finished tied in ${statLabel}.`,
+        );
         await this.clearBaseline(bet.bet_id);
         return;
       }
@@ -262,19 +270,34 @@ export class EitherOrValidatorService {
     }
   }
 
-  private async washBet(betId: string, payload: Record<string, unknown>): Promise<void> {
-  const supa = getSupabaseAdmin();
+  private async washBet(betId: string, payload: Record<string, unknown>, explanation: string): Promise<void> {
+    const supa = getSupabaseAdmin();
     const updates = {
       bet_status: 'washed' as const,
       winning_choice: null as string | null,
       resolution_time: new Date().toISOString(),
     };
-    const { error } = await supa.from('bet_proposals').update(updates).eq('bet_id', betId).eq('bet_status', 'pending');
+    const { data, error } = await supa
+      .from('bet_proposals')
+      .update(updates)
+      .eq('bet_id', betId)
+      .eq('bet_status', 'pending')
+      .select('bet_id, table_id')
+      .maybeSingle();
     if (error) {
       console.error('[eitherOr] failed to wash bet', { betId }, error);
       return;
     }
+    if (!data) {
+      console.warn('[eitherOr] wash skipped; bet not pending', { betId });
+      return;
+    }
     await this.recordHistory(betId, 'either_or_result', { outcome: 'wash', ...payload });
+    if (!data.table_id) {
+      console.warn('[eitherOr] wash message skipped; table_id missing', { betId });
+      return;
+    }
+    await this.createWashSystemMessage(data.table_id, betId, explanation);
   }
 
   private async captureBaselineForBet(bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null }, prefetchedDoc?: RefinedGameDoc | null): Promise<BaselineRecord | null> {
@@ -367,6 +390,50 @@ export class EitherOrValidatorService {
       return Number.isFinite(num) ? num : 0;
     }
     return 0;
+  }
+
+  private formatStatLabel(config: EitherOrConfig, statKey: string): string {
+    const raw = String(config.stat_label || config.stat || statKey || '').trim();
+    if (!raw) return 'the selected stat';
+    const withSpaces = raw
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!withSpaces) return 'the selected stat';
+    return withSpaces
+      .split(' ')
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private formatBetLabel(betId: string): string {
+    if (!betId) return 'UNKNOWN';
+    const trimmed = betId.trim();
+    if (!trimmed) return 'UNKNOWN';
+    const short = trimmed.length > 8 ? trimmed.slice(0, 8) : trimmed;
+    return short;
+  }
+
+  private async createWashSystemMessage(tableId: string, betId: string, explanation: string): Promise<void> {
+    const supa = getSupabaseAdmin();
+    const reason = explanation && explanation.trim().length ? explanation.trim() : 'See resolution history for details.';
+    const message = `Bet #${this.formatBetLabel(betId)} washed\n\n${reason}`;
+    try {
+      const { error } = await supa.from('system_messages').insert([
+        {
+          table_id: tableId,
+          message_text: message,
+          generated_at: new Date().toISOString(),
+        },
+      ]);
+      if (error) {
+        console.error('[eitherOr] failed to create wash system message', { betId, tableId }, error);
+      }
+    } catch (err: unknown) {
+      console.error('[eitherOr] wash system message error', { betId, tableId }, err);
+    }
   }
 
   private baselineKey(betId: string): string {

@@ -33,6 +33,7 @@ export class ChooseTheirFateValidatorService {
   private redisClient: Redis | null = null;
   private readonly baselineTtlSeconds = 60 * 60 * 6;
   private lastSignatureByGame = new Map<string, string>();
+  private readonly modeLabel = 'Choose Their Fate';
 
   start() {
     this.getRedis();
@@ -166,12 +167,16 @@ export class ChooseTheirFateValidatorService {
     try {
       const statusForWashCheck = (doc.status ? String(doc.status) : '').trim().toUpperCase();
       if (this.shouldAutoWashForStatus(statusForWashCheck)) {
-        await this.washBet(bet.bet_id, {
-          outcome: 'wash',
-          reason: 'game_status',
-          status: doc.status ?? null,
-          captured_at: new Date().toISOString(),
-        });
+        await this.washBet(
+          bet.bet_id,
+          {
+            outcome: 'wash',
+            reason: 'game_status',
+            status: doc.status ?? null,
+            captured_at: new Date().toISOString(),
+          },
+          this.describeStatusWash(doc.status),
+        );
         await this.clearBaseline(bet.bet_id);
         return;
       }
@@ -290,12 +295,16 @@ export class ChooseTheirFateValidatorService {
     }
     const statusForWashCheck = (doc.status ? String(doc.status) : '').trim().toUpperCase();
     if (this.shouldAutoWashForStatus(statusForWashCheck)) {
-      await this.washBet(bet.bet_id, {
-        outcome: 'wash',
-        reason: 'game_status',
-        status: doc.status ?? null,
-        captured_at: new Date().toISOString(),
-      });
+      await this.washBet(
+        bet.bet_id,
+        {
+          outcome: 'wash',
+          reason: 'game_status',
+          status: doc.status ?? null,
+          captured_at: new Date().toISOString(),
+        },
+        this.describeStatusWash(doc.status),
+      );
       await this.clearBaseline(bet.bet_id);
       return null;
     }
@@ -353,6 +362,56 @@ export class ChooseTheirFateValidatorService {
     return str ? str : null;
   }
 
+  private describeStatusWash(status: string | null | undefined): string {
+    const label = this.formatStatusLabel(status);
+    if (label) {
+      return `The half ended before the drive could finish (status: ${label}).`;
+    }
+    return 'The half ended before the drive could finish.';
+  }
+
+  private formatStatusLabel(status: string | null | undefined): string | null {
+    if (status === null || status === undefined) return null;
+    const raw = String(status).trim();
+    if (!raw) return null;
+    const withoutPrefix = raw.replace(/^STATUS_/i, '');
+    const withSpaces = withoutPrefix.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!withSpaces) return null;
+    return withSpaces
+      .split(' ')
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private formatBetLabel(betId: string): string {
+    if (!betId) return 'UNKNOWN';
+    const trimmed = betId.trim();
+    if (!trimmed) return 'UNKNOWN';
+    const short = trimmed.length > 8 ? trimmed.slice(0, 8) : trimmed;
+    return short;
+  }
+
+  private async createWashSystemMessage(tableId: string, betId: string, explanation: string): Promise<void> {
+    const supa = getSupabaseAdmin();
+    const reason = explanation && explanation.trim().length ? explanation.trim() : 'See resolution history for details.';
+    const message = `Bet #${this.formatBetLabel(betId)} washed\n\n${reason}`;
+    try {
+      const { error } = await supa.from('system_messages').insert([
+        {
+          table_id: tableId,
+          message_text: message,
+          generated_at: new Date().toISOString(),
+        },
+      ]);
+      if (error) {
+        console.error('[chooseTheirFate] failed to create wash system message', { betId, tableId }, error);
+      }
+    } catch (err: unknown) {
+      console.error('[chooseTheirFate] wash system message error', { betId, tableId }, err);
+    }
+  }
+
   private baselineKey(betId: string): string {
     return `choosefate:baseline:${betId}`;
   }
@@ -393,23 +452,34 @@ export class ChooseTheirFateValidatorService {
     }
   }
 
-  private async washBet(betId: string, payload: Record<string, unknown>): Promise<void> {
-  const supa = getSupabaseAdmin();
+  private async washBet(betId: string, payload: Record<string, unknown>, explanation: string): Promise<void> {
+    const supa = getSupabaseAdmin();
     const updates = {
       bet_status: 'washed' as const,
       winning_choice: null as string | null,
       resolution_time: new Date().toISOString(),
     };
-    const { error } = await supa
+    const { data, error } = await supa
       .from('bet_proposals')
       .update(updates)
       .eq('bet_id', betId)
-      .eq('bet_status', 'pending');
+      .eq('bet_status', 'pending')
+      .select('bet_id, table_id')
+      .maybeSingle();
     if (error) {
       console.error('[chooseTheirFate] failed to wash bet', { betId }, error);
       return;
     }
+    if (!data) {
+      console.warn('[chooseTheirFate] wash skipped; bet not pending', { betId });
+      return;
+    }
     await this.recordHistory(betId, 'choose_their_fate_result', payload);
+    if (!data.table_id) {
+      console.warn('[chooseTheirFate] wash message skipped; table_id missing', { betId });
+      return;
+    }
+    await this.createWashSystemMessage(data.table_id, betId, explanation);
   }
 
   private shouldAutoWashForStatus(rawStatus: string | null | undefined): boolean {

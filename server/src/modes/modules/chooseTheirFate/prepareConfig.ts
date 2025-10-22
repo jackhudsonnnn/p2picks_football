@@ -1,33 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, type RefinedGameDoc, type Team, findTeam } from '../../../helpers';
-
-function toLower(value: unknown): string {
-  return String(value || '').toLowerCase();
-}
-
-function pickHomeTeam(doc: RefinedGameDoc): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  return teams.find((team) => toLower((team as any)?.homeAway) === 'home') || teams[0] || null;
-}
-
-function pickAwayTeam(doc: RefinedGameDoc, home: Team | null): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  const byFlag = teams.find((team) => toLower((team as any)?.homeAway) === 'away');
-  if (byFlag) return byFlag;
-  return teams.find((team) => team !== home) || null;
-}
-
-function extractTeamId(team: Team | null): string | null {
-  if (!team) return null;
-  const id = (team as any)?.teamId || (team as any)?.abbreviation;
-  return id ? String(id) : null;
-}
-
-function extractTeamName(team: Team | null): string | null {
-  if (!team) return null;
-  const name = (team as any)?.name || (team as any)?.abbreviation || (team as any)?.teamId;
-  return name ? String(name) : null;
-}
+import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 function resolvePossessionTeam(doc: RefinedGameDoc, teamId?: string | null): Team | null {
   if (teamId) {

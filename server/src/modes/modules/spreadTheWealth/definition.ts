@@ -2,13 +2,14 @@ import type { ModeModule } from '../../shared/types';
 import { prepareSpreadTheWealthConfig } from './prepareConfig';
 import { spreadTheWealthValidator } from './validator';
 import { buildSpreadTheWealthUserConfig } from './userConfig';
+import { spreadTheWealthOverview } from './overview';
 
 export const spreadTheWealthModule: ModeModule = {
   definition: {
     key: 'spread_the_wealth',
     label: 'Spread The Wealth',
     summaryTemplate:
-      '`Spread The Wealth${config.line_label || config.line ? " • " + (config.line_label || config.line) : ""}`',
+      'Spread The Wealth',
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate: '`Total points compared to the selected line`',
@@ -27,6 +28,7 @@ export const spreadTheWealthModule: ModeModule = {
       },
     },
   },
+  overview: spreadTheWealthOverview,
   prepareConfig: prepareSpreadTheWealthConfig,
   validator: spreadTheWealthValidator,
   buildUserConfig: async ({ nflGameId, config }) =>

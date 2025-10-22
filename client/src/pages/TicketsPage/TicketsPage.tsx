@@ -1,20 +1,27 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import TicketCard from "@components/Bet/TicketCard/TicketCard";
-import { PaginationControls, SearchBar } from "@shared/widgets";
+import { FilterBar, PaginationControls } from "@shared/widgets";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
 
+const STATUS_FILTER_OPTIONS = [
+  { id: "active", label: "Active" },
+  { id: "pending", label: "Pending" },
+  { id: "resolved", label: "Resolved" },
+  { id: "washed", label: "Washed" },
+];
+
 export const TicketsPage: React.FC = () => {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 6;
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { tickets, loading, counts, changeGuess } = useTickets(user?.id);
+  const { tickets, loading, changeGuess } = useTickets(user?.id);
 
   const handleGuessChange = async (ticketId: string, newGuess: string) => {
     try { await changeGuess(ticketId, newGuess); } catch (e: any) { alert(`Failed to update your guess. ${e?.message ?? ''}`.trim()); }
@@ -32,15 +39,27 @@ export const TicketsPage: React.FC = () => {
     });
   };
 
-  const filteredTickets = tickets.filter((ticket) => {
-    if (!searchQuery) return true;
-    const normalizedQuery = searchQuery.toLowerCase();
-    return (
-      ticket.tableName.toLowerCase().includes(normalizedQuery) ||
-      ticket.gameContext.toLowerCase().includes(normalizedQuery) ||
-      ticket.betDetails.toLowerCase().includes(normalizedQuery)
-    );
-  });
+  const handleFilterChange = (nextFilters: string[]) => {
+    setSelectedStatuses(nextFilters);
+    setCurrentPage(1);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  const filteredTickets = useMemo(() => {
+    const effectiveStatuses = selectedStatuses.length
+      ? selectedStatuses
+      : STATUS_FILTER_OPTIONS.map((option) => option.id);
+
+    if (effectiveStatuses.length === STATUS_FILTER_OPTIONS.length) {
+      return tickets;
+    }
+
+    const statusSet = new Set(effectiveStatuses);
+    return tickets.filter((ticket) => statusSet.has(ticket.state));
+  }, [selectedStatuses, tickets]);
 
   const indexOfLastTicket = currentPage * ticketsPerPage;
   const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
@@ -49,8 +68,6 @@ export const TicketsPage: React.FC = () => {
     indexOfLastTicket
   );
   const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
-  const ticketCounts = counts;
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -58,21 +75,15 @@ export const TicketsPage: React.FC = () => {
   return (
     <div className={`tickets-page ${isMobile ? 'mobile' : ''}`}>
       <div className="page-header">
-        <div className="page-title"><h1>My Tickets</h1></div>
-        <div className="page-stats">
-          <div className="stat">
-            <span className="stat-value">{ticketCounts.total}</span>
-            <span className="stat-label">Tickets</span>
-          </div>
-        </div>
+        <div className="page-title"><h1>Tickets</h1></div>
+        <FilterBar
+          options={STATUS_FILTER_OPTIONS}
+          selectedFilters={selectedStatuses}
+          onFilterChange={handleFilterChange}
+          className="tickets-filter-dropdown"
+          placeholder="All statuses"
+        />
       </div>
-
-      {/* Use the generalized SearchBar */}
-      <SearchBar
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Search tickets..."
-      />
 
       {filteredTickets.length > 0 ? (
         <div className="tickets-list">
@@ -87,7 +98,7 @@ export const TicketsPage: React.FC = () => {
         </div>
       ) : (
         <div className="empty-state">
-          <p>No tickets match your filter criteria.</p>
+          <p>No tickets match your selected filters.</p>
         </div>
       )}
 

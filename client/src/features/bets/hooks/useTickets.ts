@@ -119,11 +119,18 @@ export function useTickets(userId?: string) {
   }, [userId, refresh]);
 
   const counts: TicketCounts = useMemo(() => {
+    const active = tickets.filter((t) => t.state === 'active').length;
+    const pending = tickets.filter((t) => t.state === 'pending').length;
+    const resolved = tickets.filter((t) => t.state === 'resolved').length;
+    const washed = tickets.filter((t) => t.state === 'washed').length;
+
     return {
       total: tickets.length,
-      active: tickets.filter((t) => t.state === 'active').length,
-      pending: tickets.filter((t) => t.state === 'pending').length,
-      settled: tickets.filter((t) => t.state === 'resolved' || t.state === 'washed').length,
+      active,
+      pending,
+      resolved,
+      washed,
+      settled: resolved + washed,
       wins: tickets.filter((t) => t.state === 'resolved' && t.winningChoice && t.winningChoice === t.myGuess).length,
     };
   }, [tickets]);

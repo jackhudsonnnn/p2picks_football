@@ -2,13 +2,14 @@ import type { ModeModule } from '../../shared/types';
 import { prepareGiveAndTakeConfig } from './prepareConfig';
 import { giveAndTakeValidator } from './validator';
 import { buildGiveAndTakeUserConfig } from './userConfig';
+import { giveAndTakeOverview } from './overview';
 
 export const giveAndTakeModule: ModeModule = {
   definition: {
     key: 'give_and_take',
     label: 'Give And Take',
     summaryTemplate:
-      '`Give And Take${config.spread_label || config.spread ? " • " + (config.spread_label || config.spread) : ""}`',
+      'Give And Take',
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate: '`Spread applied to the home team score`',
@@ -28,6 +29,7 @@ export const giveAndTakeModule: ModeModule = {
       },
     },
   },
+  overview: giveAndTakeOverview,
   prepareConfig: prepareGiveAndTakeConfig,
   validator: giveAndTakeValidator,
   buildUserConfig: async ({ nflGameId, config }) =>

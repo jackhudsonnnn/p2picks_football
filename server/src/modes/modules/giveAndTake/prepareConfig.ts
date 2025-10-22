@@ -1,5 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, type RefinedGameDoc, type Team } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 const SPREAD_MIN = -99.5;
 const SPREAD_MAX = 99.5;
@@ -103,30 +104,3 @@ function formatSpread(value: number): string {
   return value >= 0 ? `+${fixed}` : `-${fixed}`;
 }
 
-function pickHomeTeam(doc: RefinedGameDoc): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  return (
-    teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'home') ||
-    teams[0] ||
-    null
-  );
-}
-
-function pickAwayTeam(doc: RefinedGameDoc, home: Team | null): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  const byFlag = teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'away');
-  if (byFlag) return byFlag;
-  return teams.find((team) => team !== home) || null;
-}
-
-function extractTeamId(team: Team | null): string | null {
-  if (!team) return null;
-  const rawId = (team as any)?.teamId || (team as any)?.abbreviation;
-  return rawId ? String(rawId) : null;
-}
-
-function extractTeamName(team: Team | null): string | null {
-  if (!team) return null;
-  const name = (team as any)?.name || (team as any)?.abbreviation || (team as any)?.teamId;
-  return name ? String(name) : null;
-}

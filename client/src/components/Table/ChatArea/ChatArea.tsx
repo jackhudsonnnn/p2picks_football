@@ -15,6 +15,7 @@ interface ChatAreaProps {
   hasMore?: boolean;
   loading?: boolean;
   loadingMore?: boolean;
+  tableName?: string;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -26,6 +27,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   hasMore = false,
   loading = false,
   loadingMore = false,
+  tableName = "",
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -92,7 +94,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       <div className="message-input-container">
         <input
           type="text"
-          placeholder="Type a message..."
+          placeholder={`Type a message for ${tableName || "this table"}...`}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => {

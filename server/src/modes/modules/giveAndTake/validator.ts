@@ -17,6 +17,7 @@ interface GiveAndTakeConfig {
 export class GiveAndTakeValidatorService {
   private unsubscribe: (() => void) | null = null;
   private lastSignatureByGame = new Map<string, string>();
+  private readonly modeLabel = 'Give And Take';
 
   start(): void {
     if (this.unsubscribe) return;
@@ -72,12 +73,17 @@ export class GiveAndTakeValidatorService {
       }
       const spread = this.normalizeSpread(config);
       if (spread == null) {
-        await this.washBet(bet.bet_id, {
-          outcome: 'wash',
-          reason: 'invalid_spread',
-          captured_at: new Date().toISOString(),
-          config,
-        });
+        const spreadLabel = this.describeSpread(config);
+        await this.washBet(
+          bet.bet_id,
+          {
+            outcome: 'wash',
+            reason: 'invalid_spread',
+            captured_at: new Date().toISOString(),
+            config,
+          },
+          spreadLabel ? `Invalid spread value (${spreadLabel}).` : 'Invalid spread configuration.',
+        );
         return;
       }
 
@@ -90,14 +96,18 @@ export class GiveAndTakeValidatorService {
       const awayChoice = this.choiceLabel(config.away_team_name, config.away_team_id, 'Away Team');
 
       if (Math.abs(adjustedHome - awayScore) < 1e-9) {
-        await this.washBet(bet.bet_id, {
-          outcome: 'wash',
-          reason: 'push',
-          home_score: homeScore,
-          away_score: awayScore,
-          spread,
-          captured_at: new Date().toISOString(),
-        });
+        await this.washBet(
+          bet.bet_id,
+          {
+            outcome: 'wash',
+            reason: 'push',
+            home_score: homeScore,
+            away_score: awayScore,
+            spread,
+            captured_at: new Date().toISOString(),
+          },
+          `Adjusted home score matched away score (${this.formatNumber(adjustedHome)} vs ${this.formatNumber(awayScore)}).`,
+        );
         return;
       }
 
@@ -184,6 +194,56 @@ export class GiveAndTakeValidatorService {
     return fallback;
   }
 
+  private describeSpread(config: GiveAndTakeConfig): string | null {
+    const label = typeof config.spread_label === 'string' ? config.spread_label.trim() : '';
+    if (label.length) return label;
+    if (typeof config.spread === 'string' && config.spread.trim().length) {
+      return config.spread.trim();
+    }
+    if (typeof config.spread_value === 'number' && Number.isFinite(config.spread_value)) {
+      return this.formatNumber(config.spread_value);
+    }
+    return null;
+  }
+
+  private formatNumber(value: number | null | undefined): string {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return '0';
+    const fractional = Math.abs(value % 1) > 1e-9;
+    const formatter = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: fractional ? 1 : 0,
+      maximumFractionDigits: fractional ? 1 : 0,
+    });
+    return formatter.format(value);
+  }
+
+  private formatBetLabel(betId: string): string {
+    if (!betId) return 'UNKNOWN';
+    const trimmed = betId.trim();
+    if (!trimmed) return 'UNKNOWN';
+    const short = trimmed.length > 8 ? trimmed.slice(0, 8) : trimmed;
+    return short;
+  }
+
+  private async createWashSystemMessage(tableId: string, betId: string, explanation: string): Promise<void> {
+    const supa = getSupabaseAdmin();
+    const reason = explanation && explanation.trim().length ? explanation.trim() : 'See resolution history for details.';
+    const message = `Bet #${this.formatBetLabel(betId)} washed\n\n${reason}`;
+    try {
+      const { error } = await supa.from('system_messages').insert([
+        {
+          table_id: tableId,
+          message_text: message,
+          generated_at: new Date().toISOString(),
+        },
+      ]);
+      if (error) {
+        console.error('[giveAndTake] failed to create wash system message', { betId, tableId }, error);
+      }
+    } catch (err: unknown) {
+      console.error('[giveAndTake] wash system message error', { betId, tableId }, err);
+    }
+  }
+
   private async getConfigForBet(betId: string): Promise<GiveAndTakeConfig | null> {
     try {
       const record = await fetchModeConfig(betId);
@@ -195,7 +255,7 @@ export class GiveAndTakeValidatorService {
     }
   }
 
-  private async washBet(betId: string, payload: Record<string, unknown>): Promise<void> {
+  private async washBet(betId: string, payload: Record<string, unknown>, explanation: string): Promise<void> {
     try {
       const supa = getSupabaseAdmin();
       const updates = {
@@ -203,19 +263,30 @@ export class GiveAndTakeValidatorService {
         winning_choice: null as string | null,
         resolution_time: new Date().toISOString(),
       };
-      const { error } = await supa
+      const { data, error } = await supa
         .from('bet_proposals')
         .update(updates)
         .eq('bet_id', betId)
-        .eq('bet_status', 'pending');
+        .eq('bet_status', 'pending')
+        .select('bet_id, table_id')
+        .maybeSingle();
       if (error) {
         console.error('[giveAndTake] failed to wash bet', { betId }, error);
+        return;
+      }
+      if (!data) {
+        console.warn('[giveAndTake] wash skipped; bet not pending', { betId });
         return;
       }
       await this.recordHistory(betId, {
         ...payload,
         event: 'give_and_take_result',
       });
+      if (!data.table_id) {
+        console.warn('[giveAndTake] wash message skipped; table_id missing', { betId });
+        return;
+      }
+      await this.createWashSystemMessage(data.table_id, betId, explanation);
     } catch (err: unknown) {
       console.error('[giveAndTake] wash bet error', { betId }, err);
     }

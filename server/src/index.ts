@@ -6,7 +6,7 @@ import {
   getGameStatus,
 } from './services/gameDataService';
 import { storeModeConfig, fetchModeConfig, fetchModeConfigs } from './services/modeConfig';
-import { listModeCatalog, findModeDefinition } from './services/modeCatalogService';
+import { listModeCatalog, findModeDefinition, listModeOverviewCatalog } from './services/modeCatalogService';
 import {
   buildModePreview,
   ensureModeKeyMatchesBet,
@@ -52,6 +52,10 @@ apiRouter.get('/bet-proposals/bootstrap', async (_req: Request, res: Response) =
 
 apiRouter.get('/bet-modes', (_req: Request, res: Response) => {
   res.json(listModeCatalog());
+});
+
+apiRouter.get('/bet-modes/overviews', (_req: Request, res: Response) => {
+  res.json(listModeOverviewCatalog());
 });
 
 apiRouter.get('/bet-modes/:modeKey', (req: Request, res: Response) => {
@@ -106,7 +110,7 @@ apiRouter.post('/bet-modes/:modeKey/preview', async (req: Request, res: Response
     let bet: BetProposal | null = null;
     if (betId) {
       try {
-  bet = await ensureModeKeyMatchesBet(betId, modeKey, req.supabase);
+        bet = await ensureModeKeyMatchesBet(betId, modeKey, req.supabase);
       } catch (err: any) {
         console.warn('[modePreview] failed to ensure bet/mode alignment', {
           betId,
@@ -130,7 +134,7 @@ apiRouter.post('/bet-modes/:modeKey/preview', async (req: Request, res: Response
       }
     }
 
-  const preview = await buildModePreview(modeKey, config, bet);
+    const preview = await buildModePreview(modeKey, config, bet);
     res.json({ mode_key: modeKey, ...preview, config });
   } catch (e: any) {
     const status = /mode .* not found/i.test(String(e?.message || '')) ? 404 : 500;
@@ -260,7 +264,7 @@ apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
       return;
     }
 
-  const preview = await buildModePreview(modeKey, modeConfig);
+    const preview = await buildModePreview(modeKey, modeConfig);
     if (preview.errors.length) {
       res.status(400).json({ error: 'invalid mode config', details: preview.errors });
       return;
@@ -366,7 +370,7 @@ apiRouter.post('/bets/:betId/mode-config', async (req: Request, res: Response) =
       return;
     }
 
-  const prepared = await prepareModeConfig(resolvedModeKey, bet as BetProposal, data as Record<string, unknown>);
+    const prepared = await prepareModeConfig(resolvedModeKey, bet as BetProposal, data as Record<string, unknown>);
     await storeModeConfig(betId, resolvedModeKey, prepared);
     res.json({ ok: true, data: prepared });
   } catch (e: any) {

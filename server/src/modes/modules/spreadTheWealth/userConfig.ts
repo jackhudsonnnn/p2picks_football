@@ -1,4 +1,3 @@
-import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 
 const LINE_MIN = 0.5;
@@ -43,26 +42,4 @@ function buildLineChoices(): ModeUserConfigChoice[] {
     });
   }
   return choices;
-}
-
-function pickHomeTeam(doc: RefinedGameDoc) {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  return (
-    teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'home') ||
-    teams[0] ||
-    null
-  );
-}
-
-function pickAwayTeam(doc: RefinedGameDoc, home: unknown) {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  const byFlag = teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'away');
-  if (byFlag) return byFlag;
-  return teams.find((team) => team !== home) || null;
-}
-
-function extractTeamName(team: unknown): string | null {
-  if (!team) return null;
-  const name = (team as any)?.name || (team as any)?.abbreviation || (team as any)?.teamId;
-  return name ? String(name) : null;
 }

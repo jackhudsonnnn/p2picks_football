@@ -1,33 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, type RefinedGameDoc, type Team } from '../../../helpers';
-
-function lower(value: unknown): string {
-  return String(value || '').toLowerCase();
-}
-
-function pickHomeTeam(doc: RefinedGameDoc): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  return teams.find((team) => lower((team as any)?.homeAway) === 'home') || teams[0] || null;
-}
-
-function pickAwayTeam(doc: RefinedGameDoc, home: Team | null): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  const byFlag = teams.find((team) => lower((team as any)?.homeAway) === 'away');
-  if (byFlag) return byFlag;
-  return teams.find((team) => team !== home) || null;
-}
-
-function extractTeamId(team: Team | null): string | null {
-  if (!team) return null;
-  const id = (team as any)?.teamId || (team as any)?.abbreviation;
-  return id ? String(id) : null;
-}
-
-function extractTeamName(team: Team | null): string | null {
-  if (!team) return null;
-  const name = (team as any)?.name || (team as any)?.abbreviation || (team as any)?.teamId;
-  return name ? String(name) : null;
-}
+import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 export async function prepareScorcererConfig({
   bet,
