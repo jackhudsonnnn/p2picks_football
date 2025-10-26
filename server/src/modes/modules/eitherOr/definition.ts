@@ -15,7 +15,7 @@ export const eitherOrModule: ModeModule = {
     secondaryDescriptionTemplate:
       '`Largest next increase of stats, baseline stats captured at bet close`',
     winningConditionTemplate:
-      '`Largest increase in ${config.stat_label || config.stat || "stat"} between ${(config.player1_name || config.player1_id || "Player 1")} (${config.player1_team_name || config.player1_team || "Team 1"}) and ${(config.player2_name || config.player2_id || "Player 2")} (${config.player2_team_name || config.player2_team || "Team 2"}) until ${config.resolve_at || "the selected time"}`',
+      '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} ${config.stat_label || config.stat || "stat"} until ${config.resolve_at || "the selected time"}`',
     optionsExpression:
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); return opts; })()',
     configSteps: [

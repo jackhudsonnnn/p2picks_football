@@ -24,6 +24,14 @@ export async function createBetProposal(
   });
 }
 
+export async function pokeBet(betId: string) {
+  return fetchJSON(`/api/bets/${encodeURIComponent(betId)}/poke`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+}
+
 // Accept a bet proposal: create a bet_participation for the user
 export async function acceptBetProposal({ betId, tableId, userId }: { betId: string; tableId: string; userId: string }) {
   const { data, error } = await supabase

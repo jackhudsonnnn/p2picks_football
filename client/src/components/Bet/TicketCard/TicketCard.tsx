@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './TicketCard.css';
 import type { Ticket } from '@features/bets/types';
 import { extractModeConfig } from '@features/bets/mappers';
@@ -6,6 +6,8 @@ import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
 import { fetchModePreview, type ModePreviewPayload } from '@shared/api/modePreview';
+import { pokeBet } from '@features/bets/service';
+import { HttpError } from '@shared/utils/http';
 
 export interface TicketCardProps {
   ticket: Ticket;
@@ -22,6 +24,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const modeConfigSignature = useMemo(() => JSON.stringify(modeConfig || {}), [modeConfig]);
   const [preview, setPreview] = useState<ModePreviewPayload | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isPoking, setIsPoking] = useState(false);
 
   useEffect(() => {
     if (!modeKey) {
@@ -146,6 +149,49 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const resolutionClass = isCorrectGuess ? 'guess-correct' : isIncorrectGuess ? 'guess-incorrect' : '';
   const cardClassName = ['ticket-card', stateClass, outcomeClass].filter(Boolean).join(' ');
   const betContainerClassName = ['bet-container', resolutionClass].filter(Boolean).join(' ');
+  const canPoke = isResolved || isWashed;
+
+  const extractPokeErrorMessage = useCallback((error: unknown): string => {
+    if (error instanceof HttpError) {
+      const preview = error.bodyPreview;
+      if (preview) {
+        try {
+          const parsed = JSON.parse(preview);
+          if (parsed && typeof parsed.error === 'string' && parsed.error.trim().length) {
+            return parsed.error;
+          }
+        } catch {
+          // ignore JSON parse failures and fall back to message
+        }
+      }
+      return error.message || 'Failed to poke bet.';
+    }
+    if (error instanceof Error) {
+      return error.message || 'Failed to poke bet.';
+    }
+    return 'Failed to poke bet.';
+  }, []);
+
+  const handlePoke = useCallback(async () => {
+    if (!canPoke || isPoking) {
+      return;
+    }
+    const betId = (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null;
+    if (!betId) {
+      window.alert('Unable to locate this bet.');
+      return;
+    }
+
+    setIsPoking(true);
+    try {
+      await pokeBet(betId);
+      window.alert('Bet poked successfully. A fresh proposal has been posted to the table.');
+    } catch (error) {
+      window.alert(extractPokeErrorMessage(error));
+    } finally {
+      setIsPoking(false);
+    }
+  }, [canPoke, isPoking, ticket.betRecord?.bet_id, ticket.betId, extractPokeErrorMessage]);
 
   const Header = () => (
     <div className="ticket-card-header">
@@ -174,6 +220,11 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const Actions = () => (
     <div className="ticket-card-actions">
       <span className="ticket-finance">{formatToHundredth(ticket.wager)} pt(s)</span>
+      {canPoke ? (
+        <button className="poke-bet-btn" type="button" onClick={handlePoke} disabled={isPoking}>
+          {isPoking ? 'Poking…' : 'Poke'}
+        </button>
+      ) : null}
     </div>
   );
 

@@ -33,6 +33,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: var(--spacing-xs);
 }
 .ticket-card-footer {
   grid-area: footer;
@@ -142,6 +143,31 @@
   gap: var(--spacing-xs);
   padding: 0 var(--spacing-sm);
   border-radius: var(--radius-sm);
+}
+
+.poke-bet-btn {
+  background-color: var(--neutral-600);
+  color: var(--text-secondary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  margin-top: 10%;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  width: 100%;
+  height: 40px
+}
+
+.poke-bet-btn:hover:not(:disabled) {
+  background-color: var(--neutral-500);
+  transform: translateY(-1px);
+}
+
+.poke-bet-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .ticket-result-text {

@@ -7,7 +7,7 @@ export const chooseTheirFateModule: ModeModule = {
   definition: {
     key: 'choose_their_fate',
     label: 'Choose Their Fate',
-    summaryTemplate: 'Choose Their Fate',
+  summaryTemplate: '`Choose Their Fate`',
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate: '`Outcome of current posession`',

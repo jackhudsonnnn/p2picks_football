@@ -7,7 +7,7 @@ export const scorcererModule: ModeModule = {
   definition: {
     key: 'scorcerer',
     label: 'Scorcerer',
-    summaryTemplate: 'Scorcerer',
+  summaryTemplate: '`Scorcerer`',
     descriptionTemplate: 
         '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate: '`TD • FG • Safety • No More Scores`',
