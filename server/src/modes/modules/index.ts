@@ -1,14 +1,16 @@
 import type { ModeModule } from '../shared/types';
 import { eitherOrModule } from './eitherOr';
-import { spreadTheWealthModule } from './spreadTheWealth';
+import { totalDisasterModule } from './totalDisaster';
 import { giveAndTakeModule } from './giveAndTake';
 import { chooseTheirFateModule } from './chooseTheirFate';
 import { scorcererModule } from './scorcerer';
+import { propHuntModule } from './propHunt';
 
 export const MODE_MODULES: ModeModule[] = [
   eitherOrModule,
-  spreadTheWealthModule,
+  totalDisasterModule,
   giveAndTakeModule,
   chooseTheirFateModule,
   scorcererModule,
+  propHuntModule,
 ];

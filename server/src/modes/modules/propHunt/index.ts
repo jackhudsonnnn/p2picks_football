@@ -1,0 +1,1 @@
+export { propHuntModule } from './definition';

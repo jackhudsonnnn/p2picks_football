@@ -1,15 +1,15 @@
 import type { ModeModule } from '../../shared/types';
-import { prepareSpreadTheWealthConfig } from './prepareConfig';
-import { spreadTheWealthValidator } from './validator';
-import { buildSpreadTheWealthUserConfig } from './userConfig';
-import { spreadTheWealthOverview } from './overview';
+import { prepareTotalDisasterConfig } from './prepareConfig';
+import { totalDisasterValidator } from './validator';
+import { buildTotalDisasterUserConfig } from './userConfig';
+import { totalDisasterOverview } from './overview';
 
-export const spreadTheWealthModule: ModeModule = {
+export const totalDisasterModule: ModeModule = {
   definition: {
     key: 'spread_the_wealth',
-    label: 'Spread The Wealth',
+    label: 'Total Disaster',
     summaryTemplate:
-      'Spread The Wealth',
+      'Total Disaster',
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate: '`Total points compared to the selected line`',
@@ -28,9 +28,9 @@ export const spreadTheWealthModule: ModeModule = {
       },
     },
   },
-  overview: spreadTheWealthOverview,
-  prepareConfig: prepareSpreadTheWealthConfig,
-  validator: spreadTheWealthValidator,
+  overview: totalDisasterOverview,
+  prepareConfig: prepareTotalDisasterConfig,
+  validator: totalDisasterValidator,
   buildUserConfig: async ({ nflGameId, config }) =>
-    buildSpreadTheWealthUserConfig({ nflGameId, existingConfig: config ?? {} }),
+    buildTotalDisasterUserConfig({ nflGameId, existingConfig: config ?? {} }),
 };

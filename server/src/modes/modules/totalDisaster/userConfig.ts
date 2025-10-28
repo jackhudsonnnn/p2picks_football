@@ -9,15 +9,15 @@ interface BuildInput {
   existingConfig?: Record<string, unknown>;
 }
 
-export async function buildSpreadTheWealthUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
-  const debug = process.env.DEBUG_SPREAD_THE_WEALTH === '1' || process.env.DEBUG_SPREAD_THE_WEALTH === 'true';
+export async function buildTotalDisasterUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
+  const debug = process.env.DEBUG_TOTAL_DISASTER === '1' || process.env.DEBUG_TOTAL_DISASTER === 'true';
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const title = "Select Over/Under Line";
 
   const choices: ModeUserConfigChoice[] = buildLineChoices();
 
   if (debug) {
-    console.log('[spreadTheWealth][userConfig] prepared choices', {
+    console.log('[totalDisaster][userConfig] prepared choices', {
       gameId,
       choiceCount: choices.length,
     });

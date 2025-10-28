@@ -5,7 +5,7 @@ import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../.
 const LINE_MIN = 0.5;
 const LINE_MAX = 199.5;
 
-interface SpreadTheWealthConfig {
+interface TotalDisasterConfig {
   nfl_game_id?: string | null;
   home_team_id?: string | null;
   home_team_name?: string | null;
@@ -16,14 +16,14 @@ interface SpreadTheWealthConfig {
   line_label?: string | null;
 }
 
-export async function prepareSpreadTheWealthConfig({
+export async function prepareTotalDisasterConfig({
   bet,
   config,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const nextConfig = { ...config } as SpreadTheWealthConfig;
+  const nextConfig = { ...config } as TotalDisasterConfig;
 
   if (!nextConfig.nfl_game_id) {
     nextConfig.nfl_game_id = bet.nfl_game_id ?? null;

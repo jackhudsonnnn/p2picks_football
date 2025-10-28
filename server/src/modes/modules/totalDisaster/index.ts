@@ -1,0 +1,1 @@
+export { totalDisasterModule } from './definition';

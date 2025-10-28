@@ -3,7 +3,7 @@ import { fetchModeConfig } from '../../../services/modeConfig';
 import { subscribeToGameFeed, type GameFeedEvent } from '../../../services/gameFeedService';
 import type { RefinedGameDoc } from '../../../helpers';
 
-interface SpreadTheWealthConfig {
+interface TotalDisasterConfig {
   line?: string | null;
   line_value?: number | null;
   line_label?: string | null;
@@ -14,10 +14,10 @@ interface SpreadTheWealthConfig {
   nfl_game_id?: string | null;
 }
 
-export class SpreadTheWealthValidatorService {
+export class TotalDisasterValidatorService {
   private unsubscribe: (() => void) | null = null;
   private lastSignatureByGame = new Map<string, string>();
-  private readonly modeLabel = 'Spread The Wealth';
+  private readonly modeLabel = 'Total Disaster';
 
   start(): void {
     if (this.unsubscribe) return;
@@ -43,7 +43,7 @@ export class SpreadTheWealthValidatorService {
       if (status !== 'STATUS_FINAL') return;
       await this.processFinalGame(gameId, doc);
     } catch (err: unknown) {
-      console.error('[spreadTheWealth] game feed error', { gameId: event.gameId }, err);
+      console.error('[totalDisaster] game feed error', { gameId: event.gameId }, err);
     }
   }
 
@@ -56,7 +56,7 @@ export class SpreadTheWealthValidatorService {
       .eq('bet_status', 'pending')
       .eq('nfl_game_id', gameId);
     if (error) {
-      console.error('[spreadTheWealth] list pending bets error', { gameId }, error);
+      console.error('[totalDisaster] list pending bets error', { gameId }, error);
       return;
     }
     for (const row of (data as BetProposal[]) || []) {
@@ -68,12 +68,12 @@ export class SpreadTheWealthValidatorService {
     try {
       const config = await this.getConfigForBet(bet.bet_id);
       if (!config) {
-        console.warn('[spreadTheWealth] missing config; skipping bet', { bet_id: bet.bet_id });
+        console.warn('[totalDisaster] missing config; skipping bet', { bet_id: bet.bet_id });
         return;
       }
       const line = this.normalizeLine(config);
       if (line == null) {
-        console.warn('[spreadTheWealth] invalid line; washing bet', { bet_id: bet.bet_id, config });
+        console.warn('[totalDisaster] invalid line; washing bet', { bet_id: bet.bet_id, config });
         const label = this.describeLine(config);
         await this.washBet(
           bet.bet_id,
@@ -111,7 +111,7 @@ export class SpreadTheWealthValidatorService {
         .eq('bet_id', bet.bet_id)
         .is('winning_choice', null);
       if (updErr) {
-        console.error('[spreadTheWealth] failed to set winning choice', { bet_id: bet.bet_id, winningChoice }, updErr);
+        console.error('[totalDisaster] failed to set winning choice', { bet_id: bet.bet_id, winningChoice }, updErr);
         return;
       }
       await this.recordHistory(bet.bet_id, {
@@ -122,7 +122,7 @@ export class SpreadTheWealthValidatorService {
         captured_at: new Date().toISOString(),
       });
     } catch (err: unknown) {
-      console.error('[spreadTheWealth] resolve bet error', { bet_id: bet.bet_id }, err);
+      console.error('[totalDisaster] resolve bet error', { bet_id: bet.bet_id }, err);
     }
   }
 
@@ -144,7 +144,7 @@ export class SpreadTheWealthValidatorService {
     return 0;
   }
 
-  private normalizeLine(config: SpreadTheWealthConfig): number | null {
+  private normalizeLine(config: TotalDisasterConfig): number | null {
     if (typeof config.line_value === 'number' && Number.isFinite(config.line_value)) {
       return config.line_value;
     }
@@ -155,7 +155,7 @@ export class SpreadTheWealthValidatorService {
     return null;
   }
 
-  private describeLine(config: SpreadTheWealthConfig): string | null {
+  private describeLine(config: TotalDisasterConfig): string | null {
     const label = typeof config.line_label === 'string' ? config.line_label.trim() : '';
     if (label.length) return label;
     if (typeof config.line === 'string' && config.line.trim().length) {
@@ -198,20 +198,20 @@ export class SpreadTheWealthValidatorService {
         },
       ]);
       if (error) {
-        console.error('[spreadTheWealth] failed to create wash system message', { betId, tableId }, error);
+        console.error('[totalDisaster] failed to create wash system message', { betId, tableId }, error);
       }
     } catch (err: unknown) {
-      console.error('[spreadTheWealth] wash system message error', { betId, tableId }, err);
+      console.error('[totalDisaster] wash system message error', { betId, tableId }, err);
     }
   }
 
-  private async getConfigForBet(betId: string): Promise<SpreadTheWealthConfig | null> {
+  private async getConfigForBet(betId: string): Promise<TotalDisasterConfig | null> {
     try {
       const record = await fetchModeConfig(betId);
       if (!record || record.mode_key !== 'spread_the_wealth') return null;
-      return record.data as SpreadTheWealthConfig;
+      return record.data as TotalDisasterConfig;
     } catch (err: unknown) {
-      console.error('[spreadTheWealth] fetch config error', { betId }, err);
+      console.error('[totalDisaster] fetch config error', { betId }, err);
       return null;
     }
   }
@@ -232,24 +232,24 @@ export class SpreadTheWealthValidatorService {
         .select('bet_id, table_id')
         .maybeSingle();
       if (error) {
-        console.error('[spreadTheWealth] failed to wash bet', { betId }, error);
+        console.error('[totalDisaster] failed to wash bet', { betId }, error);
         return;
       }
       if (!data) {
-        console.warn('[spreadTheWealth] wash skipped; bet not pending', { betId });
+        console.warn('[totalDisaster] wash skipped; bet not pending', { betId });
         return;
       }
       await this.recordHistory(betId, {
         ...payload,
-        event: 'spread_the_wealth_result',
+        event: 'total_disaster_result',
       });
       if (!data.table_id) {
-        console.warn('[spreadTheWealth] wash message skipped; table_id missing', { betId });
+        console.warn('[totalDisaster] wash message skipped; table_id missing', { betId });
         return;
       }
       await this.createWashSystemMessage(data.table_id, betId, explanation);
     } catch (err: unknown) {
-      console.error('[spreadTheWealth] wash bet error', { betId }, err);
+      console.error('[totalDisaster] wash bet error', { betId }, err);
     }
   }
 
@@ -258,14 +258,14 @@ export class SpreadTheWealthValidatorService {
       const supa = getSupabaseAdmin();
       const { error } = await supa
         .from('resolution_history')
-        .insert([{ bet_id: betId, event_type: 'spread_the_wealth_result', payload }]);
+        .insert([{ bet_id: betId, event_type: 'total_disaster_result', payload }]);
       if (error) {
-        console.error('[spreadTheWealth] history record error', { betId }, error);
+        console.error('[totalDisaster] history record error', { betId }, error);
       }
     } catch (err: unknown) {
-      console.error('[spreadTheWealth] history insert error', { betId }, err);
+      console.error('[totalDisaster] history insert error', { betId }, err);
     }
   }
 }
 
-export const spreadTheWealthValidator = new SpreadTheWealthValidatorService();
+export const totalDisasterValidator = new TotalDisasterValidatorService();

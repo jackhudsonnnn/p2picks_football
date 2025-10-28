@@ -1,11 +1,11 @@
 import type { ModeOverview } from '../../shared/types';
 
-export const spreadTheWealthOverview: ModeOverview = {
+export const totalDisasterOverview: ModeOverview = {
   key: 'spread_the_wealth',
-  label: 'Spread The Wealth',
+  label: 'Total Disaster',
   tagline: 'Pick whether the total points go over or under the line.',
   description:
-    'Spread The Wealth turns the table into a collaborative over/under. Once the proposer sets a line, everyone wagers on whether the combined score will clear it or fall short.',
+    'Total Disaster turns the table into a collaborative over/under. Once the proposer sets a line, everyone wagers on whether the combined score will clear it or fall short.',
   proposerConfiguration: [
     'Enter the over/under line. It must be numeric, end in .5, and represent total combined points.'
   ],
