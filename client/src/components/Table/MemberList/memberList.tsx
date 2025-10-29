@@ -1,6 +1,6 @@
 import React from "react";
 import "./memberList.css";
-import type { TableMember } from "@features/tables/types";
+import type { TableMember } from "@features/table/types";
 import { formatToHundredth, normalizeToHundredth } from "@shared/utils/number";
 
 export type MemberListMember = TableMember;

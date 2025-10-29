@@ -8,6 +8,7 @@ import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import './BetProposalCard.css';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
+import { useDialog } from '@shared/hooks/useDialog';
 
 interface BetProposalCardProps {
   message: BetProposalMessage;
@@ -18,6 +19,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
   const { user } = useAuth();
   const [accepted, setAccepted] = useState(false);
   const [participants, setParticipants] = useState<number>(0);
+  const { showAlert, dialogNode } = useDialog();
 
   const { phase, timeLeft } = useBetPhase({
     closeTime: message.betDetails?.close_time,
@@ -75,7 +77,7 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
   const handleAccept = useCallback(async () => {
     if (!user) return;
     if (!message.tableId || !message.betProposalId) {
-      alert('Table ID missing for this bet proposal.');
+      await showAlert({ title: 'Accept Bet', message: 'Table information is missing for this bet proposal.' });
       return;
     }
     try {
@@ -83,9 +85,12 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
       setAccepted(true);
       navigate('/tickets');
     } catch (error: any) {
-      alert(`Failed to accept bet: ${error?.message ?? 'Unknown error'}`);
+      await showAlert({
+        title: 'Accept Bet',
+        message: `Failed to accept bet: ${error?.message ?? 'Unknown error'}`,
+      });
     }
-  }, [user, message, navigate]);
+  }, [user, message, navigate, showAlert]);
 
   const onBetClick = async () => {
     if (accepted || phase !== 'active') {
@@ -113,7 +118,8 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
   ].filter(Boolean).join(' ');
 
   return (
-    <div
+    <>
+      <div
       className={containerClasses}
       role={clickable ? 'button' : 'group'}
       tabIndex={clickable ? 0 : -1}
@@ -147,7 +153,9 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
           {accepted && <button className="bp-view-btn" onClick={() => navigate('/tickets')}>Tickets →</button>}
         </div>
       </div>
-    </div>
+      </div>
+      {dialogNode}
+    </>
   );
 };
 

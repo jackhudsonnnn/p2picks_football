@@ -37,11 +37,6 @@ export function formatDateTime(input?: string | Date | null, opts?: FormatDateTi
   }
 }
 
-export function formatDateOrFallback(input?: string | Date | null, opts?: FormatDateTimeOptions, fallback = 'N/A') {
-  const v = formatDateTime(input, opts);
-  return v ?? fallback;
-}
-
 // Time-only HH:MM (optionally with seconds) helper
 export function formatTimeOfDay(input?: string | Date | null, opts?: { includeSeconds?: boolean; hour12?: boolean; locale?: string; timeZone?: string }): string | null {
   const date = toDate(input);
@@ -71,47 +66,6 @@ export function formatRelativeDateLabel(input?: string | Date | null, opts?: { l
   return date.toLocaleDateString(opts?.locale ?? 'en-US', { month: 'short', day: 'numeric' });
 }
 
-// Compact time-ago (e.g., 5m, 2h, 3d)
-export function timeAgo(input?: string | Date | null): string | null {
-  const date = toDate(input);
-  if (!date) return null;
-  const diff = Date.now() - date.getTime();
-  if (diff < 0) return '0s';
-  const sec = Math.floor(diff / 1000);
-  if (sec < 60) return sec + 's';
-  const min = Math.floor(sec / 60);
-  if (min < 60) return min + 'm';
-  const hrs = Math.floor(min / 60);
-  if (hrs < 24) return hrs + 'h';
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return days + 'd';
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) return weeks + 'w';
-  const months = Math.floor(days / 30);
-  if (months < 12) return months + 'mo';
-  const years = Math.floor(days / 365);
-  return years + 'y';
-}
-
-// Format duration (ms or seconds) into human friendly text
-export function formatDuration(duration: number, opts?: { as?: 'ms' | 's'; style?: 'compact' | 'full' }): string {
-  const baseSeconds = opts?.as === 'ms' ? duration / 1000 : duration;
-  if (!isFinite(baseSeconds) || baseSeconds < 0) return '0s';
-  const s = Math.floor(baseSeconds % 60);
-  const m = Math.floor((baseSeconds / 60) % 60);
-  const h = Math.floor(baseSeconds / 3600);
-  if (opts?.style === 'full') {
-    const parts: string[] = [];
-    if (h) parts.push(h + 'h');
-    if (m) parts.push(m + 'm');
-    if (s || parts.length === 0) parts.push(s + 's');
-    return parts.join(' ');
-  }
-  if (h) return `${h}h${m.toString().padStart(2, '0')}m`;
-  if (m) return `${m}m${s.toString().padStart(2, '0')}s`;
-  return `${s}s`;
-}
-
 // Helper to group timestamps (e.g., chat messages) by date label
 export function groupByDateLabel<T extends { timestamp: string | Date }>(items: T[]): Record<string, T[]> {
   return items.reduce<Record<string, T[]>>((acc, item) => {
@@ -120,14 +74,4 @@ export function groupByDateLabel<T extends { timestamp: string | Date }>(items: 
     acc[label].push(item);
     return acc;
   }, {});
-}
-
-// Compose a range (start - end) using existing formatter
-export function formatDateTimeRange(start?: string | Date | null, end?: string | Date | null, opts?: FormatDateTimeOptions & { separator?: string }): string | null {
-  const a = formatDateTime(start, opts);
-  const b = formatDateTime(end, opts);
-  if (!a && !b) return null;
-  if (a && !b) return a;
-  if (!a && b) return b;
-  return `${a}${opts?.separator ?? ' – '}${b}`;
 }

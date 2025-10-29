@@ -623,6 +623,7 @@ function refineBoxscore(
     teamEntry.possession = Boolean(possession.get(teamId));
 
     const statistics = Array.isArray(block?.statistics) ? block.statistics : [];
+    const rosterPlayers = rosterMap.get(teamId);
     for (const statCat of statistics) {
       const catName = String(statCat?.name ?? statCat?.shortName ?? statCat?.displayName ?? '').toLowerCase();
       const parsedTotals = parseCategoryTotals(statCat);
@@ -631,7 +632,7 @@ function refineBoxscore(
       }
       const athletes = Array.isArray(statCat?.athletes) ? statCat.athletes : [];
       for (const athleteEntry of athletes) {
-        const player = ensurePlayerEntry(teamEntry, athleteEntry);
+        const player = ensurePlayerEntry(teamEntry, athleteEntry, rosterPlayers);
         const parsed = parseAthleteStats(statCat, athleteEntry);
         applyCategoryMappings(player.stats, catName, parsed);
       }
@@ -649,11 +650,29 @@ function refineBoxscore(
   const name = team?.name ?? team?.shortDisplayName ?? displayName;
   const teamEntry = ensureTeamEntry(teams, teamId, abbr, displayName, name, scores);
     const totalsBlock = Array.isArray(block?.statistics) ? block.statistics : [];
+    const rosterPlayers = rosterMap.get(teamId);
     for (const statCat of totalsBlock) {
       const catName = String(statCat?.name ?? '').toLowerCase();
       const parsedTotals = parseCategoryTotals(statCat);
       if (parsedTotals) {
         applyCategoryMappings(teamEntry.stats, catName, parsedTotals);
+      }
+    }
+    if (rosterPlayers) {
+      for (const rosterPlayer of rosterPlayers.values()) {
+        const existing = teamEntry.players[rosterPlayer.athleteId];
+        if (existing) {
+          existing.athleteId = rosterPlayer.athleteId;
+          existing.fullName = rosterPlayer.fullName || existing.fullName;
+          existing.position = rosterPlayer.position || existing.position;
+          existing.jersey = rosterPlayer.jersey || existing.jersey;
+          existing.headshot = rosterPlayer.headshot || existing.headshot;
+        } else {
+          teamEntry.players[rosterPlayer.athleteId] = {
+            ...rosterPlayer,
+            stats: initTargetStats(),
+          };
+        }
       }
     }
   }
@@ -663,12 +682,19 @@ function refineBoxscore(
     const rosterPlayers = rosterMap.get(teamId);
     if (!rosterPlayers) continue;
     for (const player of rosterPlayers.values()) {
-      if (!teamEntry.players[player.athleteId]) {
-        teamEntry.players[player.athleteId] = {
-          ...player,
-          stats: initTargetStats(),
-        };
+      const existing = teamEntry.players[player.athleteId];
+      if (existing) {
+        existing.athleteId = player.athleteId;
+        existing.fullName = player.fullName || existing.fullName;
+        existing.position = player.position || existing.position;
+        existing.jersey = player.jersey || existing.jersey;
+        existing.headshot = player.headshot || existing.headshot;
+        continue;
       }
+      teamEntry.players[player.athleteId] = {
+        ...player,
+        stats: initTargetStats(),
+      };
     }
   }
 
@@ -810,17 +836,52 @@ function extractPossession(raw: any): Map<string, boolean> {
   return possession;
 }
 
-function ensurePlayerEntry(teamEntry: TeamEntry, athleteEntry: any): PlayerEntry {
+function ensurePlayerEntry(
+  teamEntry: TeamEntry,
+  athleteEntry: any,
+  rosterPlayers?: Map<string, PlayerEntry>,
+): PlayerEntry {
   const athlete = athleteEntry?.athlete ?? athleteEntry ?? {};
   const athleteId = String(athlete?.id ?? athleteEntry?.id ?? '');
-  const key = athleteId || `name:${(athlete?.displayName ?? athlete?.fullName ?? '').toLowerCase()}`;
+  const rosterSource = athleteId && rosterPlayers ? rosterPlayers.get(athleteId) : undefined;
+  const fallbackKey = `name:${(athlete?.displayName ?? athlete?.fullName ?? '').toLowerCase()}`;
+  const key = rosterSource?.athleteId || athleteId || fallbackKey;
   const existing = teamEntry.players[key];
-  if (existing) return existing;
+  if (existing) {
+    if (rosterSource) {
+      existing.athleteId = rosterSource.athleteId;
+      existing.fullName = rosterSource.fullName || existing.fullName;
+      existing.position = rosterSource.position || existing.position;
+      existing.jersey = rosterSource.jersey || existing.jersey;
+      existing.headshot = rosterSource.headshot || existing.headshot;
+    } else {
+      const position = athlete?.position ?? {};
+      const headshotField = athlete?.headshot;
+      const headshot = typeof headshotField === 'string' ? headshotField : headshotField?.href ?? existing.headshot;
+      existing.fullName = athlete?.displayName ?? athlete?.fullName ?? existing.fullName;
+      existing.position = existing.position || position?.abbreviation || position?.name || '';
+      existing.jersey = existing.jersey || athlete?.jersey || '';
+      existing.headshot = headshot || existing.headshot;
+    }
+    return existing;
+  }
   const position = athlete?.position ?? {};
   const headshotField = athlete?.headshot;
   const headshot = typeof headshotField === 'string' ? headshotField : headshotField?.href ?? '';
+  if (rosterSource) {
+    const player: PlayerEntry = {
+      athleteId: rosterSource.athleteId,
+      fullName: rosterSource.fullName || athlete?.displayName || athlete?.fullName || '',
+      position: rosterSource.position || position?.abbreviation || position?.name || '',
+      jersey: rosterSource.jersey || athlete?.jersey || '',
+      headshot: rosterSource.headshot || headshot,
+      stats: initTargetStats(),
+    };
+    teamEntry.players[rosterSource.athleteId] = player;
+    return player;
+  }
   const player: PlayerEntry = {
-    athleteId: athleteId || key,
+    athleteId: athleteId || fallbackKey,
     fullName: athlete?.displayName ?? athlete?.fullName ?? '',
     position: position?.abbreviation ?? position?.name ?? '',
     jersey: athlete?.jersey ?? '',

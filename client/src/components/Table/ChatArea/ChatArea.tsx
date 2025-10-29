@@ -3,8 +3,8 @@ import { TextMessage } from "../TextMessage/TextMessage";
 import "./ChatArea.css";
 import { formatTimeOfDay } from "@shared/utils/dateTime";
 import type { ChatMessage } from "@shared/types/chat";
-import { useGroupedMessages } from "@features/tables/chat/useGroupedMessages";
-import { useAutoScroll } from "@features/tables/chat/useAutoScroll";
+import { useGroupedMessages } from "@features/table/chat/useGroupedMessages";
+import { useAutoScroll } from "@features/table/chat/useAutoScroll";
 
 interface ChatAreaProps {
   messages: ChatMessage[];

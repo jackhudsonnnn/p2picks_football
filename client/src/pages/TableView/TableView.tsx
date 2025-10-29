@@ -13,8 +13,8 @@ import { ModeReference } from "@components/Table/ModeReference/ModeReference";
 import BetProposalForm from "@components/Bet/BetProposalForm/BetProposalForm";
 import type { BetProposalFormValues } from "@components/Bet/BetProposalForm/BetProposalForm";
 import { Modal } from "@shared/widgets";
-import { useTableView } from "@features/tables/hooks";
-import { useTableChat } from "@features/tables/hooks/useTableChat";
+import { useTableView } from "@features/table/hooks";
+import { useTableChat } from "@features/table/hooks/useTableChat";
 import { useModeCatalog } from "@features/bets/hooks/useModeCatalog";
 
 export const TableView: React.FC = () => {

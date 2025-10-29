@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@shared/api/supabaseClient';
+import { useDialog } from '@shared/hooks/useDialog';
 
 interface AuthContextType {
   session: Session | null;
@@ -16,6 +17,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { showAlert, dialogNode } = useDialog();
 
   useEffect(() => {
     const setData = async () => {
@@ -64,11 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = res;
       if (error) {
         console.error('Google sign-in error:', error.message);
-        alert('Error signing in with Google: ' + error.message);
+        await showAlert({ title: 'Sign In', message: 'Error signing in with Google: ' + error.message });
       }
     } catch (error: any) {
       console.error('Exception during Google sign-in:', error.message);
-      alert('An unexpected error occurred during sign-in.');
+      await showAlert({ title: 'Sign In', message: 'An unexpected error occurred during sign-in.' });
       setLoading(false);
     }
   };
@@ -79,11 +81,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign-out error:', error.message);
-        alert('Error signing out: ' + error.message);
+        await showAlert({ title: 'Sign Out', message: 'Error signing out: ' + error.message });
       }
     } catch (error: any) {
       console.error('Exception during sign-out:', error.message);
-      alert('An unexpected error occurred during sign-out.');
+      await showAlert({ title: 'Sign Out', message: 'An unexpected error occurred during sign-out.' });
     } finally {
       // setLoading(false); // onAuthStateChange will handle this
     }
@@ -92,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ session, user, loading, signInWithGoogle, signOut }}>
       {children}
+      {dialogNode}
     </AuthContext.Provider>
   );
 };

@@ -8,6 +8,7 @@ import { useBetPhase } from '@shared/hooks/useBetPhase';
 import { fetchModePreview, type ModePreviewPayload } from '@shared/api/modePreview';
 import { pokeBet } from '@features/bets/service';
 import { HttpError } from '@shared/utils/http';
+import { useDialog } from '@shared/hooks/useDialog';
 
 export interface TicketCardProps {
   ticket: Ticket;
@@ -25,6 +26,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const [preview, setPreview] = useState<ModePreviewPayload | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPoking, setIsPoking] = useState(false);
+  const { showAlert, showConfirm, dialogNode } = useDialog();
 
   useEffect(() => {
     if (!modeKey) {
@@ -178,20 +180,20 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     }
     const betId = (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null;
     if (!betId) {
-      window.alert('Unable to locate this bet.');
+      await showAlert({ title: 'Poke Bet', message: 'Unable to locate this bet.' });
       return;
     }
 
     setIsPoking(true);
     try {
       await pokeBet(betId);
-      window.alert('Bet poked successfully. A fresh proposal has been posted to the table.');
+      await showAlert({ title: 'Poke Bet', message: 'Bet poked successfully. A fresh proposal has been posted to the table.' });
     } catch (error) {
-      window.alert(extractPokeErrorMessage(error));
+      await showAlert({ title: 'Poke Bet', message: extractPokeErrorMessage(error) });
     } finally {
       setIsPoking(false);
     }
-  }, [canPoke, isPoking, ticket.betRecord?.bet_id, ticket.betId, extractPokeErrorMessage]);
+  }, [canPoke, isPoking, ticket.betRecord?.bet_id, ticket.betId, extractPokeErrorMessage, showAlert]);
 
   const Header = () => (
     <div className="ticket-card-header">
@@ -228,9 +230,14 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     </div>
   );
 
-  const handleGuessChangeDropdown = (ticketId: string, newGuess: string) => {
+  const handleGuessChangeDropdown = async (ticketId: string, newGuess: string) => {
     if (ticket.myGuess !== newGuess) {
-      if (window.confirm(`Are you sure you want to change your guess to ${newGuess}?`)) {
+      const confirmed = await showConfirm({
+        title: 'Change Guess',
+        message: `Are you sure you want to change your guess to ${newGuess}?`,
+        confirmLabel: 'Change',
+      });
+      if (confirmed) {
         onChangeGuess(ticketId, newGuess);
       }
     }
@@ -239,11 +246,13 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const FooterLeft = () => {
     return (
       <div className="ticket-bet-options">
-  <div className={betContainerClassName}>
+        <div className={betContainerClassName}>
           <select
             className="bet-dropdown"
             value={ticket.myGuess}
-            onChange={(e) => handleGuessChangeDropdown(ticket.id, e.target.value)}
+            onChange={(e) => {
+              void handleGuessChangeDropdown(ticket.id, e.target.value);
+            }}
             disabled={phase !== 'active'}
           >
             {optionList.map((opt) => (
@@ -264,19 +273,22 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   );
 
   return (
-  <div className={cardClassName}>
-      <Header />
-      <Content />
-      <Actions />
-      <div className="ticket-card-footer">
-        <div className="ticket-card-footer-left">
-          <FooterLeft />
-        </div>
-        <div className="ticket-card-footer-right">
-          <FooterRight />
+    <>
+      <div className={cardClassName}>
+        <Header />
+        <Content />
+        <Actions />
+        <div className="ticket-card-footer">
+          <div className="ticket-card-footer-left">
+            <FooterLeft />
+          </div>
+          <div className="ticket-card-footer-right">
+            <FooterRight />
+          </div>
         </div>
       </div>
-    </div>
+      {dialogNode}
+    </>
   );
 };
 

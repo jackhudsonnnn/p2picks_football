@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import "./AccountPage.css";
 import { AccountNavigation, type AccountTab } from "@components/Social/AccountNavigation/AccountNavigation";
 import { ProfileCard } from "@components/Social/ProfileCard/ProfileCard";
@@ -6,27 +6,10 @@ import { FriendsManager } from "@components/Social/FriendsManager/FriendsManager
 import { useAuth } from "@features/auth";
 import { useAuthProfile } from "@features/social/hooks";
 
-const getPlayerName = (
-  username: string | null | undefined,
-  userMetadata: Record<string, unknown> | undefined,
-  email: string | undefined | null
-) => {
-  if (username && username.trim().length > 0) return username;
-  const rawFullName = userMetadata?.["full_name"];
-  const fullName = typeof rawFullName === "string" ? rawFullName.trim() : "";
-  if (fullName) return fullName;
-  return email ?? "Player";
-};
-
 export const AccountPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const { profile, loading: profileLoading, error: profileError } = useAuthProfile();
+  const { loading: profileLoading, error: profileError } = useAuthProfile();
   const [activeTab, setActiveTab] = useState<AccountTab>("profile");
-
-  const playerName = useMemo(
-    () => getPlayerName(profile?.username, user?.user_metadata, user?.email),
-    [profile?.username, user?.user_metadata, user?.email]
-  );
 
   if (authLoading || profileLoading) {
     return <div className="account-loading">Loading account...</div>;
@@ -48,9 +31,6 @@ export const AccountPage: React.FC = () => {
           onTabChange={setActiveTab}
         />
         <section className="account-content" aria-live="polite">
-          <header className="account-welcome" aria-label="Account greeting">
-            <h2>Welcome back, {playerName}!</h2>
-          </header>
           <div
             id="account-profile-panel"
             role="tabpanel"

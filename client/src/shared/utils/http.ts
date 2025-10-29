@@ -153,13 +153,3 @@ export async function fetchJSON<T = any>(url: string, opts: FetchJSONOptions = {
     });
   }
 }
-
-export async function safeFetchJSON<T = any>(url: string, opts: FetchJSONOptions = {}): Promise<T | null> {
-  try {
-    return await fetchJSON<T>(url, { softFail: true, ...opts });
-  } catch (e) {
-    // Should not reach here because softFail true prevents throws, but just in case
-    console.warn('[safeFetchJSON] unexpected throw', { url, error: (e as any)?.message });
-    return null;
-  }
-}

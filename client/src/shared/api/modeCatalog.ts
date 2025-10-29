@@ -21,7 +21,3 @@ export async function fetchModeOverviews(force = false): Promise<ModeOverview[]>
     });
   return inflight;
 }
-
-export function clearModeOverviewsCache(): void {
-  cachedOverviews = null;
-}

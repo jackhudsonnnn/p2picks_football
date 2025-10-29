@@ -6,17 +6,26 @@ import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
 import { subscribeToBetProposals } from '@shared/api/tableService';
 
+type RefreshOptions = {
+  silent?: boolean;
+};
+
 export function useTickets(userId?: string) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (options?: RefreshOptions) => {
+    const silent = Boolean(options?.silent);
     if (!userId) {
       setTickets([]);
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
       return;
     }
-    setLoading(true);
+    if (!silent) {
+      setLoading(true);
+    }
     try {
       const data = await getUserTickets(userId);
       setTickets((data || []).map(mapParticipationRowToTicket));
@@ -24,7 +33,9 @@ export function useTickets(userId?: string) {
       console.warn('[useTickets] failed to load tickets', error);
       setTickets([]);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [userId]);
 
@@ -147,7 +158,7 @@ export function useTickets(userId?: string) {
       if (updated) {
         setTickets((prev) => prev.map((t) => (t.id === updated.participation_id ? { ...t, myGuess: updated.user_guess } : t)));
       }
-      await refresh();
+      await refresh({ silent: true });
     } catch (e) {
       throw e;
     }

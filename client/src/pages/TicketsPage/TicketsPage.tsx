@@ -6,6 +6,7 @@ import TicketCard from "@components/Bet/TicketCard/TicketCard";
 import { FilterBar, PaginationControls } from "@shared/widgets";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
+import { useDialog } from "@shared/hooks/useDialog";
 
 const STATUS_FILTER_OPTIONS = [
   { id: "active", label: "Active" },
@@ -22,9 +23,15 @@ export const TicketsPage: React.FC = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { tickets, loading, changeGuess } = useTickets(user?.id);
+  const { showAlert, dialogNode } = useDialog();
 
   const handleGuessChange = async (ticketId: string, newGuess: string) => {
-    try { await changeGuess(ticketId, newGuess); } catch (e: any) { alert(`Failed to update your guess. ${e?.message ?? ''}`.trim()); }
+    try {
+      await changeGuess(ticketId, newGuess);
+    } catch (e: any) {
+      const message = `Failed to update your guess. ${e?.message ?? ''}`.trim();
+      await showAlert({ title: "Update Guess", message });
+    }
   };
 
   const handleEnterTable = (tableId: string) => {
@@ -73,7 +80,8 @@ export const TicketsPage: React.FC = () => {
   }
 
   return (
-    <div className={`tickets-page ${isMobile ? 'mobile' : ''}`}>
+    <>
+      <div className={`tickets-page ${isMobile ? 'mobile' : ''}`}>
       <div className="page-header">
         <div className="page-title"><h1>Tickets</h1></div>
         <FilterBar
@@ -113,6 +121,8 @@ export const TicketsPage: React.FC = () => {
           disableNext={currentPage === totalPages}
         />
       )}
-    </div>
+      </div>
+      {dialogNode}
+    </>
   );
 };

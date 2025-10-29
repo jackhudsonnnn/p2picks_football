@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
 import { Modal, PaginationControls, SearchBar } from "@shared/widgets";
+import { useDialog } from "@shared/hooks/useDialog";
 import AddIcon from "@shared/widgets/icons/AddIcon";
-import { useTablesList } from "@features/tables/hooks/useTablesList";
+import { useTablesList } from "@features/table/hooks/useTablesList";
 import { formatDateTime } from "@shared/utils/dateTime";
 
 export const TablesListPage: React.FC = () => {
@@ -18,6 +19,7 @@ export const TablesListPage: React.FC = () => {
   const [newTableName, setNewTableName] = useState("");
 
   const { tables, create, loading } = useTablesList(user?.id);
+  const { showAlert, dialogNode } = useDialog();
 
   const filteredTables = tables.filter((table) =>
     searchQuery === "" || table.table_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -29,15 +31,24 @@ export const TablesListPage: React.FC = () => {
   const totalPages = Math.ceil(filteredTables.length / tablesPerPage);
 
   const handleCreateTable = async () => {
-    if (!newTableName.trim()) return alert("Please enter a table name");
-    if (!user) return alert("You must be logged in to create a table.");
+    if (!newTableName.trim()) {
+      await showAlert({ title: "Create Table", message: "Please enter a table name." });
+      return;
+    }
+    if (!user) {
+      await showAlert({ title: "Create Table", message: "You must be logged in to create a table." });
+      return;
+    }
     try {
       const table = await create(newTableName);
       setIsCreateModalOpen(false);
       setNewTableName("");
       navigate(`/tables/${table.table_id}`);
     } catch (e: any) {
-      alert("Failed to create table: " + (e?.message || e));
+      await showAlert({
+        title: "Create Table",
+        message: `Failed to create table: ${e?.message || e}`,
+      });
     }
   };
 
@@ -45,7 +56,8 @@ export const TablesListPage: React.FC = () => {
     formatDateTime(dateString, { includeTime: true }) || "N/A";
 
   return (
-    <div className="tables-list-page">
+    <>
+      <div className="tables-list-page">
       <div className="page-header">
         <div className="page-title"><h1>My Tables</h1></div>
         <div className="page-action">
@@ -109,6 +121,8 @@ export const TablesListPage: React.FC = () => {
           disableNext={currentPage === totalPages}
         />
       )}
-    </div>
+      </div>
+      {dialogNode}
+    </>
   );
 };

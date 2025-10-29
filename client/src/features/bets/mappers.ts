@@ -1,4 +1,4 @@
-import { BetModeKey, BetRecord, BetStatus, Ticket } from './types';
+import { BetModeKey, BetRecord, Ticket } from './types';
 import { normalizeToHundredth } from '@shared/utils/number';
 
 export function extractModeConfig(bet?: BetRecord | null): Record<string, unknown> | undefined {
@@ -31,12 +31,6 @@ export function extractModeConfig(bet?: BetRecord | null): Record<string, unknow
   }
 
   return undefined;
-}
-
-export function deriveBetState(bet: BetRecord): BetStatus {
-  const s = (bet?.bet_status || 'active').toString().toLowerCase();
-  if (s === 'active' || s === 'pending' || s === 'resolved' || s === 'washed') return s as BetStatus;
-  return 'active';
 }
 
 export function getBetDescription(bet: BetRecord): string {

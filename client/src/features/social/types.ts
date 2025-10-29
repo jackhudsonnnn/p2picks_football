@@ -16,7 +16,3 @@ export interface FriendRelation {
   user_id1: string;
   user_id2: string;
 }
-
-export interface SocialError extends Error {
-  code?: string;
-}

@@ -4,6 +4,7 @@ import { FriendsList } from "@shared/widgets/FriendsList/FriendsList";
 import { useFriends } from "@features/social/hooks";
 import { addTableMember, removeTableMember, settleTable, type TableSettlementResult } from '@shared/api/tableService';
 import "./hostControls.css";
+import { useDialog } from "@shared/hooks/useDialog";
 
 export interface HostControlsMember { user_id: string; username: string; balance?: number; }
 
@@ -22,6 +23,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
   const [settlementLoading, setSettlementLoading] = useState(false);
   const [settlementResult, setSettlementResult] = useState<TableSettlementResult | null>(null);
   const [settlementError, setSettlementError] = useState<string | null>(null);
+  const { showAlert, showConfirm, dialogNode } = useDialog();
 
   const eligibleFriends = useMemo(
     () => friends.filter(f => !members.some(m => m.user_id === f.user_id)),
@@ -94,7 +96,12 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
           addSymbol="✔"
           onAction={async (userId: string, username: string) => {
             if (!tableId) return;
-            if (!window.confirm(`Add ${username} to the table?`)) return;
+            const confirmed = await showConfirm({
+              title: "Add Member",
+              message: `Add ${username} to the table?`,
+              confirmLabel: "Add",
+            });
+            if (!confirmed) return;
             setMutating(true);
             try {
               await addTableMember(tableId, userId);
@@ -102,7 +109,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
               setShowAdd(false);
             } catch (err) {
               console.error(err);
-              alert('Failed to add member');
+              await showAlert({ title: "Add Member", message: "Failed to add member." });
             } finally {
               setMutating(false);
             }
@@ -119,7 +126,12 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
           removeSymbol="✖"
           onAction={async (userId: string, username: string) => {
             if (!tableId) return;
-            if (!window.confirm(`Remove ${username} from the table?`)) return;
+            const confirmed = await showConfirm({
+              title: "Remove Member",
+              message: `Remove ${username} from the table?`,
+              confirmLabel: "Remove",
+            });
+            if (!confirmed) return;
             setMutating(true);
             try {
               await removeTableMember(tableId, userId);
@@ -127,7 +139,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
               setShowRemove(false);
             } catch (err) {
               console.error(err);
-              alert('Failed to remove member');
+              await showAlert({ title: "Remove Member", message: "Failed to remove member." });
             } finally {
               setMutating(false);
             }
@@ -186,6 +198,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
           <p className="settlement-error" role="alert">{settlementError}</p>
         )}
       </Modal>
+      {dialogNode}
     </section>
   );
 };

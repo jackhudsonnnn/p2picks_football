@@ -10,10 +10,6 @@ export type ModePreviewPayload = {
 
 const previewCache = new Map<string, ModePreviewPayload>();
 
-export function clearModePreviewCache(): void {
-  previewCache.clear();
-}
-
 export async function fetchModePreview(
   modeKey: string,
   config: Record<string, unknown>,

@@ -3,18 +3,6 @@
 export type BetModeKey = string & { _brand?: 'BetModeKey' };
 export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
 
-// Input shape for creating a bet proposal (frontend domain)
-export interface BetProposalInput {
-  nfl_game_id: string;
-  wager_amount: number;
-  time_limit_seconds: number;
-  mode: BetModeKey;
-  description: string;
-  mode_config?: Record<string, unknown>;
-  
-  [key: string]: any;
-}
-
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
 export interface BetRecord {
   bet_id: string;
