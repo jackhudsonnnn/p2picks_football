@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getTable } from '@shared/api/tableService';
+import { fetchCurrentTable } from '../services/tableService';
 import type { TableWithMembers } from '../types';
 
 export function useTable(tableId?: string) {
@@ -19,8 +19,8 @@ export function useTable(tableId?: string) {
     }
     setError(null);
     try {
-      const data = await getTable(tableId);
-      setTable(data as TableWithMembers);
+  const data = await fetchCurrentTable(tableId);
+  setTable(data as TableWithMembers);
     } catch (e: unknown) {
       const message = e instanceof Error && e.message
         ? e.message

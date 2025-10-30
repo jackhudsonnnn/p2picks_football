@@ -33,7 +33,7 @@ export interface Ticket {
   state: string; // keep loose for now to match existing UI
   gameContext: string;
   betDetails: string;
-  myGuess: string;
+  myGuess: string | null;
   wager: number;
   payout: number; // simple derived; actual payout finalized server-side
   result: string | null;
@@ -59,19 +59,4 @@ export interface TicketCounts {
   wins: number; // resolved and my guess equals winning choice
 }
 
-export interface ModeOverviewExample {
-  title?: string;
-  description: string;
-}
-
-export interface ModeOverview {
-  key: string;
-  label: string;
-  tagline: string;
-  description: string;
-  proposerConfiguration: string[];
-  participantChoices: string[];
-  winningCondition: string;
-  notes?: string[];
-  example?: ModeOverviewExample;
-}
+export type { ModeOverview, ModeOverviewExample } from '@shared/types/modes';

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '@shared/api/supabaseClient';
+import { supabase } from '@data/clients/supabaseClient';
 import { getUserTickets } from '../service';
 import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
-import { subscribeToBetProposals } from '@shared/api/tableService';
+import { subscribeToBetProposals } from '@features/table/services/tableService';
 
 type RefreshOptions = {
   silent?: boolean;

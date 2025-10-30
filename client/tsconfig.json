@@ -28,6 +28,7 @@
       "@features*": ["src/features/*"],
       "@components*": ["src/components/*"],
       "@shared*": ["src/shared/*"],
+      "@data*": ["src/data/*"],
       "@data-updater*": ["src/data-updater/*"]
     }
   },

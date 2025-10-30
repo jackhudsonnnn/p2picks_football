@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@features/auth";
 import { acceptBetProposal, hasUserAcceptedBet } from '@features/bets/service';
 import type { BetProposalMessage } from '@shared/types/chat';
-import { supabase } from '@shared/api/supabaseClient';
+import { supabase } from '@data/clients/supabaseClient';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import './BetProposalCard.css';

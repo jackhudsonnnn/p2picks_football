@@ -1,8 +1,3 @@
-// Lightweight shared HTTP helpers for stats-server interactions
-// Provides consistent JSON validation and clearer diagnostics when an endpoint
-// accidentally returns HTML (dev fallback) or non-JSON content.
-
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '@data/clients/supabaseClient';
 
 export class HttpError extends Error {
@@ -30,14 +25,14 @@ let cachedAccessToken: string | null = null;
 
 supabase.auth
   .getSession()
-  .then((response) => {
-    cachedAccessToken = response.data.session?.access_token ?? null;
+  .then(({ data }) => {
+    cachedAccessToken = data.session?.access_token ?? null;
   })
   .catch(() => {
     cachedAccessToken = null;
   });
 
-supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+supabase.auth.onAuthStateChange((_event, session) => {
   cachedAccessToken = session?.access_token ?? null;
 });
 
@@ -69,11 +64,7 @@ function normalizeHeaders(headers?: HeadersInit): Record<string, string> {
   return result;
 }
 
-async function performAuthorizedFetch(
-  url: string,
-  options: RequestInit,
-  attempt = 0,
-): Promise<Response> {
+async function performAuthorizedFetch(url: string, options: RequestInit, attempt = 0): Promise<Response> {
   const originalHeaders = options.headers;
   const headerMap = normalizeHeaders(originalHeaders);
   const hasAuthHeader = Object.keys(headerMap).some((key) => key.toLowerCase() === 'authorization');
@@ -102,12 +93,12 @@ async function performAuthorizedFetch(
         return performAuthorizedFetch(url, { ...options, headers: originalHeaders }, attempt + 1);
       }
     } catch (refreshError) {
-      console.warn('[fetchJSON] refreshSession failed', refreshError);
+      console.warn('[restClient] refreshSession failed', refreshError);
     }
     try {
       await supabase.auth.signOut();
     } catch (signOutError) {
-      console.warn('[fetchJSON] signOut after unauthorized failed', signOutError);
+      console.warn('[restClient] signOut after unauthorized failed', signOutError);
     }
   }
 

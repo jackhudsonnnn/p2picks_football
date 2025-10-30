@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchModeOverviews } from '@shared/api/modeCatalog';
+import { fetchModeOverviews } from '../service';
 import type { ModeOverview } from '../types';
 
 type UseModeCatalogOptions = {

@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getTableFeed, subscribeToBetProposals, subscribeToMessages, type TableFeedCursor } from '@shared/api/tableService';
+import {
+  loadTableFeed,
+  subscribeToBetProposals,
+  subscribeToMessages,
+  type TableFeedCursor,
+} from '@features/table/services/tableService';
 import type { ChatMessage } from '@shared/types/chat';
 
 export function useTableFeed(tableId?: string, enabled: boolean = true) {
@@ -22,7 +27,7 @@ export function useTableFeed(tableId?: string, enabled: boolean = true) {
     if (showLoading) setInitialLoading(true);
 
     try {
-      const page = await getTableFeed(tableId);
+  const page = await loadTableFeed(tableId);
       setMessages((prev) => {
         if (!prev.length) {
           return page.messages;
@@ -51,7 +56,7 @@ export function useTableFeed(tableId?: string, enabled: boolean = true) {
     if (!tableId || !cursor) return;
     setLoadingMore(true);
     try {
-      const page = await getTableFeed(tableId, { before: cursor });
+  const page = await loadTableFeed(tableId, { before: cursor });
       if (page.messages.length) {
         hasLoadedOlderRef.current = true;
         setMessages((prev) => {

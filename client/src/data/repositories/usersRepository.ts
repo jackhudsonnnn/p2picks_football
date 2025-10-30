@@ -1,5 +1,4 @@
-// Moved from src/entities/user/service.ts
-import { supabase } from '@shared/api/supabaseClient';
+import { supabase } from '@data/clients/supabaseClient';
 
 export async function getUsernamesByIds(userIds: string[]): Promise<Record<string, string>> {
   if (!userIds.length) return {};
@@ -10,7 +9,7 @@ export async function getUsernamesByIds(userIds: string[]): Promise<Record<strin
   if (error) throw error;
   const map: Record<string, string> = {};
   for (const user of data) {
-    map[user.user_id] = user.username;
+    map[user.user_id] = user.username ?? user.user_id;
   }
   return map;
 }

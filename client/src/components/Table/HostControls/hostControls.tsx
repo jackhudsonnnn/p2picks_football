@@ -2,7 +2,12 @@ import React, { useMemo, useState } from "react";
 import { Modal } from "@shared/widgets";
 import { FriendsList } from "@shared/widgets/FriendsList/FriendsList";
 import { useFriends } from "@features/social/hooks";
-import { addTableMember, removeTableMember, settleTable, type TableSettlementResult } from '@shared/api/tableService';
+import {
+  addTableMember,
+  removeTableMember,
+  settleTable,
+  type TableSettlementResult,
+} from '@features/table/services/tableService';
 import "./hostControls.css";
 import { useDialog } from "@shared/hooks/useDialog";
 

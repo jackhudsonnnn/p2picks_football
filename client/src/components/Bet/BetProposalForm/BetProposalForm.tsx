@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import './BetProposalForm.css';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { formatToHundredth, normalizeToHundredth } from '@shared/utils/number';
-import { fetchJSON } from '@shared/utils/http';
+import { fetchJSON } from '@data/clients/restClient';
 
 type GameOption = { id: string; label: string };
 type ModeOption = { key: string; label: string };

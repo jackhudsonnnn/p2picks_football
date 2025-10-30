@@ -1,44 +1,93 @@
-// Moved from src/entities/table/service.ts
-import { supabase } from '@shared/api/supabaseClient';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@data/clients/supabaseClient';
+import type { Tables } from '@data/types/database.types';
 import type { ChatMessage } from '@shared/types/chat';
-import { fetchModeConfigs } from '@shared/api/modeConfig';
-import { fetchModePreview } from '@shared/api/modePreview';
 import { normalizeToHundredth } from '@shared/utils/number';
+import { fetchModeConfigs, fetchModePreview } from '@data/repositories/modesRepository';
 
-export async function createTable(tableName: string, hostUserId: string) {
+export type TableRow = Tables<'tables'>;
+type TableMemberRow = Tables<'table_members'>;
+type UserRow = Tables<'users'>;
+
+export interface TableMemberWithUser {
+  user_id: TableMemberRow['user_id'];
+  balance: TableMemberRow['balance'] | null;
+  users?: {
+    username?: UserRow['username'] | null;
+  } | null;
+}
+
+export type TableWithMembers = TableRow & {
+  table_members: TableMemberWithUser[];
+};
+
+type RawMember = Partial<TableMemberRow> & {
+  users?: {
+    username?: UserRow['username'] | null;
+  } | null;
+};
+
+type MembershipRow = {
+  tables: (TableRow & { table_members: RawMember[] | null }) | null;
+};
+
+function normalizeMembers(members: RawMember[] | null | undefined): TableMemberWithUser[] {
+  if (!Array.isArray(members)) {
+    return [];
+  }
+  return members
+    .filter((member): member is RawMember & { user_id: string } => typeof member?.user_id === 'string')
+    .map((member) => ({
+      user_id: member.user_id,
+      balance: typeof member.balance === 'number' ? member.balance : null,
+      users: member.users ? { username: member.users.username ?? null } : null,
+    }));
+}
+
+export async function createTable(tableName: string, hostUserId: string): Promise<TableRow> {
   const { data: table, error } = await supabase
     .from('tables')
     .insert([{ table_name: tableName, host_user_id: hostUserId }])
     .select()
     .single();
   if (error) throw error;
+  if (!table) {
+    throw new Error('Failed to create table');
+  }
   await supabase.from('table_members').insert([
-    { table_id: table.table_id, user_id: hostUserId }
+    { table_id: table.table_id, user_id: hostUserId },
   ]);
-  return table;
+  return table as TableRow;
 }
 
-export async function getUserTables(userId: string) {
+export async function getUserTables(userId: string): Promise<TableWithMembers[]> {
   const { data, error } = await supabase
     .from('table_members')
-    .select('table_id, tables(*, table_members(*))')
+    .select('tables(*, table_members(*, users(username)))')
     .eq('user_id', userId);
   if (error) throw error;
-  return (data || []).map((row: any) => row.tables);
+  const rows = (data ?? []) as MembershipRow[];
+  return rows
+    .map((row) => row.tables)
+    .filter((table): table is TableRow & { table_members: RawMember[] | null } => Boolean(table))
+    .map((table) => ({
+      ...table,
+      table_members: normalizeMembers(table.table_members),
+    }));
 }
 
-export async function getTable(tableId: string) {
+export async function getTable(tableId: string): Promise<TableWithMembers | null> {
   const { data: table, error } = await supabase
     .from('tables')
-    .select('*, table_members(*, users(*))')
+    .select('table_id, table_name, host_user_id, created_at, last_activity_at, table_members(user_id, balance, users(username))')
     .eq('table_id', tableId)
     .single();
   if (error) throw error;
-  if (table && !table.table_members) {
-    (table as any).table_members = [];
-  }
-  return table;
+  if (!table) return null;
+  const withMembers = table as TableRow & { table_members: RawMember[] | null };
+  return {
+    ...withMembers,
+    table_members: normalizeMembers(withMembers.table_members),
+  };
 }
 
 export async function addTableMember(tableId: string, userId: string) {
@@ -99,7 +148,7 @@ function formatPointsDisplay(value: number): string {
 function buildSettlementSummary(
   tableName: string | null,
   host: SettlementMemberRecord,
-  others: SettlementMemberRecord[]
+  others: SettlementMemberRecord[],
 ): string {
   const winners = others
     .filter((member) => member.balance > 0)
@@ -113,7 +162,7 @@ function buildSettlementSummary(
   lines.push(`${new Date().toLocaleString()}`);
   lines.push('');
 
-  lines.push(`Host:`);
+  lines.push('Host:');
   lines.push(`- ${host.username}: ${formatPointsDisplay(host.balance)}`);
   lines.push('');
 
@@ -153,7 +202,9 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
   if (tableError) throw tableError;
   if (!tableRecord) throw new Error('Table not found');
 
-  const members: SettlementMemberRecord[] = (tableRecord.table_members || []).map((member: any) => ({
+  const normalized = normalizeMembers((tableRecord as TableRow & { table_members: RawMember[] | null }).table_members);
+
+  const members: SettlementMemberRecord[] = normalized.map((member) => ({
     user_id: member.user_id,
     username: member.users?.username ?? member.user_id,
     balance: normalizeToHundredth(member.balance ?? 0),
@@ -176,10 +227,8 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
     balance: member.balance,
   }));
 
-  // Debug: log original balances so we can trace what will be rolled back if needed
   console.log('[settleTable] originalBalances:', originalBalances);
 
-  // Update all balances to 0 - capture data + error to inspect Supabase response
   const { data: balanceData, error: balanceError } = await supabase
     .from('table_members')
     .update({ balance: 0 })
@@ -189,7 +238,6 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
 
   if (balanceError) throw balanceError;
 
-  // Verify the update by fetching the table_members rows for this table
   const { data: updatedMembers, error: fetchUpdatedError } = await supabase
     .from('table_members')
     .select('user_id, balance')
@@ -219,7 +267,7 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
         if (rollbackError) {
           console.error('[settleTable] Failed to rollback balance for user', user_id, rollbackError);
         }
-      })
+      }),
     );
     throw messageError;
   }
@@ -281,7 +329,7 @@ export async function getTableFeed(tableId: string, options: TableFeedOptions = 
   if (before) {
     const postedAtIso = new Date(before.postedAt).toISOString();
     query = query.or(
-      `and(posted_at.lt.${postedAtIso}),and(posted_at.eq.${postedAtIso},message_id.lt.${before.messageId})`
+      `and(posted_at.lt.${postedAtIso}),and(posted_at.eq.${postedAtIso},message_id.lt.${before.messageId})`,
     );
   }
 
@@ -456,65 +504,4 @@ export async function sendTextMessage(tableId: string, userId: string, messageTe
     .single();
   if (msgError) throw msgError;
   return txtMsg;
-}
-
-export function subscribeToTableMembers(
-  tableId: string,
-  onChange: (payload: { eventType: 'INSERT' | 'DELETE' | 'UPDATE' }) => void
-): RealtimeChannel {
-  const channel = supabase
-    .channel(`table_members:${tableId}`)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'table_members', filter: `table_id=eq.${tableId}` },
-      (payload) => {
-        // Debug: surface the raw payload so we can inspect realtime events
-        console.debug('[subscribeToTableMembers] payload:', payload);
-        const eventType = (payload as any).eventType as 'INSERT' | 'DELETE' | 'UPDATE';
-        onChange({ eventType });
-      }
-    )
-    .subscribe();
-  return channel;
-}
-
-export function subscribeToMessages(
-  tableId: string,
-  onInsert: (payload: { eventType: 'INSERT'; message_id?: string }) => void
-): RealtimeChannel {
-  const channel = supabase
-    .channel(`messages:${tableId}`)
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'messages', filter: `table_id=eq.${tableId}` },
-      (payload) => {
-        onInsert({ eventType: 'INSERT', message_id: (payload.new as any)?.message_id });
-      }
-    )
-    .subscribe();
-  return channel;
-}
-
-export function subscribeToBetProposals(
-  tableId: string,
-  onUpdate: (payload: { eventType: 'INSERT' | 'UPDATE'; bet_id?: string }) => void
-): RealtimeChannel {
-  const channel = supabase
-    .channel(`bet_proposals:${tableId}`)
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'bet_proposals', filter: `table_id=eq.${tableId}` },
-      (payload) => {
-        onUpdate({ eventType: 'INSERT', bet_id: (payload.new as any)?.bet_id });
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'bet_proposals', filter: `table_id=eq.${tableId}` },
-      (payload) => {
-        onUpdate({ eventType: 'UPDATE', bet_id: (payload.new as any)?.bet_id });
-      }
-    )
-    .subscribe();
-  return channel;
 }

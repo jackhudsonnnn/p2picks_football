@@ -4,7 +4,7 @@ export { useTableMembers } from './hooks/useTableMembers';
 export type { TableListItem, TableMember, Table } from './types';
 
 import { useEffect } from 'react';
-import { subscribeToTableMembers } from '@shared/api/tableService';
+import { subscribeToTableMembers } from './services/tableService';
 import { useTable } from './hooks/useTable';
 import { useTableMembers } from './hooks/useTableMembers';
 

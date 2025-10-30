@@ -29,7 +29,14 @@ export const TicketsPage: React.FC = () => {
     try {
       await changeGuess(ticketId, newGuess);
     } catch (e: any) {
-      const message = `Failed to update your guess. ${e?.message ?? ''}`.trim();
+      if (e && e.code === "PGRST116") {
+        await showAlert({
+          title: "Update Guess",
+          message: "Guesses can no longer be changed for this ticket.",
+        });
+        return;
+      }
+      const message = `Failed to update your guess. ${e?.code ?? ''}`.trim();
       await showAlert({ title: "Update Guess", message });
     }
   };

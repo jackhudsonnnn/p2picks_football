@@ -5,9 +5,8 @@ import { extractModeConfig } from '@features/bets/mappers';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
-import { fetchModePreview, type ModePreviewPayload } from '@shared/api/modePreview';
-import { pokeBet } from '@features/bets/service';
-import { HttpError } from '@shared/utils/http';
+import { fetchModePreview, type ModePreviewPayload, pokeBet } from '@features/bets/service';
+import { HttpError } from '@data/clients/restClient';
 import { useDialog } from '@shared/hooks/useDialog';
 
 export interface TicketCardProps {
@@ -249,7 +248,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
         <div className={betContainerClassName}>
           <select
             className="bet-dropdown"
-            value={ticket.myGuess}
+            value={ticket.myGuess ?? ''}
             onChange={(e) => {
               void handleGuessChangeDropdown(ticket.id, e.target.value);
             }}
