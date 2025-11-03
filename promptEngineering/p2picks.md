@@ -78,7 +78,7 @@ This mode is a bet on the next score type.
 
 * **Considerations:** This app will scale to accept many different game modes.
 
-#### Mode 5: Spread the Wealth
+#### Mode 5: Total Disaster
 Bet on whether the total points scored in the game will be over or under a specified value.
 * **Proposer Configuration:** Sets the over/under value (a numeric line, e.g. `47.5`).
 * **Participant Choices:** `pass`, `Over`, `Under`.
@@ -93,6 +93,15 @@ Bet on which team covers a specified point spread, applied to the home team (tea
 * **Winning Condition:** Once the game is final, add the spread to the home team
     * If {team 1 score} + spread > {team 2 score}, bet participants choosing {team 1} win
     * If {team 1 score} + spread < {team 2 score}, bet participants choosing {team 2} win
+
+#### Mode 7: Prop Hunt
+This mode is a prop bet for users to guess over/under on whether a player will get more/less than a specified amount for a given stat.
+* **Proposer Configuration:**
+    * Selects **one unique player**.
+    * Selects a **stat**: Receptions, Receiving Yards, Punts, ....
+    * Sets the over/under value (a numeric line, e.g. `47.5`).
+* **Participant Choices:** `pass`, `over`, `under`.
+* **Winning Condition:** The winning choice is decided by whether the player gets more/less than the specified amount for a given stat.
 
 ---
 

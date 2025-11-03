@@ -1,4 +1,5 @@
 import type { ModeModule } from '../../shared/types';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
 import { prepareGiveAndTakeConfig } from './prepareConfig';
 import { giveAndTakeValidator } from './validator';
 import { buildGiveAndTakeUserConfig } from './userConfig';
@@ -19,7 +20,7 @@ export const giveAndTakeModule: ModeModule = {
       '(() => { const opts = ["pass"]; const home = config.home_team_name || config.home_team_id || "Home Team"; const away = config.away_team_name || config.away_team_id || "Away Team"; opts.push(home); opts.push(away); return opts; })()',
     configSteps: [],
     finalizeValidatorExpression:
-      '(() => { const errors = []; const raw = Number(config.spread_value ?? config.spread ?? NaN); if (!config.spread && config.spread !== 0 && config.spread_value == null) errors.push("Spread required"); if (!Number.isFinite(raw)) { errors.push("Spread must be numeric"); } else { if (raw < -99.5 || raw > 99.5) errors.push("Spread must be between -99.5 and +99.5"); if (Math.abs(Math.round(raw * 2)) % 2 !== 1) errors.push("Spread must end in .5"); if (Math.abs(raw) < 0.5) errors.push("Spread cannot be 0"); } return errors; })()',
+      '(() => { const errors = []; const raw = Number(config.spread_value ?? config.spread ?? NaN); if (!config.spread && config.spread !== 0 && config.spread_value == null) errors.push("Spread required"); if (!Number.isFinite(raw)) { errors.push("Spread must be numeric"); } else { if (raw < -99.5 || raw > 99.5) errors.push("Spread must be between -99.5 and +99.5"); if (Math.abs(Math.round(raw * 2)) % 2 !== 1) errors.push("Spread must end in .5"); if (Math.abs(raw) < 0.5) errors.push("Spread cannot be 0"); } if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
     metadata: {
       spreadRange: {
         min: -99.5,
@@ -27,6 +28,8 @@ export const giveAndTakeModule: ModeModule = {
         step: 1,
         unit: 'points',
       },
+      allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
+      defaultResolveAt: EITHER_OR_DEFAULT_RESOLVE_AT,
     },
   },
   overview: giveAndTakeOverview,

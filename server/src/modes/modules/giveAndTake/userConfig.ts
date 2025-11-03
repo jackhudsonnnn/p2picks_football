@@ -1,6 +1,8 @@
-import { loadRefinedGame } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
+import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { extractTeamName, pickHomeTeam } from '../../shared/utils';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
 
 const MIN_MAGNITUDE = 0.5;
 const MAX_MAGNITUDE = 99.5;
@@ -17,10 +19,11 @@ export async function buildGiveAndTakeUserConfig(input: BuildInput = {}): Promis
   const title = 'Select Point Spread';
 
   let homeLabel = 'Home Team';
+  let doc: RefinedGameDoc | null = null;
 
   if (gameId) {
     try {
-      const doc = await loadRefinedGame(gameId);
+      doc = await loadRefinedGame(gameId);
       if (doc) {
         const home = pickHomeTeam(doc);
         const homeName = extractTeamName(home);
@@ -38,30 +41,40 @@ export async function buildGiveAndTakeUserConfig(input: BuildInput = {}): Promis
     }
   }
 
-  const choices: ModeUserConfigChoice[] = buildSpreadChoices(homeLabel);
+  const skipResolveStep = shouldSkipResolveStep(doc);
+  const choices: ModeUserConfigChoice[] = buildSpreadChoices(homeLabel, skipResolveStep);
 
   if (debug) {
     console.log('[giveAndTake][userConfig] prepared choices', {
       gameId,
       choiceCount: choices.length,
+      skipResolveStep,
+      status: doc?.status ?? null,
+      period: doc?.period ?? null,
     });
   }
 
-  return [[title, choices]];
+  const steps: ModeUserConfigStep[] = [[title, choices]];
+
+  if (!skipResolveStep) {
+    steps.push(['Resolve At', buildResolveChoices()]);
+  }
+
+  return steps;
 }
 
-function buildSpreadChoices(homeLabel: string): ModeUserConfigChoice[] {
+function buildSpreadChoices(homeLabel: string, skipResolveStep: boolean): ModeUserConfigChoice[] {
   const choices: ModeUserConfigChoice[] = [];
   for (let magnitude = MIN_MAGNITUDE; magnitude <= MAX_MAGNITUDE; magnitude += STEP) {
     const numeric = Number(magnitude.toFixed(1));
     const negative = -numeric;
-    choices.push(buildChoice(negative, homeLabel));
-    choices.push(buildChoice(numeric, homeLabel));
+    choices.push(buildChoice(negative, homeLabel, skipResolveStep));
+    choices.push(buildChoice(numeric, homeLabel, skipResolveStep));
   }
   return choices;
 }
 
-function buildChoice(value: number, homeLabel: string): ModeUserConfigChoice {
+function buildChoice(value: number, homeLabel: string, skipResolveStep: boolean): ModeUserConfigChoice {
   const spread = formatSpread(value);
   const label = `${homeLabel} ${spread}`;
   return {
@@ -71,6 +84,7 @@ function buildChoice(value: number, homeLabel: string): ModeUserConfigChoice {
       spread,
       spread_value: value,
       spread_label: spread,
+      ...(skipResolveStep ? { resolve_at: EITHER_OR_DEFAULT_RESOLVE_AT } : {}),
     },
   };
 }
@@ -78,5 +92,13 @@ function buildChoice(value: number, homeLabel: string): ModeUserConfigChoice {
 function formatSpread(value: number): string {
   const fixed = Math.abs(value).toFixed(1);
   return value >= 0 ? `+${fixed}` : `-${fixed}`;
+}
+
+function buildResolveChoices(): ModeUserConfigChoice[] {
+  return EITHER_OR_ALLOWED_RESOLVE_AT.map((value) => ({
+    value,
+    label: value,
+    patch: { resolve_at: value },
+  }));
 }
 

@@ -1,5 +1,7 @@
 import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpers';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
+import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
+import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
 
 interface BuildInput {
@@ -19,6 +21,7 @@ const DEBUG = process.env.DEBUG_PROP_HUNT === '1' || process.env.DEBUG_PROP_HUNT
 export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const { doc, players } = await loadGameContext(gameId);
+  const preparedPlayers = prepareValidPlayers(players);
   const currentStat = doc ? getCurrentStatValue(doc, input.existingConfig ?? {}) : null;
   const skipResolveStep = shouldSkipResolveStep(doc);
 
@@ -26,13 +29,14 @@ export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<M
     console.log('[propHunt][userConfig] building steps', {
       gameId,
       playerCount: players.length,
+      validPlayerCount: preparedPlayers.length,
       skipResolveStep,
       status: doc?.status ?? null,
       period: doc?.period ?? null,
     });
   }
 
-  const playerChoices: ModeUserConfigChoice[] = players.map((player) => ({
+  const playerChoices: ModeUserConfigChoice[] = preparedPlayers.map((player) => ({
     value: player.id,
     label: formatPlayerLabel(player),
     patch: {
@@ -117,7 +121,7 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
       }
     }
 
-    return { doc, players: records.sort((a, b) => a.name.localeCompare(b.name)) };
+  return { doc, players: sortPlayersByPositionAndName(records) };
   } catch (err) {
     if (DEBUG) {
       console.warn('[propHunt][userConfig] failed to load game context', {
@@ -127,14 +131,6 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
     }
     return { doc: null, players: [] };
   }
-}
-
-function shouldSkipResolveStep(doc: RefinedGameDoc | null): boolean {
-  if (!doc) return false;
-  const status = typeof doc.status === 'string' ? doc.status.trim().toUpperCase() : '';
-  if (status === 'STATUS_HALFTIME') return true;
-  if (typeof doc.period === 'number' && doc.period >= 3) return true;
-  return false;
 }
 
 function buildLineChoices(existingConfig: Record<string, unknown>, currentStat: number | null): ModeUserConfigChoice[] {

@@ -1,3 +1,3 @@
-Prioritize p2picks.md as the source of truth for completing this task. Some of the current code is outdated, but all features are implement. Ask clarification questions as needed. No need for legacy support.
+Prioritize p2picks.md as the source of truth for completing this task. Some of the current code is outdated, but all features are implemented. Ask clarification questions as needed. No need for legacy support; you may assume the data in my current db is unimportant.
 
 Feel free to suggest supabase db changes if necessary.

@@ -1079,6 +1079,21 @@ function coerceNumber(value: any): any {
   return value;
 }
 
+function getStatusType(source: any): string | undefined {
+  if (!source || typeof source !== 'object') return undefined;
+  const raw = (source as any).type;
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed) return trimmed;
+  }
+  return undefined;
+}
+
+function isActiveStatus(statusType?: string): boolean {
+  if (!statusType) return true;
+  return statusType.trim().toLowerCase() === 'active';
+}
+
 async function loadRosterPlayers(): Promise<Map<string, Map<string, PlayerEntry>>> {
   const result = new Map<string, Map<string, PlayerEntry>>();
   const files = await safeList(ROSTERS_DIR);
@@ -1093,18 +1108,21 @@ async function loadRosterPlayers(): Promise<Map<string, Map<string, PlayerEntry>
         const items = Array.isArray(group?.items) ? group.items : [];
         for (const item of items) {
           const athleteId = String(item?.id ?? '');
+          const statusType = getStatusType(item?.status);
+          if (statusType && !isActiveStatus(statusType)) continue;
           const position = item?.position ?? {};
           const headshotField = item?.headshot;
           const headshot = typeof headshotField === 'string' ? headshotField : headshotField?.href ?? '';
           if (!athleteId) continue;
-          playersMap.set(athleteId, {
+          const player: PlayerEntry = {
             athleteId,
             fullName: item?.displayName ?? item?.fullName ?? '',
             position: position?.abbreviation ?? position?.name ?? '',
             jersey: item?.jersey ?? '',
             headshot,
             stats: initTargetStats(),
-          });
+          };
+          playersMap.set(athleteId, player);
         }
       }
       result.set(teamId, playersMap);

@@ -1,6 +1,8 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
 
 const LINE_MIN = 0.5;
 const LINE_MAX = 199.5;
@@ -14,6 +16,7 @@ interface TotalDisasterConfig {
   line?: string | null;
   line_value?: number | null;
   line_label?: string | null;
+  resolve_at?: string | null;
 }
 
 export async function prepareTotalDisasterConfig({
@@ -28,6 +31,12 @@ export async function prepareTotalDisasterConfig({
   if (!nextConfig.nfl_game_id) {
     nextConfig.nfl_game_id = bet.nfl_game_id ?? null;
   }
+
+  nextConfig.resolve_at = normalizeResolveAt(
+    nextConfig.resolve_at,
+    EITHER_OR_ALLOWED_RESOLVE_AT,
+    EITHER_OR_DEFAULT_RESOLVE_AT,
+  );
 
   const normalizedLine = normalizeLine(nextConfig.line_value ?? nextConfig.line);
   if (normalizedLine == null) {

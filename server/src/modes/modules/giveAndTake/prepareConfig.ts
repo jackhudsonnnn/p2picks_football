@@ -1,6 +1,8 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
 
 const SPREAD_MIN = -99.5;
 const SPREAD_MAX = 99.5;
@@ -14,6 +16,7 @@ interface GiveAndTakeConfig {
   spread?: string | null;
   spread_value?: number | null;
   spread_label?: string | null;
+  resolve_at?: string | null;
 }
 
 export async function prepareGiveAndTakeConfig({
@@ -28,6 +31,12 @@ export async function prepareGiveAndTakeConfig({
   if (!nextConfig.nfl_game_id) {
     nextConfig.nfl_game_id = bet.nfl_game_id ?? null;
   }
+
+  nextConfig.resolve_at = normalizeResolveAt(
+    nextConfig.resolve_at,
+    EITHER_OR_ALLOWED_RESOLVE_AT,
+    EITHER_OR_DEFAULT_RESOLVE_AT,
+  );
 
   const normalizedSpread = normalizeSpread(nextConfig.spread_value ?? nextConfig.spread);
   if (normalizedSpread == null) {

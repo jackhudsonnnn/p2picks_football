@@ -45,14 +45,7 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
   longReception: { category: 'receiving', field: 'longReception' },
   totalTackles: { category: 'defensive', field: 'totalTackles' },
   sacks: { category: 'defensive', field: 'sacks' },
-  passesDefended: { category: 'defensive', field: 'passesDefended' },
-  interceptions: { category: 'interceptions', field: 'interceptions' },
-  kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
-  longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
-  puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
-  longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
-  puntsInside20: { category: 'punting', field: 'puntsInside20' },
-  longPunt: { category: 'punting', field: 'longPunt' },
+  passesDefended: { category: 'defensive', field: 'passesDefended' }
 };
 
 export class EitherOrValidatorService {

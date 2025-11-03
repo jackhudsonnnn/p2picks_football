@@ -1,5 +1,7 @@
 import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
+import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
+import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 
 type PlayerRecord = {
@@ -15,20 +17,22 @@ export async function buildEitherOrUserConfig(input: {
   const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const { doc, players } = await loadGameContext(gameId);
+  const preparedPlayers = prepareValidPlayers(players);
   const skipResolveStep = shouldSkipResolveStep(doc);
 
   if (debug) {
     console.log('[eitherOr][userConfig] building steps', {
       gameId,
       playerCount: players.length,
+      validPlayerCount: preparedPlayers.length,
       skipResolveStep,
       status: doc?.status ?? null,
       period: doc?.period ?? null,
     });
   }
 
-  const playerMap = playersById(players);
-  const basePlayerChoices = players.map((player) => ({
+  const playerMap = playersById(preparedPlayers);
+  const basePlayerChoices = preparedPlayers.map((player) => ({
     value: player.id,
     label: formatPlayerLabel(player),
   }));
@@ -140,21 +144,12 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
       }
     }
 
-    return { doc, players: records.sort((a, b) => a.name.localeCompare(b.name)) };
+  return { doc, players: sortPlayersByPositionAndName(records) };
   } catch (err) {
     console.warn('[eitherOr] failed to load player records', { gameId, error: (err as Error).message });
     return { doc: null, players: [] };
   }
 }
-
-function shouldSkipResolveStep(doc: RefinedGameDoc | null): boolean {
-  if (!doc) return false;
-  const status = typeof doc.status === 'string' ? doc.status.trim().toUpperCase() : '';
-  if (status === 'STATUS_HALFTIME') return true;
-  if (typeof doc.period === 'number' && doc.period >= 3) return true;
-  return false;
-}
-
 function playersById(players: PlayerRecord[]): Record<string, PlayerRecord> {
   return players.reduce<Record<string, PlayerRecord>>((map, player) => {
     map[player.id] = player;
