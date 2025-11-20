@@ -1,9 +1,13 @@
 import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
-import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { getValidPositionsForStat } from '../../shared/statMappings';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
+import {
+  KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES,
+  KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
+  KING_OF_THE_HILL_STAT_KEY_LABELS,
+  KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
+} from './constants';
 
 type PlayerRecord = {
   id: string;
@@ -12,15 +16,14 @@ type PlayerRecord = {
   position?: string | null;
 };
 
-export async function buildEitherOrUserConfig(input: {
+export async function buildKingOfTheHillUserConfig(input: {
   nflGameId?: string | null;
   existingConfig?: Record<string, unknown>;
 }): Promise<ModeUserConfigStep[]> {
-  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
+  const debug = process.env.DEBUG_KING_OF_THE_HILL === '1' || process.env.DEBUG_KING_OF_THE_HILL === 'true';
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const { doc, players } = await loadGameContext(gameId);
   const preparedPlayers = prepareValidPlayers(players);
-  const skipResolveStep = shouldSkipResolveStep(doc);
   const normalizedStatus = typeof doc?.status === 'string' ? doc.status.trim().toUpperCase() : null;
   const showProgressStep = Boolean(normalizedStatus && normalizedStatus !== 'STATUS_SCHEDULED');
 
@@ -28,7 +31,7 @@ export async function buildEitherOrUserConfig(input: {
   const validPositions = getValidPositionsForStat(statKey);
 
   if (debug) {
-    console.log('[eitherOr][userConfig] filtering players', {
+    console.log('[kingOfTheHill][userConfig] filtering players', {
       existingConfig: input.existingConfig,
       statKey,
       validPositions,
@@ -42,13 +45,12 @@ export async function buildEitherOrUserConfig(input: {
   });
 
   if (debug) {
-    console.log('[eitherOr][userConfig] building steps', {
+    console.log('[kingOfTheHill][userConfig] building steps', {
       gameId,
       playerCount: players.length,
       validPlayerCount: preparedPlayers.length,
       filteredPlayerCount: filteredPlayers.length,
       statKey,
-      skipResolveStep,
       status: doc?.status ?? null,
       period: doc?.period ?? null,
       showProgressStep,
@@ -83,49 +85,49 @@ export async function buildEitherOrUserConfig(input: {
 
   const defaultProgressPatch = showProgressStep ? {} : { progress_mode: 'starting_now' };
 
-  const statChoices: ModeUserConfigChoice[] = Object.keys(STAT_KEY_TO_CATEGORY)
+  const statChoices: ModeUserConfigChoice[] = Object.keys(KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY)
     .sort()
     .map((statKey) => {
-      const label = STAT_KEY_LABELS[statKey] ?? humanizeStatKey(statKey);
+      const label = KING_OF_THE_HILL_STAT_KEY_LABELS[statKey] ?? humanizeStatKey(statKey);
       return {
         value: statKey,
         label,
         patch: {
           stat: statKey,
           stat_label: label,
-          ...(skipResolveStep ? { resolve_at: EITHER_OR_DEFAULT_RESOLVE_AT } : {}),
           ...defaultProgressPatch,
         },
       } satisfies ModeUserConfigChoice;
     });
 
+  const resolveValueChoices: ModeUserConfigChoice[] = KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES.map((value) => ({
+    value: String(value),
+    label: String(value),
+    patch: {
+      resolve_value: value,
+      resolve_value_label: String(value),
+    },
+  }));
+
   const steps: ModeUserConfigStep[] = [
     ['Select Stat', statChoices],
     ['Select Player 1', player1Choices],
     ['Select Player 2', player2Choices],
+    ['Resolve Value', resolveValueChoices],
   ];
-
-  if (!skipResolveStep) {
-    const resolveChoices: ModeUserConfigChoice[] = EITHER_OR_ALLOWED_RESOLVE_AT.map((value) => ({
-      value,
-      label: value,
-      patch: { resolve_at: value },
-    }));
-    steps.push(['Resolve At', resolveChoices]);
-  }
 
   if (showProgressStep) {
     const progressModeChoices: ModeUserConfigChoice[] = [
       {
         value: 'starting_now',
         label: 'Starting Now',
-        description: 'Capture baselines when betting closes; whoever gains the most afterward wins.',
+        description: 'Capture current stats when betting closes; players must add the full resolve value from that snapshot.',
         patch: { progress_mode: 'starting_now' },
       },
       {
         value: 'cumulative',
         label: 'Cumulative',
-        description: 'Skip baselines and compare full-game totals at the resolve time.',
+        description: 'Use total game stats; the first player to hit the resolve value overall wins.',
         patch: { progress_mode: 'cumulative' },
       },
     ];
@@ -133,13 +135,10 @@ export async function buildEitherOrUserConfig(input: {
   }
 
   if (debug) {
-    console.log('[eitherOr][userConfig] steps prepared', {
+    console.log('[kingOfTheHill][userConfig] steps prepared', {
       gameId,
       stepCount: steps.length,
-      samplePlayerChoices: {
-        player1: player1Choices.slice(0, 3),
-        player2: player2Choices.slice(0, 3),
-      },
+      defaultResolveValue: KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
     });
   }
 
@@ -153,8 +152,8 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
   try {
     const doc = await loadRefinedGame(gameId);
     if (!doc || !Array.isArray(doc.teams)) {
-      if (process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true') {
-        console.warn('[eitherOr][userConfig] missing teams in refined game doc', { gameId });
+      if (process.env.DEBUG_KING_OF_THE_HILL === '1' || process.env.DEBUG_KING_OF_THE_HILL === 'true') {
+        console.warn('[kingOfTheHill][userConfig] missing teams in refined game doc', { gameId });
       }
       return { doc, players: [] };
     }
@@ -189,12 +188,13 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
       }
     }
 
-  return { doc, players: sortPlayersByPositionAndName(records) };
+    return { doc, players: sortPlayersByPositionAndName(records) };
   } catch (err) {
-    console.warn('[eitherOr] failed to load player records', { gameId, error: (err as Error).message });
+    console.warn('[kingOfTheHill] failed to load player records', { gameId, error: (err as Error).message });
     return { doc: null, players: [] };
   }
 }
+
 function playersById(players: PlayerRecord[]): Record<string, PlayerRecord> {
   return players.reduce<Record<string, PlayerRecord>>((map, player) => {
     map[player.id] = player;

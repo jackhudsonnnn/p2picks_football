@@ -17,6 +17,7 @@ interface EitherOrConfig {
   stat_label?: string | null;
   nfl_game_id?: string | null;
   resolve_at?: string | null;
+  progress_mode?: string | null;
 }
 
 interface PlayerSnapshot {
@@ -208,37 +209,57 @@ export class EitherOrValidatorService {
       if (configResolveAt.toLowerCase() !== resolveAt.trim().toLowerCase()) {
         return;
       }
+      const progressMode = this.normalizeProgressMode(config.progress_mode);
       const baseline = (await this.getBaseline(bet.bet_id)) || (await this.captureBaselineForBet(bet, doc));
-      if (!baseline) {
-        console.warn('[eitherOr] baseline unavailable; skipping bet', { bet_id: bet.bet_id });
+      if (progressMode === 'starting_now' && !baseline) {
+        console.warn('[eitherOr] baseline unavailable for Starting Now; skipping bet', { bet_id: bet.bet_id });
         return;
       }
-      const player1Final = this.getPlayerStatValue(doc, { id: config.player1_id, name: config.player1_name }, baseline.statKey);
-      const player2Final = this.getPlayerStatValue(doc, { id: config.player2_id, name: config.player2_name }, baseline.statKey);
-      const delta1 = player1Final - baseline.player1.value;
-      const delta2 = player2Final - baseline.player2.value;
-      if (Number.isNaN(delta1) || Number.isNaN(delta2)) {
-        console.warn('[eitherOr] computed NaN delta; skipping bet', { bet_id: bet.bet_id, delta1, delta2 });
+      const statKey = (baseline?.statKey ?? config.stat ?? '').trim();
+      if (!statKey) {
+        console.warn('[eitherOr] stat key unavailable for evaluation', { bet_id: bet.bet_id });
         return;
       }
-      if (delta1 === delta2) {
-        const player1Label = config.player1_name || baseline.player1.name || 'Player 1';
-        const player2Label = config.player2_name || baseline.player2.name || 'Player 2';
-        const statLabel = this.formatStatLabel(config, baseline.statKey);
+      const player1Final = this.getPlayerStatValue(doc, { id: config.player1_id, name: config.player1_name }, statKey);
+      const player2Final = this.getPlayerStatValue(doc, { id: config.player2_id, name: config.player2_name }, statKey);
+      const baselinePlayer1 = baseline?.player1?.value ?? 0;
+      const baselinePlayer2 = baseline?.player2?.value ?? 0;
+      const metric1 = progressMode === 'starting_now' ? player1Final - baselinePlayer1 : player1Final;
+      const metric2 = progressMode === 'starting_now' ? player2Final - baselinePlayer2 : player2Final;
+      if (Number.isNaN(metric1) || Number.isNaN(metric2)) {
+        console.warn('[eitherOr] computed NaN metric; skipping bet', { bet_id: bet.bet_id, metric1, metric2 });
+        return;
+      }
+      const baselinePlayer1Snapshot = baseline?.player1 ?? {
+        id: config.player1_id,
+        name: config.player1_name,
+        value: baselinePlayer1,
+      };
+      const baselinePlayer2Snapshot = baseline?.player2 ?? {
+        id: config.player2_id,
+        name: config.player2_name,
+        value: baselinePlayer2,
+      };
+
+      if (metric1 === metric2) {
+        const player1Label = config.player1_name || baselinePlayer1Snapshot.name || 'Player 1';
+        const player2Label = config.player2_name || baselinePlayer2Snapshot.name || 'Player 2';
+        const statLabel = this.formatStatLabel(config, baseline?.statKey || statKey);
         await this.washBet(
           bet.bet_id,
           {
-            stat: baseline.statKey,
-            player1: { ...baseline.player1, final: player1Final, delta: delta1 },
-            player2: { ...baseline.player2, final: player2Final, delta: delta2 },
+            stat: baseline?.statKey || statKey,
+            player1: { ...baselinePlayer1Snapshot, final: player1Final, delta: metric1 },
+            player2: { ...baselinePlayer2Snapshot, final: player2Final, delta: metric2 },
             captured_at: new Date().toISOString(),
+            progress_mode: progressMode,
           },
           `${player1Label} and ${player2Label} finished tied in ${statLabel}.`,
         );
         await this.clearBaseline(bet.bet_id);
         return;
       }
-      const winner = delta1 > delta2 ? (config.player1_name || baseline.player1.name || 'Player 1') : (config.player2_name || baseline.player2.name || 'Player 2');
+      const winner = metric1 > metric2 ? (config.player1_name || baselinePlayer1Snapshot.name || 'Player 1') : (config.player2_name || baselinePlayer2Snapshot.name || 'Player 2');
   const supa = getSupabaseAdmin();
       const { error: updErr } = await supa
         .from('bet_proposals')
@@ -252,9 +273,10 @@ export class EitherOrValidatorService {
       await this.recordHistory(bet.bet_id, 'either_or_result', {
         outcome: 'winner',
         winning_choice: winner,
-        stat: baseline.statKey,
-        player1: { ...baseline.player1, final: player1Final, delta: delta1 },
-        player2: { ...baseline.player2, final: player2Final, delta: delta2 },
+        stat: statKey,
+        player1: { ...baselinePlayer1Snapshot, final: player1Final, delta: metric1 },
+        player2: { ...baselinePlayer2Snapshot, final: player2Final, delta: metric2 },
+        progress_mode: progressMode,
         captured_at: new Date().toISOString(),
       });
       await this.clearBaseline(bet.bet_id);
@@ -399,6 +421,13 @@ export class EitherOrValidatorService {
       .filter(Boolean)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  }
+
+  private normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
+    if (typeof mode === 'string' && mode.trim().toLowerCase() === 'cumulative') {
+      return 'cumulative';
+    }
+    return 'starting_now';
   }
 
   private formatBetLabel(betId: string): string {

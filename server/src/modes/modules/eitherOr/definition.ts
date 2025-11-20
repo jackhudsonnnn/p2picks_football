@@ -13,7 +13,7 @@ export const eitherOrModule: ModeModule = {
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate:
-      '`Largest next increase of stats, baseline stats captured at bet close`',
+      '`${(config.progress_mode === "cumulative" ? "Highest total " : "Largest net gain in ")}${(config.stat_label || config.stat || "stat")} by ${(config.resolve_at || "the selected time")}`',
     winningConditionTemplate:
       '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} ${config.stat_label || config.stat || "stat"} until ${config.resolve_at || "the selected time"}`',
     optionsExpression:
@@ -41,11 +41,12 @@ export const eitherOrModule: ModeModule = {
       },
     ],
     finalizeValidatorExpression:
-      '(() => { const errors = []; if (!config.player1_id || !config.player2_id) errors.push("Two players required"); if (!config.stat) errors.push("Stat required"); return errors; })()',
+      '(() => { const errors = []; if (!config.player1_id || !config.player2_id) errors.push("Two players required"); if (!config.stat) errors.push("Stat required"); if (!config.progress_mode) errors.push("Progress tracking selection required"); return errors; })()',
     metadata: buildEitherOrMetadata(),
   },
   overview: eitherOrOverview,
   prepareConfig: prepareEitherOrConfig,
   validator: eitherOrValidator,
-  buildUserConfig: async ({ nflGameId }) => buildEitherOrUserConfig({ nflGameId }),
+  buildUserConfig: async ({ nflGameId, config }) =>
+    buildEitherOrUserConfig({ nflGameId, existingConfig: config ?? {} }),
 };

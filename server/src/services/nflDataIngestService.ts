@@ -49,9 +49,9 @@ const CLEANUP_CUTOFF_MINUTES = 30;
 const POST_GAME_DELETE_MINUTES = 10;
 
 const DEFAULT_CONFIG: IngestConfig = {
-  rawIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_RAW_INTERVAL_SECONDS) || 60),
+  rawIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_RAW_INTERVAL_SECONDS) || 20),
   rawJitterPercent: Math.max(0, Number(process.env.NFL_DATA_RAW_JITTER_PERCENT) || 10),
-  refinedIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_REFINED_INTERVAL_SECONDS) || 60),
+  refinedIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_REFINED_INTERVAL_SECONDS) || 20),
   rosterRefreshIntervalSeconds: Number(process.env.NFL_DATA_ROSTER_REFRESH_SECONDS) || 24 * 60 * 60,
   testingMode: String(process.env.NFL_DATA_TEST_MODE || '').toLowerCase() === 'true',
 };
@@ -252,6 +252,7 @@ async function runRawTick(firstTick: boolean): Promise<void> {
   if (firstTick) {
     await purgeInitialRaw();
   }
+  
   const events = await getLiveEvents();
   if (!events.length) {
     logger.info('No live NFL games');

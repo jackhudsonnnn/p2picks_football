@@ -18,6 +18,7 @@ interface ChooseTheirFateConfig {
 interface TeamScoreSnapshot {
   touchdowns: number;
   fieldGoals: number;
+  punts: number;
 }
 
 interface ChooseFateBaseline {
@@ -193,6 +194,8 @@ export class ChooseTheirFateValidatorService {
       const currentScores = this.collectTeamScores(doc);
       const touchdownTeam = this.firstIncrease(baseline.teams, currentScores, 'touchdowns');
       const fieldGoalTeam = this.firstIncrease(baseline.teams, currentScores, 'fieldGoals');
+      const puntTeam = this.firstIncrease(baseline.teams, currentScores, 'punts');
+      const baselinePossession = baseline.possessionTeamId;
       const possessionTeam = this.possessionTeamIdFromDoc(doc);
       if (touchdownTeam) {
         await this.setResult(bet.bet_id, 'Touchdown', {
@@ -212,7 +215,21 @@ export class ChooseTheirFateValidatorService {
         await this.clearBaseline(bet.bet_id);
         return;
       }
-      const baselinePossession = baseline.possessionTeamId;
+      if (puntTeam && baselinePossession && puntTeam === baselinePossession) {
+        const puntsBefore = this.normalizeNumber(baseline.teams[puntTeam]?.punts);
+        const puntsAfter = this.normalizeNumber(currentScores[puntTeam]?.punts);
+        await this.setResult(bet.bet_id, 'Punt', {
+          outcome: 'Punt',
+          from_team_id: baselinePossession,
+          to_team_id:
+            possessionTeam && possessionTeam !== baselinePossession ? possessionTeam : null,
+          punts_before: puntsBefore,
+          punts_after: puntsAfter,
+          captured_at: new Date().toISOString(),
+        });
+        await this.clearBaseline(bet.bet_id);
+        return;
+      }
       if (baselinePossession && possessionTeam && possessionTeam !== baselinePossession) {
         await this.setResult(bet.bet_id, 'Turnover', {
           outcome: 'Turnover',
@@ -235,9 +252,11 @@ export class ChooseTheirFateValidatorService {
       const teamId = this.normalizeTeamId(team?.teamId || team?.abbreviation || null);
       if (!teamId) continue;
       const scoring = (team?.stats || {}).scoring || {};
+      const punting = (team?.stats || {}).punting || {};
       map[teamId] = {
         touchdowns: this.normalizeNumber((scoring as any).touchdowns),
         fieldGoals: this.normalizeNumber((scoring as any).fieldGoals),
+        punts: this.normalizeNumber((punting as any).punts),
       };
     }
     return map;
@@ -250,15 +269,20 @@ export class ChooseTheirFateValidatorService {
   ): string | null {
     for (const [teamId, base] of Object.entries(baseline)) {
       const now = current[teamId];
-      if (!now) continue;
-      if (now[field] > base[field]) {
+      const baseValue = this.normalizeNumber((base as any)[field]);
+      const nowValue = this.normalizeNumber(now ? (now as any)[field] : 0);
+      if (nowValue > baseValue) {
         return teamId;
       }
     }
     return null;
   }
 
-  private async setResult(betId: string, winningChoice: 'Touchdown' | 'Field Goal' | 'Turnover', payload: Record<string, unknown>): Promise<void> {
+  private async setResult(
+    betId: string,
+    winningChoice: 'Touchdown' | 'Field Goal' | 'Punt' | 'Turnover',
+    payload: Record<string, unknown>,
+  ): Promise<void> {
   const supa = getSupabaseAdmin();
     const { error } = await supa
       .from('bet_proposals')
@@ -486,9 +510,9 @@ export class ChooseTheirFateValidatorService {
     if (!rawStatus) return false;
     const status = String(rawStatus).trim().toUpperCase();
     if (!status || status === 'STATUS_IN_PROGRESS') return false;
-    if (status.includes('HALFTIME')) return true;
+    if (status.startsWith('STATUS_HALFTIME')) return true;
     if (status.startsWith('STATUS_FINAL')) return true;
-    if (status.startsWith('STATUS_END')) return true;
+    // TODO: investigate what happens with postponed/suspended games
     if (status.includes('POSTPONED') || status.includes('SUSPENDED')) return true;
     return false;
   }

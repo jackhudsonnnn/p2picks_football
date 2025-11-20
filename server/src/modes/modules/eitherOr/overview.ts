@@ -9,7 +9,8 @@ export const eitherOrOverview: ModeOverview = {
   proposerConfiguration: [
     'Select two unique players from the active game.',
     'Choose the stat to monitor (receptions, receiving yards, punts, etc.).',
-    'Set whether the wager resolves at halftime or at the end of the game.'
+    'Set whether the wager resolves at halftime or at the end of the game.',
+    'Pick how progress should be tracked: “Starting Now” (net gains) or “Cumulative” (total stats).'
   ],
   participantChoices: [
     'pass — sit this bet out.',
@@ -17,14 +18,14 @@ export const eitherOrOverview: ModeOverview = {
     'Player 2 — the second player selected by the proposer.'
   ],
   winningCondition:
-    'When the settle time is reached, compare each player’s stat total to the baseline captured when the bet moved to pending. The player with the largest net increase wins.',
+    'At the selected settle time, compare the players based on the chosen tracking mode. “Starting Now” compares net gains since betting closed, while “Cumulative” compares total stats outright. The higher metric wins.',
   notes: [
-    'The baseline for the tracked stat is captured the moment the bet becomes pending.',
+    '“Starting Now” captures baselines as soon as the bet turns pending, while “Cumulative” always uses total stats.',
     'Participants can change their selection at any time while the bet remains active.'
   ],
   example: {
     title: 'Example',
     description:
-      'Tom Brady vs. Peyton Manning in passing yards, resolving at halftime, with the bet proposed mid first quarter. When halftime arrives, the system checks which quarterback gained the most passing yards from the moment the bet became pending. That player’s backers win.'
+      'Tom Brady vs. Peyton Manning in passing yards, resolving at halftime, with “Starting Now” selected. When halftime arrives, the system checks which quarterback gained the most passing yards from the moment the bet became pending. If “Cumulative” had been selected instead, the quarterback with the higher total yards at halftime would win outright.'
   }
 };

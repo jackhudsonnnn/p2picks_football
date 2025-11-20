@@ -13,7 +13,7 @@ export const chooseTheirFateModule: ModeModule = {
     secondaryDescriptionTemplate: '`Outcome of current posession`',
     winningConditionTemplate:
       '`${(config.possession_team_name || config.possession_team_id || "Offense")}\'s drive outcome`',
-    optionsExpression: "['pass','Touchdown','Field Goal','Safety','Turnover']",
+  optionsExpression: "['pass','Touchdown','Field Goal','Safety','Punt','Turnover']",
     configSteps: [],
   },
   overview: chooseTheirFateOverview,

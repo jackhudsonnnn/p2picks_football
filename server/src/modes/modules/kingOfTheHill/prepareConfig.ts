@@ -1,61 +1,78 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpers';
+import { findPlayer, loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
 import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
+import {
+  KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
+  KING_OF_THE_HILL_MAX_RESOLVE_VALUE,
+  KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
+  KING_OF_THE_HILL_STAT_KEY_LABELS,
+  KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
+  clampResolveValue,
+  isValidResolveValue,
+} from './constants';
 
-export async function prepareEitherOrConfig({
+type PlayerRef = { id?: string | null; name?: string | null };
+
+type KingOfTheHillConfig = Record<string, unknown> & {
+  nfl_game_id?: string | null;
+  player1_id?: string | null;
+  player1_name?: string | null;
+  player1_team_name?: string | null;
+  player1_team?: string | null;
+  player2_id?: string | null;
+  player2_name?: string | null;
+  player2_team_name?: string | null;
+  player2_team?: string | null;
+  stat?: string | null;
+  stat_label?: string | null;
+  resolve_value?: number | null;
+  resolve_value_label?: string | null;
+  home_team_id?: string | null;
+  home_team_name?: string | null;
+  away_team_id?: string | null;
+  away_team_name?: string | null;
+  progress_mode?: string | null;
+};
+
+export async function prepareKingOfTheHillConfig({
   bet,
   config,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
-  const cfg = { ...config } as Record<string, unknown> & {
-    nfl_game_id?: string | null;
-    player1_id?: string | null;
-    player1_name?: string | null;
-    player1_team_name?: string | null;
-    player1_team?: string | null;
-    player2_id?: string | null;
-    player2_name?: string | null;
-    player2_team_name?: string | null;
-    player2_team?: string | null;
-    stat?: string | null;
-    stat_label?: string | null;
-    resolve_at?: string | null;
-    bet_id?: string | null;
-    home_team_id?: string | null;
-    home_team_name?: string | null;
-    away_team_id?: string | null;
-    away_team_name?: string | null;
-    progress_mode?: string | null;
-  };
+  const debug = process.env.DEBUG_KING_OF_THE_HILL === '1' || process.env.DEBUG_KING_OF_THE_HILL === 'true';
+  const cfg = { ...config } as KingOfTheHillConfig;
 
   if (!cfg.nfl_game_id) {
     cfg.nfl_game_id = bet.nfl_game_id ?? null;
   }
 
-  if (!cfg.resolve_at || !EITHER_OR_ALLOWED_RESOLVE_AT.includes(String(cfg.resolve_at))) {
-    cfg.resolve_at = EITHER_OR_DEFAULT_RESOLVE_AT;
+  const resolveValue = clampResolveValue(cfg.resolve_value ?? cfg.resolve_value_label ?? KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE);
+  cfg.resolve_value = resolveValue;
+  cfg.resolve_value_label = cfg.resolve_value_label ?? String(resolveValue);
+
+  if (!cfg.stat_label && cfg.stat) {
+    const label = KING_OF_THE_HILL_STAT_KEY_LABELS[cfg.stat];
+    if (label) cfg.stat_label = label;
   }
 
+  cfg.progress_mode = normalizeProgressMode(cfg.progress_mode);
+
   if (debug) {
-    console.log('[eitherOr][prepareConfig] normalized base config', {
+    console.log('[kingOfTheHill][prepareConfig] normalized base config', {
       betId: bet.bet_id,
       config: cfg,
     });
   }
 
-  cfg.progress_mode = normalizeProgressMode(cfg.progress_mode);
-
   const statKey = cfg.stat ? String(cfg.stat) : '';
-  const category = STAT_KEY_TO_CATEGORY[statKey];
+  const category = KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY[statKey];
   const gameId = cfg.nfl_game_id ? String(cfg.nfl_game_id) : '';
 
   if (!statKey || !category || !gameId) {
     if (debug) {
-      console.warn('[eitherOr][prepareConfig] missing stat/category/gameId for baseline capture', {
+      console.warn('[kingOfTheHill][prepareConfig] missing stat/category/gameId', {
         betId: bet.bet_id,
         statKey,
         category,
@@ -69,7 +86,7 @@ export async function prepareEitherOrConfig({
     const doc = await loadRefinedGame(gameId);
     if (!doc) {
       if (debug) {
-        console.warn('[eitherOr][prepareConfig] no refined game document found', {
+        console.warn('[kingOfTheHill][prepareConfig] no refined game document found', {
           betId: bet.bet_id,
           gameId,
         });
@@ -79,46 +96,38 @@ export async function prepareEitherOrConfig({
 
     enrichWithTeamContext(cfg, doc);
 
-    const [baselinePlayer1, baselinePlayer2] = await Promise.all([
+    const [player1Value, player2Value] = await Promise.all([
       getPlayerStatValue(doc, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
       getPlayerStatValue(doc, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
 
     if (debug) {
-      console.log('[eitherOr][prepareConfig] captured baselines', {
+      console.log('[kingOfTheHill][prepareConfig] captured initial values', {
         betId: bet.bet_id,
         statKey,
-        baselinePlayer1,
-        baselinePlayer2,
+        player1Value,
+        player2Value,
+        resolveValue,
       });
     }
 
     return {
       ...normalizeConfigPayload(cfg),
-      bet_id: bet.bet_id,
-      baseline_player1: baselinePlayer1,
-      baseline_player2: baselinePlayer2,
-      baseline_captured_at: new Date().toISOString(),
-    };
+      initial_player1_value: player1Value,
+      initial_player2_value: player2Value,
+      initial_captured_at: new Date().toISOString(),
+    } as Record<string, unknown>;
   } catch (err) {
-    console.warn('[modes] failed to capture baselines for either_or', {
+    console.warn('[kingOfTheHill] failed to prepare config', {
       bet_id: bet.bet_id,
-      gameId,
-      statKey,
       error: (err as Error).message,
     });
-    return {
-      ...normalizeConfigPayload(cfg),
-      bet_id: bet.bet_id,
-    };
+    return normalizeConfigPayload(cfg);
   }
 }
 
-type PlayerRef = { id?: string | null; name?: string | null };
-
-function normalizeConfigPayload(config: Record<string, unknown>) {
+function normalizeConfigPayload(config: KingOfTheHillConfig) {
   return {
-    bet_id: config.bet_id ?? null,
     nfl_game_id: config.nfl_game_id ?? null,
     player1_id: config.player1_id ?? null,
     player1_name: config.player1_name ?? null,
@@ -130,7 +139,8 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
     player2_team: config.player2_team ?? config.player2_team_name ?? null,
     stat: config.stat ?? null,
     stat_label: config.stat_label ?? null,
-    resolve_at: config.resolve_at ?? null,
+    resolve_value: isValidResolveValue(config.resolve_value) ? config.resolve_value : KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
+    resolve_value_label: config.resolve_value_label ?? String(config.resolve_value ?? KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE),
     home_team_id: config.home_team_id ?? null,
     home_team_name: config.home_team_name ?? null,
     away_team_id: config.away_team_id ?? null,
@@ -140,32 +150,14 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
 }
 
 async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string, ref: PlayerRef): Promise<number | null> {
-  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
-  const category = STAT_KEY_TO_CATEGORY[statKey];
+  const category = KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
   const player = lookupPlayer(doc, ref);
-  if (!player) {
-    if (debug) {
-      console.warn('[eitherOr][prepareConfig] player not found for baseline lookup', {
-        statKey,
-        playerId: ref.id ?? null,
-        playerName: ref.name ?? null,
-      });
-    }
-    return null;
-  }
+  if (!player) return null;
   const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
   const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
   if (!categoryStats) return null;
-  const raw = categoryStats[statKey];
-  if (debug) {
-    console.log('[eitherOr][prepareConfig] raw stat value', {
-      statKey,
-      playerId: ref.id ?? null,
-      raw,
-    });
-  }
-  return normalizeStatValue(raw);
+  return normalizeStatValue(categoryStats[statKey]);
 }
 
 function lookupPlayer(doc: RefinedGameDoc, ref: PlayerRef) {
@@ -218,17 +210,21 @@ function enrichWithTeamContext(
   }
 }
 
-export function buildEitherOrMetadata() {
-  return {
-    statKeyToCategory: STAT_KEY_TO_CATEGORY,
-    allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
-    statKeyLabels: STAT_KEY_LABELS,
-  } as Record<string, unknown>;
-}
-
 function normalizeProgressMode(value: unknown): 'starting_now' | 'cumulative' {
   if (typeof value === 'string' && value.trim().toLowerCase() === 'cumulative') {
     return 'cumulative';
   }
   return 'starting_now';
+}
+
+export function buildKingOfTheHillMetadata(): Record<string, unknown> {
+  return {
+    statKeyToCategory: KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
+    statKeyLabels: KING_OF_THE_HILL_STAT_KEY_LABELS,
+    resolveValue: {
+      min: KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
+      max: KING_OF_THE_HILL_MAX_RESOLVE_VALUE,
+      default: KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
+    },
+  } as Record<string, unknown>;
 }

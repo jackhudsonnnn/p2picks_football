@@ -65,9 +65,9 @@ This mode is a bet on the final point difference of a game.
 #### Mode 3: Choose their Fate
 This mode is a bet on the current drive outcome.
 * **Proposer Configuration:** None beyond the standard bet parameters.
-* **Participant Choices:** `pass`, `Touchdown`, `Field Goal`, `Safety`, `Turnover`.
-* **Winning Condition:** The winning choice is the outcome of the current drive given the participant choices.
-    * *Example:* the offensive team's quarterback threw an interception. The winning choice is **'Turnover'**.
+* **Participant Choices:** `pass`, `Touchdown`, `Field Goal`, `Safety`, `Punt`, `Turnover`.
+* **Winning Condition:** The winning choice mirrors how the drive ends. Touchdowns, field goals, punts, and turnovers all have dedicated selections. If the drive ends scoreless without a punt or turnover (e.g., end of quarter), the bet washes.
+    * *Example:* the offense goes three-and-out and punts it away. The winning choice is **'Punt'**.
 
 #### Mode 4: Scorcerer
 This mode is a bet on the next score type.
@@ -102,6 +102,16 @@ This mode is a prop bet for users to guess over/under on whether a player will g
     * Sets the over/under value (a numeric line, e.g. `47.5`).
 * **Participant Choices:** `pass`, `over`, `under`.
 * **Winning Condition:** The winning choice is decided by whether the player gets more/less than the specified amount for a given stat.
+
+#### Mode 8: King Of The Hill
+Race two players to a stat milestone.
+* **Proposer Configuration:**
+    * Selects **two unique players** from the active game.
+    * Selects the **stat** to monitor: passing yards, receptions, tackles, etc.
+    * Sets a **resolve value** between `0` and `499`; this is the target both players are racing to hit.
+* **Participant Choices:** `pass`, `{Player 1}`, `{Player 2}`, `Neither`.
+* **Winning Condition:** As the game progresses the validator watches the tracked stat. The first player to reach or exceed the resolve value wins. If the game reaches its final state before either player hits the target, `Neither` wins.
+* **Edge Cases:** The wager washes if the resolve value has already been met before the bet becomes pending or if both players cross the threshold on the same update.
 
 ---
 

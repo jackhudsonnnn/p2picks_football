@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './BetProposalForm.css';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { formatToHundredth, normalizeToHundredth } from '@shared/utils/number';
@@ -38,6 +38,31 @@ export interface BetProposalFormValues {
 interface BetProposalFormProps {
   onSubmit: (values: BetProposalFormValues) => void;
   loading?: boolean;
+}
+
+function mapPayloadToConfigSteps(payloadSteps: any): ConfigStep[] {
+  return Array.isArray(payloadSteps)
+    ? payloadSteps.map((entry: any) => {
+        const title = Array.isArray(entry) ? entry[0] : entry?.title;
+        const rawChoices = Array.isArray(entry) ? entry[1] : entry?.choices;
+        const choices: ConfigChoice[] = Array.isArray(rawChoices)
+          ? rawChoices.map((choice: any) => ({
+              value: String(choice?.value ?? choice?.id ?? ''),
+              label: String(choice?.label ?? choice?.name ?? choice?.value ?? ''),
+              description: choice?.description ? String(choice.description) : undefined,
+              disabled: Boolean(choice?.disabled),
+              patch:
+                choice?.patch && typeof choice.patch === 'object'
+                  ? { ...(choice.patch as Record<string, unknown>) }
+                  : undefined,
+            }))
+          : [];
+        return {
+          title: String(title ?? 'Select Option'),
+          choices,
+        };
+      })
+    : [];
 }
 
 const WAGER_CHOICES = Array.from({ length: 20 }).map((_, index) => {
@@ -127,6 +152,21 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     setStep((current) => (current > 0 ? 0 : current));
   }, [gameId, modeKey]);
 
+  const fetchUserConfigSteps = useCallback(
+    async (nextConfig: Record<string, unknown>, signal?: AbortSignal): Promise<ConfigStep[]> => {
+      if (!gameId || !modeKey) return [];
+      const payloadConfig = { ...(nextConfig || {}), nfl_game_id: gameId };
+      const payload = await fetchJSON(`/api/bet-modes/${encodeURIComponent(modeKey)}/user-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nfl_game_id: gameId, config: payloadConfig }),
+        signal,
+      });
+      return mapPayloadToConfigSteps(payload?.steps);
+    },
+    [gameId, modeKey],
+  );
+
   useEffect(() => {
     if (!gameId || !modeKey) return;
 
@@ -138,43 +178,14 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       try {
         setConfigLoading(true);
         setConfigError(null);
-        const payload = await fetchJSON(`/api/bet-modes/${encodeURIComponent(modeKey)}/user-config`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nfl_game_id: gameId, config: baseConfig }),
-          signal: controller.signal,
-        });
+        const steps = await fetchUserConfigSteps(baseConfig, controller.signal);
         if (cancelled) return;
-
-        const steps: ConfigStep[] = Array.isArray(payload?.steps)
-          ? payload.steps.map((entry: any) => {
-              const title = Array.isArray(entry) ? entry[0] : entry?.title;
-              const rawChoices = Array.isArray(entry) ? entry[1] : entry?.choices;
-              const choices: ConfigChoice[] = Array.isArray(rawChoices)
-                ? rawChoices.map((choice: any) => ({
-                    value: String(choice?.value ?? choice?.id ?? ''),
-                    label: String(choice?.label ?? choice?.name ?? choice?.value ?? ''),
-                    description: choice?.description ? String(choice.description) : undefined,
-                    disabled: Boolean(choice?.disabled),
-                    patch:
-                      choice?.patch && typeof choice.patch === 'object'
-                        ? { ...(choice.patch as Record<string, unknown>) }
-                        : undefined,
-                  }))
-                : [];
-              return {
-                title: String(title ?? 'Select Option'),
-                choices,
-              };
-            })
-          : [];
-
-        setConfig(baseConfig);
+        setConfig({ ...baseConfig });
         setConfigSteps(steps);
         setConfigSelections(Array(steps.length).fill(null));
       } catch (err: any) {
         if (!cancelled) {
-          setConfig({});
+          setConfig({ ...baseConfig });
           setConfigSteps([]);
           setConfigSelections([]);
           setConfigError(err?.message || 'Unable to load configuration');
@@ -188,7 +199,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       cancelled = true;
       controller.abort();
     };
-  }, [gameId, modeKey]);
+  }, [gameId, modeKey, fetchUserConfigSteps]);
 
   const totalConfigSteps = configSteps.length;
   // Now that NFL game + mode are selected together in step 0, config steps begin at index 1
@@ -281,9 +292,49 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
       next[stepIndex] = value;
       return next;
     });
-    setConfig((prev) => ({ ...(prev || {}), ...patch, nfl_game_id: gameId }));
+
     setPreview(null);
     setPreviewError(null);
+
+    const prevStat = typeof config?.stat === 'string' ? String(config.stat) : undefined;
+    const statChanged = 'stat' in patch && String(patch.stat ?? '') !== String(prevStat ?? '');
+
+    const nextConfig = { ...(config || {}), ...patch, nfl_game_id: gameId };
+
+    if (statChanged) {
+      Object.assign(nextConfig, {
+        player1_id: null,
+        player1_name: null,
+        player2_id: null,
+        player2_name: null,
+        player_id: null,
+        player_name: null,
+      });
+    }
+
+    setConfig(nextConfig);
+
+    if (statChanged) {
+      (async () => {
+        try {
+          setConfigLoading(true);
+          setConfigError(null);
+          const steps = await fetchUserConfigSteps(nextConfig);
+          setConfigSteps(steps);
+          setConfigSelections(() => {
+            const nextSelections = Array(steps.length).fill(null);
+            nextSelections[stepIndex] = value;
+            return nextSelections;
+          });
+        } catch (err: any) {
+          setConfigSteps([]);
+          setConfigSelections([]);
+          setConfigError(err?.message || 'Unable to load configuration');
+        } finally {
+          setConfigLoading(false);
+        }
+      })();
+    }
   };
 
   const goNext = () => {

@@ -2,6 +2,7 @@ import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpe
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
+import { getValidPositionsForStat } from '../../shared/statMappings';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
 
 interface BuildInput {
@@ -25,18 +26,37 @@ export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<M
   const currentStat = doc ? getCurrentStatValue(doc, input.existingConfig ?? {}) : null;
   const skipResolveStep = shouldSkipResolveStep(doc);
 
+  const statKey = input.existingConfig?.stat as string | undefined;
+  const validPositions = getValidPositionsForStat(statKey);
+
+  if (DEBUG) {
+    console.log('[propHunt][userConfig] filtering players', {
+      existingConfig: input.existingConfig,
+      statKey,
+      validPositions,
+      totalPlayers: preparedPlayers.length,
+    });
+  }
+
+  const filteredPlayers = preparedPlayers.filter((player) => {
+    if (!validPositions) return true;
+    return player.position && validPositions.includes(player.position);
+  });
+
   if (DEBUG) {
     console.log('[propHunt][userConfig] building steps', {
       gameId,
       playerCount: players.length,
       validPlayerCount: preparedPlayers.length,
+      filteredPlayerCount: filteredPlayers.length,
+      statKey,
       skipResolveStep,
       status: doc?.status ?? null,
       period: doc?.period ?? null,
     });
   }
 
-  const playerChoices: ModeUserConfigChoice[] = preparedPlayers.map((player) => ({
+  const playerChoices: ModeUserConfigChoice[] = filteredPlayers.map((player) => ({
     value: player.id,
     label: formatPlayerLabel(player),
     patch: {
@@ -63,8 +83,8 @@ export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<M
     });
 
   const steps: ModeUserConfigStep[] = [
-    ['Select Player', playerChoices],
     ['Select Stat', statChoices],
+    ['Select Player', playerChoices],
   ];
 
   if (!skipResolveStep) {
