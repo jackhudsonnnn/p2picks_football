@@ -31,10 +31,22 @@ export async function buildTotalDisasterUserConfig(input: BuildInput = {}): Prom
     });
   }
 
-  const steps: ModeUserConfigStep[] = [[title, choices]];
+  const steps: ModeUserConfigStep[] = [
+    {
+      key: 'line',
+      title,
+      inputType: 'select',
+      choices,
+    },
+  ];
 
   if (!skipResolveStep) {
-    steps.push(['Resolve At', buildResolveChoices()]);
+    steps.push({
+      key: 'resolve_at',
+      title: 'Resolve At',
+      inputType: 'select',
+      choices: buildResolveChoices(),
+    });
   }
 
   return steps;
@@ -59,7 +71,7 @@ function buildLineChoices(baseChoices: ModeUserConfigChoice[], skipResolveStep: 
   return baseChoices.map((choice) => ({
     ...choice,
     patch: {
-      ...choice.patch,
+      ...(choice.patch || {}),
       resolve_at: EITHER_OR_DEFAULT_RESOLVE_AT,
     },
   }));
@@ -71,6 +83,7 @@ function buildBaseLineChoices(): ModeUserConfigChoice[] {
     const numeric = Number(value.toFixed(1));
     const name = numeric.toFixed(1);
     choices.push({
+      id: name,
       value: name,
       label: name,
       patch: {
@@ -85,6 +98,7 @@ function buildBaseLineChoices(): ModeUserConfigChoice[] {
 
 function buildResolveChoices(): ModeUserConfigChoice[] {
   return EITHER_OR_ALLOWED_RESOLVE_AT.map((value) => ({
+    id: value,
     value,
     label: value,
     patch: { resolve_at: value },

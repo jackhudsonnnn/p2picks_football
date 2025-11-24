@@ -1,3 +1,4 @@
+import Redis from 'ioredis';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal, getSupabaseAdmin } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
@@ -15,12 +16,22 @@ interface PropHuntConfig {
   line_label?: string | null;
   nfl_game_id?: string | null;
   resolve_at?: string | null;
+  progress_mode?: string | null;
 }
 
 interface PendingCheckResult {
   crossed: boolean;
   currentValue: number | null;
   line: number;
+}
+
+interface BaselineRecord {
+  statKey: string;
+  capturedAt: string;
+  gameId: string | null;
+  player_id?: string | null;
+  player_name?: string | null;
+  value: number;
 }
 
 const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
@@ -48,8 +59,11 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
 export class PropHuntValidatorService {
   private unsubscribe: (() => void) | null = null;
   private pendingChannel: RealtimeChannel | null = null;
+  private redisClient: Redis | null = null;
   private lastSignatureByGame = new Map<string, string>();
   private readonly resultEvent = 'prop_hunt_result';
+  private readonly baselineEvent = 'prop_hunt_baseline';
+  private readonly baselineTtlSeconds = 60 * 60 * 12;
 
   start(): void {
     this.startPendingMonitor();
@@ -67,6 +81,10 @@ export class PropHuntValidatorService {
         console.error('[propHunt] pending channel unsubscribe error', err),
       );
       this.pendingChannel = null;
+    }
+    if (this.redisClient) {
+      this.redisClient.quit().catch((err: unknown) => console.error('[propHunt] redis quit error', err));
+      this.redisClient = null;
     }
     this.lastSignatureByGame.clear();
   }
@@ -90,6 +108,13 @@ export class PropHuntValidatorService {
           void this.handleBetProposalUpdate(payload as RealtimePostgresChangesPayload<Record<string, unknown>>);
         },
       )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'bet_proposals', filter: 'mode_key=eq.prop_hunt' },
+        (payload) => {
+          void this.handleBetProposalDelete(payload as RealtimePostgresChangesPayload<Record<string, unknown>>);
+        },
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.log('[propHunt] pending monitor ready');
@@ -105,8 +130,25 @@ export class PropHuntValidatorService {
       if (newRow.bet_status === 'pending' && oldRow?.bet_status !== 'pending') {
         await this.handlePendingTransition(newRow as BetProposal);
       }
+      if (newRow.bet_status !== 'pending' && oldRow?.bet_status === 'pending') {
+        await this.clearBaseline(newRow.bet_id);
+      }
+      if (newRow.winning_choice && !oldRow?.winning_choice) {
+        await this.clearBaseline(newRow.bet_id);
+      }
     } catch (err) {
       console.error('[propHunt] pending update handler error', err);
+    }
+  }
+
+  private async handleBetProposalDelete(payload: RealtimePostgresChangesPayload<Record<string, unknown>>): Promise<void> {
+    try {
+      const oldRow = (payload.old || {}) as Partial<BetProposal>;
+      if (oldRow?.bet_id) {
+        await this.clearBaseline(oldRow.bet_id);
+      }
+    } catch (err) {
+      console.error('[propHunt] pending delete handler error', err);
     }
   }
 
@@ -121,6 +163,7 @@ export class PropHuntValidatorService {
       if (error) throw error;
       for (const row of (data as BetProposal[]) || []) {
         await this.handlePendingTransition(row);
+        await this.captureBaselineForBet(row);
       }
     } catch (err) {
       console.error('[propHunt] sync pending bets failed', err);
@@ -148,7 +191,14 @@ export class PropHuntValidatorService {
         );
         return;
       }
-      const check = await this.evaluateLineCrossed(config, bet.nfl_game_id, line);
+      const progressMode = this.normalizeProgressMode(config.progress_mode);
+      if (progressMode === 'starting_now') {
+        const baseline = await this.captureBaselineForBet(bet, undefined, config);
+        if (!baseline) {
+          console.warn('[propHunt] unable to capture baseline for Starting Now bet', { bet_id: bet.bet_id });
+        }
+      }
+      const check = await this.evaluateLineCrossed(config, bet.nfl_game_id, line, progressMode);
       if (check.crossed) {
         await this.washBet(
           bet.bet_id,
@@ -158,6 +208,7 @@ export class PropHuntValidatorService {
             current_value: check.currentValue,
             line: check.line,
             captured_at: new Date().toISOString(),
+            progress_mode: progressMode,
           },
           `Line (${this.formatNumber(check.line)}) already met before betting closed.`,
         );
@@ -235,12 +286,23 @@ export class PropHuntValidatorService {
         );
         return;
       }
+      const progressMode = this.normalizeProgressMode(config.progress_mode);
+      let baselineValue = 0;
+      if (progressMode === 'starting_now') {
+        const baseline = (await this.getBaseline(bet.bet_id)) || (await this.captureBaselineForBet(bet, doc, config));
+        if (!baseline) {
+          console.warn('[propHunt] baseline unavailable for Starting Now; skipping bet', { bet_id: bet.bet_id });
+          return;
+        }
+        baselineValue = baseline.value ?? 0;
+      }
       const finalValue = await this.readStatValue(config, bet.nfl_game_id, doc);
       if (finalValue == null) {
         console.warn('[propHunt] unable to determine final stat; skipping bet', { bet_id: bet.bet_id });
         return;
       }
-      const delta = finalValue - line;
+      const metricValue = progressMode === 'starting_now' ? finalValue - baselineValue : finalValue;
+      const delta = metricValue - line;
       if (Math.abs(delta) < 1e-9) {
         await this.washBet(
           bet.bet_id,
@@ -248,11 +310,17 @@ export class PropHuntValidatorService {
             outcome: 'wash',
             reason: 'push',
             final_value: finalValue,
+            baseline_value: progressMode === 'starting_now' ? baselineValue : null,
+            metric_value: metricValue,
             line,
             captured_at: new Date().toISOString(),
+            progress_mode: progressMode,
           },
-          `Final value (${this.formatNumber(finalValue)}) matched the line.`,
+          progressMode === 'starting_now'
+            ? `Net progress (${this.formatNumber(metricValue)}) matched the line.`
+            : `Final value (${this.formatNumber(metricValue)}) matched the line.`,
         );
+        await this.clearBaseline(bet.bet_id);
         return;
       }
       const winningChoice = delta > 0 ? 'Over' : 'Under';
@@ -269,11 +337,15 @@ export class PropHuntValidatorService {
       await this.recordHistory(bet.bet_id, {
         outcome: winningChoice,
         final_value: finalValue,
+        baseline_value: progressMode === 'starting_now' ? baselineValue : null,
+        metric_value: metricValue,
         line,
         line_label: config.line_label ?? config.line ?? null,
         resolve_at: config.resolve_at ?? PROP_HUNT_DEFAULT_RESOLVE_AT,
+        progress_mode: progressMode,
         captured_at: new Date().toISOString(),
       });
+      await this.clearBaseline(bet.bet_id);
     } catch (err) {
       console.error('[propHunt] resolve bet error', { bet_id: bet.bet_id }, err);
     }
@@ -303,6 +375,7 @@ export class PropHuntValidatorService {
         return;
       }
       await this.recordHistory(betId, { ...payload, outcome: payload.outcome ?? 'wash' });
+      await this.clearBaseline(betId);
       if (!data.table_id) {
         console.warn('[propHunt] wash message skipped; table_id missing', { betId });
         return;
@@ -313,7 +386,15 @@ export class PropHuntValidatorService {
     }
   }
 
-  private async evaluateLineCrossed(config: PropHuntConfig, nflGameId: string | null | undefined, line: number): Promise<PendingCheckResult> {
+  private async evaluateLineCrossed(
+    config: PropHuntConfig,
+    nflGameId: string | null | undefined,
+    line: number,
+    progressMode: 'starting_now' | 'cumulative',
+  ): Promise<PendingCheckResult> {
+    if (progressMode === 'starting_now') {
+      return { crossed: false, currentValue: 0, line };
+    }
     const statValue = await this.readStatValue(config, nflGameId);
     if (statValue == null) {
       return { crossed: false, currentValue: null, line };
@@ -396,12 +477,16 @@ export class PropHuntValidatorService {
     }
   }
 
-  private async recordHistory(betId: string, payload: Record<string, unknown>): Promise<void> {
+  private async recordHistory(
+    betId: string,
+    payload: Record<string, unknown>,
+    eventType: string = this.resultEvent,
+  ): Promise<void> {
     try {
       const supa = getSupabaseAdmin();
       const entry = {
         bet_id: betId,
-        event_type: this.resultEvent,
+        event_type: eventType,
         payload,
       };
       const { error } = await supa.from('resolution_history').insert([entry]);
@@ -431,6 +516,118 @@ export class PropHuntValidatorService {
     } catch (err) {
       console.error('[propHunt] wash system message error', { betId, tableId }, err);
     }
+  }
+
+  private async captureBaselineForBet(
+    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
+    prefetchedDoc?: RefinedGameDoc | null,
+    existingConfig?: PropHuntConfig | null,
+  ): Promise<BaselineRecord | null> {
+    try {
+      const config = existingConfig ?? (await this.getConfigForBet(bet.bet_id));
+      if (!config) {
+        console.warn('[propHunt] cannot capture baseline; missing config', { bet_id: bet.bet_id });
+        return null;
+      }
+      const progressMode = this.normalizeProgressMode(config.progress_mode);
+      if (progressMode !== 'starting_now') {
+        return null;
+      }
+      const statKey = config.stat || '';
+      if (!statKey) {
+        console.warn('[propHunt] config missing stat key for baseline capture', { bet_id: bet.bet_id });
+        return null;
+      }
+      const gameId = config.nfl_game_id || bet.nfl_game_id || null;
+      if (!gameId) {
+        console.warn('[propHunt] missing game id for baseline capture', { bet_id: bet.bet_id });
+        return null;
+      }
+      const existing = await this.getBaseline(bet.bet_id);
+      if (existing) {
+        return existing;
+      }
+      let doc = prefetchedDoc ?? getCachedGameDoc(gameId) ?? null;
+      if (!doc) {
+        doc = await loadRefinedGame(gameId);
+      }
+      if (!doc) {
+        console.warn('[propHunt] refined doc unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
+        return null;
+      }
+      const value = await this.readStatValue(config, bet.nfl_game_id, doc);
+      const baseline: BaselineRecord = {
+        statKey,
+        capturedAt: new Date().toISOString(),
+        gameId,
+        player_id: config.player_id,
+        player_name: config.player_name,
+        value: typeof value === 'number' && Number.isFinite(value) ? value : 0,
+      };
+      await this.setBaseline(bet.bet_id, baseline);
+      await this.recordHistory(bet.bet_id, baseline as unknown as Record<string, unknown>, this.baselineEvent);
+      return baseline;
+    } catch (err) {
+      console.error('[propHunt] capture baseline error', { bet_id: bet.bet_id }, err);
+      return null;
+    }
+  }
+
+  private baselineKey(betId: string): string {
+    return `prop_hunt:baseline:${betId}`;
+  }
+
+  private async setBaseline(betId: string, baseline: BaselineRecord): Promise<void> {
+    try {
+      const redis = this.getRedis();
+      await redis.set(this.baselineKey(betId), JSON.stringify(baseline), 'EX', this.baselineTtlSeconds);
+    } catch (err) {
+      console.error('[propHunt] redis baseline set error', { betId }, err);
+    }
+  }
+
+  private async getBaseline(betId: string): Promise<BaselineRecord | null> {
+    try {
+      const redis = this.getRedis();
+      const raw = await redis.get(this.baselineKey(betId));
+      if (raw) {
+        return JSON.parse(raw) as BaselineRecord;
+      }
+    } catch (err) {
+      console.error('[propHunt] redis baseline get error', { betId }, err);
+    }
+    return null;
+  }
+
+  private async clearBaseline(betId: string): Promise<void> {
+    try {
+      const redis = this.getRedis();
+      await redis.del(this.baselineKey(betId));
+    } catch (err) {
+      console.error('[propHunt] redis baseline clear error', { betId }, err);
+    }
+  }
+
+  private normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
+    if (typeof mode === 'string' && mode.trim().toLowerCase() === 'cumulative') {
+      return 'cumulative';
+    }
+    return 'starting_now';
+  }
+
+  private getRedis(): Redis {
+    if (this.redisClient) {
+      return this.redisClient;
+    }
+    const url = process.env.REDIS_URL;
+    if (!url) {
+      throw new Error('[propHunt] REDIS_URL not configured; Redis is required for progress baselines');
+    }
+    const client = new Redis(url);
+    client.on('error', (err: unknown) => console.error('[propHunt] redis error', err));
+    this.redisClient = client;
+    console.log('[propHunt] redis client initialized');
+    return client;
   }
 
   private formatBetLabel(betId: string): string {

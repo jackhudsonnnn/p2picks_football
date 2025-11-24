@@ -333,6 +333,19 @@ export class ChooseTheirFateValidatorService {
       return null;
     }
     const possessionTeamId = this.possessionTeamIdFromDoc(doc) ?? this.normalizeTeamId(config.possession_team_id ?? null);
+    if (!possessionTeamId) {
+      await this.washBet(
+        bet.bet_id,
+        {
+          outcome: 'wash',
+          reason: 'missing_possession',
+          captured_at: new Date().toISOString(),
+        },
+        'Could not capture the drive because no team had possession.',
+      );
+      await this.clearBaseline(bet.bet_id);
+      return null;
+    }
     const baseline: ChooseFateBaseline = {
       gameId,
       possessionTeamId,

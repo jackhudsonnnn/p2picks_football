@@ -1,10 +1,15 @@
 import type { BetProposal } from '../../supabaseClient';
 
+export type ModeUserConfigInputType = 'select' | 'radio';
+
 export type ModeConfigStepDefinition = {
   key: string;
   component: string;
   label?: string;
+  description?: string;
+  inputType?: ModeUserConfigInputType;
   props?: Record<string, unknown>;
+  optional?: boolean;
   validatorExpression?: string;
 };
 
@@ -40,14 +45,30 @@ export interface ModeOverview {
 }
 
 export interface ModeUserConfigChoice {
+  id?: string;
   value: string;
   label: string;
   description?: string;
   patch?: Record<string, unknown>;
+  clears?: string[];
+  clearSteps?: string[];
   disabled?: boolean;
 }
 
-export type ModeUserConfigStep = [title: string, choices: ModeUserConfigChoice[]];
+export interface ModeUserConfigStep {
+  key: string;
+  title: string;
+  description?: string;
+  inputType?: ModeUserConfigInputType;
+  component?: string;
+  props?: Record<string, unknown>;
+  optional?: boolean;
+  validatorExpression?: string;
+  validationErrors?: string[];
+  selectedChoiceId?: string | null;
+  completed?: boolean;
+  choices: ModeUserConfigChoice[];
+}
 
 export interface ModeValidator {
   start(): void;

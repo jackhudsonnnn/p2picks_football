@@ -64,7 +64,9 @@ export async function buildKingOfTheHillUserConfig(input: {
   }));
 
   const player1Choices: ModeUserConfigChoice[] = basePlayerChoices.map((choice) => ({
-    ...choice,
+    id: choice.value,
+    value: choice.value,
+    label: choice.label,
     patch: {
       player1_id: choice.value,
       player1_name: playerMap[choice.value]?.name ?? choice.label,
@@ -74,7 +76,9 @@ export async function buildKingOfTheHillUserConfig(input: {
   }));
 
   const player2Choices: ModeUserConfigChoice[] = basePlayerChoices.map((choice) => ({
-    ...choice,
+    id: choice.value,
+    value: choice.value,
+    label: choice.label,
     patch: {
       player2_id: choice.value,
       player2_name: playerMap[choice.value]?.name ?? choice.label,
@@ -87,13 +91,16 @@ export async function buildKingOfTheHillUserConfig(input: {
 
   const statChoices: ModeUserConfigChoice[] = Object.keys(KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY)
     .sort()
-    .map((statKey) => {
-      const label = KING_OF_THE_HILL_STAT_KEY_LABELS[statKey] ?? humanizeStatKey(statKey);
+    .map((statKeyValue) => {
+      const label = KING_OF_THE_HILL_STAT_KEY_LABELS[statKeyValue] ?? humanizeStatKey(statKeyValue);
       return {
-        value: statKey,
+        id: statKeyValue,
+        value: statKeyValue,
         label,
+        clears: ['player1_id', 'player1_name', 'player2_id', 'player2_name'],
+        clearSteps: ['player1', 'player2'],
         patch: {
-          stat: statKey,
+          stat: statKeyValue,
           stat_label: label,
           ...defaultProgressPatch,
         },
@@ -101,6 +108,7 @@ export async function buildKingOfTheHillUserConfig(input: {
     });
 
   const resolveValueChoices: ModeUserConfigChoice[] = KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES.map((value) => ({
+    id: String(value),
     value: String(value),
     label: String(value),
     patch: {
@@ -110,28 +118,57 @@ export async function buildKingOfTheHillUserConfig(input: {
   }));
 
   const steps: ModeUserConfigStep[] = [
-    ['Select Stat', statChoices],
-    ['Select Player 1', player1Choices],
-    ['Select Player 2', player2Choices],
-    ['Resolve Value', resolveValueChoices],
+    {
+      key: 'stat',
+      title: 'Select Stat',
+      inputType: 'select',
+      choices: statChoices,
+    },
+    {
+      key: 'player1',
+      title: 'Select Player 1',
+      inputType: 'select',
+      choices: player1Choices,
+    },
+    {
+      key: 'player2',
+      title: 'Select Player 2',
+      inputType: 'select',
+      choices: player2Choices,
+    },
   ];
 
   if (showProgressStep) {
     const progressModeChoices: ModeUserConfigChoice[] = [
       {
+        id: 'starting_now',
         value: 'starting_now',
         label: 'Starting Now',
         description: 'Capture current stats when betting closes; players must add the full resolve value from that snapshot.',
         patch: { progress_mode: 'starting_now' },
       },
       {
+        id: 'cumulative',
         value: 'cumulative',
         label: 'Cumulative',
         description: 'Use total game stats; the first player to hit the resolve value overall wins.',
         patch: { progress_mode: 'cumulative' },
       },
     ];
-    steps.push(['Track Progress', progressModeChoices]);
+    steps.push({
+      key: 'progress_mode',
+      title: 'Track Progress',
+      inputType: 'select',
+      choices: progressModeChoices,
+    });
+
+    const resolveValueStep: ModeUserConfigStep = {
+      key: 'resolve_value',
+      title: 'Resolve Value',
+      inputType: 'select',
+      choices: resolveValueChoices,
+    };
+    steps.push(resolveValueStep);
   }
 
   if (debug) {

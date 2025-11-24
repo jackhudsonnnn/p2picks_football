@@ -14,6 +14,17 @@ import {
   prepareModeConfig,
   validateModeConfig,
 } from './services/modeRuntimeService';
+import {
+  GENERAL_CONFIG_SCHEMA,
+  applyModeConfigChoice,
+  type ConsumedModeConfigSession,
+  consumeModeConfigSession,
+  createModeConfigSession,
+  getModeConfigSession,
+  normalizeTimeLimitSeconds,
+  normalizeWagerAmount,
+  setModeConfigGeneral,
+} from './services/configSessionService';
 import { startModeValidators } from './services/modeValidatorService';
 import { startNflGameStatusSync } from './services/nflGameStatusSyncService';
 import { startNflDataIngestService } from './services/nflDataIngestService';
@@ -45,9 +56,86 @@ apiRouter.get('/bet-proposals/bootstrap', async (_req: Request, res: Response) =
       Promise.resolve(listModeCatalog()),
     ]);
     const games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
-    res.json({ games, modes: modeList });
+    res.json({ games, modes: modeList, general_config_schema: GENERAL_CONFIG_SCHEMA });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to load bet proposal bootstrap data' });
+  }
+});
+
+apiRouter.post('/bet-proposals/sessions', async (req: Request, res: Response) => {
+  try {
+    const modeKeyRaw = typeof req.body?.mode_key === 'string' ? req.body.mode_key : '';
+    const modeKey = modeKeyRaw.trim();
+    const nflGameIdRaw = typeof req.body?.nfl_game_id === 'string' ? req.body.nfl_game_id : '';
+    const nflGameId = nflGameIdRaw.trim();
+    if (!modeKey) {
+      res.status(400).json({ error: 'mode_key required' });
+      return;
+    }
+    if (!nflGameId) {
+      res.status(400).json({ error: 'nfl_game_id required' });
+      return;
+    }
+    const session = await createModeConfigSession({ modeKey, nflGameId });
+    res.json(session);
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'failed to create configuration session' });
+  }
+});
+
+apiRouter.get('/bet-proposals/sessions/:sessionId', async (req: Request, res: Response) => {
+  try {
+    const sessionId = String((req.params as any)?.sessionId || '').trim();
+    if (!sessionId) {
+      res.status(400).json({ error: 'sessionId required' });
+      return;
+    }
+    const session = await getModeConfigSession(sessionId);
+    res.json(session);
+  } catch (e: any) {
+    const status = /not found|expired/i.test(String(e?.message || '')) ? 404 : 500;
+    res.status(status).json({ error: e?.message || 'failed to fetch configuration session' });
+  }
+});
+
+apiRouter.post('/bet-proposals/sessions/:sessionId/choices', async (req: Request, res: Response) => {
+  try {
+    const sessionId = String((req.params as any)?.sessionId || '').trim();
+    if (!sessionId) {
+      res.status(400).json({ error: 'sessionId required' });
+      return;
+    }
+    const stepKeyRaw = typeof req.body?.step_key === 'string' ? req.body.step_key : '';
+    const choiceIdRaw = typeof req.body?.choice_id === 'string' ? req.body.choice_id : '';
+    const stepKey = stepKeyRaw.trim();
+    const choiceId = choiceIdRaw.trim();
+    if (!stepKey || !choiceId) {
+      res.status(400).json({ error: 'step_key and choice_id required' });
+      return;
+    }
+    const session = await applyModeConfigChoice(sessionId, { stepKey, choiceId });
+    res.json(session);
+  } catch (e: any) {
+    const status = /not available|not found|expired|no longer available/i.test(String(e?.message || '')) ? 400 : 500;
+    res.status(status).json({ error: e?.message || 'failed to apply configuration choice' });
+  }
+});
+
+apiRouter.post('/bet-proposals/sessions/:sessionId/general', async (req: Request, res: Response) => {
+  try {
+    const sessionId = String((req.params as any)?.sessionId || '').trim();
+    if (!sessionId) {
+      res.status(400).json({ error: 'sessionId required' });
+      return;
+    }
+    const session = await setModeConfigGeneral(sessionId, {
+      wager_amount: typeof req.body?.wager_amount === 'number' ? req.body.wager_amount : undefined,
+      time_limit_seconds: typeof req.body?.time_limit_seconds === 'number' ? req.body.time_limit_seconds : undefined,
+    });
+    res.json(session);
+  } catch (e: any) {
+    const status = /complete mode configuration/i.test(String(e?.message || '')) ? 400 : 500;
+    res.status(status).json({ error: e?.message || 'failed to update general configuration' });
   }
 });
 
@@ -152,17 +240,15 @@ apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
 
   const body = req.body || {};
   const proposerUserId = typeof body.proposer_user_id === 'string' ? body.proposer_user_id : '';
-  const modeKey = typeof body.mode_key === 'string' ? body.mode_key : '';
+  let modeKey = typeof body.mode_key === 'string' ? body.mode_key : '';
   const nflGameIdRaw = body.nfl_game_id;
-  const nflGameId =
+  let nflGameId =
     typeof nflGameIdRaw === 'string' && nflGameIdRaw.trim().length ? nflGameIdRaw.trim() : null;
+  const sessionIdRaw = typeof body.config_session_id === 'string' ? body.config_session_id : '';
+  const configSessionId = sessionIdRaw.trim();
 
   if (!proposerUserId) {
     res.status(400).json({ error: 'proposer_user_id required' });
-    return;
-  }
-  if (!modeKey) {
-    res.status(400).json({ error: 'mode_key required' });
     return;
   }
   const supabase = req.supabase;
@@ -194,16 +280,44 @@ apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
     return;
   }
 
-  const wagerAmountRaw = Number(body.wager_amount ?? 0);
-  const wagerAmount = clampWager(normalizeToHundredth(wagerAmountRaw));
-  const timeLimitSecondsRaw = Number(body.time_limit_seconds ?? 30);
-  const timeLimitSeconds = clampTimeLimit(timeLimitSecondsRaw);
+  let consumedSession: ConsumedModeConfigSession | null = null;
+  if (configSessionId) {
+    try {
+      consumedSession = consumeModeConfigSession(configSessionId);
+      modeKey = consumedSession.modeKey;
+      nflGameId = consumedSession.nflGameId;
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || 'invalid configuration session' });
+      return;
+    }
+  }
+
+  if (!modeKey) {
+    res.status(400).json({ error: 'mode_key required' });
+    return;
+  }
+
+  const wagerAmountRaw = Number(
+    body.wager_amount ?? GENERAL_CONFIG_SCHEMA.wager_amount.defaultValue,
+  );
+  let wagerAmount = normalizeWagerAmount(normalizeToHundredth(wagerAmountRaw));
+  const timeLimitSecondsRaw = Number(
+    body.time_limit_seconds ?? GENERAL_CONFIG_SCHEMA.time_limit_seconds.defaultValue,
+  );
+  let timeLimitSeconds = normalizeTimeLimitSeconds(timeLimitSecondsRaw);
 
   const rawConfig = body.mode_config;
-  const modeConfig =
+  let modeConfig =
     rawConfig && typeof rawConfig === 'object'
       ? { ...(rawConfig as Record<string, unknown>) }
       : {};
+
+  if (consumedSession) {
+    modeConfig = { ...consumedSession.config };
+    wagerAmount = consumedSession.general.wager_amount;
+    timeLimitSeconds = consumedSession.general.time_limit_seconds;
+  }
+
   let configGameId: string | null = null;
   if (typeof (modeConfig as any).nfl_game_id === 'string') {
     const trimmed = (modeConfig as any).nfl_game_id.trim();
@@ -259,7 +373,7 @@ apiRouter.post('/tables/:tableId/bets', async (req: Request, res: Response) => {
   }
 
   try {
-  const validationErrors = await validateModeConfig(modeKey, modeConfig);
+    const validationErrors = await validateModeConfig(modeKey, modeConfig);
     if (validationErrors.length) {
       res.status(400).json({ error: 'invalid mode config', details: validationErrors });
       return;
@@ -484,8 +598,8 @@ apiRouter.post('/bets/:betId/poke', async (req: Request, res: Response) => {
       return;
     }
 
-    const wagerAmount = clampWager(normalizeToHundredth(sourceBet.wager_amount));
-    const timeLimitSeconds = clampTimeLimit(sourceBet.time_limit_seconds);
+  const wagerAmount = normalizeWagerAmount(normalizeToHundredth(sourceBet.wager_amount));
+  const timeLimitSeconds = normalizeTimeLimitSeconds(sourceBet.time_limit_seconds);
     const description = preview.description || preview.summary || sourceBet.description || 'Bet';
 
     let insertedBet: BetProposal;
@@ -700,17 +814,6 @@ app.listen(PORT, () => {
   startBetLifecycleService();
   startNflDataIngestService();
 });
-
-function clampWager(value: number): number {
-  if (!Number.isFinite(value)) return 0.25;
-  return Math.min(Math.max(value, 0.25), 5);
-}
-
-function clampTimeLimit(value: number): number {
-  if (!Number.isFinite(value)) return 30;
-  const rounded = Math.round(value);
-  return Math.min(Math.max(rounded, 10), 60);
-}
 
 function assertRequiredEnv(): void {
   const missing: string[] = [];

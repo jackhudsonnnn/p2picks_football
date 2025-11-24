@@ -54,10 +54,22 @@ export async function buildGiveAndTakeUserConfig(input: BuildInput = {}): Promis
     });
   }
 
-  const steps: ModeUserConfigStep[] = [[title, choices]];
+  const steps: ModeUserConfigStep[] = [
+    {
+      key: 'spread',
+      title,
+      inputType: 'select',
+      choices,
+    },
+  ];
 
   if (!skipResolveStep) {
-    steps.push(['Resolve At', buildResolveChoices()]);
+    steps.push({
+      key: 'resolve_at',
+      title: 'Resolve At',
+      inputType: 'select',
+      choices: buildResolveChoices(),
+    });
   }
 
   return steps;
@@ -78,6 +90,7 @@ function buildChoice(value: number, homeLabel: string, skipResolveStep: boolean)
   const spread = formatSpread(value);
   const label = `${homeLabel} ${spread}`;
   return {
+    id: spread,
     value: spread,
     label,
     patch: {
@@ -96,6 +109,7 @@ function formatSpread(value: number): string {
 
 function buildResolveChoices(): ModeUserConfigChoice[] {
   return EITHER_OR_ALLOWED_RESOLVE_AT.map((value) => ({
+    id: value,
     value,
     label: value,
     patch: { resolve_at: value },

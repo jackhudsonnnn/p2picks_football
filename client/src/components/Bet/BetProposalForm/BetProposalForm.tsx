@@ -1,22 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './BetProposalForm.css';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { formatToHundredth, normalizeToHundredth } from '@shared/utils/number';
+import { formatToHundredth } from '@shared/utils/number';
 import { fetchJSON } from '@data/clients/restClient';
 
 type GameOption = { id: string; label: string };
 type ModeOption = { key: string; label: string };
-type ConfigChoice = {
+
+type ModeUserConfigChoiceDTO = {
+  id: string;
   value: string;
   label: string;
   description?: string;
-  patch?: Record<string, unknown>;
   disabled?: boolean;
 };
-type ConfigStep = {
+
+type ModeUserConfigStepDTO = {
+  key: string;
   title: string;
-  choices: ConfigChoice[];
+  description?: string;
+  validationErrors?: string[];
+  selectedChoiceId?: string | null;
+  completed?: boolean;
+  choices: ModeUserConfigChoiceDTO[];
 };
+
 type ModePreview = {
   summary: string;
   description: string;
@@ -27,11 +35,12 @@ type ModePreview = {
 };
 
 export interface BetProposalFormValues {
-  nfl_game_id: string;
-  mode_key: string;
-  mode_config: Record<string, unknown>;
-  wager_amount: number;
-  time_limit_seconds: number;
+  config_session_id?: string;
+  nfl_game_id?: string;
+  mode_key?: string;
+  mode_config?: Record<string, unknown>;
+  wager_amount?: number;
+  time_limit_seconds?: number;
   preview?: ModePreview | null;
 }
 
@@ -40,59 +49,72 @@ interface BetProposalFormProps {
   loading?: boolean;
 }
 
-function mapPayloadToConfigSteps(payloadSteps: any): ConfigStep[] {
-  return Array.isArray(payloadSteps)
-    ? payloadSteps.map((entry: any) => {
-        const title = Array.isArray(entry) ? entry[0] : entry?.title;
-        const rawChoices = Array.isArray(entry) ? entry[1] : entry?.choices;
-        const choices: ConfigChoice[] = Array.isArray(rawChoices)
-          ? rawChoices.map((choice: any) => ({
-              value: String(choice?.value ?? choice?.id ?? ''),
-              label: String(choice?.label ?? choice?.name ?? choice?.value ?? ''),
-              description: choice?.description ? String(choice.description) : undefined,
-              disabled: Boolean(choice?.disabled),
-              patch:
-                choice?.patch && typeof choice.patch === 'object'
-                  ? { ...(choice.patch as Record<string, unknown>) }
-                  : undefined,
-            }))
-          : [];
-        return {
-          title: String(title ?? 'Select Option'),
-          choices,
-        };
-      })
-    : [];
-}
+type ConfigSessionStage = 'start' | 'mode' | 'general' | 'summary';
+type ConfigSessionStatus = 'mode_config' | 'general' | 'summary';
 
-const WAGER_CHOICES = Array.from({ length: 20 }).map((_, index) => {
-  const raw = normalizeToHundredth(0.25 * (index + 1));
-  return Number(raw);
-});
+type GeneralConfigFieldSchema = {
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  defaultValue: number;
+  choices: number[];
+};
+
+type GeneralConfigSchema = {
+  wager_amount: GeneralConfigFieldSchema;
+  time_limit_seconds: GeneralConfigFieldSchema;
+};
+
+type ModeConfigSessionDTO = {
+  session_id: string;
+  mode_key: string;
+  nfl_game_id: string;
+  status: ConfigSessionStatus;
+  steps: ModeUserConfigStepDTO[];
+  next_step: ModeUserConfigStepDTO | null;
+  general: {
+    wager_amount: number;
+    time_limit_seconds: number;
+  };
+  general_schema: GeneralConfigSchema;
+  preview: ModePreview | null;
+};
+
+const STAGE_ORDER: Record<ConfigSessionStage, number> = {
+  start: 0,
+  mode: 1,
+  general: 2,
+  summary: 3,
+};
+
+const DEFAULT_GENERAL_VALUES = {
+  wager_amount: '0.25',
+  time_limit_seconds: '30',
+};
 
 const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) => {
   const [bootstrapLoading, setBootstrapLoading] = useState(false);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [games, setGames] = useState<GameOption[]>([]);
   const [modes, setModes] = useState<ModeOption[]>([]);
+  const [generalSchema, setGeneralSchema] = useState<GeneralConfigSchema | null>(null);
 
-  const [gameId, setGameId] = useState<string>('');
-  const [modeKey, setModeKey] = useState<string>('');
+  const [gameId, setGameId] = useState('');
+  const [modeKey, setModeKey] = useState('');
 
-  const [config, setConfig] = useState<Record<string, unknown>>({});
-  const [configSteps, setConfigSteps] = useState<ConfigStep[]>([]);
-  const [configSelections, setConfigSelections] = useState<(string | null)[]>([]);
-  const [configLoading, setConfigLoading] = useState(false);
-  const [configError, setConfigError] = useState<string | null>(null);
+  const [stage, setStage] = useState<ConfigSessionStage>('start');
+  const [manualStageOverride, setManualStageOverride] = useState(false);
+  const [modeStepIndex, setModeStepIndex] = useState(0);
 
-  const [wagerAmount, setWagerAmount] = useState<number>(0.25);
-  const [timeLimit, setTimeLimit] = useState<number>(30);
+  const [session, setSession] = useState<ModeConfigSessionDTO | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(false);
+  const [sessionUpdating, setSessionUpdating] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
-  const [step, setStep] = useState<number>(0);
-
-  const [preview, setPreview] = useState<ModePreview | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [generalValues, setGeneralValues] = useState(DEFAULT_GENERAL_VALUES);
+  const [generalSaving, setGeneralSaving] = useState(false);
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,32 +127,36 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           signal: controller.signal,
         });
         if (cancelled) return;
-
         const gameEntries: GameOption[] = Array.isArray(payload?.games)
           ? payload.games
               .map((item: any) => ({
                 id: String(item?.id ?? ''),
                 label: String(item?.label ?? ''),
               }))
-              .filter((item: GameOption) => item.id && item.label)
-          : Object.entries(payload?.games || {}).map(([id, label]) => ({
-              id: String(id),
-              label: String(label ?? id),
-            }));
-
-        const modeEntries: ModeOption[] = Array.isArray(payload?.modes)
-      ? payload.modes
-        .map((def: any) => ({ key: String(def?.key ?? ''), label: String(def?.label ?? def?.key ?? '') }))
-        .filter((item: ModeOption) => item.key && item.label)
+              .filter((entry: GameOption) => entry.id && entry.label)
           : [];
-
+        const modeEntries: ModeOption[] = Array.isArray(payload?.modes)
+          ? payload.modes
+              .map((item: any) => ({
+                key: String(item?.key ?? ''),
+                label: String(item?.label ?? item?.key ?? ''),
+              }))
+              .filter((entry: ModeOption) => entry.key && entry.label)
+          : [];
         setGames(gameEntries);
         setModes(modeEntries);
+        if (payload?.general_config_schema) {
+          setGeneralSchema(payload.general_config_schema as GeneralConfigSchema);
+          setGeneralValues({
+            wager_amount: String(payload.general_config_schema?.wager_amount?.defaultValue ?? DEFAULT_GENERAL_VALUES.wager_amount),
+            time_limit_seconds: String(
+              payload.general_config_schema?.time_limit_seconds?.defaultValue ?? DEFAULT_GENERAL_VALUES.time_limit_seconds,
+            ),
+          });
+        }
       } catch (err: any) {
         if (!cancelled) {
           setBootstrapError(err?.message || 'Unable to load bet proposal setup');
-          setGames([]);
-          setModes([]);
         }
       } finally {
         if (!cancelled) setBootstrapLoading(false);
@@ -144,436 +170,426 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
   }, []);
 
   useEffect(() => {
-    setConfig({});
-    setConfigSteps([]);
-    setConfigSelections([]);
-    setPreview(null);
-    setPreviewError(null);
-    setStep((current) => (current > 0 ? 0 : current));
-  }, [gameId, modeKey]);
-
-  const fetchUserConfigSteps = useCallback(
-    async (nextConfig: Record<string, unknown>, signal?: AbortSignal): Promise<ConfigStep[]> => {
-      if (!gameId || !modeKey) return [];
-      const payloadConfig = { ...(nextConfig || {}), nfl_game_id: gameId };
-      const payload = await fetchJSON(`/api/bet-modes/${encodeURIComponent(modeKey)}/user-config`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nfl_game_id: gameId, config: payloadConfig }),
-        signal,
-      });
-      return mapPayloadToConfigSteps(payload?.steps);
-    },
-    [gameId, modeKey],
-  );
-
-  useEffect(() => {
-    if (!gameId || !modeKey) return;
-
-    const controller = new AbortController();
-    let cancelled = false;
-    const baseConfig: Record<string, unknown> = { nfl_game_id: gameId };
-
-    (async () => {
-      try {
-        setConfigLoading(true);
-        setConfigError(null);
-        const steps = await fetchUserConfigSteps(baseConfig, controller.signal);
-        if (cancelled) return;
-        setConfig({ ...baseConfig });
-        setConfigSteps(steps);
-        setConfigSelections(Array(steps.length).fill(null));
-      } catch (err: any) {
-        if (!cancelled) {
-          setConfig({ ...baseConfig });
-          setConfigSteps([]);
-          setConfigSelections([]);
-          setConfigError(err?.message || 'Unable to load configuration');
-        }
-      } finally {
-        if (!cancelled) setConfigLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [gameId, modeKey, fetchUserConfigSteps]);
-
-  const totalConfigSteps = configSteps.length;
-  // Now that NFL game + mode are selected together in step 0, config steps begin at index 1
-  const configStartIndex = 1;
-  const generalStepIndex = configStartIndex + totalConfigSteps;
-  const reviewStepIndex = generalStepIndex + 1;
-  const totalSteps = reviewStepIndex + 1;
-
-  const configSelectionsComplete = useMemo(
-    () => configSelections.length === totalConfigSteps && configSelections.every((value) => value != null),
-    [configSelections, totalConfigSteps],
-  );
-
-  const configSignature = useMemo(() => JSON.stringify(config), [config]);
-
-  useEffect(() => {
-    if (step !== reviewStepIndex) return;
-    if (!gameId || !modeKey) return;
-    if (totalConfigSteps > 0 && !configSelectionsComplete) return;
-
-    let cancelled = false;
-    const controller = new AbortController();
-    (async () => {
-      try {
-        setPreviewLoading(true);
-        setPreviewError(null);
-        const payload = {
-          nfl_game_id: gameId,
-          config,
-          wager_amount: normalizeToHundredth(wagerAmount),
-          time_limit_seconds: timeLimit,
-        };
-        const data: ModePreview = await fetchJSON(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-        if (cancelled) return;
-        setPreview(data);
-      } catch (err: any) {
-        if (!cancelled) {
-          setPreview(null);
-          setPreviewError(err?.message || 'Unable to build preview');
-        }
-      } finally {
-        if (!cancelled) setPreviewLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [step, reviewStepIndex, gameId, modeKey, configSignature, wagerAmount, timeLimit, totalConfigSteps, configSelectionsComplete]);
-
-  const stepValid = useMemo(() => {
-    // combined first step requires both game and mode
-    if (step === 0) return !!gameId && !!modeKey;
-    if (step >= configStartIndex && step < generalStepIndex) {
-      const localIndex = step - configStartIndex;
-      return configSelections[localIndex] != null;
-    }
-    if (step === generalStepIndex) {
-      const wagerValid = wagerAmount >= 0.25 && wagerAmount <= 5;
-      const timeValid = timeLimit >= 15 && timeLimit <= 120;
-      return wagerValid && timeValid;
-    }
-    return step <= reviewStepIndex;
-  }, [step, gameId, modeKey, configSelections, generalStepIndex, configStartIndex, wagerAmount, timeLimit, reviewStepIndex]);
-
-  const canSubmit = step === reviewStepIndex && !previewLoading && !previewError && (preview?.errors?.length ?? 0) === 0;
-
-  const disableNext = !stepValid || (step === reviewStepIndex - 1 && !configSelectionsComplete && totalConfigSteps > 0);
-
-  const handleConfigSelection = (stepIndex: number, value: string) => {
-    const choice = configSteps[stepIndex]?.choices.find((option) => String(option.value) === value);
-    if (!choice) return;
-    const patch = choice.patch && typeof choice.patch === 'object' ? choice.patch : {};
-    if (
-      patch &&
-      'player2_id' in patch &&
-      config.player1_id &&
-      String((patch as Record<string, unknown>).player2_id) === String(config.player1_id)
-    ) {
+    if (!session) {
       return;
     }
-    setConfigSelections((prev) => {
-      const next = [...prev];
-      next[stepIndex] = value;
-      return next;
+    if (manualStageOverride) {
+      return;
+    }
+    const derivedStage = mapStatusToStage(session.status);
+    const noModeSteps = (session.steps?.length ?? 0) === 0;
+    if (noModeSteps) {
+      if (stage !== derivedStage) {
+        setStage(derivedStage);
+      }
+      return;
+    }
+    if (stage === 'mode' && STAGE_ORDER[derivedStage] > STAGE_ORDER[stage]) {
+      return;
+    }
+    if (STAGE_ORDER[derivedStage] > STAGE_ORDER[stage]) {
+      setStage(derivedStage);
+    }
+  }, [session, stage, manualStageOverride]);
+
+  useEffect(() => {
+    if (!session) {
+      if (stage !== 'start') {
+        setStage('start');
+      }
+      return;
+    }
+    setGeneralValues({
+      wager_amount: String(session.general.wager_amount),
+      time_limit_seconds: String(session.general.time_limit_seconds),
     });
+  }, [session?.general.wager_amount, session?.general.time_limit_seconds]);
 
-    setPreview(null);
-    setPreviewError(null);
+  const resetSession = useCallback(() => {
+    setSession(null);
+    setSessionError(null);
+    setGeneralError(null);
+    setManualStageOverride(false);
+    setGeneralValues((prev) => ({
+      wager_amount: generalSchema ? String(generalSchema.wager_amount.defaultValue) : prev.wager_amount,
+      time_limit_seconds: generalSchema ? String(generalSchema.time_limit_seconds.defaultValue) : prev.time_limit_seconds,
+    }));
+    setModeStepIndex(0);
+  }, [generalSchema]);
 
-    const prevStat = typeof config?.stat === 'string' ? String(config.stat) : undefined;
-    const statChanged = 'stat' in patch && String(patch.stat ?? '') !== String(prevStat ?? '');
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    if (!gameId || !modeKey) {
+      resetSession();
+      return;
+    }
+    if (session.mode_key !== modeKey || session.nfl_game_id !== gameId) {
+      resetSession();
+    }
+  }, [gameId, modeKey, session, resetSession]);
 
-    const nextConfig = { ...(config || {}), ...patch, nfl_game_id: gameId };
+  useEffect(() => {
+    if (!session) {
+      setModeStepIndex(0);
+      return;
+    }
+    setModeStepIndex((prev) => {
+      const lastIndex = Math.max(session.steps.length - 1, 0);
+      if (prev > lastIndex) {
+        return lastIndex;
+      }
+      if (prev < 0) {
+        return 0;
+      }
+      return prev;
+    });
+  }, [session?.steps.length]);
 
-    if (statChanged) {
-      Object.assign(nextConfig, {
-        player1_id: null,
-        player1_name: null,
-        player2_id: null,
-        player2_name: null,
-        player_id: null,
-        player_name: null,
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    setModeStepIndex(0);
+  }, [session?.session_id]);
+
+  const initializeSession = useCallback(async () => {
+    if (!gameId || !modeKey) return;
+    setSessionLoading(true);
+    setSessionError(null);
+    setManualStageOverride(false);
+    try {
+      const dto = await createConfigSessionRequest(modeKey, gameId);
+      setSession(dto);
+      setStage('mode');
+    } catch (err) {
+      setSessionError(extractErrorMessage(err, 'Unable to start configuration'));
+    } finally {
+      setSessionLoading(false);
+    }
+  }, [gameId, modeKey]);
+
+  const handleChoiceChange = useCallback(
+    async (stepKey: string, choiceId: string) => {
+      if (!session || !choiceId || sessionUpdating) return;
+      const current = session.steps.find((step) => step.key === stepKey);
+      if (current?.selectedChoiceId === choiceId) return;
+      setSessionUpdating(true);
+      setSessionError(null);
+      setManualStageOverride(false);
+      try {
+        const dto = await applyConfigChoiceRequest(session.session_id, stepKey, choiceId);
+        setSession(dto);
+      } catch (err) {
+        setSessionError(extractErrorMessage(err, 'Unable to update selection'));
+      } finally {
+        setSessionUpdating(false);
+      }
+    },
+    [session, sessionUpdating],
+  );
+
+  const handleGeneralSubmit = useCallback(async () => {
+    if (!session) return;
+    setGeneralSaving(true);
+    setGeneralError(null);
+    setManualStageOverride(false);
+    try {
+      const dto = await updateGeneralConfigRequest(session.session_id, {
+        wager_amount: Number(generalValues.wager_amount),
+        time_limit_seconds: Number(generalValues.time_limit_seconds),
       });
+      setSession(dto);
+    } catch (err) {
+      setGeneralError(extractErrorMessage(err, 'Unable to update wager or time limit'));
+    } finally {
+      setGeneralSaving(false);
     }
+  }, [session, generalValues]);
 
-    setConfig(nextConfig);
-
-    if (statChanged) {
-      (async () => {
-        try {
-          setConfigLoading(true);
-          setConfigError(null);
-          const steps = await fetchUserConfigSteps(nextConfig);
-          setConfigSteps(steps);
-          setConfigSelections(() => {
-            const nextSelections = Array(steps.length).fill(null);
-            nextSelections[stepIndex] = value;
-            return nextSelections;
-          });
-        } catch (err: any) {
-          setConfigSteps([]);
-          setConfigSelections([]);
-          setConfigError(err?.message || 'Unable to load configuration');
-        } finally {
-          setConfigLoading(false);
-        }
-      })();
-    }
-  };
-
-  const goNext = () => {
-    if (step < totalSteps - 1 && !disableNext) {
-      setStep((current) => Math.min(current + 1, totalSteps - 1));
+  const handleBack = () => {
+    if (stage === 'start') return;
+    setManualStageOverride(true);
+    if (stage === 'mode') {
+      if (modeStepIndex > 0) {
+        setModeStepIndex((prev) => Math.max(prev - 1, 0));
+      } else {
+        resetSession();
+      }
+    } else if (stage === 'general') {
+      if (session?.steps.length) {
+        setModeStepIndex(session.steps.length - 1);
+      }
+      setStage('mode');
+    } else if (stage === 'summary') {
+      setStage('general');
     }
   };
 
-  const goBack = () => {
-    if (step > 0) {
-      setStep((current) => Math.max(current - 1, 0));
+  const handleNext = () => {
+    if (stage === 'start') {
+      void initializeSession();
+      return;
+    }
+    if (stage === 'mode') {
+      if (!session) {
+        return;
+      }
+      if (!session.steps.length) {
+        setManualStageOverride(false);
+        setStage('general');
+        return;
+      }
+      const lastIndex = session.steps.length - 1;
+      if (modeStepIndex < lastIndex) {
+        setModeStepIndex((prev) => Math.min(prev + 1, lastIndex));
+        return;
+      }
+      if (session.status !== 'mode_config') {
+        setManualStageOverride(false);
+        setStage('general');
+      }
+      return;
+    }
+    if (stage === 'general') {
+      void handleGeneralSubmit();
     }
   };
 
   const handleSubmit = () => {
-    if (!gameId || !modeKey) return;
-    const payload: BetProposalFormValues = {
-      nfl_game_id: gameId,
-      mode_key: modeKey,
-      mode_config: { ...(config || {}) },
-      wager_amount: normalizeToHundredth(Math.min(Math.max(wagerAmount, 0.25), 5)),
-  time_limit_seconds: Math.min(Math.max(Math.round(timeLimit), 15), 120),
-
-      preview,
-    };
-    onSubmit(payload);
+    if (!session || session.status !== 'summary' || !session.preview) return;
+    if (session.preview.errors && session.preview.errors.length) return;
+    onSubmit({
+      config_session_id: session.session_id,
+      nfl_game_id: session.nfl_game_id,
+      mode_key: session.mode_key,
+      wager_amount: session.general.wager_amount,
+      time_limit_seconds: session.general.time_limit_seconds,
+      preview: session.preview,
+    });
   };
 
-  const renderConfigStep = (configIndex: number) => {
-    const stepDef = configSteps[configIndex];
-    if (!stepDef) return null;
-    const selection = configSelections[configIndex] ?? '';
-    const choices = stepDef.choices.map((choice) => {
-      let disabled = Boolean(choice.disabled);
-      const patch = choice.patch as Record<string, unknown> | undefined;
-      if (patch && 'player2_id' in patch && config.player1_id && String(patch.player2_id) === String(config.player1_id)) {
-        disabled = true;
+  const effectiveGeneralSchema = session?.general_schema || generalSchema;
+  const activeModeStep = useMemo(() => {
+    if (!session || !session.steps.length) {
+      return null;
+    }
+    const clampedIndex = Math.min(Math.max(modeStepIndex, 0), session.steps.length - 1);
+    return session.steps[clampedIndex];
+  }, [session, modeStepIndex]);
+
+  const hasModeSteps = Boolean(session && session.steps.length > 0);
+
+  const canProceed = useMemo(() => {
+    if (stage === 'start') {
+      return Boolean(gameId && modeKey && !sessionLoading);
+    }
+    if (stage === 'mode') {
+      if (!session || sessionUpdating) {
+        return false;
       }
-      return { ...choice, disabled };
-    });
+      if (!hasModeSteps) {
+        return true;
+      }
+      return Boolean(activeModeStep && activeModeStep.selectedChoiceId);
+    }
+    if (stage === 'general') {
+      return Boolean(session && !generalSaving);
+    }
+    return false;
+  }, [stage, gameId, modeKey, sessionLoading, session, sessionUpdating, generalSaving, hasModeSteps, activeModeStep]);
 
-    const selectedChoice = choices.find((choice) => choice.value === selection);
+  const canSubmit = useMemo(() => {
+    if (!session || session.status !== 'summary' || !session.preview) return false;
+    return (session.preview.errors?.length ?? 0) === 0 && !generalSaving && !sessionUpdating;
+  }, [session, generalSaving, sessionUpdating]);
 
+  const disableBack = stage === 'start' || sessionLoading;
+  const disableNext =
+    stage === 'summary' || !canProceed || sessionLoading || sessionUpdating || generalSaving;
+
+  const renderStartStage = () => (
+    <div className="form-step combined-step">
+      <div className="form-group">
+        <label className="form-label" htmlFor="nfl_game_id">
+          NFL Game
+        </label>
+        <select
+          id="nfl_game_id"
+          className="form-select"
+          value={gameId}
+          onChange={(event) => setGameId(event.target.value)}
+          disabled={bootstrapLoading || sessionLoading}
+        >
+          <option value="">Select NFL Game</option>
+          {games.map((game) => (
+            <option key={game.id} value={game.id}>
+              {game.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label" htmlFor="mode_key">
+          Game Mode
+        </label>
+        <select
+          id="mode_key"
+          className="form-select"
+          value={modeKey}
+          onChange={(event) => setModeKey(event.target.value)}
+          disabled={bootstrapLoading || sessionLoading}
+        >
+          <option value="">Select Mode</option>
+          {modes.map((mode) => (
+            <option key={mode.key} value={mode.key}>
+              {mode.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
+  const renderModeStage = () => {
+    if (!session) {
+      return <div className="form-step centered-step">Select an NFL game and mode to begin.</div>;
+    }
+    if (!session.steps.length) {
+      return <div className="form-step centered-step">No additional configuration required for this mode.</div>;
+    }
+    const step = activeModeStep;
+    if (!step) {
+      return <div className="form-step centered-step">Loading configuration options…</div>;
+    }
     return (
       <div className="form-step">
         <div className="form-group">
-          <label className="form-label">{stepDef.title}</label>
+          <label className="form-label mode-step-label" htmlFor={`step-${step.key}`}>
+            <span>{step.title}</span>
+          </label>
           <select
+            id={`step-${step.key}`}
             className="form-select"
-            value={selection}
-            onChange={(event) => handleConfigSelection(configIndex, event.target.value)}
+            value={step.selectedChoiceId ?? ''}
+            disabled={sessionUpdating}
+            onChange={(event) => handleChoiceChange(step.key, event.target.value)}
           >
             <option value="">Select option</option>
-            {choices.map((choice) => (
-              <option key={choice.value} value={choice.value} disabled={choice.disabled}>
+            {step.choices.map((choice) => (
+              <option key={choice.id} value={choice.id} disabled={choice.disabled}>
                 {choice.label}
               </option>
             ))}
           </select>
         </div>
-        {selectedChoice?.description && <div className="form-hint">{selectedChoice.description}</div>}
       </div>
     );
   };
 
-  const renderReviewStep = () => {
-    if (previewLoading) {
-      return <div className="form-step centered-step">Building preview…</div>;
+  const renderGeneralStage = () => {
+    if (!session || !effectiveGeneralSchema) {
+      return <div className="form-step centered-step">Configuration session unavailable.</div>;
     }
-    if (previewError) {
-      return (
-        <div className="form-step centered-step">
-          <div className="form-error" role="alert">
-            {previewError}
-          </div>
+    const wagerField = effectiveGeneralSchema.wager_amount;
+    const timeField = effectiveGeneralSchema.time_limit_seconds;
+    return (
+      <div className="form-step">
+        <div className="form-group">
+          <label className="form-label" htmlFor="general-wager">
+            Wager ({wagerField.unit})
+          </label>
+          <select
+            id="general-wager"
+            className="form-select"
+            value={generalValues.wager_amount}
+            onChange={(event) => setGeneralValues((prev) => ({
+              ...prev,
+              wager_amount: event.target.value,
+            }))}
+            disabled={generalSaving}
+          >
+            {wagerField.choices.map((value) => (
+              <option key={value} value={String(value)}>
+                {formatToHundredth(value)}
+              </option>
+            ))}
+          </select>
         </div>
-      );
+        <div className="form-group">
+          <label className="form-label" htmlFor="general-time">
+            Time Limit ({timeField.unit})
+          </label>
+          <select
+            id="general-time"
+            className="form-select"
+            value={generalValues.time_limit_seconds}
+            onChange={(event) => setGeneralValues((prev) => ({
+              ...prev,
+              time_limit_seconds: event.target.value,
+            }))}
+            disabled={generalSaving}
+          >
+            {timeField.choices.map((value) => (
+              <option key={value} value={String(value)}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSummaryStage = () => {
+    if (!session) {
+      return <div className="form-step centered-step">Configuration session missing.</div>;
     }
-    if (!preview) {
+    if (!session.preview) {
       return <div className="form-step centered-step">Preview unavailable. Adjust selections or go back.</div>;
-    }
-    if (preview.errors && preview.errors.length) {
-      return (
-        <div className="form-step centered-step">
-          <div className="form-error" role="alert">
-            {preview.errors.join('; ')}
-          </div>
-        </div>
-      );
     }
     return (
       <div className="form-step centered-step">
-        <div><strong>{preview.description}</strong></div>
         <div>
-          {formatToHundredth(wagerAmount)} pt(s)• {timeLimit}s window
+          <strong>{session.preview.description}</strong>
         </div>
         <div>
-          {preview.summary}
+          {formatToHundredth(session.general.wager_amount)} pt(s) • {session.general.time_limit_seconds}s window
         </div>
-        {preview.winningCondition}
+        <div>{session.preview.summary}</div>
+        {session.preview.winningCondition && <div>{session.preview.winningCondition}</div>}
       </div>
     );
   };
 
-  const renderStepContent = () => {
-    // Combined first step: select NFL game and mode in a single UI
-    if (step === 0) {
-      return (
-        <div className="form-step combined-step">
-          <div className="form-group">
-            <label className="form-label" htmlFor="nfl_game_id">
-              NFL Game
-            </label>
-            <select
-              id="nfl_game_id"
-              className="form-select"
-              value={gameId}
-              onChange={(event) => setGameId(event.target.value)}
-              disabled={bootstrapLoading}
-            >
-              <option value="">Select NFL Game</option>
-              {games.map((game) => (
-                <option key={game.id} value={game.id}>
-                  {game.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="mode_key">
-              Game Mode
-            </label>
-            <select
-              id="mode_key"
-              className="form-select"
-              value={modeKey}
-              onChange={(event) => setModeKey(event.target.value)}
-              disabled={bootstrapLoading}
-            >
-              <option value="">Select Mode</option>
-              {modes.map((mode) => (
-                <option key={mode.key} value={mode.key}>
-                  {mode.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {bootstrapError && (
-            <div className="form-error" role="alert">
-              {bootstrapError}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (step >= configStartIndex && step < generalStepIndex) {
-      const configIndex = step - configStartIndex;
-      if (configLoading) {
-        return <div className="form-step centered-step">Loading options…</div>;
-      }
-      if (configError) {
-        return (
-          <div className="form-step centered-step">
-            <div className="form-error" role="alert">
-              {configError}
-            </div>
-          </div>
-        );
-      }
-      return renderConfigStep(configIndex);
-    }
-
-    if (step === generalStepIndex) {
-      return (
-        <div className="form-step">
-          <div className="form-group">
-            <label className="form-label" htmlFor="wager_amount">
-              Wager (pts)
-            </label>
-            <select
-              id="wager_amount"
-              className="form-select"
-              value={String(wagerAmount)}
-              onChange={(event) => setWagerAmount(Number(event.target.value))}
-            >
-              <option value="">Select wager</option>
-              {WAGER_CHOICES.map((value) => (
-                <option key={value} value={value}>
-                  {formatToHundredth(value)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="time_limit">
-              Time Limit (seconds)
-            </label>
-            <select
-              id="time_limit"
-              className="form-select"
-              value={String(timeLimit)}
-              onChange={(event) => setTimeLimit(Number(event.target.value))}
-            >
-              <option value="">Select time limit</option>
-              {Array.from({ length: 8 }).map((_, i) => {
-                const val = 15 * (i + 1); // 15,30,...,120
-                return (
-                  <option key={val} value={val}>
-                    {val}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        </div>
-      );
-    }
-
-    return renderReviewStep();
-  };
+  let content: React.ReactNode;
+  if (stage === 'start') {
+    content = renderStartStage();
+  } else if (stage === 'mode') {
+    content = renderModeStage();
+  } else if (stage === 'general') {
+    content = renderGeneralStage();
+  } else {
+    content = renderSummaryStage();
+  }
 
   return (
     <div className="bet-proposal-form">
-      <div className="form-content">{renderStepContent()}</div>
+      <div className="form-content">{content}</div>
       <div className="form-navigation">
         <button
           className="nav-button"
           type="button"
-          onClick={goBack}
-          disabled={step === 0}
+          onClick={handleBack}
+          disabled={disableBack}
           aria-label="Previous step"
           title="Previous step"
         >
           <IoIosArrowBack />
         </button>
-        {step === reviewStepIndex ? (
+        {stage === 'summary' ? (
           <button
             className="submit-button"
             type="button"
@@ -588,7 +604,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           <button
             className="nav-button"
             type="button"
-            onClick={goNext}
+            onClick={handleNext}
             disabled={disableNext}
             aria-label="Next step"
             title="Next step"
@@ -602,3 +618,50 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
 };
 
 export default BetProposalForm;
+
+function mapStatusToStage(status: ConfigSessionStatus): ConfigSessionStage {
+  if (status === 'summary') return 'summary';
+  if (status === 'general') return 'general';
+  return 'mode';
+}
+
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (typeof error === 'string' && error.length) {
+    return error;
+  }
+  return fallback;
+}
+
+async function createConfigSessionRequest(modeKey: string, nflGameId: string): Promise<ModeConfigSessionDTO> {
+  return fetchJSON('/api/bet-proposals/sessions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode_key: modeKey, nfl_game_id: nflGameId }),
+  });
+}
+
+async function applyConfigChoiceRequest(
+  sessionId: string,
+  stepKey: string,
+  choiceId: string,
+): Promise<ModeConfigSessionDTO> {
+  return fetchJSON(`/api/bet-proposals/sessions/${encodeURIComponent(sessionId)}/choices`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ step_key: stepKey, choice_id: choiceId }),
+  });
+}
+
+async function updateGeneralConfigRequest(
+  sessionId: string,
+  general: { wager_amount: number; time_limit_seconds: number },
+): Promise<ModeConfigSessionDTO> {
+  return fetchJSON(`/api/bet-proposals/sessions/${encodeURIComponent(sessionId)}/general`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(general),
+  });
+}

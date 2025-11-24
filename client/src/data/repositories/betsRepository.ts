@@ -3,11 +3,12 @@ import { fetchJSON } from '@data/clients/restClient';
 import { fetchModeConfigs } from '@data/repositories/modesRepository';
 
 export interface BetProposalRequestPayload {
-  nfl_game_id: string;
-  mode_key: string;
+  config_session_id?: string;
+  nfl_game_id?: string;
+  mode_key?: string;
   mode_config?: Record<string, unknown>;
-  wager_amount: number;
-  time_limit_seconds: number;
+  wager_amount?: number;
+  time_limit_seconds?: number;
 }
 
 export async function createBetProposal(

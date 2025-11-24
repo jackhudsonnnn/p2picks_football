@@ -9,7 +9,7 @@ export const kingOfTheHillOverview: ModeOverview = {
   proposerConfiguration: [
     'Select two unique players from the active game.',
     'Choose the stat to monitor (passing yards, receptions, tackles, etc.).',
-    'Set the resolve value between 0 and 499 that the players are racing to hit.',
+    'Set the resolve value between 1 and 499 that the players are racing to hit.',
     'Choose how progress is tracked: “Starting Now” captures baselines at lock, “Cumulative” uses total game stats.',
   ],
   participantChoices: [

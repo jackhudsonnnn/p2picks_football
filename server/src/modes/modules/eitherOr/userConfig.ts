@@ -62,7 +62,9 @@ export async function buildEitherOrUserConfig(input: {
   }));
 
   const player1Choices: ModeUserConfigChoice[] = basePlayerChoices.map((choice) => ({
-    ...choice,
+    id: choice.value,
+    value: choice.value,
+    label: choice.label,
     patch: {
       player1_id: choice.value,
       player1_name: playerMap[choice.value]?.name ?? choice.label,
@@ -72,7 +74,9 @@ export async function buildEitherOrUserConfig(input: {
   }));
 
   const player2Choices: ModeUserConfigChoice[] = basePlayerChoices.map((choice) => ({
-    ...choice,
+    id: choice.value,
+    value: choice.value,
+    label: choice.label,
     patch: {
       player2_id: choice.value,
       player2_name: playerMap[choice.value]?.name ?? choice.label,
@@ -85,13 +89,16 @@ export async function buildEitherOrUserConfig(input: {
 
   const statChoices: ModeUserConfigChoice[] = Object.keys(STAT_KEY_TO_CATEGORY)
     .sort()
-    .map((statKey) => {
-      const label = STAT_KEY_LABELS[statKey] ?? humanizeStatKey(statKey);
+    .map((statKeyValue) => {
+      const label = STAT_KEY_LABELS[statKeyValue] ?? humanizeStatKey(statKeyValue);
       return {
-        value: statKey,
+        id: statKeyValue,
+        value: statKeyValue,
         label,
+        clears: ['player1_id', 'player1_name', 'player2_id', 'player2_name', 'player_id', 'player_name'],
+        clearSteps: ['player1', 'player2'],
         patch: {
-          stat: statKey,
+          stat: statKeyValue,
           stat_label: label,
           ...(skipResolveStep ? { resolve_at: EITHER_OR_DEFAULT_RESOLVE_AT } : {}),
           ...defaultProgressPatch,
@@ -100,36 +107,64 @@ export async function buildEitherOrUserConfig(input: {
     });
 
   const steps: ModeUserConfigStep[] = [
-    ['Select Stat', statChoices],
-    ['Select Player 1', player1Choices],
-    ['Select Player 2', player2Choices],
+    {
+      key: 'stat',
+      title: 'Select Stat',
+      inputType: 'select',
+      choices: statChoices,
+    },
+    {
+      key: 'player1',
+      title: 'Select Player 1',
+      inputType: 'select',
+      choices: player1Choices,
+    },
+    {
+      key: 'player2',
+      title: 'Select Player 2',
+      inputType: 'select',
+      choices: player2Choices,
+    },
   ];
 
   if (!skipResolveStep) {
     const resolveChoices: ModeUserConfigChoice[] = EITHER_OR_ALLOWED_RESOLVE_AT.map((value) => ({
+      id: value,
       value,
       label: value,
       patch: { resolve_at: value },
     }));
-    steps.push(['Resolve At', resolveChoices]);
+    steps.push({
+      key: 'resolve_at',
+      title: 'Resolve At',
+      inputType: 'select',
+      choices: resolveChoices,
+    });
   }
 
   if (showProgressStep) {
     const progressModeChoices: ModeUserConfigChoice[] = [
       {
+        id: 'starting_now',
         value: 'starting_now',
         label: 'Starting Now',
         description: 'Capture baselines when betting closes; whoever gains the most afterward wins.',
         patch: { progress_mode: 'starting_now' },
       },
       {
+        id: 'cumulative',
         value: 'cumulative',
         label: 'Cumulative',
         description: 'Skip baselines and compare full-game totals at the resolve time.',
         patch: { progress_mode: 'cumulative' },
       },
     ];
-    steps.push(['Track Progress', progressModeChoices]);
+    steps.push({
+      key: 'progress_mode',
+      title: 'Track Progress',
+      inputType: 'select',
+      choices: progressModeChoices,
+    });
   }
 
   if (debug) {

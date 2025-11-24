@@ -13,18 +13,66 @@ export const propHuntModule: ModeModule = {
     descriptionTemplate:
       '`${(config.player_name || config.player_id || "Selected Player")} • ${(config.stat_label || config.stat || "Stat")}`',
     secondaryDescriptionTemplate:
-      '`Compare ${(config.player_name || config.player_id || "Selected Player")}\'s ${(config.stat_label || config.stat || "stat")} total to ${(config.line_label || config.line || "the line")} at ${(config.resolve_at || "settle time")}`',
+      '`Track ${(config.player_name || config.player_id || "Selected Player")}\'s ${(config.stat_label || config.stat || "stat")} ${(config.progress_mode === "cumulative" ? "total" : "net-new output")} against ${(config.line_label || config.line || "the line")} by ${(config.resolve_at || "settle time")}`',
     winningConditionTemplate:
-      '`Total ${(config.stat_label || config.stat || "stat")} for ${(config.player_name || config.player_id || "the player")} at ${(config.resolve_at || "settle time")} vs ${(config.line_label || config.line || "line")}`',
+      '`Compare ${(config.progress_mode === "cumulative" ? "total" : "post-lock")} ${(config.stat_label || config.stat || "stat")} for ${(config.player_name || config.player_id || "the player")} against ${(config.line_label || config.line || "line")} at ${(config.resolve_at || "settle time")}`',
     optionsExpression: "['pass','Over','Under']",
-    configSteps: [],
+    configSteps: [
+      {
+        key: 'stat',
+        component: 'propHunt.stat',
+        label: 'Select Stat',
+        props: {
+          statKeyLabels: STAT_KEY_LABELS,
+        },
+        validatorExpression:
+          '(() => { const errors = []; if (!config.stat) errors.push("Stat required"); return errors; })()',
+      },
+      {
+        key: 'player',
+        component: 'propHunt.player',
+        label: 'Select Player',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.player_id && !config.player_name) errors.push("Player required"); return errors; })()',
+      },
+      {
+        key: 'resolve_at',
+        component: 'propHunt.resolveAt',
+        label: 'Resolve At',
+        props: {
+          allowedResolveAt: PROP_HUNT_ALLOWED_RESOLVE_AT,
+          defaultResolveAt: PROP_HUNT_DEFAULT_RESOLVE_AT,
+        },
+        validatorExpression:
+          '(() => { const errors = []; if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
+      },
+      {
+        key: 'progress_mode',
+        component: 'propHunt.progressMode',
+        label: 'Track Progress',
+        description: 'Decide whether to capture a Starting Now baseline or use full-game totals before setting the line.',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.progress_mode) errors.push("Progress tracking selection required"); return errors; })()',
+      },
+      {
+        key: 'line',
+        component: 'propHunt.line',
+        label: 'Set Line',
+        props: {
+          lineRange: PROP_HUNT_LINE_RANGE,
+        },
+        validatorExpression:
+          '(() => { const errors = []; const raw = Number(config.line_value ?? config.line ?? NaN); if (!config.line && config.line !== 0 && config.line_value == null) errors.push("Line required"); if (!Number.isFinite(raw)) { errors.push("Line must be numeric"); } else { if (raw < 0.5 || raw > 499.5) errors.push("Line must be between 0.5 and 499.5"); if (Math.abs(Math.round(raw * 2)) % 2 !== 1) errors.push("Line must end in .5"); } return errors; })()',
+      },
+    ],
     finalizeValidatorExpression:
-  '(() => { const errors = []; if (!config.player_id && !config.player_name) errors.push("Player required"); if (!config.stat) errors.push("Stat required"); const raw = Number(config.line_value ?? config.line ?? NaN); if (!config.line && config.line !== 0 && config.line_value == null) errors.push("Line required"); if (!Number.isFinite(raw)) { errors.push("Line must be numeric"); } else { if (raw < 0.5 || raw > 499.5) errors.push("Line must be between 0.5 and 499.5"); if (Math.abs(Math.round(raw * 2)) % 2 !== 1) errors.push("Line must end in .5"); } if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
+  '(() => { const errors = []; if (!config.player_id && !config.player_name) errors.push("Player required"); if (!config.stat) errors.push("Stat required"); if (!config.progress_mode) errors.push("Progress tracking selection required"); const raw = Number(config.line_value ?? config.line ?? NaN); if (!config.line && config.line !== 0 && config.line_value == null) errors.push("Line required"); if (!Number.isFinite(raw)) { errors.push("Line must be numeric"); } else { if (raw < 0.5 || raw > 499.5) errors.push("Line must be between 0.5 and 499.5"); if (Math.abs(Math.round(raw * 2)) % 2 !== 1) errors.push("Line must end in .5"); } if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
     metadata: {
       allowedResolveAt: PROP_HUNT_ALLOWED_RESOLVE_AT,
       defaultResolveAt: PROP_HUNT_DEFAULT_RESOLVE_AT,
       statKeyLabels: STAT_KEY_LABELS,
       lineRange: PROP_HUNT_LINE_RANGE,
+      progressModes: ['starting_now', 'cumulative'],
     },
   },
   overview: propHuntOverview,

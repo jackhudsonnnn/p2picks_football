@@ -25,9 +25,15 @@ export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<M
   const preparedPlayers = prepareValidPlayers(players);
   const currentStat = doc ? getCurrentStatValue(doc, input.existingConfig ?? {}) : null;
   const skipResolveStep = shouldSkipResolveStep(doc);
+  const normalizedStatus = typeof doc?.status === 'string' ? doc.status.trim().toUpperCase() : null;
+  const showProgressStep = Boolean(normalizedStatus && normalizedStatus !== 'STATUS_SCHEDULED');
 
   const statKey = input.existingConfig?.stat as string | undefined;
   const validPositions = getValidPositionsForStat(statKey);
+  const progressModeForLines = showProgressStep
+    ? normalizeProgressMode(input.existingConfig?.progress_mode)
+    : 'starting_now';
+  const defaultProgressPatch = showProgressStep ? {} : { progress_mode: 'starting_now' };
 
   if (DEBUG) {
     console.log('[propHunt][userConfig] filtering players', {
@@ -35,6 +41,7 @@ export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<M
       statKey,
       validPositions,
       totalPlayers: preparedPlayers.length,
+      showProgressStep,
     });
   }
 
@@ -53,10 +60,12 @@ export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<M
       skipResolveStep,
       status: doc?.status ?? null,
       period: doc?.period ?? null,
+      showProgressStep,
     });
   }
 
   const playerChoices: ModeUserConfigChoice[] = filteredPlayers.map((player) => ({
+    id: player.id,
     value: player.id,
     label: formatPlayerLabel(player),
     patch: {
@@ -72,31 +81,85 @@ export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<M
     .map((statKey) => {
       const label = STAT_KEY_LABELS[statKey] ?? humanizeStatKey(statKey);
       return {
+        id: statKey,
         value: statKey,
         label,
+        clears: ['player_id', 'player_name', 'line', 'line_value', 'line_label'],
+        clearSteps: ['player', 'line'],
         patch: {
           stat: statKey,
           stat_label: label,
           ...(skipResolveStep ? { resolve_at: PROP_HUNT_DEFAULT_RESOLVE_AT } : {}),
+          ...defaultProgressPatch,
         },
       } satisfies ModeUserConfigChoice;
     });
 
   const steps: ModeUserConfigStep[] = [
-    ['Select Stat', statChoices],
-    ['Select Player', playerChoices],
+    {
+      key: 'stat',
+      title: 'Select Stat',
+      inputType: 'select',
+      choices: statChoices,
+    },
+    {
+      key: 'player',
+      title: 'Select Player',
+      inputType: 'select',
+      choices: playerChoices,
+    },
   ];
 
   if (!skipResolveStep) {
     const resolveChoices: ModeUserConfigChoice[] = PROP_HUNT_ALLOWED_RESOLVE_AT.map((value) => ({
+      id: value,
       value,
       label: value,
       patch: { resolve_at: value },
     }));
-    steps.push(['Resolve At', resolveChoices]);
+    steps.push({
+      key: 'resolve_at',
+      title: 'Resolve At',
+      inputType: 'select',
+      choices: resolveChoices,
+    });
   }
 
-  steps.push(['Set Line', buildLineChoices(input.existingConfig ?? {}, currentStat)]);
+  if (showProgressStep) {
+    const progressModeChoices: ModeUserConfigChoice[] = [
+      {
+        id: 'starting_now',
+        value: 'starting_now',
+        label: 'Starting Now',
+        description: 'Capture the current stat when betting closes; the player must add the entire line afterward.',
+        patch: { progress_mode: 'starting_now' },
+        clears: ['line', 'line_value', 'line_label'],
+        clearSteps: ['line'],
+      },
+      {
+        id: 'cumulative',
+        value: 'cumulative',
+        label: 'Cumulative',
+        description: 'Use full-game totals and compare the total stat to the line.',
+        patch: { progress_mode: 'cumulative' },
+        clears: ['line', 'line_value', 'line_label'],
+        clearSteps: ['line'],
+      },
+    ];
+    steps.push({
+      key: 'progress_mode',
+      title: 'Track Progress',
+      inputType: 'select',
+      choices: progressModeChoices,
+    });
+  }
+
+  steps.push({
+    key: 'line',
+    title: 'Set Line',
+    inputType: 'select',
+    choices: buildLineChoices(input.existingConfig ?? {}, currentStat, progressModeForLines),
+  });
 
   return steps;
 }
@@ -153,15 +216,25 @@ async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | 
   }
 }
 
-function buildLineChoices(existingConfig: Record<string, unknown>, currentStat: number | null): ModeUserConfigChoice[] {
+function buildLineChoices(
+  existingConfig: Record<string, unknown>,
+  currentStat: number | null,
+  progressMode: 'starting_now' | 'cumulative',
+): ModeUserConfigChoice[] {
   const choices: ModeUserConfigChoice[] = [];
   const { min, max, step } = PROP_HUNT_LINE_RANGE;
-  const minimum = currentStat != null ? currentStat + 0.5 : min;
-  const start = Math.max(min, Math.ceil(minimum * 2) / 2);
+  const minimumBase =
+    progressMode === 'starting_now'
+      ? min
+      : currentStat != null
+        ? currentStat + 0.5
+        : min;
+  const start = Math.max(min, Math.ceil(minimumBase * 2) / 2);
 
   if (start > max) {
     return [
       {
+        id: 'unavailable',
         value: 'unavailable',
         label: 'No valid lines available',
         description: 'The selected stat already exceeds the maximum supported line (499.5).',
@@ -174,8 +247,9 @@ function buildLineChoices(existingConfig: Record<string, unknown>, currentStat: 
     const numeric = Number(value.toFixed(1));
     const label = numeric.toFixed(1);
     choices.push({
+      id: label,
       value: label,
-      label: label,
+      label,
       patch: {
         line: label,
         line_value: numeric,
@@ -187,6 +261,7 @@ function buildLineChoices(existingConfig: Record<string, unknown>, currentStat: 
   const currentLine = extractLine(existingConfig);
   if (currentLine && !choices.find((choice) => choice.value === currentLine)) {
     choices.unshift({
+      id: currentLine,
       value: currentLine,
       label: currentLine,
       patch: {
@@ -229,6 +304,13 @@ function humanizeStatKey(key: string): string {
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
+}
+
+function normalizeProgressMode(value: unknown): 'starting_now' | 'cumulative' {
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'cumulative') {
+    return 'cumulative';
+  }
+  return 'starting_now';
 }
 
 function getCurrentStatValue(doc: RefinedGameDoc, config: Record<string, unknown>): number | null {

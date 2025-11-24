@@ -25,13 +25,6 @@ export const kingOfTheHillModule: ModeModule = {
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); if (!opts.includes("Neither")) opts.push("Neither"); return opts; })()',
     configSteps: [
       {
-        key: 'players',
-        component: 'kingOfTheHill.players',
-        label: 'Select Players',
-        validatorExpression:
-          '(() => { const errors = []; if (!config.player1_id) errors.push("Player 1 required"); if (!config.player2_id) errors.push("Player 2 required"); if (config.player1_id && config.player2_id && String(config.player1_id) === String(config.player2_id)) errors.push("Players must differ"); return errors; })()',
-      },
-      {
         key: 'stat',
         component: 'kingOfTheHill.stat',
         label: 'Select Stat',
@@ -44,6 +37,20 @@ export const kingOfTheHillModule: ModeModule = {
           '(() => { const errors = []; if (!config.stat) errors.push("Stat required"); return errors; })()',
       },
       {
+        key: 'player1',
+        component: 'kingOfTheHill.player1',
+        label: 'Select Player 1',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.player1_id) errors.push("Player 1 required"); return errors; })()',
+      },
+      {
+        key: 'player2',
+        component: 'kingOfTheHill.player2',
+        label: 'Select Player 2',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.player2_id) errors.push("Player 2 required"); if (config.player1_id && config.player2_id && String(config.player1_id) === String(config.player2_id)) errors.push("Players must differ"); return errors; })()',
+      },
+      {
         key: 'resolve_value',
         component: 'kingOfTheHill.resolveValue',
         label: 'Resolve Value',
@@ -52,7 +59,14 @@ export const kingOfTheHillModule: ModeModule = {
           defaultValue: KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
         },
         validatorExpression:
-          '(() => { const errors = []; const value = Number(config.resolve_value ?? config.resolve_value_label); if (!Number.isFinite(value)) { errors.push("Resolve value required"); } else if (value < 0 || value > 499) { errors.push("Resolve value must be between 0 and 499"); } return errors; })()',
+          '(() => { const errors = []; const value = Number(config.resolve_value ?? config.resolve_value_label); if (!Number.isFinite(value)) { errors.push("Resolve value required"); } else if (value < 1 || value > 499) { errors.push("Resolve value must be between 1 and 499"); } return errors; })()',
+      },
+      {
+        key: 'progress_mode',
+        component: 'kingOfTheHill.progressMode',
+        label: 'Track Progress',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.progress_mode) errors.push("Progress tracking selection required"); return errors; })()',
       },
     ],
     finalizeValidatorExpression:

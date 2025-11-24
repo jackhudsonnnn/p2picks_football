@@ -22,6 +22,7 @@ interface PropHuntConfig {
   away_team_name?: string | null;
   bet_id?: string | null;
   current_stat_value?: number | null;
+  progress_mode?: string | null;
 }
 
 const { min: LINE_MIN, max: LINE_MAX } = PROP_HUNT_LINE_RANGE;
@@ -45,6 +46,7 @@ export async function preparePropHuntConfig({
 
   normalizeLine(next);
   normalizeStat(next);
+  next.progress_mode = normalizeProgressMode(next.progress_mode);
 
   const gameId = next.nfl_game_id ? String(next.nfl_game_id) : '';
   if (!gameId) {
@@ -115,6 +117,7 @@ function normalizeConfigPayload(config: PropHuntConfig): Record<string, unknown>
     away_team_id: config.away_team_id ?? null,
     away_team_name: config.away_team_name ?? null,
     current_stat_value: config.current_stat_value ?? null,
+    progress_mode: normalizeProgressMode(config.progress_mode),
   };
 }
 
@@ -229,4 +232,11 @@ function enrichWithTeamContext(config: PropHuntConfig, doc: RefinedGameDoc): voi
 
 function isDebug(): boolean {
   return process.env.DEBUG_PROP_HUNT === '1' || process.env.DEBUG_PROP_HUNT === 'true';
+}
+
+function normalizeProgressMode(value: unknown): 'starting_now' | 'cumulative' {
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'cumulative') {
+    return 'cumulative';
+  }
+  return 'starting_now';
 }

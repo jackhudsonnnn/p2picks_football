@@ -20,24 +20,48 @@ export const eitherOrModule: ModeModule = {
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); return opts; })()',
     configSteps: [
       {
-        key: 'players',
-        component: 'eitherOr.players',
-        label: 'Select Players',
-        validatorExpression:
-          '(() => { const errors = []; if (!config.player1_id) errors.push("Player 1 required"); if (!config.player2_id) errors.push("Player 2 required"); if (config.player1_id && config.player2_id && String(config.player1_id) === String(config.player2_id)) errors.push("Players must differ"); return errors; })()',
-      },
-      {
-        key: 'stat_resolve',
-        component: 'eitherOr.statResolve',
-        label: 'Stat & Resolve',
+        key: 'stat',
+        component: 'eitherOr.stat',
+        label: 'Select Stat',
         props: {
-          allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
           statKeyToCategory: STAT_KEY_TO_CATEGORY,
           statKeyLabels: STAT_KEY_LABELS,
           allowedStatKeys: Object.keys(STAT_KEY_TO_CATEGORY),
         },
         validatorExpression:
-          '(() => { const errors = []; if (!config.stat) errors.push("Stat required"); if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
+          '(() => { const errors = []; if (!config.stat) errors.push("Stat required"); return errors; })()',
+      },
+      {
+        key: 'player1',
+        component: 'eitherOr.player1',
+        label: 'Select Player 1',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.player1_id) errors.push("Player 1 required"); return errors; })()',
+      },
+      {
+        key: 'player2',
+        component: 'eitherOr.player2',
+        label: 'Select Player 2',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.player2_id) errors.push("Player 2 required"); if (config.player1_id && config.player2_id && String(config.player1_id) === String(config.player2_id)) errors.push("Players must differ"); return errors; })()',
+      },
+      {
+        key: 'resolve_at',
+        component: 'eitherOr.resolve',
+        label: 'Resolve At',
+        props: {
+          allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
+        },
+        validatorExpression:
+          '(() => { const errors = []; if (!config.resolve_at) errors.push("Resolve at required"); return errors; })()',
+      },
+      {
+        key: 'progress_mode',
+        component: 'eitherOr.progressMode',
+        label: 'Track Progress',
+        description: 'Determine whether to compare cumulative stats or gains after betting closes.',
+        validatorExpression:
+          '(() => { const errors = []; if (!config.progress_mode) errors.push("Progress tracking selection required"); return errors; })()',
       },
     ],
     finalizeValidatorExpression:

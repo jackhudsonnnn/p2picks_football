@@ -1,5 +1,10 @@
 import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../modes/registry';
-import type { ModeDefinitionDTO, ModeUserConfigStep } from '../modes/shared/types';
+import type {
+  ModeConfigStepDefinition,
+  ModeDefinitionDTO,
+  ModeUserConfigChoice,
+  ModeUserConfigStep,
+} from '../modes/shared/types';
 import { computeModeOptions, renderModeTemplate, runModeValidator } from '../modes/shared/utils';
 import type { BetProposal } from '../supabaseClient';
 import { getSupabaseAdmin } from '../supabaseClient';
@@ -40,7 +45,8 @@ export async function getModeUserConfigSteps(
     nflGameId: input.nflGameId ?? null,
     config: input.config ?? {},
   });
-  return steps ?? [];
+  const definition = getModeDefinition(modeKey) ?? null;
+  return normalizeModeUserConfigSteps(definition, steps ?? []);
 }
 
 export async function buildModePreview(
@@ -96,6 +102,53 @@ function requireModeDefinition(modeKey: string): ModeDefinitionDTO {
 function safeLabel(candidate: string, fallback: string): string {
   const value = candidate && candidate.trim().length ? candidate : fallback;
   return value && value.trim().length ? value : fallback;
+}
+
+function normalizeModeUserConfigSteps(
+  definition: ModeDefinitionDTO | null,
+  steps: ModeUserConfigStep[],
+): ModeUserConfigStep[] {
+  if (!Array.isArray(steps) || steps.length === 0) {
+    return [];
+  }
+  const metadataMap = new Map<string, ModeConfigStepDefinition>();
+  definition?.configSteps?.forEach((meta) => {
+    metadataMap.set(meta.key, meta);
+  });
+  return steps.map((step, index) => {
+    const meta = step.key ? metadataMap.get(step.key) : undefined;
+    const key = step.key || meta?.key || `step_${index}`;
+    const title = step.title || meta?.label || `Step ${index + 1}`;
+    const inputType = step.inputType || meta?.inputType;
+    const description = step.description ?? meta?.description;
+    const component = step.component || meta?.component;
+    const props = step.props || meta?.props;
+    const validatorExpression = step.validatorExpression || meta?.validatorExpression;
+    const normalizedChoices = (step.choices || []).map(normalizeChoice);
+    return {
+      key,
+      title,
+      description,
+      inputType,
+      component,
+      props,
+      optional: step.optional ?? meta?.optional,
+      validatorExpression,
+      choices: normalizedChoices,
+    } satisfies ModeUserConfigStep;
+  });
+}
+
+function normalizeChoice(choice: ModeUserConfigChoice): ModeUserConfigChoice {
+  const id = choice.id || choice.value;
+  return {
+    ...choice,
+    id,
+    value: choice.value,
+    label: choice.label,
+    patch: choice.patch ? { ...choice.patch } : undefined,
+    clears: choice.clears ? [...choice.clears] : undefined,
+  };
 }
 
 async function enrichConfigWithGameContext(config: Record<string, unknown>, bet: BetProposal | null): Promise<void> {
