@@ -1,13 +1,17 @@
-import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
 import { getValidPositionsForStat } from '../../shared/statMappings';
+import type { PlayerRef } from '../../shared/playerStatUtils';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import {
   KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES,
   KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
+  KING_OF_THE_HILL_MAX_RESOLVE_VALUE,
+  KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
   KING_OF_THE_HILL_STAT_KEY_LABELS,
   KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
 } from './constants';
+import { readPlayerStat, resolveStatKey, type KingOfTheHillConfig } from './evaluator';
 
 type PlayerRecord = {
   id: string;
@@ -28,6 +32,7 @@ export async function buildKingOfTheHillUserConfig(input: {
   const showProgressStep = Boolean(normalizedStatus && normalizedStatus !== 'STATUS_SCHEDULED');
 
   const statKey = input.existingConfig?.stat as string | undefined;
+  const selectedProgressMode = parseProgressModeSelection(input.existingConfig?.progress_mode);
   const validPositions = getValidPositionsForStat(statKey);
 
   if (debug) {
@@ -54,6 +59,7 @@ export async function buildKingOfTheHillUserConfig(input: {
       status: doc?.status ?? null,
       period: doc?.period ?? null,
       showProgressStep,
+      selectedProgressMode,
     });
   }
 
@@ -107,7 +113,14 @@ export async function buildKingOfTheHillUserConfig(input: {
       } satisfies ModeUserConfigChoice;
     });
 
-  const resolveValueChoices: ModeUserConfigChoice[] = KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES.map((value) => ({
+  const resolveValueFilterContext = computeResolveValueFilter({
+    doc,
+    statKey,
+    progressMode: selectedProgressMode,
+    existingConfig: input.existingConfig,
+  });
+
+  let resolveValueChoices: ModeUserConfigChoice[] = resolveValueFilterContext.values.map((value) => ({
     id: String(value),
     value: String(value),
     label: String(value),
@@ -116,6 +129,28 @@ export async function buildKingOfTheHillUserConfig(input: {
       resolve_value_label: String(value),
     },
   }));
+
+  if (!resolveValueChoices.length) {
+    resolveValueChoices = [
+      {
+        id: 'resolve_value_unavailable',
+        value: 'resolve_value_unavailable',
+        label: 'No valid resolve values available',
+        description: 'Both players already surpassed the maximum allowed for this stat. Pick different players or a new stat.',
+        disabled: true,
+      },
+    ];
+  }
+
+  const resolveValueStepDescription = buildResolveValueDescription(resolveValueFilterContext, input.existingConfig);
+
+  if (debug && resolveValueFilterContext.filterApplied) {
+    console.log('[kingOfTheHill][userConfig] resolve value filtering applied', {
+      highestValue: resolveValueFilterContext.highestValue,
+      minAllowed: resolveValueFilterContext.minAllowed,
+      availableChoices: resolveValueFilterContext.values.length,
+    });
+  }
 
   const steps: ModeUserConfigStep[] = [
     {
@@ -166,6 +201,7 @@ export async function buildKingOfTheHillUserConfig(input: {
       key: 'resolve_value',
       title: 'Resolve Value',
       inputType: 'select',
+      description: resolveValueStepDescription,
       choices: resolveValueChoices,
     };
     steps.push(resolveValueStep);
@@ -256,4 +292,122 @@ function humanizeStatKey(key: string): string {
     .split(' ')
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
+}
+
+type ResolveValueFilterContext = {
+  values: number[];
+  filterApplied: boolean;
+  minAllowed: number;
+  highestValue: number;
+  player1Value: number;
+  player2Value: number;
+};
+
+function computeResolveValueFilter(input: {
+  doc: RefinedGameDoc | null;
+  statKey?: string;
+  progressMode: 'starting_now' | 'cumulative' | null;
+  existingConfig?: Record<string, unknown>;
+}): ResolveValueFilterContext {
+  const baseValues = [...KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES];
+  const defaultResult: ResolveValueFilterContext = {
+    values: baseValues,
+    filterApplied: false,
+    minAllowed: KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
+    highestValue: 0,
+    player1Value: 0,
+    player2Value: 0,
+  };
+
+  if (!input.doc || input.progressMode !== 'cumulative' || !input.statKey) {
+    return defaultResult;
+  }
+
+  const statConfig: KingOfTheHillConfig = { stat: input.statKey };
+  const resolvedStatKey = resolveStatKey(statConfig);
+  if (!resolvedStatKey) {
+    return defaultResult;
+  }
+
+  const player1Ref: PlayerRef = {
+    id: readConfigString(input.existingConfig, 'player1_id'),
+    name: readConfigString(input.existingConfig, 'player1_name'),
+  };
+  const player2Ref: PlayerRef = {
+    id: readConfigString(input.existingConfig, 'player2_id'),
+    name: readConfigString(input.existingConfig, 'player2_name'),
+  };
+
+  const player1Value = readPlayerStat(input.doc, player1Ref, resolvedStatKey);
+  const player2Value = readPlayerStat(input.doc, player2Ref, resolvedStatKey);
+  const highestValue = Math.max(player1Value, player2Value, 0);
+  const minAllowed = Math.max(KING_OF_THE_HILL_MIN_RESOLVE_VALUE, Math.floor(highestValue) + 1);
+  const filteredValues = baseValues.filter((value) => value >= minAllowed);
+
+  return {
+    values: filteredValues,
+    filterApplied: true,
+    minAllowed,
+    highestValue,
+    player1Value,
+    player2Value,
+  };
+}
+
+function buildResolveValueDescription(
+  context: ResolveValueFilterContext,
+  existingConfig?: Record<string, unknown>,
+): string | undefined {
+  if (!context.filterApplied) return undefined;
+  const player1Name = readPlayerLabel(existingConfig, 'player1');
+  const player2Name = readPlayerLabel(existingConfig, 'player2');
+  if (!context.values.length) {
+    return `No resolve values remain because ${player1Name} (${formatStatValue(context.player1Value)}) and ${player2Name} (${formatStatValue(
+      context.player2Value,
+    )}) already exceed the maximum of ${KING_OF_THE_HILL_MAX_RESOLVE_VALUE}. Pick different players or stats.`;
+  }
+  return `Current totals — ${player1Name}: ${formatStatValue(context.player1Value)}, ${player2Name}: ${formatStatValue(
+    context.player2Value,
+  )}. Targets now start at ${context.minAllowed}.`;
+}
+
+function readConfigString(config: Record<string, unknown> | undefined, key: string): string | undefined {
+  const raw = config?.[key];
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    return trimmed.length ? trimmed : undefined;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return String(raw);
+  }
+  return undefined;
+}
+
+function readPlayerLabel(config: Record<string, unknown> | undefined, playerKey: 'player1' | 'player2'): string {
+  const nameKey = playerKey === 'player1' ? 'player1_name' : 'player2_name';
+  const idKey = playerKey === 'player1' ? 'player1_id' : 'player2_id';
+  return (
+    readConfigString(config, nameKey) ||
+    readConfigString(config, idKey) ||
+    (playerKey === 'player1' ? 'Player 1' : 'Player 2')
+  );
+}
+
+function formatStatValue(value: number): string {
+  if (Number.isInteger(value)) {
+    return String(value);
+  }
+  if (Number.isFinite(value)) {
+    return value.toFixed(1);
+  }
+  return '0';
+}
+
+function parseProgressModeSelection(value: unknown): 'starting_now' | 'cumulative' | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'starting_now' || normalized === 'cumulative') {
+    return normalized;
+  }
+  return null;
 }

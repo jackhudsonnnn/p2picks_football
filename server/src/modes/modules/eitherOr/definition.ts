@@ -13,9 +13,9 @@ export const eitherOrModule: ModeModule = {
     descriptionTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate:
-      '`${(config.progress_mode === "cumulative" ? "Highest total " : "Largest net gain in ")}${(config.stat_label || config.stat || "stat")} by ${(config.resolve_at || "the selected time")}`',
+      '`${(config.progress_mode === "cumulative" ? "Highest total " : "Largest net gain in ")}${(config.stat_label || config.stat || "stat")} by ${(config.resolve_at || "the selected time")} (${(config.progress_mode === "cumulative" ? "cumulative" : "Starting Now")} tracking).`',
     winningConditionTemplate:
-      '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} ${config.stat_label || config.stat || "stat"} until ${config.resolve_at || "the selected time"}`',
+      '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} ${(config.progress_mode === "cumulative" ? "— total" : "— net gain in")} ${(config.stat_label || config.stat || "stat")} until ${(config.resolve_at || "the selected time")}`',
     optionsExpression:
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); return opts; })()',
     configSteps: [

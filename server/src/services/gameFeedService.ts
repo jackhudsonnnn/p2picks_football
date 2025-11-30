@@ -2,7 +2,7 @@ import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { loadRefinedGame, REFINED_DIR, type RefinedGameDoc } from '../helpers';
+import { loadRefinedGame, REFINED_DIR, type RefinedGameDoc } from '../utils/gameData';
 
 export type GameFeedEvent = {
   gameId: string;
@@ -129,14 +129,39 @@ class GameFeedService extends EventEmitter {
             teamId: team?.teamId ?? null,
             abbreviation: team?.abbreviation ?? null,
             score: team?.score ?? null,
-            stats: team?.stats?.scoring ?? null,
+            stats: team?.stats ?? null,
             possession: team?.possession ?? null,
             lastUpdated: team?.lastUpdated ?? null,
+            players: summarizePlayers(team?.players),
           }))
         : [],
     };
     return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex');
   }
+}
+
+function summarizePlayers(rawPlayers: unknown): Array<{ athleteId: string | null; stats: any }> {
+  const records: Array<{ athleteId: string | null; stats: any }> = [];
+  const pushRecord = (player: any) => {
+    if (!player) return;
+    const athleteId =
+      player?.athlete?.id ??
+      player?.athleteId ??
+      player?.id ??
+      (typeof player?.fullName === 'string' ? player.fullName : null);
+    records.push({
+      athleteId: athleteId != null ? String(athleteId) : null,
+      stats: player?.stats ?? null,
+    });
+  };
+
+  if (Array.isArray(rawPlayers)) {
+    rawPlayers.forEach(pushRecord);
+  } else if (rawPlayers && typeof rawPlayers === 'object') {
+    Object.values(rawPlayers as Record<string, unknown>).forEach(pushRecord);
+  }
+
+  return records;
 }
 
 const service = new GameFeedService();

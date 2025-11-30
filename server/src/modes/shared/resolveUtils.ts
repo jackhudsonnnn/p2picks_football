@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../helpers';
+import type { RefinedGameDoc } from '../../utils/gameData';
 
 export function shouldSkipResolveStep(doc: RefinedGameDoc | null | undefined): boolean {
   if (!doc) return false;

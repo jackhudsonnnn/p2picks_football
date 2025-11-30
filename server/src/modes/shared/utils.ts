@@ -1,4 +1,4 @@
-import type { RefinedGameDoc, Team } from '../../helpers';
+import type { RefinedGameDoc, Team } from '../../utils/gameData';
 import type { ModeDefinitionDTO, ModeOverview } from './types';
 
 export function cloneDefinition(definition: ModeDefinitionDTO): ModeDefinitionDTO {

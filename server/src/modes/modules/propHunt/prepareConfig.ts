@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpers';
+import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
 import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';

@@ -1,4 +1,4 @@
-import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';

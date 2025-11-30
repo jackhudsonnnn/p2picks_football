@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, type RefinedGameDoc, type Team, findTeam } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc, type Team, findTeam } from '../../../utils/gameData';
 import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 function resolvePossessionTeam(doc: RefinedGameDoc, teamId?: string | null): Team | null {

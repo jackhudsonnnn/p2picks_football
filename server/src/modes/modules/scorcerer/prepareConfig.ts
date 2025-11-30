@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
 import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 export async function prepareScorcererConfig({

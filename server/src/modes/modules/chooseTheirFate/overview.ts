@@ -11,14 +11,14 @@ export const chooseTheirFateOverview: ModeOverview = {
   ],
   participantChoices: [
     'pass — watch without joining.',
-    'Touchdown — the drive results in a touchdown.',
+    'Touchdown — the drive results in an offensive touchdown.',
     'Field Goal — the drive ends with a made field goal.',
     'Safety — the offense gets tackled in its own end zone.',
     'Punt — the offense punts the ball away to end the drive.',
-    'Turnover — any turnover (interception, fumble lost, or turnover on downs).'
+    'Turnover — any turnover (interception, pick 6, fumble lost, or turnover on downs).'
   ],
   winningCondition:
-    'Once the drive concludes, the outcome determines the winning choice. If the offense punts, everyone who picked Punt wins. If the drive ends scoreless without a punt or turnover (e.g., quarter break), the bet washes.',
+    'Once the drive concludes, the outcome determines the winning choice. If the offense punts, everyone who picked Punt wins. If the drive ends scoreless without a punt or turnover (e.g., halftime, end of game), the bet washes.',
   notes: [
     'This mode is only available while the selected game is in progress so a live drive can be tracked.'
   ],

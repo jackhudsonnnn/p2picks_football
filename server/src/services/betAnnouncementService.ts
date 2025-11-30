@@ -1,4 +1,4 @@
-import type { BetProposal } from '../supabaseClient';
+import { getSupabaseAdmin, type BetProposal } from '../supabaseClient';
 import type { ModePreviewResult } from './modeRuntimeService';
 
 const DEFAULT_WINNING_CONDITION = 'Winning condition available at kickoff.';
@@ -15,7 +15,7 @@ export interface BetAnnouncementResult {
 
 export async function createBetProposalAnnouncement(input: BetAnnouncementInput): Promise<BetAnnouncementResult> {
   const messageText = formatBetAnnouncement(input);
-  const supabase = getAdminClient();
+  const supabase = getSupabaseAdmin();
   const generatedAt =
     typeof input.bet.proposal_time === 'string' && input.bet.proposal_time.trim().length
       ? input.bet.proposal_time
@@ -110,9 +110,4 @@ function resolveModeLabel(modeKey: string): string {
 function sanitizeLine(value: string): string {
   if (!value) return '';
   return value.replace(/\s+/g, ' ').trim();
-}
-
-function getAdminClient() {
-  const { getSupabaseAdmin } = require('../supabaseClient') as typeof import('../supabaseClient');
-  return getSupabaseAdmin();
 }

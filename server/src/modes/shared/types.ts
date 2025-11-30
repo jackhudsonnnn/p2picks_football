@@ -87,4 +87,8 @@ export interface ModeModule {
     nflGameId?: string | null;
     config: Record<string, unknown>;
   }) => Promise<ModeUserConfigStep[]>;
+  validateProposal?: (input: {
+    nflGameId: string;
+    config: Record<string, unknown>;
+  }) => Promise<{ valid: boolean; error?: string; details?: any; configUpdates?: Record<string, unknown> }>;
 }

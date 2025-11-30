@@ -9,7 +9,7 @@ import { computeModeOptions, renderModeTemplate, runModeValidator } from '../mod
 import type { BetProposal } from '../supabaseClient';
 import { getSupabaseAdmin } from '../supabaseClient';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadRefinedGame, type RefinedGameDoc, type Team } from '../helpers';
+import { loadRefinedGame, type RefinedGameDoc, type Team } from '../utils/gameData';
 
 export type ModeUserConfigInput = {
   nflGameId?: string | null;

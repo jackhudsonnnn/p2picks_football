@@ -1,4 +1,4 @@
-import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../helpers';
+import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';

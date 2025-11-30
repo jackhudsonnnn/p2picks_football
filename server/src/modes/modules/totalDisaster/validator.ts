@@ -1,207 +1,91 @@
-import { getSupabaseAdmin, type BetProposal } from '../../../supabaseClient';
 import { fetchModeConfig } from '../../../services/modeConfig';
-import { subscribeToGameFeed, type GameFeedEvent } from '../../../services/gameFeedService';
-import type { RefinedGameDoc } from '../../../helpers';
-
-interface TotalDisasterConfig {
-  line?: string | null;
-  line_value?: number | null;
-  line_label?: string | null;
-  home_team_id?: string | null;
-  home_team_name?: string | null;
-  away_team_id?: string | null;
-  away_team_name?: string | null;
-  nfl_game_id?: string | null;
-}
+import type { RefinedGameDoc } from '../../../utils/gameData';
+import { ModeRuntimeKernel } from '../../shared/modeRuntimeKernel';
+import { betRepository } from '../../shared/betRepository';
+import { washBetWithHistory } from '../../shared/washService';
+import { normalizeStatus } from '../../shared/gameDocProvider';
+import { formatNumber } from '../../shared/numberUtils';
+import {
+  TotalDisasterConfig,
+  describeLine,
+  evaluateTotalDisaster,
+  normalizeLine,
+} from './evaluator';
 
 export class TotalDisasterValidatorService {
-  private unsubscribe: (() => void) | null = null;
-  private lastSignatureByGame = new Map<string, string>();
+  private readonly kernel: ModeRuntimeKernel;
   private readonly modeLabel = 'Total Disaster';
+  private readonly resultEvent = 'total_disaster_result';
+
+  constructor() {
+    this.kernel = new ModeRuntimeKernel({
+      modeKey: 'spread_the_wealth',
+      dedupeGameFeed: true,
+      onGameEvent: (event) => this.handleGameFeedEvent(event.gameId, event.doc),
+    });
+  }
 
   start(): void {
-    if (this.unsubscribe) return;
-    this.unsubscribe = subscribeToGameFeed((event) => {
-      void this.handleGameFeedEvent(event);
-    });
+    this.kernel.start();
   }
 
   stop(): void {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
-    this.lastSignatureByGame.clear();
+    this.kernel.stop();
   }
 
-  private async handleGameFeedEvent(event: GameFeedEvent): Promise<void> {
+  private async handleGameFeedEvent(gameId: string, doc: RefinedGameDoc): Promise<void> {
     try {
-      const { gameId, doc, signature } = event;
-      if (this.lastSignatureByGame.get(gameId) === signature) return;
-      this.lastSignatureByGame.set(gameId, signature);
-      const status = String(doc.status || '').toUpperCase();
-      if (status !== 'STATUS_FINAL') return;
-      await this.processFinalGame(gameId, doc);
-    } catch (err: unknown) {
-      console.error('[totalDisaster] game feed error', { gameId: event.gameId }, err);
+      if (normalizeStatus(doc.status) !== 'STATUS_FINAL') return;
+      const bets = await betRepository.listPendingBets('spread_the_wealth', { gameId });
+      for (const bet of bets) {
+        await this.resolveBet(bet.bet_id, doc);
+      }
+    } catch (err) {
+      console.error('[totalDisaster] game feed error', { gameId }, err);
     }
   }
 
-  private async processFinalGame(gameId: string, doc: RefinedGameDoc): Promise<void> {
-    const supa = getSupabaseAdmin();
-    const { data, error } = await supa
-      .from('bet_proposals')
-      .select('*')
-      .eq('mode_key', 'spread_the_wealth')
-      .eq('bet_status', 'pending')
-      .eq('nfl_game_id', gameId);
-    if (error) {
-      console.error('[totalDisaster] list pending bets error', { gameId }, error);
-      return;
-    }
-    for (const row of (data as BetProposal[]) || []) {
-      await this.resolveBet(row, doc);
-    }
-  }
-
-  private async resolveBet(bet: BetProposal, doc: RefinedGameDoc): Promise<void> {
+  private async resolveBet(betId: string, doc: RefinedGameDoc): Promise<void> {
     try {
-      const config = await this.getConfigForBet(bet.bet_id);
+      const config = await this.getConfigForBet(betId);
       if (!config) {
-        console.warn('[totalDisaster] missing config; skipping bet', { bet_id: bet.bet_id });
+        console.warn('[totalDisaster] missing config; skipping bet', { betId });
         return;
       }
-      const line = this.normalizeLine(config);
+      const line = normalizeLine(config);
       if (line == null) {
-        console.warn('[totalDisaster] invalid line; washing bet', { bet_id: bet.bet_id, config });
-        const label = this.describeLine(config);
         await this.washBet(
-          bet.bet_id,
-          {
-            outcome: 'wash',
-            reason: 'invalid_line',
-            captured_at: new Date().toISOString(),
-            config,
-          },
-          label ? `Invalid over/under line (${label}).` : 'Invalid over/under line configuration.',
+          betId,
+          { reason: 'invalid_line', config },
+          describeLine(config) ?? 'Invalid over/under line configuration.',
         );
         return;
       }
-      const totalPoints = this.computeTotalPoints(doc);
-      const delta = totalPoints - line;
-      if (Math.abs(delta) < 1e-9) {
+      const evaluation = evaluateTotalDisaster(doc, line);
+      if (evaluation.decision === 'push') {
         await this.washBet(
-          bet.bet_id,
+          betId,
           {
-            outcome: 'wash',
             reason: 'push',
-            total_points: totalPoints,
-            line,
-            captured_at: new Date().toISOString(),
+            total_points: evaluation.totalPoints,
+            line: evaluation.line,
           },
-          `Total points matched the line (${this.formatNumber(totalPoints)} vs ${this.formatNumber(line)}).`,
+          `Total points matched the line (${formatNumber(evaluation.totalPoints)} vs ${formatNumber(line)}).`,
         );
         return;
       }
-      const winningChoice = delta > 0 ? 'Over' : 'Under';
-      const supa = getSupabaseAdmin();
-      const { error: updErr } = await supa
-        .from('bet_proposals')
-        .update({ winning_choice: winningChoice })
-        .eq('bet_id', bet.bet_id)
-        .is('winning_choice', null);
-      if (updErr) {
-        console.error('[totalDisaster] failed to set winning choice', { bet_id: bet.bet_id, winningChoice }, updErr);
-        return;
-      }
-      await this.recordHistory(bet.bet_id, {
+      const winningChoice = evaluation.decision === 'over' ? 'Over' : 'Under';
+      const updated = await betRepository.setWinningChoice(betId, winningChoice);
+      if (!updated) return;
+      await betRepository.recordHistory(betId, this.resultEvent, {
         outcome: winningChoice,
-        total_points: totalPoints,
-        line,
+        total_points: evaluation.totalPoints,
+        line: evaluation.line,
         line_label: config.line_label ?? config.line ?? null,
         captured_at: new Date().toISOString(),
       });
-    } catch (err: unknown) {
-      console.error('[totalDisaster] resolve bet error', { bet_id: bet.bet_id }, err);
-    }
-  }
-
-  private computeTotalPoints(doc: RefinedGameDoc): number {
-    const teams = Array.isArray(doc.teams) ? (doc.teams as any[]) : [];
-    let total = 0;
-    for (const team of teams) {
-      total += this.normalizeScore((team as any)?.score);
-    }
-    return total;
-  }
-
-  private normalizeScore(raw: unknown): number {
-    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-    if (typeof raw === 'string') {
-      const num = Number(raw);
-      if (Number.isFinite(num)) return num;
-    }
-    return 0;
-  }
-
-  private normalizeLine(config: TotalDisasterConfig): number | null {
-    if (typeof config.line_value === 'number' && Number.isFinite(config.line_value)) {
-      return config.line_value;
-    }
-    if (typeof config.line === 'string') {
-      const parsed = Number.parseFloat(config.line);
-      if (Number.isFinite(parsed)) return parsed;
-    }
-    return null;
-  }
-
-  private describeLine(config: TotalDisasterConfig): string | null {
-    const label = typeof config.line_label === 'string' ? config.line_label.trim() : '';
-    if (label.length) return label;
-    if (typeof config.line === 'string' && config.line.trim().length) {
-      return config.line.trim();
-    }
-    if (typeof config.line_value === 'number' && Number.isFinite(config.line_value)) {
-      return this.formatNumber(config.line_value);
-    }
-    return null;
-  }
-
-  private formatNumber(value: number | null | undefined): string {
-    if (typeof value !== 'number' || !Number.isFinite(value)) return '0';
-    const fractional = Math.abs(value % 1) > 1e-9;
-    const formatter = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: fractional ? 1 : 0,
-      maximumFractionDigits: fractional ? 1 : 0,
-    });
-    return formatter.format(value);
-  }
-
-  private formatBetLabel(betId: string): string {
-    if (!betId) return 'UNKNOWN';
-    const trimmed = betId.trim();
-    if (!trimmed) return 'UNKNOWN';
-    const short = trimmed.length > 8 ? trimmed.slice(0, 8) : trimmed;
-    return short;
-  }
-
-  private async createWashSystemMessage(tableId: string, betId: string, explanation: string): Promise<void> {
-    const supa = getSupabaseAdmin();
-    const reason = explanation && explanation.trim().length ? explanation.trim() : 'See resolution history for details.';
-    const message = `Bet #${this.formatBetLabel(betId)} washed\n\n${reason}`;
-    try {
-      const { error } = await supa.from('system_messages').insert([
-        {
-          table_id: tableId,
-          message_text: message,
-          generated_at: new Date().toISOString(),
-        },
-      ]);
-      if (error) {
-        console.error('[totalDisaster] failed to create wash system message', { betId, tableId }, error);
-      }
-    } catch (err: unknown) {
-      console.error('[totalDisaster] wash system message error', { betId, tableId }, err);
+    } catch (err) {
+      console.error('[totalDisaster] resolve bet error', { betId }, err);
     }
   }
 
@@ -210,61 +94,20 @@ export class TotalDisasterValidatorService {
       const record = await fetchModeConfig(betId);
       if (!record || record.mode_key !== 'spread_the_wealth') return null;
       return record.data as TotalDisasterConfig;
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('[totalDisaster] fetch config error', { betId }, err);
       return null;
     }
   }
 
   private async washBet(betId: string, payload: Record<string, unknown>, explanation: string): Promise<void> {
-    try {
-      const supa = getSupabaseAdmin();
-      const updates = {
-        bet_status: 'washed' as const,
-        winning_choice: null as string | null,
-        resolution_time: new Date().toISOString(),
-      };
-      const { data, error } = await supa
-        .from('bet_proposals')
-        .update(updates)
-        .eq('bet_id', betId)
-        .eq('bet_status', 'pending')
-        .select('bet_id, table_id')
-        .maybeSingle();
-      if (error) {
-        console.error('[totalDisaster] failed to wash bet', { betId }, error);
-        return;
-      }
-      if (!data) {
-        console.warn('[totalDisaster] wash skipped; bet not pending', { betId });
-        return;
-      }
-      await this.recordHistory(betId, {
-        ...payload,
-        event: 'total_disaster_result',
-      });
-      if (!data.table_id) {
-        console.warn('[totalDisaster] wash message skipped; table_id missing', { betId });
-        return;
-      }
-      await this.createWashSystemMessage(data.table_id, betId, explanation);
-    } catch (err: unknown) {
-      console.error('[totalDisaster] wash bet error', { betId }, err);
-    }
-  }
-
-  private async recordHistory(betId: string, payload: Record<string, unknown>): Promise<void> {
-    try {
-      const supa = getSupabaseAdmin();
-      const { error } = await supa
-        .from('resolution_history')
-        .insert([{ bet_id: betId, event_type: 'total_disaster_result', payload }]);
-      if (error) {
-        console.error('[totalDisaster] history record error', { betId }, error);
-      }
-    } catch (err: unknown) {
-      console.error('[totalDisaster] history insert error', { betId }, err);
-    }
+    await washBetWithHistory({
+      betId,
+      payload,
+      explanation,
+      eventType: this.resultEvent,
+      modeLabel: this.modeLabel,
+    });
   }
 }
 

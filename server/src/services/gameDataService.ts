@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { findTeam, loadRefinedGame, REFINED_DIR } from '../helpers';
-import type { RefinedGameDoc } from '../helpers';
+import { findTeam, loadRefinedGame, REFINED_DIR } from '../utils/gameData';
+import type { RefinedGameDoc } from '../utils/gameData';
 
 export async function getAvailableGames(): Promise<Record<string, string>> {
   try {

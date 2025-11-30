@@ -1,4 +1,4 @@
-import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { extractTeamName, pickHomeTeam } from '../../shared/utils';

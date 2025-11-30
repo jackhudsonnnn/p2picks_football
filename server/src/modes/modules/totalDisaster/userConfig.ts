@@ -1,4 +1,4 @@
-import { loadRefinedGame, type RefinedGameDoc } from '../../../helpers';
+import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
@@ -19,7 +19,8 @@ export async function buildTotalDisasterUserConfig(input: BuildInput = {}): Prom
 
   const { doc, lineChoices } = await loadChoices(gameId);
   const skipResolveStep = shouldSkipResolveStep(doc);
-  const choices: ModeUserConfigChoice[] = buildLineChoices(lineChoices, skipResolveStep);
+  const minLineValue = computeMinLineValue(doc);
+  const choices: ModeUserConfigChoice[] = buildLineChoices(lineChoices, skipResolveStep, minLineValue);
 
   if (debug) {
     console.log('[totalDisaster][userConfig] prepared choices', {
@@ -28,6 +29,7 @@ export async function buildTotalDisasterUserConfig(input: BuildInput = {}): Prom
       skipResolveStep,
       status: doc?.status ?? null,
       period: doc?.period ?? null,
+      minLineValue,
     });
   }
 
@@ -64,11 +66,25 @@ async function loadChoices(gameId: string): Promise<{ doc: RefinedGameDoc | null
   }
 }
 
-function buildLineChoices(baseChoices: ModeUserConfigChoice[], skipResolveStep: boolean): ModeUserConfigChoice[] {
-  if (!skipResolveStep) {
-    return baseChoices;
+function buildLineChoices(
+  baseChoices: ModeUserConfigChoice[],
+  skipResolveStep: boolean,
+  minLineValue: number | null,
+): ModeUserConfigChoice[] {
+  let filtered = baseChoices;
+  if (typeof minLineValue === 'number' && Number.isFinite(minLineValue)) {
+    filtered = baseChoices.filter((choice) => {
+      const numeric = normalizeLineValue(choice);
+      return numeric == null || numeric >= minLineValue;
+    });
   }
-  return baseChoices.map((choice) => ({
+  if (!filtered.length) {
+    return [buildUnavailableChoice(minLineValue)];
+  }
+  if (!skipResolveStep) {
+    return filtered;
+  }
+  return filtered.map((choice) => ({
     ...choice,
     patch: {
       ...(choice.patch || {}),
@@ -103,4 +119,38 @@ function buildResolveChoices(): ModeUserConfigChoice[] {
     label: value,
     patch: { resolve_at: value },
   }));
+}
+
+function computeMinLineValue(doc: RefinedGameDoc | null): number | null {
+  if (!doc || !Array.isArray(doc.teams)) return null;
+  const total = doc.teams.reduce((sum, team) => {
+    const score = Number((team as any)?.score ?? 0);
+    return sum + (Number.isFinite(score) ? score : 0);
+  }, 0);
+  if (!Number.isFinite(total)) return null;
+  const baseline = Math.max(0, total);
+  const candidate = Math.min(LINE_MAX, baseline + 0.5);
+  return Number(candidate.toFixed(1));
+}
+
+function normalizeLineValue(choice: ModeUserConfigChoice): number | null {
+  const fromPatch = choice.patch?.line_value;
+  const parsedPatch = typeof fromPatch === 'number' ? fromPatch : Number(fromPatch);
+  if (Number.isFinite(parsedPatch)) return parsedPatch;
+  const parsedValue = Number(choice.value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+}
+
+function buildUnavailableChoice(minLineValue: number | null): ModeUserConfigChoice {
+  const label =
+    typeof minLineValue === 'number' && Number.isFinite(minLineValue)
+      ? `No lines ≥ ${minLineValue.toFixed(1)} available`
+      : 'No lines available';
+  return {
+    id: 'line_unavailable',
+    value: 'line_unavailable',
+    label,
+    description: 'The current total already exceeds the supported max line. Pick a different mode or wait for the next game.',
+    disabled: true,
+  };
 }
