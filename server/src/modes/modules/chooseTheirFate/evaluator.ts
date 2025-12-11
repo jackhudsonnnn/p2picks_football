@@ -1,6 +1,6 @@
 import type { RefinedGameDoc } from '../../../utils/gameData';
 import { getCategory } from '../../../utils/gameData';
-import { normalizeNumber } from '../../shared/numberUtils';
+import { normalizeNumber } from '../../../utils/number';
 import { normalizeTeamId } from '../../shared/teamUtils';
 
 export interface ChooseTheirFateConfig {

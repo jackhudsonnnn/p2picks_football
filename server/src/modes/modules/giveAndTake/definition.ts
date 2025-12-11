@@ -4,6 +4,7 @@ import { prepareGiveAndTakeConfig } from './prepareConfig';
 import { giveAndTakeValidator } from './validator';
 import { buildGiveAndTakeUserConfig } from './userConfig';
 import { giveAndTakeOverview } from './overview';
+import { getGiveAndTakeLiveInfo } from './liveInfo';
 
 export const giveAndTakeModule: ModeModule = {
   definition: {
@@ -56,4 +57,5 @@ export const giveAndTakeModule: ModeModule = {
   validator: giveAndTakeValidator,
   buildUserConfig: async ({ nflGameId, config }) =>
     buildGiveAndTakeUserConfig({ nflGameId, existingConfig: config ?? {} }),
+  getLiveInfo: getGiveAndTakeLiveInfo,
 };

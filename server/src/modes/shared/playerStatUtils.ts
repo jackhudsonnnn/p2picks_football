@@ -1,6 +1,6 @@
 import type { RefinedGameDoc } from '../../utils/gameData';
 import { normalizePlayerPosition } from './playerUtils';
-import { normalizeNumber } from './numberUtils';
+import { normalizeNumber } from '../../utils/number';
 
 export type PlayerRef = { id?: string | null; name?: string | null };
 

@@ -4,7 +4,9 @@ import {
   acceptBetProposal as acceptBetProposalRepo,
   getUserTickets as getUserTicketsRepo,
   hasUserAcceptedBet as hasUserAcceptedBetRepo,
+  fetchBetLiveInfo as fetchBetLiveInfoRepo,
   type BetProposalRequestPayload,
+  type BetLiveInfo,
 } from '@data/repositories/betsRepository';
 import {
   fetchModeOverviews as fetchModeOverviewsRepo,
@@ -14,6 +16,7 @@ import {
 
 export type { BetProposalRequestPayload };
 export type { ModePreviewPayload };
+export type { BetLiveInfo };
 
 export async function createBetProposal(
   tableId: string,
@@ -58,4 +61,8 @@ export async function fetchModePreview(
   betId?: string | null,
 ) {
   return fetchModePreviewRepo(modeKey, config, nflGameId, betId);
+}
+
+export async function fetchBetLiveInfo(betId: string): Promise<BetLiveInfo> {
+  return fetchBetLiveInfoRepo(betId);
 }

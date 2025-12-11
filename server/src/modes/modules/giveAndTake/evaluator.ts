@@ -1,5 +1,5 @@
 import type { RefinedGameDoc } from '../../../utils/gameData';
-import { formatNumber, isApproximatelyEqual, normalizeNumber } from '../../shared/numberUtils';
+import { formatNumber, isApproximatelyEqual, normalizeNumber } from '../../../utils/number';
 import { listTeams, normalizeTeamId } from '../../shared/teamUtils';
 
 export interface GiveAndTakeConfig {

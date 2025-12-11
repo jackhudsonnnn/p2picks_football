@@ -12,6 +12,7 @@ router.get('/health', (_req: Request, res: Response) => {
 router.get('/bet-proposals/bootstrap', betController.getBetProposalBootstrap);
 router.post('/tables/:tableId/bets', betController.createBetProposal);
 router.post('/bets/:betId/poke', betController.pokeBet);
+router.get('/bets/:betId/live-info', betController.getBetLiveInfo);
 
 // Sessions
 router.post('/bet-proposals/sessions', modeController.createSession);

@@ -1,6 +1,6 @@
 import type { RefinedGameDoc } from '../../../utils/gameData';
 import { computeTotalPoints } from '../../shared/teamUtils';
-import { formatNumber, isApproximatelyEqual } from '../../shared/numberUtils';
+import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 
 export interface TotalDisasterConfig {
   line?: string | null;

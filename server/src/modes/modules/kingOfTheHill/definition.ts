@@ -9,6 +9,7 @@ import { buildKingOfTheHillMetadata, prepareKingOfTheHillConfig } from './prepar
 import { kingOfTheHillValidator } from './validator';
 import { buildKingOfTheHillUserConfig } from './userConfig';
 import { kingOfTheHillOverview } from './overview';
+import { getKingOfTheHillLiveInfo } from './liveInfo';
 
 export const kingOfTheHillModule: ModeModule = {
   definition: {
@@ -78,4 +79,5 @@ export const kingOfTheHillModule: ModeModule = {
   validator: kingOfTheHillValidator,
   buildUserConfig: async ({ nflGameId, config }) =>
     buildKingOfTheHillUserConfig({ nflGameId, existingConfig: config ?? {} }),
+  getLiveInfo: getKingOfTheHillLiveInfo,
 };

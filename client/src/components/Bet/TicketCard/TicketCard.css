@@ -412,6 +412,98 @@
   border-color: var(--accent-power);
 }
 
+/* Info button styles */
+.ticket-summary-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.info-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity var(--transition);
+}
+
+.info-btn:hover {
+  opacity: 1;
+}
+
+.info-icon {
+  width: 22px;
+  height: 22px;
+  filter: invert(1);
+}
+
+/* Live Info Modal Styles */
+.live-info-content {
+  min-width: 250px;
+}
+
+.live-info-loading {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: var(--spacing-md);
+}
+
+.live-info-error {
+  color: var(--accent-power);
+  padding: var(--spacing-sm);
+  background-color: var(--status-loss-bg);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.live-info-warning {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm);
+  background-color: var(--status-neutral-bg);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.live-info-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.live-info-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--neutral-700);
+}
+
+.live-info-field:last-child {
+  border-bottom: none;
+}
+
+.live-info-label {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.live-info-value {
+  color: var(--text-light);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+
+.live-info-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: var(--spacing-md);
+}
+
 /* Responsive tweaks used by the component */
 @media (max-width: 768px) {
   .card-footer-left .bet-container {

@@ -4,7 +4,7 @@ import { ModeRuntimeKernel } from '../../shared/modeRuntimeKernel';
 import { betRepository } from '../../shared/betRepository';
 import { washBetWithHistory } from '../../shared/washService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
-import { formatNumber } from '../../shared/numberUtils';
+import { formatNumber } from '../../../utils/number';
 import {
   TotalDisasterConfig,
   describeLine,

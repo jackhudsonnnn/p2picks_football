@@ -3,11 +3,13 @@ import './TicketCard.css';
 import type { Ticket } from '@features/bets/types';
 import { extractModeConfig } from '@features/bets/mappers';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
+import Modal from '@shared/widgets/Modal/Modal';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
-import { fetchModePreview, type ModePreviewPayload, pokeBet } from '@features/bets/service';
+import { fetchModePreview, fetchBetLiveInfo, type ModePreviewPayload, type BetLiveInfo, pokeBet } from '@features/bets/service';
 import { HttpError } from '@data/clients/restClient';
 import { useDialog } from '@shared/hooks/useDialog';
+import infoIcon from '@assets/information.png';
 
 export interface TicketCardProps {
   ticket: Ticket;
@@ -25,6 +27,10 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const [preview, setPreview] = useState<ModePreviewPayload | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPoking, setIsPoking] = useState(false);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [liveInfo, setLiveInfo] = useState<BetLiveInfo | null>(null);
+  const [liveInfoLoading, setLiveInfoLoading] = useState(false);
+  const [liveInfoError, setLiveInfoError] = useState<string | null>(null);
   const { showAlert, showConfirm, dialogNode } = useDialog();
 
   useEffect(() => {
@@ -60,6 +66,43 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
       cancelled = true;
     };
   }, [modeKey, modeConfigSignature, ticket.betRecord?.nfl_game_id, ticket.betRecord?.bet_id, ticket.betId]);
+
+  // Fetch live info when modal opens
+  useEffect(() => {
+    if (!isInfoModalOpen) {
+      return;
+    }
+
+    const betId = (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null;
+    if (!betId) {
+      setLiveInfoError('Unable to locate this bet');
+      return;
+    }
+
+    let cancelled = false;
+    setLiveInfoLoading(true);
+    setLiveInfoError(null);
+
+    fetchBetLiveInfo(betId)
+      .then((data) => {
+        if (!cancelled) {
+          setLiveInfo(data);
+          setLiveInfoLoading(false);
+        }
+      })
+      .catch((error: Error) => {
+        if (!cancelled) {
+          console.warn('[TicketCard] failed to load live info', error);
+          setLiveInfo(null);
+          setLiveInfoError(error.message || 'Failed to load live info');
+          setLiveInfoLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isInfoModalOpen, ticket.betRecord?.bet_id, ticket.betId]);
 
   const summaryText = useMemo(() => {
     if (preview?.summary && preview.summary.trim().length) {
@@ -197,7 +240,17 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const Header = () => (
     <div className="ticket-card-header">
       <div className="ticket-header-left">
-        <span className="bet-details">{summaryText}</span>
+        <div className="ticket-summary-row">
+          <span className="bet-details">{summaryText}</span>
+          <button
+            className="info-btn"
+            type="button"
+            onClick={() => setIsInfoModalOpen(true)}
+            aria-label="More information"
+          >
+            <img src={infoIcon} alt="Info" className="info-icon" />
+          </button>
+        </div>
       </div>
       <div className="ticket-header-right">
         <BetStatus
@@ -286,6 +339,34 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
           </div>
         </div>
       </div>
+      <Modal
+        isOpen={isInfoModalOpen}
+        onClose={() => setIsInfoModalOpen(false)}
+        title={liveInfo?.modeLabel ?? 'Bet Information'}
+      >
+        <div className="live-info-content">
+          {liveInfoLoading && <div className="live-info-loading">Loading...</div>}
+          {liveInfoError && <div className="live-info-error">{liveInfoError}</div>}
+          {!liveInfoLoading && !liveInfoError && liveInfo && (
+            <>
+              {liveInfo.unavailableReason && (
+                <div className="live-info-warning">{liveInfo.unavailableReason}</div>
+              )}
+              <div className="live-info-fields">
+                {liveInfo.fields.map((field, index) => (
+                  <div key={index} className="live-info-field">
+                    <span className="live-info-label">{field.label}</span>
+                    <span className="live-info-value">{field.value}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {!liveInfoLoading && !liveInfoError && !liveInfo && (
+            <div className="live-info-empty">No live information available for this bet.</div>
+          )}
+        </div>
+      </Modal>
       {dialogNode}
     </>
   );

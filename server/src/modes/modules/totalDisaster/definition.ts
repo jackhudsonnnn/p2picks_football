@@ -4,6 +4,7 @@ import { prepareTotalDisasterConfig } from './prepareConfig';
 import { totalDisasterValidator } from './validator';
 import { buildTotalDisasterUserConfig } from './userConfig';
 import { totalDisasterOverview } from './overview';
+import { getTotalDisasterLiveInfo } from './liveInfo';
 
 export const totalDisasterModule: ModeModule = {
   definition: {
@@ -62,4 +63,5 @@ export const totalDisasterModule: ModeModule = {
   validator: totalDisasterValidator,
   buildUserConfig: async ({ nflGameId, config }) =>
     buildTotalDisasterUserConfig({ nflGameId, existingConfig: config ?? {} }),
+  getLiveInfo: getTotalDisasterLiveInfo,
 };

@@ -7,7 +7,6 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   tableId?: string;
-  // Optional fields when type === 'bet_proposal'
   betProposalId?: string;
   betDetails?: {
     description: string;

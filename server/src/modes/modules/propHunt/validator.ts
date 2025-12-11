@@ -9,7 +9,7 @@ import { washBetWithHistory } from '../../shared/washService';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { ensureRefinedGameDoc, normalizeStatus } from '../../shared/gameDocProvider';
-import { formatNumber, isApproximatelyEqual } from '../../shared/numberUtils';
+import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 import {
   PropHuntBaseline,
   PropHuntConfig,

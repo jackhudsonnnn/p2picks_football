@@ -1,1 +1,0 @@
-export { scorcererModule } from './definition';

@@ -1,5 +1,15 @@
 import type { BetProposal } from '../../supabaseClient';
 
+/**
+ * Shared player record type used across all mode userConfig builders.
+ */
+export type PlayerRecord = {
+  id: string;
+  name: string;
+  team: string;
+  position?: string | null;
+};
+
 export type ModeUserConfigInputType = 'select' | 'radio';
 
 export type ModeConfigStepDefinition = {
@@ -75,6 +85,28 @@ export interface ModeValidator {
   stop(): void;
 }
 
+/**
+ * Live info payload returned to the client for displaying real-time bet status.
+ * Each mode can define its own fields, but common patterns include:
+ * - Total Disaster: scores, total points, line
+ * - King of the Hill: player names, baselines, current values, target
+ */
+export interface ModeLiveInfo {
+  modeKey: string;
+  /** Human-readable label for the mode */
+  modeLabel: string;
+  /** Key-value pairs to display in the info modal */
+  fields: { label: string; value: string | number }[];
+  /** Optional message if live info is unavailable */
+  unavailableReason?: string;
+}
+
+export interface GetLiveInfoInput {
+  betId: string;
+  config: Record<string, unknown>;
+  nflGameId: string | null;
+}
+
 export interface ModeModule {
   definition: ModeDefinitionDTO;
   overview?: ModeOverview;
@@ -91,4 +123,5 @@ export interface ModeModule {
     nflGameId: string;
     config: Record<string, unknown>;
   }) => Promise<{ valid: boolean; error?: string; details?: any; configUpdates?: Record<string, unknown> }>;
+  getLiveInfo?: (input: GetLiveInfoInput) => Promise<ModeLiveInfo>;
 }

@@ -4,6 +4,7 @@ import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
 import { buildEitherOrUserConfig } from './userConfig';
 import { eitherOrOverview } from './overview';
+import { getEitherOrLiveInfo } from './liveInfo';
 
 export const eitherOrModule: ModeModule = {
   definition: {
@@ -73,4 +74,5 @@ export const eitherOrModule: ModeModule = {
   validator: eitherOrValidator,
   buildUserConfig: async ({ nflGameId, config }) =>
     buildEitherOrUserConfig({ nflGameId, existingConfig: config ?? {} }),
+  getLiveInfo: getEitherOrLiveInfo,
 };

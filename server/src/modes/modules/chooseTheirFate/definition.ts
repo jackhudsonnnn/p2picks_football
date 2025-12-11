@@ -3,6 +3,7 @@ import { chooseTheirFateValidator } from './validator';
 import { prepareChooseTheirFateConfig } from './prepareConfig';
 import { chooseTheirFateOverview } from './overview';
 import { validateChooseTheirFateProposal } from './validateProposal';
+import { getChooseTheirFateLiveInfo } from './liveInfo';
 
 export const chooseTheirFateModule: ModeModule = {
   definition: {
@@ -21,4 +22,5 @@ export const chooseTheirFateModule: ModeModule = {
   prepareConfig: prepareChooseTheirFateConfig,
   validator: chooseTheirFateValidator,
   validateProposal: validateChooseTheirFateProposal,
+  getLiveInfo: getChooseTheirFateLiveInfo,
 };

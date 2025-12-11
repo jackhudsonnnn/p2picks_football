@@ -1,10 +1,10 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors, { CorsOptions } from 'cors';
 import 'dotenv/config';
 import apiRouter from './routes/api';
 import { startModeValidators } from './services/modeValidatorService';
 import { startNflGameStatusSync } from './services/nflGameStatusSyncService';
-import { startNflDataIngestService } from './services/nflDataIngestService';
+import { startNflDataIngestService } from './services/nflData';
 import { startBetLifecycleService } from './services/betLifecycleService';
 import { requireAuth } from './middleware/auth';
 

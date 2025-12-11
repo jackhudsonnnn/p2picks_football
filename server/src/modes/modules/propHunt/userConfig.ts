@@ -1,219 +1,125 @@
-import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
+/**
+ * Prop Hunt - User Configuration Builder
+ * Uses shared UserConfigBuilder utilities.
+ */
+
+import { findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
-import { prepareValidPlayers, sortPlayersByPositionAndName } from '../../shared/playerUtils';
-import { shouldSkipResolveStep } from '../../shared/resolveUtils';
-import { getValidPositionsForStat } from '../../shared/statMappings';
-import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
-
-interface BuildInput {
-  nflGameId?: string | null;
-  existingConfig?: Record<string, unknown>;
-}
-
-type PlayerRecord = {
-  id: string;
-  name: string;
-  team: string;
-  position?: string | null;
-};
+import {
+  loadGameContext,
+  buildStatStep,
+  buildPlayerStep,
+  buildResolveAtStep,
+  buildProgressModeStep,
+  getDefaultProgressPatch,
+  filterPlayersByStatPosition,
+  normalizeProgressMode,
+} from '../../shared/userConfigBuilder';
+import { prepareValidPlayers } from '../../shared/playerUtils';
+import {
+  PROP_HUNT_ALLOWED_RESOLVE_AT,
+  PROP_HUNT_DEFAULT_RESOLVE_AT,
+  PROP_HUNT_LINE_RANGE,
+  STAT_KEY_LABELS,
+  STAT_KEY_TO_CATEGORY,
+} from './constants';
 
 const DEBUG = process.env.DEBUG_PROP_HUNT === '1' || process.env.DEBUG_PROP_HUNT === 'true';
 
-export async function buildPropHuntUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
-  const gameId = input.nflGameId ? String(input.nflGameId) : '';
-  const { doc, players } = await loadGameContext(gameId);
-  const preparedPlayers = prepareValidPlayers(players);
-  const currentStat = doc ? getCurrentStatValue(doc, input.existingConfig ?? {}) : null;
-  const skipResolveStep = shouldSkipResolveStep(doc);
-  const normalizedStatus = typeof doc?.status === 'string' ? doc.status.trim().toUpperCase() : null;
-  const showProgressStep = Boolean(normalizedStatus && normalizedStatus !== 'STATUS_SCHEDULED');
-
+export async function buildPropHuntUserConfig(input: {
+  nflGameId?: string | null;
+  existingConfig?: Record<string, unknown>;
+}): Promise<ModeUserConfigStep[]> {
+  const gameId = input.nflGameId ? String(input.nflGameId) : null;
+  const context = await loadGameContext(gameId);
   const statKey = input.existingConfig?.stat as string | undefined;
-  const validPositions = getValidPositionsForStat(statKey);
-  const progressModeForLines = showProgressStep
+  const currentStat = context.doc ? getCurrentStatValue(context.doc, input.existingConfig ?? {}) : null;
+  const progressModeForLines = context.showProgressStep
     ? normalizeProgressMode(input.existingConfig?.progress_mode)
     : 'starting_now';
-  const defaultProgressPatch = showProgressStep ? {} : { progress_mode: 'starting_now' };
 
-  if (DEBUG) {
-    console.log('[propHunt][userConfig] filtering players', {
-      existingConfig: input.existingConfig,
-      statKey,
-      validPositions,
-      totalPlayers: preparedPlayers.length,
-      showProgressStep,
-    });
-  }
-
-  const filteredPlayers = preparedPlayers.filter((player) => {
-    if (!validPositions) return true;
-    return player.position && validPositions.includes(player.position);
-  });
+  // Filter players by position based on stat
+  const filteredPlayers = filterPlayersByStatPosition(context.players, statKey);
+  const preparedPlayers = prepareValidPlayers(filteredPlayers);
 
   if (DEBUG) {
     console.log('[propHunt][userConfig] building steps', {
       gameId,
-      playerCount: players.length,
-      validPlayerCount: preparedPlayers.length,
-      filteredPlayerCount: filteredPlayers.length,
+      playerCount: context.players.length,
+      filteredPlayerCount: preparedPlayers.length,
       statKey,
-      skipResolveStep,
-      status: doc?.status ?? null,
-      period: doc?.period ?? null,
-      showProgressStep,
+      skipResolveStep: context.skipResolveStep,
+      showProgressStep: context.showProgressStep,
     });
   }
 
-  const playerChoices: ModeUserConfigChoice[] = filteredPlayers.map((player) => ({
-    id: player.id,
-    value: player.id,
-    label: formatPlayerLabel(player),
-    patch: {
-      player_id: player.id,
-      player_name: player.name,
-      player_team_name: player.team ?? null,
-      player_team: player.team ?? null,
-    },
-  }));
+  const defaultProgressPatch = getDefaultProgressPatch(context.showProgressStep);
 
-  const statChoices: ModeUserConfigChoice[] = Object.keys(STAT_KEY_TO_CATEGORY)
-    .sort()
-    .map((statKey) => {
-      const label = STAT_KEY_LABELS[statKey] ?? humanizeStatKey(statKey);
-      return {
-        id: statKey,
-        value: statKey,
-        label,
-        clears: ['player_id', 'player_name', 'line', 'line_value', 'line_label'],
-        clearSteps: ['player', 'line'],
-        patch: {
-          stat: statKey,
-          stat_label: label,
-          ...(skipResolveStep ? { resolve_at: PROP_HUNT_DEFAULT_RESOLVE_AT } : {}),
-          ...defaultProgressPatch,
-        },
-      } satisfies ModeUserConfigChoice;
-    });
+  const steps: ModeUserConfigStep[] = [];
 
-  const steps: ModeUserConfigStep[] = [
-    {
-      key: 'stat',
-      title: 'Select Stat',
-      inputType: 'select',
-      choices: statChoices,
-    },
-    {
-      key: 'player',
-      title: 'Select Player',
-      inputType: 'select',
-      choices: playerChoices,
-    },
-  ];
+  // Stat step
+  steps.push(
+    buildStatStep({
+      statKeyToCategory: STAT_KEY_TO_CATEGORY,
+      statKeyLabels: STAT_KEY_LABELS,
+      defaultResolveAt: PROP_HUNT_DEFAULT_RESOLVE_AT,
+      skipResolveStep: context.skipResolveStep,
+      defaultProgressPatch,
+      clearsOnChange: ['player_id', 'player_name', 'line', 'line_value', 'line_label'],
+      clearStepsOnChange: ['player', 'line'],
+    }),
+  );
 
-  if (!skipResolveStep) {
-    const resolveChoices: ModeUserConfigChoice[] = PROP_HUNT_ALLOWED_RESOLVE_AT.map((value) => ({
-      id: value,
-      value,
-      label: value,
-      patch: { resolve_at: value },
-    }));
-    steps.push({
-      key: 'resolve_at',
-      title: 'Resolve At',
-      inputType: 'select',
-      choices: resolveChoices,
-    });
+  // Player step
+  steps.push(
+    buildPlayerStep({
+      players: preparedPlayers,
+      playerKey: 'player',
+      statKey,
+    }),
+  );
+
+  // Resolve at step (if not skipped)
+  if (!context.skipResolveStep) {
+    steps.push(buildResolveAtStep({ allowedValues: PROP_HUNT_ALLOWED_RESOLVE_AT }));
   }
 
-  if (showProgressStep) {
-    const progressModeChoices: ModeUserConfigChoice[] = [
-      {
-        id: 'starting_now',
-        value: 'starting_now',
-        label: 'Starting Now',
-        description: 'Capture the current stat when betting closes; the player must add the entire line afterward.',
-        patch: { progress_mode: 'starting_now' },
-        clears: ['line', 'line_value', 'line_label'],
-        clearSteps: ['line'],
-      },
-      {
-        id: 'cumulative',
-        value: 'cumulative',
-        label: 'Cumulative',
-        description: 'Use full-game totals and compare the total stat to the line.',
-        patch: { progress_mode: 'cumulative' },
-        clears: ['line', 'line_value', 'line_label'],
-        clearSteps: ['line'],
-      },
-    ];
-    steps.push({
-      key: 'progress_mode',
-      title: 'Track Progress',
-      inputType: 'select',
-      choices: progressModeChoices,
+  // Progress mode step (if game is in progress)
+  if (context.showProgressStep) {
+    const progressStep = buildProgressModeStep({
+      showProgressStep: true,
+      startingNowDescription: 'Capture the current stat when betting closes; the player must add the entire line afterward.',
+      cumulativeDescription: 'Use full-game totals and compare the total stat to the line.',
+      clearsOnChange: ['line', 'line_value', 'line_label'],
+      clearStepsOnChange: ['line'],
     });
+    if (progressStep) {
+      steps.push(progressStep);
+    }
   }
 
-  steps.push({
-    key: 'line',
-    title: 'Set Line',
-    inputType: 'select',
-    choices: buildLineChoices(input.existingConfig ?? {}, currentStat, progressModeForLines),
-  });
+  // Line step
+  steps.push(buildLineStep(input.existingConfig ?? {}, currentStat, progressModeForLines));
 
   return steps;
 }
 
-async function loadGameContext(gameId: string): Promise<{ doc: RefinedGameDoc | null; players: PlayerRecord[] }> {
-  if (!gameId) {
-    return { doc: null, players: [] };
-  }
-  try {
-    const doc = await loadRefinedGame(gameId);
-    if (!doc || !Array.isArray(doc.teams)) {
-      return { doc, players: [] };
-    }
+// ─────────────────────────────────────────────────────────────────────────────
+// Line Step Builder
+// ─────────────────────────────────────────────────────────────────────────────
 
-    const records: PlayerRecord[] = [];
-    const seen = new Set<string>();
-
-    for (const team of doc.teams as any[]) {
-      if (!team) continue;
-      const teamName = team.abbreviation || team.name || '';
-      const roster = (team as any).players;
-      if (!roster) continue;
-
-      const pushPlayer = (player: any) => {
-        if (!player) return;
-        const id: string | undefined = player.athleteId || player.id || undefined;
-        if (!id) return;
-        if (seen.has(id)) return;
-        seen.add(id);
-        records.push({
-          id: String(id),
-          name: String(player.fullName || player.name || id),
-          team: String(teamName || ''),
-          position: player.position || player.pos || null,
-        });
-      };
-
-      if (Array.isArray(roster)) {
-        roster.forEach(pushPlayer);
-      } else if (typeof roster === 'object') {
-        Object.values(roster).forEach(pushPlayer);
-      }
-    }
-
-  return { doc, players: sortPlayersByPositionAndName(records) };
-  } catch (err) {
-    if (DEBUG) {
-      console.warn('[propHunt][userConfig] failed to load game context', {
-        gameId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-    return { doc: null, players: [] };
-  }
+function buildLineStep(
+  existingConfig: Record<string, unknown>,
+  currentStat: number | null,
+  progressMode: 'starting_now' | 'cumulative',
+): ModeUserConfigStep {
+  const choices = buildLineChoices(existingConfig, currentStat, progressMode);
+  return {
+    key: 'line',
+    title: 'Set Line',
+    inputType: 'select',
+    choices,
+  };
 }
 
 function buildLineChoices(
@@ -223,6 +129,7 @@ function buildLineChoices(
 ): ModeUserConfigChoice[] {
   const choices: ModeUserConfigChoice[] = [];
   const { min, max, step } = PROP_HUNT_LINE_RANGE;
+  
   const minimumBase =
     progressMode === 'starting_now'
       ? min
@@ -258,6 +165,7 @@ function buildLineChoices(
     });
   }
 
+  // Include current line if not in choices
   const currentLine = extractLine(existingConfig);
   if (currentLine && !choices.find((choice) => choice.value === currentLine)) {
     choices.unshift({
@@ -285,33 +193,9 @@ function extractLine(config: Record<string, unknown>): string | null {
   return value.toFixed(1);
 }
 
-function formatPlayerLabel(player: PlayerRecord): string {
-  const segments = [player.name];
-  if (player.team) segments.push(player.team);
-  if (player.position) segments.push(player.position);
-  return segments.join(' • ');
-}
-
-function humanizeStatKey(key: string): string {
-  const withSpaces = key
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!withSpaces) return key;
-  return withSpaces
-    .split(' ')
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
-}
-
-function normalizeProgressMode(value: unknown): 'starting_now' | 'cumulative' {
-  if (typeof value === 'string' && value.trim().toLowerCase() === 'cumulative') {
-    return 'cumulative';
-  }
-  return 'starting_now';
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Stat Value Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
 function getCurrentStatValue(doc: RefinedGameDoc, config: Record<string, unknown>): number | null {
   const statKey = typeof config.stat === 'string' ? config.stat : '';
@@ -321,11 +205,15 @@ function getCurrentStatValue(doc: RefinedGameDoc, config: Record<string, unknown
   const ref = {
     id: typeof config.player_id === 'string' ? config.player_id : null,
     name: typeof config.player_name === 'string' ? config.player_name : null,
-  } as { id?: string | null; name?: string | null };
+  };
   return extractPlayerStat(doc, statKey, ref);
 }
 
-function extractPlayerStat(doc: RefinedGameDoc, statKey: string, ref: { id?: string | null; name?: string | null }): number | null {
+function extractPlayerStat(
+  doc: RefinedGameDoc,
+  statKey: string,
+  ref: { id?: string | null; name?: string | null },
+): number | null {
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
   const player = lookupPlayer(doc, ref);

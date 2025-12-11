@@ -1,5 +1,5 @@
 import type { BetProposal } from '../supabaseClient';
-import type { ModeDefinitionDTO, ModeModule, ModeOverview } from './shared/types';
+import type { GetLiveInfoInput, ModeDefinitionDTO, ModeLiveInfo, ModeModule, ModeOverview } from './shared/types';
 import { cloneDefinition, cloneOverview } from './shared/utils';
 import { MODE_MODULES } from './modules';
 
@@ -47,6 +47,14 @@ function findModeModule(modeKey: string): ModeModule | undefined {
 
 export function getModeModule(modeKey: string): ModeModule | undefined {
   return findModeModule(modeKey);
+}
+
+export async function getModeLiveInfo(modeKey: string, input: GetLiveInfoInput): Promise<ModeLiveInfo | null> {
+  const module = findModeModule(modeKey);
+  if (!module || !module.getLiveInfo) {
+    return null;
+  }
+  return module.getLiveInfo(input);
 }
 
 function buildRegistry(modules: ModeModule[]): Map<string, ModeModule> {

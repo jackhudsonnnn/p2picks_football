@@ -1,5 +1,5 @@
 import type { RefinedGameDoc, Team } from '../../utils/gameData';
-import { normalizeNumber } from './numberUtils';
+import { normalizeNumber } from '../../utils/number';
 
 export function listTeams(doc: RefinedGameDoc | null | undefined): Team[] {
   if (!doc || !Array.isArray(doc.teams)) return [];

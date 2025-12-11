@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
-import { listModeCatalog, findModeDefinition, listModeOverviewCatalog } from '../services/modeCatalogService';
+import { 
+  listModeDefinitions, 
+  getModeDefinition as findModeDefinition, 
+  listModeOverviews as getOverviewCatalog 
+} from '../modes/registry';
 import {
   buildModePreview,
   ensureModeKeyMatchesBet,
@@ -16,11 +20,11 @@ import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../services/
 import { BetProposal } from '../supabaseClient';
 
 export function listModes(_req: Request, res: Response) {
-  res.json(listModeCatalog());
+  res.json(listModeDefinitions());
 }
 
 export function listModeOverviews(_req: Request, res: Response) {
-  res.json(listModeOverviewCatalog());
+  res.json(getOverviewCatalog());
 }
 
 export function getModeDefinition(req: Request, res: Response) {

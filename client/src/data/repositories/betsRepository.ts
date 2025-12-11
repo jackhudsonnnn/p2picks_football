@@ -120,3 +120,19 @@ export async function hasUserAcceptedBet(betId: string, userId: string): Promise
   if (error) throw error;
   return !!data;
 }
+
+export interface BetLiveInfoField {
+  label: string;
+  value: string | number;
+}
+
+export interface BetLiveInfo {
+  modeKey: string;
+  modeLabel: string;
+  fields: BetLiveInfoField[];
+  unavailableReason?: string;
+}
+
+export async function fetchBetLiveInfo(betId: string): Promise<BetLiveInfo> {
+  return fetchJSON<BetLiveInfo>(`/api/bets/${encodeURIComponent(betId)}/live-info`);
+}

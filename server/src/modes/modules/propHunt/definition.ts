@@ -4,6 +4,7 @@ import { buildPropHuntUserConfig } from './userConfig';
 import { preparePropHuntConfig } from './prepareConfig';
 import { propHuntValidator } from './validator';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS } from './constants';
+import { getPropHuntLiveInfo } from './liveInfo';
 
 export const propHuntModule: ModeModule = {
   definition: {
@@ -11,7 +12,7 @@ export const propHuntModule: ModeModule = {
     label: 'Prop Hunt',
     summaryTemplate: '`Prop Hunt`',
     descriptionTemplate:
-      '`${(config.player_name || config.player_id || "Selected Player")} • ${(config.stat_label || config.stat || "Stat")}`',
+      '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate:
       '`Track ${(config.player_name || config.player_id || "Selected Player")}\'s ${(config.stat_label || config.stat || "stat")} ${(config.progress_mode === "cumulative" ? "total" : "net-new output")} against ${(config.line_label || config.line || "the line")} by ${(config.resolve_at || "settle time")}`',
     winningConditionTemplate:
@@ -79,4 +80,5 @@ export const propHuntModule: ModeModule = {
   prepareConfig: preparePropHuntConfig,
   validator: propHuntValidator,
   buildUserConfig: async ({ nflGameId, config }) => buildPropHuntUserConfig({ nflGameId, existingConfig: config ?? {} }),
+  getLiveInfo: getPropHuntLiveInfo,
 };
