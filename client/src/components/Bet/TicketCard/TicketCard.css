@@ -119,13 +119,6 @@
   word-wrap: break-word;
 }
 
-.game-context-secondary {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  margin-top: 4px;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
 
 .bet-details {
   color: var(--neutral-300);
@@ -133,6 +126,8 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   padding: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .ticket-finance {
@@ -143,31 +138,6 @@
   gap: var(--spacing-xs);
   padding: 0 var(--spacing-sm);
   border-radius: var(--radius-sm);
-}
-
-.poke-bet-btn {
-  background-color: var(--neutral-600);
-  color: var(--text-secondary);
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs) var(--spacing-md);
-  margin-top: 10%;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition);
-  width: 100%;
-  height: 40px
-}
-
-.poke-bet-btn:hover:not(:disabled) {
-  background-color: var(--neutral-500);
-  transform: translateY(-1px);
-}
-
-.poke-bet-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .ticket-result-text {
@@ -416,7 +386,15 @@
 .ticket-summary-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-md);
+}
+
+.ticket-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
 }
 
 .info-btn {
@@ -441,9 +419,65 @@
   filter: invert(1);
 }
 
+.poke-icon-btn {
+  background: #00000000;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: background-color var(--transition), transform var(--transition), opacity var(--transition);
+}
+
+.poke-icon-btn:hover:not(:disabled) {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.poke-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.poke-icon {
+  width: 18px;
+  height: 18px;
+  filter: invert(1);
+}
+
 /* Live Info Modal Styles */
 .live-info-content {
   min-width: 250px;
+}
+
+.live-info-winning-condition {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--status-neutral-bg);
+  border-left: 3px solid var(--primary-400);
+  border-radius: var(--radius-md);
+}
+
+.live-info-winning-condition-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.live-info-winning-condition-text {
+  margin: 0;
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-align: center;
 }
 
 .live-info-loading {

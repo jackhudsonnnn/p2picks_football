@@ -16,7 +16,7 @@ export const giveAndTakeModule: ModeModule = {
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     secondaryDescriptionTemplate: '`Spread applied to the home team score`',
     winningConditionTemplate:
-      '`Highest score between ${(config.home_team_name || config.home_team_id || "Home Team")} (${(config.spread_label || config.spread || "spread")} points) and ${(config.away_team_name || config.away_team_id || "Away Team")}`',
+      '`Highest score between ${(config.home_team_name || config.home_team_id || "Home Team")} (${(config.spread_label || config.spread || "adjusted")} points) and ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     optionsExpression:
       '(() => { const opts = ["pass"]; const home = config.home_team_name || config.home_team_id || "Home Team"; const away = config.away_team_name || config.away_team_id || "Away Team"; opts.push(home); opts.push(away); return opts; })()',
     configSteps: [

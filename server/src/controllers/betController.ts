@@ -13,6 +13,30 @@ import {
   BetProposalError,
 } from '../services/bet';
 import { fetchModeConfig } from '../services/modeConfig';
+import { getRedisClient } from '../modes/shared/redisClient';
+import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
+
+// Lazy-initialize the rate limiter (shared with messages)
+let sharedRateLimiter: ReturnType<typeof createMessageRateLimiter> | null = null;
+
+function getSharedRateLimiter() {
+  if (!sharedRateLimiter) {
+    const redis = getRedisClient();
+    sharedRateLimiter = createMessageRateLimiter(redis);
+  }
+  return sharedRateLimiter;
+}
+
+/**
+ * Helper to set rate limit headers on the response.
+ */
+function setRateLimitHeaders(res: Response, result: RateLimitResult): void {
+  res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+  res.setHeader('X-RateLimit-Reset', result.resetInSeconds.toString());
+  if (result.retryAfterSeconds !== null) {
+    res.setHeader('Retry-After', result.retryAfterSeconds.toString());
+  }
+}
 
 /**
  * POST /api/tables/:tableId/bets
@@ -49,6 +73,22 @@ export async function createBetProposal(req: Request, res: Response) {
   const membershipError = await validateTableMembership(supabase, tableId, authUser.id);
   if (membershipError) {
     res.status(membershipError.status).json({ error: membershipError.message });
+    return;
+  }
+
+  // Check rate limit (shared with messages - bets count as messages)
+  const rateLimiter = getSharedRateLimiter();
+  const rateLimitKey = `${authUser.id}:${tableId}`;
+  const rateLimitResult = await rateLimiter.check(rateLimitKey);
+
+  setRateLimitHeaders(res, rateLimitResult);
+
+  if (!rateLimitResult.allowed) {
+    res.status(429).json({
+      error: 'Rate limit exceeded',
+      retryAfter: rateLimitResult.retryAfterSeconds,
+      message: `You've sent too many messages/bets. Please wait ${rateLimitResult.retryAfterSeconds} seconds.`,
+    });
     return;
   }
 
@@ -125,6 +165,22 @@ export async function pokeBet(req: Request, res: Response) {
     );
     if (membershipError) {
       res.status(membershipError.status).json({ error: membershipError.message });
+      return;
+    }
+
+    // Check rate limit (shared with messages - pokes count as messages)
+    const rateLimiter = getSharedRateLimiter();
+    const rateLimitKey = `${authUser.id}:${betRow.table_id}`;
+    const rateLimitResult = await rateLimiter.check(rateLimitKey);
+
+    setRateLimitHeaders(res, rateLimitResult);
+
+    if (!rateLimitResult.allowed) {
+      res.status(429).json({
+        error: 'Rate limit exceeded',
+        retryAfter: rateLimitResult.retryAfterSeconds,
+        message: `You've sent too many messages/bets. Please wait ${rateLimitResult.retryAfterSeconds} seconds.`,
+      });
       return;
     }
 

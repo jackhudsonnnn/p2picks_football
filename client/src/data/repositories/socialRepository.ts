@@ -1,4 +1,5 @@
 import { supabase } from '@data/clients/supabaseClient';
+import { fetchJSON } from '@data/clients/restClient';
 import type { Friend, FriendRelation, UserProfile } from '@shared/types/social';
 
 export async function getAuthUserProfile(): Promise<UserProfile | null> {
@@ -62,23 +63,13 @@ export async function listFriends(currentUserId: string): Promise<Friend[]> {
   return (data ?? []).filter((u) => u.username !== null) as Friend[];
 }
 
-export async function addFriend(currentUserId: string, targetUsername: string): Promise<Friend> {
-  const { data: targetUser, error: findError } = await supabase
-    .from('users')
-    .select('user_id, username')
-    .eq('username', targetUsername)
-    .single();
-  if (findError || !targetUser) {
-    const msg = findError?.message ?? 'User not found';
-    throw Object.assign(new Error(msg), { code: findError?.code });
-  }
-
-  const { error: insertError } = await supabase.from('friends').insert({
-    user_id1: currentUserId,
-    user_id2: targetUser.user_id,
+export async function addFriend(_currentUserId: string, targetUsername: string): Promise<Friend> {
+  const payload = await fetchJSON<{ friend: Friend }>(`/api/friends`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: targetUsername }),
   });
-  if (insertError) throw insertError;
-  return { user_id: targetUser.user_id, username: targetUser.username } as Friend;
+  return payload.friend;
 }
 
 export async function removeFriend(currentUserId: string, friendUserId: string): Promise<void> {

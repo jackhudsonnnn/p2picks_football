@@ -80,30 +80,21 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
 
   // Show drive/possession info
   if (possessionTeam) {
-    fields.push({ label: 'Drive Team (at lock)', value: possessionTeam });
-  }
-
-  if (currentPossession) {
-    fields.push({ label: 'Current Possession', value: currentPossession });
-  }
-
-  // Show baseline captured time if available
-  if (baseline?.capturedAt) {
-    const capturedDate = new Date(baseline.capturedAt);
-    fields.push({ label: 'Baseline Captured', value: capturedDate.toLocaleTimeString() });
+    fields.push({ label: 'Drive Team', value: possessionTeam });
   }
 
   // Show baseline stats for the drive team if available
-  if (baseline && possessionTeam) {
-    const driveTeamBaseline = Object.values(baseline.teams).find(
-      t => t.teamId === baseline.possessionTeamId || t.abbreviation === baseline.possessionTeamId
-    );
-    if (driveTeamBaseline) {
-      fields.push({ label: 'TDs (at lock)', value: driveTeamBaseline.touchdowns });
-      fields.push({ label: 'FGs (at lock)', value: driveTeamBaseline.fieldGoals });
-      fields.push({ label: 'Punts (at lock)', value: driveTeamBaseline.punts });
-    }
-  }
+  // if (baseline && possessionTeam) {
+  //   const driveTeamBaseline = Object.values(baseline.teams).find(
+  //     t => t.teamId === baseline.possessionTeamId || t.abbreviation === baseline.possessionTeamId
+  //   );
+  //   if (driveTeamBaseline) {
+  //     fields.push({ label: 'TDs', value: driveTeamBaseline.touchdowns });
+  //     fields.push({ label: 'FGs', value: driveTeamBaseline.fieldGoals });
+  //     fields.push({ label: 'Safeties', value: driveTeamBaseline.safeties });
+  //     fields.push({ label: 'Punts', value: driveTeamBaseline.punts });
+  //   }
+  // }
 
   // Add unavailable reason if no data
   if (!baseline && !doc) {

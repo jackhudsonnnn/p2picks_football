@@ -19,7 +19,7 @@ export const HomePage: React.FC = () => {
         <div className="steps-container">
           <div className="step container-primary">
             <h3>Sign using Google</h3>
-            <p>Quick and easy—sign in with your Google account to get started.</p>
+            <p>Quick, easy, and secure sign in by using your Google account credentials. Press the login button in the top right corner to get started.</p>
           </div>
           <div className="step container-primary">
             <h3>The house has been evicted</h3>

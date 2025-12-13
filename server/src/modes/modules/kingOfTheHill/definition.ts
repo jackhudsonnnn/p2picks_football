@@ -21,7 +21,7 @@ export const kingOfTheHillModule: ModeModule = {
     secondaryDescriptionTemplate:
       '`First to ${config.resolve_value ?? "the selected value"} ${(config.stat_label || config.stat || "stat")} (${(config.progress_mode === "cumulative" ? "cumulative" : "Starting Now")} tracking).`',
     winningConditionTemplate:
-      '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} — ${(config.progress_mode === "cumulative" ? "first to hit" : "first to add")} ${(config.resolve_value_label || config.resolve_value || KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE)} ${(config.stat_label || config.stat || "stat")}.`',
+      '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} — ${(config.progress_mode === "cumulative" ? "first to hit" : "first to add")} ${(config.resolve_value_label || config.resolve_value || KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE)} ${(config.stat_label || config.stat || "stat")}`',
     optionsExpression:
       '(() => { const opts = ["pass"]; if (config.player1_name || config.player1_id) opts.push(config.player1_name || config.player1_id); if (config.player2_name || config.player2_id) opts.push(config.player2_name || config.player2_id); if (!opts.includes("Neither")) opts.push("Neither"); return opts; })()',
     configSteps: [

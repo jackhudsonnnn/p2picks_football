@@ -66,10 +66,8 @@ export async function getGiveAndTakeLiveInfo(input: GetLiveInfoInput): Promise<M
   return {
     ...baseResult,
     fields: [
-      { label: homeName, value: homeScore },
-      { label: awayName, value: awayScore },
-      { label: `${homeName} Spread`, value: formatNumber(spread) },
       { label: `${homeName} (Adjusted)`, value: formatNumber(adjustedHomeScore) },
+      { label: awayName, value: awayScore },
     ],
   };
 }

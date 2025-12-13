@@ -1,6 +1,6 @@
 // client/src/pages/TableView.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "./TableView.css";
 import "@shared/widgets/FriendsList/FriendsList.css";
@@ -16,6 +16,14 @@ import { Modal } from "@shared/widgets";
 import { useTableView } from "@features/table/hooks";
 import { useTableChat } from "@features/table/hooks/useTableChat";
 import { useModeCatalog } from "@features/bets/hooks/useModeCatalog";
+import { HttpError } from "@data/clients/restClient";
+
+const RATE_LIMIT_TITLE = "Knock it off!!";
+const RATE_LIMIT_MESSAGE = "You've sent 20 messages and bet proposals in the last minute. Chill out a bit.";
+
+function isRateLimitError(error: unknown): error is HttpError {
+  return error instanceof HttpError && error.status === 429;
+}
 
 export const TableView: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -24,6 +32,7 @@ export const TableView: React.FC = () => {
   const [showBetModal, setShowBetModal] = useState(false);
   const [betError, setBetError] = useState<string | null>(null);
   const [showBetErrorModal, setShowBetErrorModal] = useState(false);
+  const [showMessageRateLimitModal, setShowMessageRateLimitModal] = useState(false);
   const { table, loading, error, members, isHost } = useTableView(
     tableId,
     user?.id
@@ -55,6 +64,19 @@ export const TableView: React.FC = () => {
     setBetError(null);
     setShowBetModal(true);
   };
+  const handleSendMessageWithRateLimit = useCallback(
+    async (message: string) => {
+      try {
+        await sendMessage(message);
+      } catch (err) {
+        if (isRateLimitError(err)) {
+          setShowMessageRateLimitModal(true);
+        }
+        throw err;
+      }
+    },
+    [sendMessage]
+  );
   const handleBetSubmit = async (form: BetProposalFormValues) => {
     try {
       await proposeBet(form);
@@ -62,7 +84,11 @@ export const TableView: React.FC = () => {
       setBetError(null);
       setShowBetErrorModal(false);
     } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : 'Failed to create bet proposal.';
+      const message = isRateLimitError(err)
+        ? RATE_LIMIT_MESSAGE
+        : err instanceof Error && err.message
+          ? err.message
+          : "Failed to create bet proposal.";
       setBetError(message);
       setShowBetModal(false);
       setShowBetErrorModal(true);
@@ -73,6 +99,7 @@ export const TableView: React.FC = () => {
     setShowBetErrorModal(false);
     setBetError(null);
   };
+  const handleMessageRateLimitClose = () => setShowMessageRateLimitModal(false);
 
   if (!user)
     return (
@@ -108,7 +135,7 @@ export const TableView: React.FC = () => {
             <ChatArea
               messages={chatFeed}
               currentUserId={user.id}
-              onSendMessage={sendMessage}
+              onSendMessage={handleSendMessageWithRateLimit}
               onProposeBet={handleProposeBet}
               onLoadMore={loadMore}
               hasMore={hasMoreMessages}
@@ -133,6 +160,15 @@ export const TableView: React.FC = () => {
             >
               <div className="friends-list-shared empty bet-error-modal-message" role="alert">
                 {betError ?? "Unable to create bet proposal."}
+              </div>
+            </Modal>
+            <Modal
+              isOpen={showMessageRateLimitModal}
+              onClose={handleMessageRateLimitClose}
+              title={RATE_LIMIT_TITLE}
+            >
+              <div className="friends-list-shared empty bet-error-modal-message" role="alert">
+                {RATE_LIMIT_MESSAGE}
               </div>
             </Modal>
           </>

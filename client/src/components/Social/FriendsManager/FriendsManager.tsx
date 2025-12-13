@@ -5,6 +5,12 @@ import SearchBar from "@shared/widgets/SearchBar/SearchBar";
 import { FriendsList } from "@shared/widgets/index";
 import "./FriendsManager.css";
 import { useDialog } from "@shared/hooks/useDialog";
+import { HttpError } from "@data/clients/restClient";
+
+const FRIEND_RATE_LIMIT_TITLE = "Add Friend";
+const FRIEND_RATE_LIMIT_MESSAGE = "You've already added 10 friends in the last minute. Take a quick breather before adding more.";
+
+const isRateLimited = (error: unknown): error is HttpError => error instanceof HttpError && error.status === 429;
 
 export const FriendsManager: React.FC = () => {
   const { user } = useAuth();
@@ -42,8 +48,12 @@ export const FriendsManager: React.FC = () => {
       await add(targetUsername);
       setFriendUsernameToAdd("");
       await showAlert({ title: "Add Friend", message: `${targetUsername} added as a friend!` });
-    } catch {
-      await showAlert({ title: "Add Friend", message: "An unexpected error occurred while adding friend." });
+    } catch (err) {
+      if (isRateLimited(err)) {
+        await showAlert({ title: FRIEND_RATE_LIMIT_TITLE, message: FRIEND_RATE_LIMIT_MESSAGE });
+      } else {
+        await showAlert({ title: "Add Friend", message: "An unexpected error occurred while adding friend." });
+      }
     } finally {
       setBusy(false);
     }

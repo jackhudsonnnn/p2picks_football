@@ -10,6 +10,7 @@ import { fetchModePreview, fetchBetLiveInfo, type ModePreviewPayload, type BetLi
 import { HttpError } from '@data/clients/restClient';
 import { useDialog } from '@shared/hooks/useDialog';
 import infoIcon from '@assets/information.png';
+import pokeIcon from '@assets/poke.png';
 
 export interface TicketCardProps {
   ticket: Ticket;
@@ -242,14 +243,28 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
       <div className="ticket-header-left">
         <div className="ticket-summary-row">
           <span className="bet-details">{summaryText}</span>
-          <button
-            className="info-btn"
-            type="button"
-            onClick={() => setIsInfoModalOpen(true)}
-            aria-label="More information"
-          >
-            <img src={infoIcon} alt="Info" className="info-icon" />
-          </button>
+          <div className="ticket-header-actions">
+            <button
+              className="info-btn"
+              type="button"
+              onClick={() => setIsInfoModalOpen(true)}
+              aria-label="More information"
+            >
+              <img src={infoIcon} alt="Info" className="info-icon" />
+            </button>
+            {canPoke ? (
+              <button
+                className="poke-icon-btn"
+                type="button"
+                onClick={handlePoke}
+                disabled={isPoking}
+                aria-label="Poke bet"
+                title={isPoking ? 'Poking…' : 'Poke bet'}
+              >
+                <img src={pokeIcon} alt="Poke" className="poke-icon" />
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
       <div className="ticket-header-right">
@@ -267,18 +282,12 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const Content = () => (
     <div className="ticket-card-content">
       <span className="game-context">{descriptionText}</span>
-      {winningConditionText ? <span className="game-context-secondary">{winningConditionText}</span> : null}
     </div>
   );
 
   const Actions = () => (
     <div className="ticket-card-actions">
       <span className="ticket-finance">{formatToHundredth(ticket.wager)} pt(s)</span>
-      {canPoke ? (
-        <button className="poke-bet-btn" type="button" onClick={handlePoke} disabled={isPoking}>
-          {isPoking ? 'Poking…' : 'Poke'}
-        </button>
-      ) : null}
     </div>
   );
 
@@ -344,6 +353,11 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
         onClose={() => setIsInfoModalOpen(false)}
         title={liveInfo?.modeLabel ?? 'Bet Information'}
       >
+        {winningConditionText ? (
+          <div className="live-info-winning-condition">
+            <p className="live-info-winning-condition-text">{winningConditionText}</p>
+          </div>
+        ) : null}
         <div className="live-info-content">
           {liveInfoLoading && <div className="live-info-loading">Loading...</div>}
           {liveInfoError && <div className="live-info-error">{liveInfoError}</div>}

@@ -1,6 +1,9 @@
 import express, { Request, Response } from 'express';
 import * as betController from '../controllers/betController';
 import * as modeController from '../controllers/modeController';
+import * as messageController from '../controllers/messageController';
+import * as friendController from '../controllers/friendController';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -31,5 +34,12 @@ router.post('/bet-modes/:modeKey/preview', modeController.getModePreview);
 router.post('/bets/:betId/mode-config', modeController.updateBetModeConfig);
 router.get('/bets/:betId/mode-config', modeController.getBetModeConfig);
 router.post('/mode-config/batch', modeController.getBatchModeConfigs);
+
+// Messages (rate-limited)
+router.post('/tables/:tableId/messages', requireAuth, messageController.sendMessage);
+router.get('/tables/:tableId/messages/rate-limit-status', requireAuth, messageController.getRateLimitStatus);
+
+// Friends
+router.post('/friends', requireAuth, friendController.addFriend);
 
 export default router;

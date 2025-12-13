@@ -1,4 +1,5 @@
 import { supabase } from '@data/clients/supabaseClient';
+import { fetchJSON } from '@data/clients/restClient';
 import type { Tables } from '@data/types/database.types';
 import type { ChatMessage } from '@shared/types/chat';
 import { normalizeToHundredth } from '@shared/utils/number';
@@ -497,11 +498,35 @@ export async function getTableFeed(tableId: string, options: TableFeedOptions = 
 }
 
 export async function sendTextMessage(tableId: string, userId: string, messageText: string) {
-  const { data: txtMsg, error: msgError } = await supabase
-    .from('text_messages')
-    .insert([{ table_id: tableId, user_id: userId, message_text: messageText }])
-    .select()
-    .single();
-  if (msgError) throw msgError;
-  return txtMsg;
+  const response = await fetchJSON<{
+    success: boolean;
+    messageId: string;
+    postedAt: string;
+    error?: string;
+    retryAfter?: number;
+  }>(`/api/tables/${encodeURIComponent(tableId)}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message: messageText }),
+  });
+
+  if (!response.success) {
+    const error = new Error(response.error ?? 'Failed to send message') as Error & {
+      retryAfter?: number;
+    };
+    if (response.retryAfter) {
+      error.retryAfter = response.retryAfter;
+    }
+    throw error;
+  }
+
+  return {
+    text_message_id: response.messageId,
+    posted_at: response.postedAt,
+    table_id: tableId,
+    user_id: userId,
+    message_text: messageText,
+  };
 }
