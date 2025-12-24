@@ -8,13 +8,12 @@ import { getTotalDisasterLiveInfo } from './liveInfo';
 
 export const totalDisasterModule: ModeModule = {
   definition: {
-    key: 'spread_the_wealth',
+    key: 'total_disaster',
     label: 'Total Disaster',
     summaryTemplate:
       'Total Disaster',
-    descriptionTemplate:
+    matchupTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
-    secondaryDescriptionTemplate: '`Total points compared to the selected line`',
     winningConditionTemplate:
       '`Total points between ${(config.home_team_name || config.home_team_id || "Home Team")} and ${(config.away_team_name || config.away_team_id || "Away Team")} over/under ${(config.line_label || config.line || "line")}`',
     optionsExpression: "['pass','Over','Under']",

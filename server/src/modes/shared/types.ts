@@ -27,8 +27,7 @@ export type ModeDefinitionDTO = {
   key: string;
   label: string;
   summaryTemplate?: string;
-  descriptionTemplate?: string;
-  secondaryDescriptionTemplate?: string;
+  matchupTemplate?: string;
   winningConditionTemplate?: string;
   optionsExpression?: string;
   staticOptions?: string[];

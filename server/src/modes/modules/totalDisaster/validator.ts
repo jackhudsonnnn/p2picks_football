@@ -19,7 +19,7 @@ export class TotalDisasterValidatorService {
 
   constructor() {
     this.kernel = new ModeRuntimeKernel({
-      modeKey: 'spread_the_wealth',
+      modeKey: 'total_disaster',
       dedupeGameFeed: true,
       onGameEvent: (event) => this.handleGameFeedEvent(event.gameId, event.doc),
     });
@@ -36,7 +36,7 @@ export class TotalDisasterValidatorService {
   private async handleGameFeedEvent(gameId: string, doc: RefinedGameDoc): Promise<void> {
     try {
       if (normalizeStatus(doc.status) !== 'STATUS_FINAL') return;
-      const bets = await betRepository.listPendingBets('spread_the_wealth', { gameId });
+      const bets = await betRepository.listPendingBets('total_disaster', { gameId });
       for (const bet of bets) {
         await this.resolveBet(bet.bet_id, doc);
       }
@@ -92,7 +92,7 @@ export class TotalDisasterValidatorService {
   private async getConfigForBet(betId: string): Promise<TotalDisasterConfig | null> {
     try {
       const record = await fetchModeConfig(betId);
-      if (!record || record.mode_key !== 'spread_the_wealth') return null;
+      if (!record || record.mode_key !== 'total_disaster') return null;
       return record.data as TotalDisasterConfig;
     } catch (err) {
       console.error('[totalDisaster] fetch config error', { betId }, err);

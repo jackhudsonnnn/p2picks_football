@@ -18,12 +18,13 @@ import {
   subscribeToTableMembers,
   subscribeToMessages,
   subscribeToBetProposals,
+  subscribeToUserTables,
 } from '@data/subscriptions/tableSubscriptions';
 import { getUsernamesByIds } from '@data/repositories/usersRepository';
 import type { TableListItem, TableWithMembers } from '../types';
 
 export type { TableFeedCursor, TableFeedOptions, TableFeedPage, TableSettlementResult };
-export { subscribeToTableMembers, subscribeToMessages, subscribeToBetProposals };
+export { subscribeToTableMembers, subscribeToMessages, subscribeToBetProposals, subscribeToUserTables };
 
 export async function fetchCurrentTable(tableId: string): Promise<TableWithMembers | null> {
   if (!tableId) return null;

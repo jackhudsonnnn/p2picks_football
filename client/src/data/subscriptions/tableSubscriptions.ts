@@ -60,3 +60,22 @@ export function subscribeToBetProposals(
     .subscribe();
   return channel;
 }
+
+export function subscribeToUserTables(
+  userId: string,
+  onChange: (payload: { eventType: 'INSERT' | 'DELETE' | 'UPDATE' }) => void,
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`user_table_memberships:${userId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'table_members', filter: `user_id=eq.${userId}` },
+      (payload) => {
+        const eventType = (payload as any).eventType as 'INSERT' | 'DELETE' | 'UPDATE';
+        onChange({ eventType });
+      },
+    )
+    .subscribe();
+
+  return channel;
+}

@@ -91,7 +91,7 @@ Bet on whether the total points scored in the game will be over or under a speci
     * If total points > line, `Over` wins.
     * If total points < line, `Under` wins.
 
-#### Mode 6: Give And Take
+#### Mode 6: Spread The Wealth
 Bet on which team covers a specified point spread, applied to the home team.
 * **Proposer Configuration:** 
     * Sets the point spread (a numeric value that must end in .5). A spread is applied to the home teams score; the highest of the two scores wins/covers.
@@ -111,6 +111,16 @@ This mode is a prop bet for users to guess over/under on whether a player will g
     * Sets the over/under value, a numeric **line** (a numeric value that must end in .5).
 * **Participant Choices:** `pass`, `over`, `under`.
 * **Winning Condition:** The winning choice is decided by whether the player gets more/less than the specified amount for a given stat.
+
+#### Mode 8: Right On The Money
+Classic moneyline — pick who wins the game.
+* **Proposer Configuration:** None beyond selecting the game; team names are auto-filled when available.
+* **Participant Choices:** `pass`, `{Home Team}`, `{Away Team}`, `Tie`.
+* **Winning Condition:** Once the game is final, the side with the higher score wins. If the home and away scores are equal at final, `Tie` wins.
+* **Edge Cases:**
+    * Bets only resolve after the game status is final. If final scores are unavailable or the game is canceled, the bet will be washed.
+    * If both teams end with the same score, `Tie` is the winning option.
+
 
 ---
 

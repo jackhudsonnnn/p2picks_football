@@ -1,24 +1,31 @@
 [
   {
     "table_name": "bet_participations",
-    "policy_name": "Participations are updatable by users",
-    "command": "UPDATE",
-    "using_expression": "((user_id = auth.uid()) AND is_bet_open(bet_id))",
-    "check_expression": "((user_id = auth.uid()) AND is_bet_open(bet_id))"
+    "policy_name": "bet_participations_delete_none",
+    "command": "DELETE",
+    "using_expression": "false",
+    "check_expression": null
   },
   {
     "table_name": "bet_participations",
-    "policy_name": "Users can participate in open bets in their tables",
+    "policy_name": "bet_participations_insert_scoped",
     "command": "INSERT",
     "using_expression": null,
-    "check_expression": "((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM table_members tm\n  WHERE ((tm.table_id = bet_participations.table_id) AND (tm.user_id = auth.uid())))) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::text) AND (EXTRACT(epoch FROM (now() - bp.proposal_time)) < (bp.time_limit_seconds)::numeric)))))"
+    "check_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::text) AND is_bet_open(bp.bet_id)))))"
   },
   {
     "table_name": "bet_participations",
-    "policy_name": "Users can view participations in their tables or their own",
+    "policy_name": "bet_participations_select_scoped",
     "command": "SELECT",
-    "using_expression": "((auth.uid() = user_id) OR is_table_member(table_id, auth.uid()))",
+    "using_expression": "((auth.uid() = user_id) OR (is_table_member(table_id, auth.uid()) AND (NOT is_bet_open(bet_id))))",
     "check_expression": null
+  },
+  {
+    "table_name": "bet_participations",
+    "policy_name": "bet_participations_update_scoped",
+    "command": "UPDATE",
+    "using_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND is_bet_open(bet_id))",
+    "check_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND is_bet_open(bet_id))"
   },
   {
     "table_name": "bet_proposals",

@@ -1,20 +1,15 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { formatNumber, normalizeNumber } from '../../../utils/number';
-import {
-  type GiveAndTakeConfig,
-  normalizeSpread,
-  describeSpread,
-  resolveTeams,
-} from './evaluator';
+import { type SpreadTheWealthConfig, normalizeSpread, describeSpread, resolveTeams } from './evaluator';
 
-export async function getGiveAndTakeLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
+export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { config, nflGameId } = input;
-  const typedConfig = config as GiveAndTakeConfig;
+  const typedConfig = config as SpreadTheWealthConfig;
 
   const baseResult: ModeLiveInfo = {
-    modeKey: 'give_and_take',
-    modeLabel: 'Give And Take',
+    modeKey: 'spread_the_wealth',
+    modeLabel: 'Spread The Wealth',
     fields: [],
   };
 

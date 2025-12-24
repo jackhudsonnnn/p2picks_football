@@ -4,17 +4,17 @@ import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { extractTeamName, pickHomeTeam } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
 
-const MIN_MAGNITUDE = 0.5;
+const MIN_MAGNITUDE = 0;
 const MAX_MAGNITUDE = 99.5;
-const STEP = 1;
+const STEP = 0.5;
 
 interface BuildInput {
   nflGameId?: string | null;
   existingConfig?: Record<string, unknown>;
 }
 
-export async function buildGiveAndTakeUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
-  const debug = process.env.DEBUG_GIVE_AND_TAKE === '1' || process.env.DEBUG_GIVE_AND_TAKE === 'true';
+export async function buildSpreadTheWealthUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
+  const debug = process.env.DEBUG_SPREAD_THE_WEALTH === '1' || process.env.DEBUG_SPREAD_THE_WEALTH === 'true';
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const title = 'Select Point Spread';
 
@@ -33,7 +33,7 @@ export async function buildGiveAndTakeUserConfig(input: BuildInput = {}): Promis
       }
     } catch (err) {
       if (debug) {
-        console.warn('[giveAndTake][userConfig] failed to load game context', {
+  console.warn('[spreadTheWealth][userConfig] failed to load game context', {
           gameId,
           error: err instanceof Error ? err.message : String(err),
         });
@@ -45,7 +45,7 @@ export async function buildGiveAndTakeUserConfig(input: BuildInput = {}): Promis
   const choices: ModeUserConfigChoice[] = buildSpreadChoices(homeLabel, skipResolveStep);
 
   if (debug) {
-    console.log('[giveAndTake][userConfig] prepared choices', {
+  console.log('[spreadTheWealth][userConfig] prepared choices', {
       gameId,
       choiceCount: choices.length,
       skipResolveStep,
@@ -77,12 +77,20 @@ export async function buildGiveAndTakeUserConfig(input: BuildInput = {}): Promis
 
 function buildSpreadChoices(homeLabel: string, skipResolveStep: boolean): ModeUserConfigChoice[] {
   const choices: ModeUserConfigChoice[] = [];
-  for (let magnitude = MIN_MAGNITUDE; magnitude <= MAX_MAGNITUDE; magnitude += STEP) {
+
+  for (let magnitude = MIN_MAGNITUDE; magnitude <= MAX_MAGNITUDE + 1e-9; magnitude += STEP) {
     const numeric = Number(magnitude.toFixed(1));
+
+    if (numeric === 0) {
+      choices.push(buildChoice(0, homeLabel, skipResolveStep));
+      continue;
+    }
+
     const negative = -numeric;
     choices.push(buildChoice(negative, homeLabel, skipResolveStep));
     choices.push(buildChoice(numeric, homeLabel, skipResolveStep));
   }
+
   return choices;
 }
 

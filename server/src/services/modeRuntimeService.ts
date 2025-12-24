@@ -19,7 +19,6 @@ export type ModeUserConfigInput = {
 export interface ModePreviewResult {
   summary: string;
   description: string;
-  secondary?: string;
   options: string[];
   winningCondition?: string;
   errors: string[];
@@ -63,11 +62,9 @@ export async function buildModePreview(
     definition.label,
   );
   const description = safeLabel(
-    renderModeTemplate(definition.descriptionTemplate, context),
+    renderModeTemplate(definition.matchupTemplate, context),
     summary,
   );
-  const secondaryRaw = renderModeTemplate(definition.secondaryDescriptionTemplate, context);
-  const secondary = secondaryRaw && secondaryRaw.trim().length ? secondaryRaw : undefined;
   const winningCondition = renderModeTemplate(definition.winningConditionTemplate, context);
   const options = computeModeOptions(definition, context);
   const errors = runModeValidator(definition.finalizeValidatorExpression, context);
@@ -75,7 +72,6 @@ export async function buildModePreview(
   return {
     summary,
     description,
-    secondary,
     winningCondition: winningCondition && winningCondition.trim().length ? winningCondition : undefined,
     options,
     errors,

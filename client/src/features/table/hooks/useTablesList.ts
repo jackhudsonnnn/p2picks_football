@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { createTable, fetchUserTables } from '../services/tableService';
+import { createTable, fetchUserTables, subscribeToUserTables } from '../services/tableService';
 import type { TableListItem } from '../types';
 
 export function useTablesList(userId?: string) {
@@ -24,11 +24,21 @@ export function useTablesList(userId?: string) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  useEffect(() => {
+    if (!userId) return;
+    const channel = subscribeToUserTables(userId, () => {
+      refresh();
+    });
+    return () => {
+      try { channel?.unsubscribe(); } catch (err) { console.warn('Failed to unsubscribe user table channel', err); }
+    };
+  }, [userId, refresh]);
+
   const create = useCallback(async (name: string) => {
     if (!userId) throw new Error('Not authenticated');
     const table = await createTable(name, userId);
     setTables((prev) => [table, ...prev]);
-  return table;
+    return table;
   }, [userId]);
 
   return { tables, loading, error, refresh, create } as const;

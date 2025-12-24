@@ -7,7 +7,7 @@ import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../e
 const SPREAD_MIN = -99.5;
 const SPREAD_MAX = 99.5;
 
-interface GiveAndTakeConfig {
+interface SpreadTheWealthConfig {
   nfl_game_id?: string | null;
   home_team_id?: string | null;
   home_team_name?: string | null;
@@ -19,14 +19,14 @@ interface GiveAndTakeConfig {
   resolve_at?: string | null;
 }
 
-export async function prepareGiveAndTakeConfig({
+export async function prepareSpreadTheWealthConfig({
   bet,
   config,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const nextConfig = { ...config } as GiveAndTakeConfig;
+  const nextConfig = { ...config } as SpreadTheWealthConfig;
 
   if (!nextConfig.nfl_game_id) {
     nextConfig.nfl_game_id = bet.nfl_game_id ?? null;
@@ -85,12 +85,14 @@ function normalizeSpread(raw: unknown): number | null {
   const numeric = toNumber(raw);
   if (numeric == null) return null;
   if (numeric < SPREAD_MIN || numeric > SPREAD_MAX) return null;
-  if (Math.abs(numeric) < 0.5) return null;
-  const rounded = Math.round(numeric * 10) / 10;
-  const scaled = Math.round(rounded * 2);
-  if (!Number.isFinite(rounded) || !Number.isInteger(scaled)) return null;
-  if (Math.abs(scaled) % 2 !== 1) return null; // enforce .5 increments
-  return scaled / 2;
+
+  // Accept whole numbers and .5 increments
+  const scaled = Math.round(numeric * 2);
+  if (Math.abs(numeric * 2 - scaled) > 1e-9) return null;
+  if (!Number.isInteger(scaled)) return null;
+  const normalized = scaled / 2;
+  if (!Number.isFinite(normalized)) return null;
+  return normalized;
 }
 
 function toNumber(raw: unknown): number | null {

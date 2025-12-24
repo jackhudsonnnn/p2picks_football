@@ -1,11 +1,11 @@
 import type { ModeOverview } from '../../shared/types';
 
-export const giveAndTakeOverview: ModeOverview = {
-  key: 'give_and_take',
-  label: 'Give And Take',
+export const spreadTheWealthOverview: ModeOverview = {
+  key: 'spread_the_wealth',
+  label: 'Spread The Wealth',
   tagline: 'Will the home team cover the chosen spread?',
   description:
-    'Give And Take lets the table decide a custom spread for the matchup. The home team receives the spread value and everyone bets on which side covers when the game ends.',
+    'Spread The Wealth lets the table decide a custom spread for the matchup. The home team receives the spread value and everyone bets on which side covers when the game ends. Whole-number spreads allow a Tie outcome.',
   proposerConfiguration: [
     'Set the numeric spread applied to the home team. The value must end in .5 so there is always a decision.'
   ],
@@ -18,7 +18,7 @@ export const giveAndTakeOverview: ModeOverview = {
     'Add the spread to the home team’s final score. If the adjusted home total is higher, everyone on Home Team wins; otherwise the Away Team covers.',
   notes: [
     'The spread always modifies the home team (Team 1).',
-    'Because the spread ends in .5, pushes cannot occur in normal play.'
+    'Whole-number spreads introduce a Tie option; half-point spreads behave as before (no pushes).'
   ],
   example: {
     title: 'Example',

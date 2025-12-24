@@ -16,10 +16,8 @@ export const kingOfTheHillModule: ModeModule = {
     key: 'king_of_the_hill',
     label: 'King Of The Hill',
     summaryTemplate: '`King Of The Hill`',
-    descriptionTemplate:
+    matchupTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
-    secondaryDescriptionTemplate:
-      '`First to ${config.resolve_value ?? "the selected value"} ${(config.stat_label || config.stat || "stat")} (${(config.progress_mode === "cumulative" ? "cumulative" : "Starting Now")} tracking).`',
     winningConditionTemplate:
       '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} — ${(config.progress_mode === "cumulative" ? "first to hit" : "first to add")} ${(config.resolve_value_label || config.resolve_value || KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE)} ${(config.stat_label || config.stat || "stat")}`',
     optionsExpression:

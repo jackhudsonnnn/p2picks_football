@@ -2,7 +2,7 @@ import type { RefinedGameDoc } from '../../../utils/gameData';
 import { formatNumber, isApproximatelyEqual, normalizeNumber } from '../../../utils/number';
 import { listTeams, normalizeTeamId } from '../../shared/teamUtils';
 
-export interface GiveAndTakeConfig {
+export interface SpreadTheWealthConfig {
   spread?: string | null;
   spread_value?: number | null;
   spread_label?: string | null;
@@ -13,15 +13,15 @@ export interface GiveAndTakeConfig {
   nfl_game_id?: string | null;
 }
 
-export interface GiveAndTakeEvaluationResult {
+export interface SpreadTheWealthEvaluationResult {
   homeScore: number;
   awayScore: number;
   adjustedHomeScore: number;
   spread: number;
-  decision: 'home' | 'away' | 'push';
+  decision: 'home' | 'away' | 'tie';
 }
 
-export function normalizeSpread(config: GiveAndTakeConfig): number | null {
+export function normalizeSpread(config: SpreadTheWealthConfig): number | null {
   if (typeof config.spread_value === 'number' && Number.isFinite(config.spread_value)) {
     return config.spread_value;
   }
@@ -32,7 +32,7 @@ export function normalizeSpread(config: GiveAndTakeConfig): number | null {
   return null;
 }
 
-export function describeSpread(config: GiveAndTakeConfig): string | null {
+export function describeSpread(config: SpreadTheWealthConfig): string | null {
   const label = typeof config.spread_label === 'string' ? config.spread_label.trim() : '';
   if (label.length) return label;
   if (typeof config.spread === 'string' && config.spread.trim().length) {
@@ -44,7 +44,7 @@ export function describeSpread(config: GiveAndTakeConfig): string | null {
   return null;
 }
 
-export function resolveTeams(doc: RefinedGameDoc, config: GiveAndTakeConfig): { homeTeam: any; awayTeam: any } {
+export function resolveTeams(doc: RefinedGameDoc, config: SpreadTheWealthConfig): { homeTeam: any; awayTeam: any } {
   const teams = listTeams(doc) as any[];
   let home = lookupTeam(teams, config.home_team_id, config.home_team_name, 'home');
   let away = lookupTeam(teams, config.away_team_id, config.away_team_name, 'away');
@@ -55,11 +55,11 @@ export function resolveTeams(doc: RefinedGameDoc, config: GiveAndTakeConfig): { 
   return { homeTeam: home, awayTeam: away };
 }
 
-export function evaluateGiveAndTake(
+export function evaluateSpreadTheWealth(
   doc: RefinedGameDoc,
-  config: GiveAndTakeConfig,
+  config: SpreadTheWealthConfig,
   spread: number,
-): GiveAndTakeEvaluationResult {
+): SpreadTheWealthEvaluationResult {
   const { homeTeam, awayTeam } = resolveTeams(doc, config);
   const homeScore = normalizeNumber((homeTeam as any)?.score);
   const awayScore = normalizeNumber((awayTeam as any)?.score);
@@ -70,7 +70,7 @@ export function evaluateGiveAndTake(
       awayScore,
       adjustedHomeScore,
       spread,
-      decision: 'push',
+      decision: 'tie',
     };
   }
   return {

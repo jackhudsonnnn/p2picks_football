@@ -11,10 +11,8 @@ export const propHuntModule: ModeModule = {
     key: 'prop_hunt',
     label: 'Prop Hunt',
     summaryTemplate: '`Prop Hunt`',
-    descriptionTemplate:
+    matchupTemplate:
       '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
-    secondaryDescriptionTemplate:
-      '`Track ${(config.player_name || config.player_id || "Selected Player")}\'s ${(config.stat_label || config.stat || "stat")} ${(config.progress_mode === "cumulative" ? "total" : "net-new output")} against ${(config.line_label || config.line || "the line")} by ${(config.resolve_at || "settle time")}`',
     winningConditionTemplate:
       '`${(config.player_name || config.player_id || "the player")} over/under ${(config.line_label || config.line || "the line")} ${(config.stat_label || config.stat || "stat")} ${(config.progress_mode === "cumulative" ? "" : "now")} until ${(config.resolve_at || "settle time")}`',
     optionsExpression: "['pass','Over','Under']",

@@ -1,7 +1,7 @@
 import type { ModeOverview } from '../../shared/types';
 
 export const totalDisasterOverview: ModeOverview = {
-  key: 'spread_the_wealth',
+  key: 'total_disaster',
   label: 'Total Disaster',
   tagline: 'Pick whether the total points go over or under the line.',
   description:

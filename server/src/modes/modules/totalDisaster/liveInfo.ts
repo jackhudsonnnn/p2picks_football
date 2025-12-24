@@ -9,7 +9,7 @@ export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise
   const typedConfig = config as TotalDisasterConfig;
 
   const baseResult: ModeLiveInfo = {
-    modeKey: 'spread_the_wealth',
+  modeKey: 'total_disaster',
     modeLabel: 'Total Disaster',
     fields: [],
   };

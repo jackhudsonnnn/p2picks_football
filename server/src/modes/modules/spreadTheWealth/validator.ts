@@ -7,20 +7,20 @@ import { normalizeStatus } from '../../shared/gameDocProvider';
 import { formatNumber } from '../../../utils/number';
 import { choiceLabel } from '../../shared/teamUtils';
 import {
-  GiveAndTakeConfig,
+  SpreadTheWealthConfig,
   describeSpread,
-  evaluateGiveAndTake,
+  evaluateSpreadTheWealth,
   normalizeSpread,
 } from './evaluator';
 
-export class GiveAndTakeValidatorService {
+export class SpreadTheWealthValidatorService {
   private readonly kernel: ModeRuntimeKernel;
-  private readonly modeLabel = 'Give And Take';
-  private readonly resultEvent = 'give_and_take_result';
+  private readonly modeLabel = 'Spread The Wealth';
+  private readonly resultEvent = 'spread_the_wealth_result';
 
   constructor() {
     this.kernel = new ModeRuntimeKernel({
-      modeKey: 'give_and_take',
+      modeKey: 'spread_the_wealth',
       dedupeGameFeed: true,
       onGameEvent: (event) => this.handleGameFeedEvent(event.gameId, event.doc),
     });
@@ -37,12 +37,12 @@ export class GiveAndTakeValidatorService {
   private async handleGameFeedEvent(gameId: string, doc: RefinedGameDoc): Promise<void> {
     try {
       if (normalizeStatus(doc.status) !== 'STATUS_FINAL') return;
-      const bets = await betRepository.listPendingBets('give_and_take', { gameId });
+      const bets = await betRepository.listPendingBets('spread_the_wealth', { gameId });
       for (const bet of bets) {
         await this.resolveBet(bet.bet_id, doc);
       }
     } catch (err) {
-      console.error('[giveAndTake] game feed error', { gameId }, err);
+      console.error('[spreadTheWealth] game feed error', { gameId }, err);
     }
   }
 
@@ -50,7 +50,7 @@ export class GiveAndTakeValidatorService {
     try {
       const config = await this.getConfigForBet(betId);
       if (!config) {
-        console.warn('[giveAndTake] missing config; skipping bet', { betId });
+        console.warn('[spreadTheWealth] missing config; skipping bet', { betId });
         return;
       }
       const spread = normalizeSpread(config);
@@ -62,28 +62,51 @@ export class GiveAndTakeValidatorService {
         );
         return;
       }
-      const evaluation = evaluateGiveAndTake(doc, config, spread);
+      const evaluation = evaluateSpreadTheWealth(doc, config, spread);
+
+      const allowsTie = Number.isInteger(spread);
 
       const homeChoice = choiceLabel(config.home_team_name, config.home_team_id, 'Home Team');
       const awayChoice = choiceLabel(config.away_team_name, config.away_team_id, 'Away Team');
 
-      if (evaluation.decision === 'push') {
-        await this.washBet(
-          betId,
-          {
-            reason: 'push',
-            home_score: evaluation.homeScore,
-            away_score: evaluation.awayScore,
-            spread,
-          },
-          `Adjusted home score matched away score (${formatNumber(evaluation.adjustedHomeScore)} vs ${formatNumber(
-            evaluation.awayScore,
-          )}).`,
-        );
+      if (evaluation.decision === 'tie') {
+        if (!allowsTie) {
+          await this.washBet(
+            betId,
+            {
+              reason: 'push',
+              home_score: evaluation.homeScore,
+              away_score: evaluation.awayScore,
+              spread,
+            },
+            `Adjusted home score matched away score (${formatNumber(evaluation.adjustedHomeScore)} vs ${formatNumber(
+              evaluation.awayScore,
+            )}).`,
+          );
+          return;
+        }
+
+        const updatedTie = await betRepository.setWinningChoice(betId, 'Tie');
+        if (!updatedTie) return;
+        await betRepository.recordHistory(betId, this.resultEvent, {
+          outcome: 'Tie',
+          home_score: evaluation.homeScore,
+          away_score: evaluation.awayScore,
+          adjusted_home: evaluation.adjustedHomeScore,
+          spread,
+          spread_label: config.spread_label ?? config.spread ?? null,
+          captured_at: new Date().toISOString(),
+        });
         return;
       }
 
-      const winningChoice = evaluation.decision === 'home' ? homeChoice : awayChoice;
+      const winningChoice = allowsTie
+        ? evaluation.decision === 'home'
+          ? 'Over'
+          : 'Under'
+        : evaluation.decision === 'home'
+        ? homeChoice
+        : awayChoice;
       const updated = await betRepository.setWinningChoice(betId, winningChoice);
       if (!updated) return;
       await betRepository.recordHistory(betId, this.resultEvent, {
@@ -96,17 +119,17 @@ export class GiveAndTakeValidatorService {
         captured_at: new Date().toISOString(),
       });
     } catch (err) {
-      console.error('[giveAndTake] resolve bet error', { betId }, err);
+      console.error('[spreadTheWealth] resolve bet error', { betId }, err);
     }
   }
 
-  private async getConfigForBet(betId: string): Promise<GiveAndTakeConfig | null> {
+  private async getConfigForBet(betId: string): Promise<SpreadTheWealthConfig | null> {
     try {
       const record = await fetchModeConfig(betId);
-      if (!record || record.mode_key !== 'give_and_take') return null;
-      return record.data as GiveAndTakeConfig;
+      if (!record || record.mode_key !== 'spread_the_wealth') return null;
+      return record.data as SpreadTheWealthConfig;
     } catch (err) {
-      console.error('[giveAndTake] fetch config error', { betId }, err);
+      console.error('[spreadTheWealth] fetch config error', { betId }, err);
       return null;
     }
   }
@@ -122,4 +145,4 @@ export class GiveAndTakeValidatorService {
   }
 }
 
-export const giveAndTakeValidator = new GiveAndTakeValidatorService();
+export const spreadTheWealthValidator = new SpreadTheWealthValidatorService();

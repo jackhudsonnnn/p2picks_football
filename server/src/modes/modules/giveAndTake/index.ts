@@ -1,1 +1,0 @@
-export { giveAndTakeModule } from './definition';
