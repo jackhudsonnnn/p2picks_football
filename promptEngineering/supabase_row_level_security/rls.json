@@ -29,13 +29,6 @@
   },
   {
     "table_name": "bet_proposals",
-    "policy_name": "Allow members to create bet proposals in their tables",
-    "command": "INSERT",
-    "using_expression": null,
-    "check_expression": "((proposer_user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM table_members tm\n  WHERE ((tm.table_id = bet_proposals.table_id) AND (tm.user_id = auth.uid())))))"
-  },
-  {
-    "table_name": "bet_proposals",
     "policy_name": "Allow members to view bet proposals in their tables",
     "command": "SELECT",
     "using_expression": "(EXISTS ( SELECT 1\n   FROM table_members tm\n  WHERE ((tm.table_id = bet_proposals.table_id) AND (tm.user_id = auth.uid()))))",
@@ -43,10 +36,24 @@
   },
   {
     "table_name": "bet_proposals",
-    "policy_name": "Allow proposers to update their open bet proposals",
+    "policy_name": "bet_proposals_delete_none",
+    "command": "DELETE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "policy_name": "bet_proposals_insert_scoped_active_only",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((proposer_user_id = auth.uid()) AND is_user_member_of_table(table_id, auth.uid()) AND (bet_status = 'active'::text) AND (winning_choice IS NULL) AND (resolution_time IS NULL))"
+  },
+  {
+    "table_name": "bet_proposals",
+    "policy_name": "bet_proposals_update_none",
     "command": "UPDATE",
-    "using_expression": "((proposer_user_id = auth.uid()) AND (bet_status = 'active'::text) AND ((close_time IS NULL) OR (now() < close_time)))",
-    "check_expression": "((proposer_user_id = auth.uid()) AND ((close_time IS NULL) OR (now() < close_time)))"
+    "using_expression": "false",
+    "check_expression": "false"
   },
   {
     "table_name": "friends",

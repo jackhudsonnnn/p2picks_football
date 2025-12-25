@@ -17,6 +17,22 @@
   },
   {
     "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+  },
+  {
+    "table_name": "bet_participations",
     "column_name": "user_id",
     "data_type": "uuid",
     "is_nullable": "NO",
@@ -29,7 +45,23 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
     "key_info": "FOREIGN KEY -> tables(table_id)"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
   },
   {
     "table_name": "bet_participations",
