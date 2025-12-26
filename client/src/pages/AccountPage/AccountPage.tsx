@@ -3,6 +3,7 @@ import "./AccountPage.css";
 import { AccountNavigation, type AccountTab } from "@components/Social/AccountNavigation/AccountNavigation";
 import { ProfileCard } from "@components/Social/ProfileCard/ProfileCard";
 import { FriendsManager } from "@components/Social/FriendsManager/FriendsManager";
+import { FriendRequests } from "@components/Social/FriendRequests/FriendRequests";
 import { useAuth } from "@features/auth";
 import { useAuthProfile } from "@features/social/hooks";
 
@@ -59,10 +60,7 @@ export const AccountPage: React.FC = () => {
             hidden={activeTab !== "friendRequests"}
           >
             {activeTab === "friendRequests" && (
-              <section className="profile-section account-placeholder">
-                <h3>Friend Requests</h3>
-                <p>Friend requests will appear here soon. Stay tuned!</p>
-              </section>
+              <FriendRequests />
             )}
           </div>
         </section>

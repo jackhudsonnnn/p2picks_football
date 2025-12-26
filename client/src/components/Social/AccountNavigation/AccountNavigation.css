@@ -1,11 +1,11 @@
 .account-navigation {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
   gap: var(--spacing-xs);
   border-bottom: 1px solid var(--neutral-700);
-  padding: var(--space-lg) var(--space-xl) var(--spacing-xs);
+  padding-bottom: 1px;
+  margin-bottom: var(--spacing-md);
 }
 
 .account-greeting {
@@ -21,19 +21,16 @@
 }
 
 .account-tab-section {
-  flex: 0 1 auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .account-tab-buttons {
   display: flex;
-  gap: var(--spacing-xl);
-  overflow-x: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.account-tab-buttons::-webkit-scrollbar {
-  display: none;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  overflow: hidden;
 }
 
 .account-tab-button {

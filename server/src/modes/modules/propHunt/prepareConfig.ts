@@ -1,6 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
-import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
 
@@ -18,8 +18,10 @@ interface PropHuntConfig {
   line_value?: number | null;
   home_team_id?: string | null;
   home_team_name?: string | null;
+  home_team_abbrev?: string | null;
   away_team_id?: string | null;
   away_team_name?: string | null;
+  away_team_abbrev?: string | null;
   bet_id?: string | null;
   current_stat_value?: number | null;
   progress_mode?: string | null;
@@ -114,8 +116,10 @@ function normalizeConfigPayload(config: PropHuntConfig): Record<string, unknown>
     line_value: config.line_value ?? null,
     home_team_id: config.home_team_id ?? null,
     home_team_name: config.home_team_name ?? null,
+    home_team_abbrev: config.home_team_abbrev ?? null,
     away_team_id: config.away_team_id ?? null,
     away_team_name: config.away_team_name ?? null,
+    away_team_abbrev: config.away_team_abbrev ?? null,
     current_stat_value: config.current_stat_value ?? null,
     progress_mode: normalizeProgressMode(config.progress_mode),
   };
@@ -222,11 +226,17 @@ function enrichWithTeamContext(config: PropHuntConfig, doc: RefinedGameDoc): voi
   if (!config.home_team_name) {
     config.home_team_name = extractTeamName(homeTeam);
   }
+  if (!config.home_team_abbrev) {
+    config.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+  }
   if (!config.away_team_id) {
     config.away_team_id = extractTeamId(awayTeam);
   }
   if (!config.away_team_name) {
     config.away_team_name = extractTeamName(awayTeam);
+  }
+  if (!config.away_team_abbrev) {
+    config.away_team_abbrev = extractTeamAbbreviation(awayTeam);
   }
 }
 

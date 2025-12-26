@@ -13,7 +13,7 @@ export const totalDisasterModule: ModeModule = {
     summaryTemplate:
       'Total Disaster',
     matchupTemplate:
-      '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
+      '`${(config.home_team_abbrev || config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_abbrev || config.away_team_name || config.away_team_id || "Away Team")}`',
     winningConditionTemplate:
       '`Total points between ${(config.home_team_name || config.home_team_id || "Home Team")} and ${(config.away_team_name || config.away_team_id || "Away Team")} over/under ${(config.line_label || config.line || "line")}`',
     optionsExpression: "['pass','Over','Under']",

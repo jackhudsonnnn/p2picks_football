@@ -1,18 +1,7 @@
 import type { ModeOverview } from '@shared/types/modes';
 import { fetchJSON } from '@data/clients/restClient';
 
-export interface ModeConfigRecord {
-  mode_key: string;
-  data: Record<string, unknown>;
-}
-
-export type ModePreviewPayload = {
-  summary?: string;
-  description?: string;
-  secondary?: string;
-  winningCondition?: string;
-  options?: string[];
-};
+import type { ModeConfigRecord, ModePreviewPayload } from '@shared/types/modes';
 
 const previewCache = new Map<string, ModePreviewPayload>();
 

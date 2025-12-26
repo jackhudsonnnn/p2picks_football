@@ -1,6 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
-import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 
 export async function prepareEitherOrConfig({
@@ -27,8 +27,10 @@ export async function prepareEitherOrConfig({
     bet_id?: string | null;
     home_team_id?: string | null;
     home_team_name?: string | null;
+    home_team_abbrev?: string | null;
     away_team_id?: string | null;
     away_team_name?: string | null;
+    away_team_abbrev?: string | null;
     progress_mode?: string | null;
   };
 
@@ -133,8 +135,10 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
     resolve_at: config.resolve_at ?? null,
     home_team_id: config.home_team_id ?? null,
     home_team_name: config.home_team_name ?? null,
+    home_team_abbrev: config.home_team_abbrev ?? null,
     away_team_id: config.away_team_id ?? null,
     away_team_name: config.away_team_name ?? null,
+    away_team_abbrev: config.away_team_abbrev ?? null,
     progress_mode: normalizeProgressMode(config.progress_mode),
   } as Record<string, unknown>;
 }
@@ -196,8 +200,10 @@ function enrichWithTeamContext(
   cfg: {
     home_team_id?: string | null;
     home_team_name?: string | null;
+    home_team_abbrev?: string | null;
     away_team_id?: string | null;
     away_team_name?: string | null;
+    away_team_abbrev?: string | null;
   },
   doc: RefinedGameDoc,
 ) {
@@ -210,11 +216,17 @@ function enrichWithTeamContext(
   if (!cfg.home_team_name) {
     cfg.home_team_name = extractTeamName(homeTeam);
   }
+  if (!cfg.home_team_abbrev) {
+    cfg.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+  }
   if (!cfg.away_team_id) {
     cfg.away_team_id = extractTeamId(awayTeam);
   }
   if (!cfg.away_team_name) {
     cfg.away_team_name = extractTeamName(awayTeam);
+  }
+  if (!cfg.away_team_abbrev) {
+    cfg.away_team_abbrev = extractTeamAbbreviation(awayTeam);
   }
 }
 

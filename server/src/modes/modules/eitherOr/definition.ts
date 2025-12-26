@@ -12,7 +12,7 @@ export const eitherOrModule: ModeModule = {
     label: 'Either Or',
     summaryTemplate: '`Either Or`',
     matchupTemplate:
-      '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
+      '`${(config.home_team_abbrev || config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_abbrev || config.away_team_name || config.away_team_id || "Away Team")}`',
     winningConditionTemplate:
       '`${(config.player1_name || config.player1_id || "Player 1")} vs ${(config.player2_name || config.player2_id || "Player 2")} ${(config.progress_mode === "cumulative" ? "— total" : "— net gain in")} ${(config.stat_label || config.stat || "stat")} until ${(config.resolve_at || "the selected time")}`',
     optionsExpression:

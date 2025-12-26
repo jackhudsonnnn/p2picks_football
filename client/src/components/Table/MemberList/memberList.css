@@ -59,6 +59,19 @@
   border-radius: 6px;
 }
 
+.member-row-clickable {
+  cursor: pointer;
+}
+
+.member-row-clickable:hover {
+  background-color: var(--neutral-700);
+}
+
+.member-row-busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .member-row-alt {
   background-color: var(--neutral-800);
 }

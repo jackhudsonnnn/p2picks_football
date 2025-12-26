@@ -12,7 +12,7 @@ export const spreadTheWealthModule: ModeModule = {
     label: 'Spread The Wealth',
     summaryTemplate: 'Spread The Wealth',
     matchupTemplate:
-      '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
+      '`${(config.home_team_abbrev || config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_abbrev || config.away_team_name || config.away_team_id || "Away Team")}`',
     winningConditionTemplate:
       '`Highest score between ${(config.home_team_name || config.home_team_id || "Home Team")} (${(config.spread_label || config.spread || "adjusted")} points) and ${(config.away_team_name || config.away_team_id || "Away Team")}`',
     optionsExpression:

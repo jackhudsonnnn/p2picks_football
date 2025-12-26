@@ -1,0 +1,50 @@
+.friend-request-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-800);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: var(--gray-900);
+}
+
+.friend-request-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.friend-request-username {
+  font-weight: 600;
+}
+
+.friend-request-meta {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  text-transform: capitalize;
+}
+
+.friend-request-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.friend-request-status {
+  color: var(--gray-300);
+  text-transform: capitalize;
+}
+
+@media (max-width: 640px) {
+  .friend-request-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .friend-request-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}

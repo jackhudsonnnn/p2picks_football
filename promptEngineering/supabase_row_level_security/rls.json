@@ -56,6 +56,27 @@
     "check_expression": "false"
   },
   {
+    "table_name": "friend_requests",
+    "policy_name": "friend_requests_insert",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((auth.uid() = sender_user_id) AND (sender_user_id <> receiver_user_id))"
+  },
+  {
+    "table_name": "friend_requests",
+    "policy_name": "friend_requests_select",
+    "command": "SELECT",
+    "using_expression": "((auth.uid() = sender_user_id) OR (auth.uid() = receiver_user_id))",
+    "check_expression": null
+  },
+  {
+    "table_name": "friend_requests",
+    "policy_name": "friend_requests_update",
+    "command": "UPDATE",
+    "using_expression": "((auth.uid() = sender_user_id) OR (auth.uid() = receiver_user_id))",
+    "check_expression": "((auth.uid() = sender_user_id) OR (auth.uid() = receiver_user_id))"
+  },
+  {
     "table_name": "friends",
     "policy_name": "Allow users to add friends",
     "command": "INSERT",

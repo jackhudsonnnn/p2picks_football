@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import { getRedisClient } from '../modes/shared/redisClient';
 import { createFriendRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
 
+type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled';
+
 const RATE_LIMIT_MESSAGE = 'Friend request rate limit exceeded. Please wait before adding more friends.';
 
 let friendRateLimiter: ReturnType<typeof createFriendRateLimiter> | null = null;
@@ -20,6 +22,65 @@ function applyRateLimitHeaders(res: Response, result: RateLimitResult) {
   if (result.retryAfterSeconds !== null) {
     res.setHeader('Retry-After', result.retryAfterSeconds.toString());
   }
+}
+
+function normalizeUsername(raw: string): string {
+  return raw.replace(/[^a-zA-Z0-9_]/g, '');
+}
+
+async function fetchUserMap(supabase: NonNullable<Request['supabase']>, userIds: string[]) {
+  const uniqueIds = Array.from(new Set(userIds));
+  if (!uniqueIds.length) return new Map<string, { user_id: string; username: string | null }>();
+  const { data, error } = await supabase
+    .from('users')
+    .select('user_id, username')
+    .in('user_id', uniqueIds);
+  if (error) throw error;
+  return new Map((data ?? []).map((u) => [u.user_id, u as { user_id: string; username: string | null }]));
+}
+
+async function ensureFriendship(supabase: NonNullable<Request['supabase']>, userIdA: string, userIdB: string) {
+  const { data: existing, error: existingError } = await supabase
+    .from('friends')
+    .select('user_id1, user_id2')
+    .or(
+      `and(user_id1.eq.${userIdA},user_id2.eq.${userIdB}),and(user_id1.eq.${userIdB},user_id2.eq.${userIdA})`,
+    )
+    .maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) return existing;
+  const { error: insertError } = await supabase.from('friends').insert([
+    {
+      user_id1: userIdA,
+      user_id2: userIdB,
+    },
+  ]);
+  if (insertError) throw insertError;
+  return { user_id1: userIdA, user_id2: userIdB };
+}
+
+async function loadFriendRequest(
+  supabase: NonNullable<Request['supabase']>,
+  requestId: string,
+): Promise<
+  | {
+      request_id: string;
+      sender_user_id: string;
+      receiver_user_id: string;
+      status: FriendRequestStatus;
+      created_at: string;
+      responded_at: string | null;
+    }
+  | null
+> {
+  const { data, error } = await supabase
+    .from('friend_requests')
+    .select('request_id, sender_user_id, receiver_user_id, status, created_at, responded_at')
+    .eq('request_id', requestId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as any;
 }
 
 export async function addFriend(req: Request, res: Response): Promise<void> {
@@ -48,7 +109,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const normalizedUsername = username.replace(/[^a-zA-Z0-9_]/g, '');
+    const normalizedUsername = normalizeUsername(username);
 
     if (!normalizedUsername) {
       res.status(400).json({ error: 'username must contain letters, numbers, or underscores' });
@@ -77,6 +138,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Already friends?
     const { data: existingRelation, error: relationError } = await supabase
       .from('friends')
       .select('user_id1, user_id2')
@@ -96,27 +158,231 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { error: insertError } = await supabase.from('friends').insert([
-      {
-        user_id1: authUser.id,
-        user_id2: targetUser.user_id,
-      },
-    ]);
+    // Check for an existing pending request from current user to target
+    const { data: existingOutgoing, error: existingOutgoingError } = await supabase
+      .from('friend_requests')
+      .select('request_id')
+      .eq('sender_user_id', authUser.id)
+      .eq('receiver_user_id', targetUser.user_id)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (existingOutgoingError) {
+      console.error('[friendController] Failed to verify existing outgoing request', existingOutgoingError);
+      res.status(500).json({ error: 'Unable to verify current request status' });
+      return;
+    }
+
+    if (existingOutgoing) {
+      res.status(409).json({ error: 'Friend request already sent to this user' });
+      return;
+    }
+
+    // If target user already sent a pending request, auto-accept by flipping their request to accepted
+    const { data: incomingRequest, error: incomingError } = await supabase
+      .from('friend_requests')
+      .select('request_id, sender_user_id, receiver_user_id, status')
+      .eq('sender_user_id', targetUser.user_id)
+      .eq('receiver_user_id', authUser.id)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (incomingError) {
+      console.error('[friendController] Failed to lookup incoming request', incomingError);
+      res.status(500).json({ error: 'Unable to verify incoming requests' });
+      return;
+    }
+
+    if (incomingRequest) {
+      const { error: acceptError } = await supabase
+        .from('friend_requests')
+        .update({ status: 'accepted', responded_at: new Date().toISOString() })
+        .eq('request_id', incomingRequest.request_id);
+
+      if (acceptError) {
+        console.error('[friendController] Failed to accept existing request', acceptError);
+        res.status(500).json({ error: 'Failed to accept existing request' });
+        return;
+      }
+
+      try {
+        await ensureFriendship(supabase, authUser.id, targetUser.user_id);
+      } catch (friendErr) {
+        console.error('[friendController] Failed to finalize friendship', friendErr);
+        res.status(500).json({ error: 'Failed to finalize friendship' });
+        return;
+      }
+
+      res.status(201).json({
+        friend: {
+          user_id: targetUser.user_id,
+          username: targetUser.username,
+        },
+        status: 'accepted',
+      });
+      return;
+    }
+
+    const insertPayload = {
+      sender_user_id: authUser.id,
+      receiver_user_id: targetUser.user_id,
+      status: 'pending' as FriendRequestStatus,
+    };
+
+    const { data: requestRow, error: insertError } = await supabase
+      .from('friend_requests')
+      .insert([insertPayload])
+      .select('request_id, sender_user_id, receiver_user_id, status, created_at, responded_at')
+      .single();
 
     if (insertError) {
-      console.error('[friendController] Failed to add friend', insertError);
-      res.status(500).json({ error: 'Failed to add friend' });
+      console.error('[friendController] Failed to create friend request', insertError);
+      res.status(500).json({ error: 'Failed to create friend request' });
       return;
     }
 
     res.status(201).json({
-      friend: {
-        user_id: targetUser.user_id,
-        username: targetUser.username,
+      request: {
+        ...requestRow,
+        sender: { user_id: authUser.id, username: authUser.user_metadata?.username ?? null },
+        receiver: { user_id: targetUser.user_id, username: targetUser.username },
       },
+      status: 'pending',
     });
   } catch (err) {
     console.error('[friendController] Unexpected error', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function listFriendRequests(req: Request, res: Response): Promise<void> {
+  try {
+    const supabase = req.supabase;
+    const authUser = req.authUser;
+    if (!supabase || !authUser) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('friend_requests')
+      .select('request_id, sender_user_id, receiver_user_id, status, created_at, responded_at')
+      .or(`sender_user_id.eq.${authUser.id},receiver_user_id.eq.${authUser.id}`)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[friendController] Failed to list friend requests', error);
+      res.status(500).json({ error: 'Failed to load friend requests' });
+      return;
+    }
+
+    const requests = data ?? [];
+    const userIds: string[] = [];
+    requests.forEach((r) => {
+      userIds.push(r.sender_user_id, r.receiver_user_id);
+    });
+
+    const userMap = await fetchUserMap(supabase, userIds);
+
+    res.json({
+      requests: requests.map((r) => ({
+        ...r,
+        sender: userMap.get(r.sender_user_id) ?? { user_id: r.sender_user_id, username: null },
+        receiver: userMap.get(r.receiver_user_id) ?? { user_id: r.receiver_user_id, username: null },
+      })),
+    });
+  } catch (err) {
+    console.error('[friendController] Unexpected error listing requests', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function respondToFriendRequest(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const action = req.params.action as 'accept' | 'decline' | 'cancel';
+  const requestId = req.params.requestId;
+
+  try {
+    const supabase = req.supabase;
+    const authUser = req.authUser;
+    if (!supabase || !authUser) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const request = await loadFriendRequest(supabase, requestId);
+    if (!request) {
+      res.status(404).json({ error: 'Friend request not found' });
+      return;
+    }
+
+    const isSender = request.sender_user_id === authUser.id;
+    const isReceiver = request.receiver_user_id === authUser.id;
+
+    if (!isSender && !isReceiver) {
+      res.status(403).json({ error: 'Not authorized to modify this request' });
+      return;
+    }
+
+    if (request.status !== 'pending' && action !== 'cancel') {
+      res.status(400).json({ error: 'Request is no longer pending' });
+      return;
+    }
+
+    if (action === 'accept' && !isReceiver) {
+      res.status(403).json({ error: 'Only the receiver can accept this request' });
+      return;
+    }
+    if (action === 'decline' && !isReceiver) {
+      res.status(403).json({ error: 'Only the receiver can decline this request' });
+      return;
+    }
+    if (action === 'cancel' && !isSender) {
+      res.status(403).json({ error: 'Only the sender can cancel this request' });
+      return;
+    }
+
+    const status: FriendRequestStatus =
+      action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'canceled';
+
+    const { data: updated, error: updateError } = await supabase
+      .from('friend_requests')
+      .update({ status, responded_at: new Date().toISOString() })
+      .eq('request_id', requestId)
+      .select('request_id, sender_user_id, receiver_user_id, status, created_at, responded_at')
+      .single();
+
+    if (updateError) {
+      console.error('[friendController] Failed to update friend request', updateError);
+      res.status(500).json({ error: 'Failed to update friend request' });
+      return;
+    }
+
+    if (status === 'accepted') {
+      const otherUserId = authUser.id === request.sender_user_id ? request.receiver_user_id : request.sender_user_id;
+      try {
+        await ensureFriendship(supabase, authUser.id, otherUserId);
+      } catch (friendErr) {
+        console.error('[friendController] Failed to finalize friendship after accept', friendErr);
+        res.status(500).json({ error: 'Failed to finalize friendship' });
+        return;
+      }
+    }
+
+    const userMap = await fetchUserMap(supabase, [request.sender_user_id, request.receiver_user_id]);
+
+    res.json({
+      request: {
+        ...updated,
+        sender: userMap.get(request.sender_user_id) ?? { user_id: request.sender_user_id, username: null },
+        receiver: userMap.get(request.receiver_user_id) ?? { user_id: request.receiver_user_id, username: null },
+      },
+      status,
+    });
+  } catch (err) {
+    console.error('[friendController] Unexpected error updating request', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 }

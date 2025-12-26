@@ -196,6 +196,14 @@ export function extractTeamName(team: Team | null | undefined): string | null {
   return value.length ? value : null;
 }
 
+export function extractTeamAbbreviation(team: Team | null | undefined): string | null {
+  if (!team) return null;
+  const raw = (team as any)?.abbreviation ?? (team as any)?.name ?? (team as any)?.teamId;
+  if (raw === undefined || raw === null) return null;
+  const value = String(raw).trim();
+  return value.length ? value : null;
+}
+
 function isTeamSide(team: Team, side: 'home' | 'away'): boolean {
   const homeAway = (team as any)?.homeAway;
   if (homeAway === undefined || homeAway === null) return false;

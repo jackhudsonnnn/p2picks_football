@@ -1,7 +1,7 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
-import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
 
 const SPREAD_MIN = -99.5;
@@ -11,8 +11,10 @@ interface SpreadTheWealthConfig {
   nfl_game_id?: string | null;
   home_team_id?: string | null;
   home_team_name?: string | null;
+  home_team_abbrev?: string | null;
   away_team_id?: string | null;
   away_team_name?: string | null;
+  away_team_abbrev?: string | null;
   spread?: string | null;
   spread_value?: number | null;
   spread_label?: string | null;
@@ -65,11 +67,17 @@ export async function prepareSpreadTheWealthConfig({
     if (!nextConfig.home_team_id) {
       nextConfig.home_team_id = extractTeamId(homeTeam);
     }
+    if (!nextConfig.home_team_abbrev) {
+      nextConfig.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+    }
     if (!nextConfig.home_team_name) {
       nextConfig.home_team_name = extractTeamName(homeTeam);
     }
     if (!nextConfig.away_team_id) {
       nextConfig.away_team_id = extractTeamId(awayTeam);
+    }
+    if (!nextConfig.away_team_abbrev) {
+      nextConfig.away_team_abbrev = extractTeamAbbreviation(awayTeam);
     }
     if (!nextConfig.away_team_name) {
       nextConfig.away_team_name = extractTeamName(awayTeam);

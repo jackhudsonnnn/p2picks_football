@@ -41,5 +41,7 @@ router.get('/tables/:tableId/messages/rate-limit-status', requireAuth, messageCo
 
 // Friends
 router.post('/friends', requireAuth, friendController.addFriend);
+router.get('/friend-requests', requireAuth, friendController.listFriendRequests);
+router.post('/friend-requests/:requestId/:action', requireAuth, friendController.respondToFriendRequest);
 
 export default router;

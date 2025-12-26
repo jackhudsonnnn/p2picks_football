@@ -4,12 +4,11 @@
   width: fit-content;
   margin-bottom: var(--spacing-sm);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(33, 150, 243, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .message.own-message {
   background-color: #192746;
-  border: 1px solid rgba(33, 150, 243, 0.25);
   align-self: flex-end;
 }
 
@@ -22,6 +21,7 @@
   align-self: center;
   margin-left: auto;
   margin-right: auto;
+  border: 1px solid rgba(0, 0, 0, 0.25);
 }
 
 .system-message {
@@ -29,11 +29,12 @@
   color: var(--text-secondary);
   font-size: var(--font-size-xl);
   margin: var(--spacing-xs) 0;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--neutral-850);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   display: inline-block;
   white-space: pre-wrap;
+  border: 1px solid rgb(0, 0, 0);
 }
 
 .chat-message {
@@ -60,9 +61,6 @@
   font-size: var(--font-size-sm);
   margin-left: var(--spacing-sm);
 }
-
-/* Bet proposal presentation moved to `BetProposalCard` component and its CSS.
-  Legacy selectors removed from here to avoid duplication. */
 
 @media (max-width: 600px) {
   .message-text {

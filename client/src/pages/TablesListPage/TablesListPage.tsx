@@ -28,7 +28,9 @@ export const TablesListPage: React.FC = () => {
   const indexOfLastTable = currentPage * tablesPerPage;
   const indexOfFirstTable = indexOfLastTable - tablesPerPage;
   const currentTables = filteredTables.slice(indexOfFirstTable, indexOfLastTable);
-  const totalPages = Math.ceil(filteredTables.length / tablesPerPage);
+  const totalPages = filteredTables.length
+    ? Math.max(1, Math.ceil(filteredTables.length / tablesPerPage))
+    : 1;
 
   const handleCreateTable = async () => {
     if (!newTableName.trim()) {
@@ -58,69 +60,69 @@ export const TablesListPage: React.FC = () => {
   return (
     <>
       <div className="tables-list-page">
-      <div className="page-header">
-        <div className="page-title"><h1>My Tables</h1></div>
-        <div className="page-action">
-          <button className="create-button" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
-            <AddIcon className="btn-icon" title="Add" />
-            <span>Create Table</span>
-          </button>
+        <div className="page-header">
+          <div className="page-title"><h1>My Tables</h1></div>
+          <div className="page-action">
+            <button className="create-button" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
+              <AddIcon className="btn-icon" title="Add" />
+              <span>Create Table</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Table" footer={
-        <>
-          <button className="btn btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleCreateTable} disabled={loading}>Create</button>
-        </>
-      }>
-        <div className="form-group">
-          <label htmlFor="tableName">Table Name</label>
-          <input type="text" id="tableName" className="form-control" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} placeholder="Enter table name" autoFocus />
-        </div>
-      </Modal>
-      
-  <SearchBar value={searchQuery} onChange={(q) => { setSearchQuery(q); setCurrentPage(1); }} placeholder="Search tables..." />
+        <SearchBar value={searchQuery} onChange={(q) => { setSearchQuery(q); setCurrentPage(1); }} placeholder="Search tables..." />
 
-      {filteredTables.length > 0 ? (
-        <div className="tables-list">
-          {currentTables.map((table) => (
-            <div key={table.table_id} className="table-card">
-              <div className="table-card-header">
-                <div className="table-header-left">
-                  <span className="table-name">{table.table_name}</span>
-                  <span className="table-host">Host: {table.host_username || table.host_user_id}</span>
-                </div>
-                <div className="table-header-right">
-                  <span className="activity-label">Last activity</span>
-                  <span className="activity-time">{formatDate(table.last_activity_at)}</span>
-                </div>
-              </div>
-              <div className="table-card-content" />
-              <div className="table-card-footer">
-                <div className="table-activity">
-                  <span className="members-count">{table.memberCount ?? 0} members</span>
-                </div>
-                <button className="view-table-btn" onClick={() => navigate(`/tables/${table.table_id}`)}>View Table →</button>
-              </div>
+        <div className="tables-page-container">
+
+          <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Table" footer={
+            <>
+              <button className="btn btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleCreateTable} disabled={loading}>Create</button>
+            </>
+          }>
+            <div className="form-group">
+              <label htmlFor="tableName">Table Name</label>
+              <input type="text" id="tableName" className="form-control" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} placeholder="Enter table name" autoFocus />
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="empty-state"><p>No tables match your filter criteria.</p></div>
-      )}
+          </Modal>
 
-      {filteredTables.length > tablesPerPage && (
+          {filteredTables.length > 0 ? (
+            <div className="tables-list">
+              {currentTables.map((table) => (
+                <div key={table.table_id} className="table-card">
+                  <div className="table-card-header">
+                    <div className="table-header-left">
+                      <span className="table-name">{table.table_name}</span>
+                      <span className="table-host">Host: {table.host_username || table.host_user_id}</span>
+                    </div>
+                    <div className="table-header-right">
+                      <span className="activity-label">Last activity</span>
+                      <span className="activity-time">{formatDate(table.last_activity_at)}</span>
+                    </div>
+                  </div>
+                  <div className="table-card-content" />
+                  <div className="table-card-footer">
+                    <div className="table-activity">
+                      <span className="members-count">{table.memberCount ?? 0} members</span>
+                    </div>
+                    <button className="view-table-btn" onClick={() => navigate(`/tables/${table.table_id}`)}>View Table →</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state"><p>No tables match your filter criteria.</p></div>
+          )}
+        </div>
         <PaginationControls
           className="tables-pagination"
-          current={currentPage}
+          current={Math.min(currentPage, totalPages)}
           total={totalPages}
           onPrevious={() => setCurrentPage((p) => Math.max(p - 1, 1))}
           onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
           disablePrevious={currentPage === 1}
           disableNext={currentPage === totalPages}
         />
-      )}
       </div>
       {dialogNode}
     </>

@@ -11,7 +11,7 @@ export const chooseTheirFateModule: ModeModule = {
     label: 'Choose Their Fate',
     summaryTemplate: '`Choose Their Fate`',
     matchupTemplate:
-      '`${(config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_name || config.away_team_id || "Away Team")}`',
+      '`${(config.home_team_abbrev || config.home_team_name || config.home_team_id || "Home Team")} vs ${(config.away_team_abbrev || config.away_team_name || config.away_team_id || "Away Team")}`',
     winningConditionTemplate:
       '`${(config.possession_team_name || "Offense")}\'s drive outcome`',
     optionsExpression: "['pass','Touchdown','Field Goal','Safety','Punt','Turnover']",

@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getAuthUserProfile, listFriends, addFriend, removeFriend, isUsernameTaken, updateUsername } from './service';
-import type { Friend, UserProfile } from './types';
+import {
+  getAuthUserProfile,
+  listFriends,
+  addFriend,
+  removeFriend,
+  isUsernameTaken,
+  updateUsername,
+  listFriendRequests,
+  respondToFriendRequest,
+} from './service';
+import { supabase } from '@data/clients/supabaseClient';
+import type { Friend, FriendRequest, FriendRequestStatus, UserProfile } from './types';
 
 export function useAuthProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -54,8 +64,11 @@ export function useFriends(currentUserId?: string) {
     () => ({
       add: async (username: string) => {
         if (!currentUserId) return;
-        const friend = await addFriend(currentUserId, username);
-        setFriends((prev) => [...prev, friend]);
+        const result = await addFriend(currentUserId, username);
+        if (result.status === 'accepted' && result.friend) {
+          setFriends((prev) => [...prev, result.friend!]);
+        }
+        return result;
       },
       remove: async (friendUserId: string) => {
         if (!currentUserId) return;
@@ -68,6 +81,67 @@ export function useFriends(currentUserId?: string) {
   );
 
   return { friends, loading, error, ...actions } as const;
+}
+
+export function useFriendRequests(currentUserId?: string) {
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await listFriendRequests();
+      setRequests(data);
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load friend requests');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!currentUserId) return;
+    const channel = supabase
+      .channel(`friend_requests_${currentUserId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'friend_requests',
+          filter: `receiver_user_id=eq.${currentUserId}`,
+        },
+        () => {
+          void fetchRequests();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [currentUserId, fetchRequests]);
+
+  const actions = useMemo(
+    () => ({
+      respond: async (requestId: string, action: 'accept' | 'decline' | 'cancel') => {
+        const { request, status } = await respondToFriendRequest(requestId, action);
+        setRequests((prev) => prev.map((r) => (r.request_id === requestId ? request : r)));
+        return { request, status } as { request: FriendRequest; status: FriendRequestStatus };
+      },
+      refresh: fetchRequests,
+    }),
+    [fetchRequests],
+  );
+
+  return { requests, loading, error, ...actions } as const;
 }
 
 export function useUsernameUpdater(userId?: string) {

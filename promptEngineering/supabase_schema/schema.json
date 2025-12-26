@@ -192,6 +192,54 @@
     "key_info": ""
   },
   {
+    "table_name": "friend_requests",
+    "column_name": "request_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY"
+  },
+  {
+    "table_name": "friend_requests",
+    "column_name": "sender_user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)"
+  },
+  {
+    "table_name": "friend_requests",
+    "column_name": "receiver_user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)"
+  },
+  {
+    "table_name": "friend_requests",
+    "column_name": "status",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": "'pending'::text",
+    "key_info": ""
+  },
+  {
+    "table_name": "friend_requests",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "key_info": ""
+  },
+  {
+    "table_name": "friend_requests",
+    "column_name": "responded_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
     "table_name": "friends",
     "column_name": "user_id1",
     "data_type": "uuid",

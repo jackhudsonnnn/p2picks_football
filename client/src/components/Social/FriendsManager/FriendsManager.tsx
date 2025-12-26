@@ -9,6 +9,7 @@ import { HttpError } from "@data/clients/restClient";
 
 const FRIEND_RATE_LIMIT_TITLE = "Add Friend";
 const FRIEND_RATE_LIMIT_MESSAGE = "You've already added 10 friends in the last minute. Take a quick breather before adding more.";
+const FRIEND_PENDING_MESSAGE = "A friend request is already pending with this user.";
 
 const isRateLimited = (error: unknown): error is HttpError => error instanceof HttpError && error.status === 429;
 
@@ -45,12 +46,18 @@ export const FriendsManager: React.FC = () => {
     }
     setBusy(true);
     try {
-      await add(targetUsername);
+      const result = await add(targetUsername);
       setFriendUsernameToAdd("");
-      await showAlert({ title: "Add Friend", message: `${targetUsername} added as a friend!` });
+      if (result?.status === "accepted") {
+        await showAlert({ title: "Add Friend", message: `${targetUsername} added as a friend!` });
+      } else {
+        await showAlert({ title: "Friend Request Sent", message: `Friend request sent to ${targetUsername}.` });
+      }
     } catch (err) {
       if (isRateLimited(err)) {
         await showAlert({ title: FRIEND_RATE_LIMIT_TITLE, message: FRIEND_RATE_LIMIT_MESSAGE });
+      } else if (err instanceof HttpError && err.status === 409) {
+        await showAlert({ title: "Add Friend", message: FRIEND_PENDING_MESSAGE });
       } else {
         await showAlert({ title: "Add Friend", message: "An unexpected error occurred while adding friend." });
       }
@@ -112,7 +119,13 @@ export const FriendsManager: React.FC = () => {
           />
         </div>
         {loading ? (
-          <p>Loading friends...</p>
+          <FriendsList
+            friends={[]}
+            emptyMessage="Loading friends..."
+            mode="select"
+            variant="remove"
+            disabled={busy}
+          />
         ) : (
           <FriendsList
             friends={filteredFriends}
@@ -126,7 +139,6 @@ export const FriendsManager: React.FC = () => {
               }
             }}
             disabled={busy}
-            removeSymbol="✖"
           />
         )}
       </section>

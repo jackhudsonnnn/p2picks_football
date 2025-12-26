@@ -176,7 +176,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const isIncorrectGuess = Boolean(
     isResolved && hasGuess && normalizedWinningChoice && normalizedGuess !== normalizedWinningChoice
   );
-  const stateClass = `state-${(ticket.state || phase).toLowerCase()}`;
+  const stateClass = `state-${(phase).toLowerCase()}`;
   const resolvedOutcome: 'win' | 'loss' | null = (() => {
     if (!isResolved) return null;
     if (normalizedResult === 'win') return 'win';

@@ -1,6 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
 import { loadRefinedGame, type RefinedGameDoc, type Team, findTeam } from '../../../utils/gameData';
-import { extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 function resolvePossessionTeam(doc: RefinedGameDoc, teamId?: string | null): Team | null {
   if (teamId) {
@@ -23,8 +23,10 @@ export async function prepareChooseTheirFateConfig({
     nfl_game_id?: string | null;
     home_team_id?: string | null;
     home_team_name?: string | null;
+  home_team_abbrev?: string | null;
     away_team_id?: string | null;
     away_team_name?: string | null;
+  away_team_abbrev?: string | null;
     possession_team_id?: string | null;
     possession_team_name?: string | null;
   };
@@ -48,11 +50,17 @@ export async function prepareChooseTheirFateConfig({
     if (!nextConfig.home_team_id) {
       nextConfig.home_team_id = extractTeamId(homeTeam);
     }
+    if (!nextConfig.home_team_abbrev) {
+      nextConfig.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+    }
     if (!nextConfig.home_team_name) {
       nextConfig.home_team_name = extractTeamName(homeTeam);
     }
     if (!nextConfig.away_team_id) {
       nextConfig.away_team_id = extractTeamId(awayTeam);
+    }
+    if (!nextConfig.away_team_abbrev) {
+      nextConfig.away_team_abbrev = extractTeamAbbreviation(awayTeam);
     }
     if (!nextConfig.away_team_name) {
       nextConfig.away_team_name = extractTeamName(awayTeam);

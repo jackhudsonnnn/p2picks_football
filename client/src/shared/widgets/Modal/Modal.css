@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -25,7 +25,7 @@
 }
 
 .modal-panel {
-  background-color: #010c1d65;
+  background-color: #010c1d98;
   border-radius: inherit;
   width: 100%;
   max-height: 100%;

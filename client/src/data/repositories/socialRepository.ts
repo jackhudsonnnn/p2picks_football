@@ -1,6 +1,12 @@
 import { supabase } from '@data/clients/supabaseClient';
 import { fetchJSON } from '@data/clients/restClient';
-import type { Friend, FriendRelation, UserProfile } from '@shared/types/social';
+import type {
+  Friend,
+  FriendRelation,
+  FriendRequest,
+  FriendRequestStatus,
+  UserProfile,
+} from '@shared/types/social';
 
 export async function getAuthUserProfile(): Promise<UserProfile | null> {
   const {
@@ -63,13 +69,26 @@ export async function listFriends(currentUserId: string): Promise<Friend[]> {
   return (data ?? []).filter((u) => u.username !== null) as Friend[];
 }
 
-export async function addFriend(_currentUserId: string, targetUsername: string): Promise<Friend> {
-  const payload = await fetchJSON<{ friend: Friend }>(`/api/friends`, {
+type AddFriendResult =
+  | { status: 'pending'; request: FriendRequest }
+  | { status: 'accepted'; friend: Friend };
+
+export async function addFriend(_currentUserId: string, targetUsername: string): Promise<AddFriendResult> {
+  const payload = await fetchJSON<{ friend?: Friend; request?: FriendRequest; status: FriendRequestStatus }>(`/api/friends`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: targetUsername }),
   });
-  return payload.friend;
+
+  if (payload.status === 'accepted' && payload.friend) {
+    return { status: 'accepted', friend: payload.friend };
+  }
+
+  if (payload.request) {
+    return { status: 'pending', request: payload.request };
+  }
+
+  throw new Error('Unexpected response creating friend request');
 }
 
 export async function removeFriend(currentUserId: string, friendUserId: string): Promise<void> {
@@ -80,4 +99,24 @@ export async function removeFriend(currentUserId: string, friendUserId: string):
       `and(user_id1.eq.${currentUserId},user_id2.eq.${friendUserId}),and(user_id1.eq.${friendUserId},user_id2.eq.${currentUserId})`,
     );
   if (error) throw error;
+}
+
+export async function listFriendRequests(): Promise<FriendRequest[]> {
+  const payload = await fetchJSON<{ requests: FriendRequest[] }>(`/api/friend-requests`, {
+    method: 'GET',
+  });
+  return payload.requests ?? [];
+}
+
+export async function respondToFriendRequest(
+  requestId: string,
+  action: 'accept' | 'decline' | 'cancel',
+): Promise<{ request: FriendRequest; status: FriendRequestStatus }> {
+  const payload = await fetchJSON<{ request: FriendRequest; status: FriendRequestStatus }>(
+    `/api/friend-requests/${requestId}/${action}`,
+    {
+      method: 'POST',
+    },
+  );
+  return payload;
 }

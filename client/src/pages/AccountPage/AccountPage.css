@@ -3,7 +3,7 @@
 }
 
 .account-content {
-  padding: var(--space-xl) var(--space-xl) var(--space-lg);
+  margin-top: var(--space-lg);
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);

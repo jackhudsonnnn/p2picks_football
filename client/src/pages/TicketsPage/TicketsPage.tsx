@@ -81,7 +81,9 @@ export const TicketsPage: React.FC = () => {
     indexOfFirstTicket,
     indexOfLastTicket
   );
-  const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
+  const totalPages = filteredTickets.length
+    ? Math.max(1, Math.ceil(filteredTickets.length / ticketsPerPage))
+    : 1;
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -89,45 +91,48 @@ export const TicketsPage: React.FC = () => {
   return (
     <>
       <div className={`tickets-page ${isMobile ? 'mobile' : ''}`}>
-      <div className="page-header">
-        <div className="page-title"><h1>Tickets</h1></div>
-        <FilterBar
-          options={STATUS_FILTER_OPTIONS}
-          selectedFilters={selectedStatuses}
-          onFilterChange={handleFilterChange}
-          className="tickets-filter-dropdown"
-          placeholder="All statuses"
-        />
-      </div>
-
-      {filteredTickets.length > 0 ? (
-        <div className="tickets-list">
-          {currentTickets.map((ticket) => (
-            <TicketCard
-              key={ticket.id}
-              ticket={ticket}
-              onChangeGuess={handleGuessChange}
-              onEnterTable={handleEnterTable}
-            />
-          ))}
+        <div className="page-header">
+          <div className="page-title"><h1>Tickets</h1></div>
+          <FilterBar
+            options={STATUS_FILTER_OPTIONS}
+            selectedFilters={selectedStatuses}
+            onFilterChange={handleFilterChange}
+            className="tickets-filter-dropdown"
+            placeholder="All statuses"
+          />
         </div>
-      ) : (
-        <div className="empty-state">
-          <p>No tickets match your selected filters.</p>
-        </div>
-      )}
+        <div className="tickets-page-container">
 
-      {filteredTickets.length > ticketsPerPage && (
-        <PaginationControls
-          className="tickets-pagination"
-          current={currentPage}
-          total={totalPages}
-          onPrevious={() => handlePageChange(Math.max(currentPage - 1, 1))}
-          onNext={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
-          disablePrevious={currentPage === 1}
-          disableNext={currentPage === totalPages}
-        />
-      )}
+
+          {filteredTickets.length > 0 ? (
+            <div className="tickets-list">
+              {currentTickets.map((ticket) => (
+                <TicketCard
+                  key={ticket.id}
+                  ticket={ticket}
+                  onChangeGuess={handleGuessChange}
+                  onEnterTable={handleEnterTable}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No tickets match your selected filters.</p>
+            </div>
+          )}
+        </div>
+
+        {
+          <PaginationControls
+            className="tickets-pagination"
+            current={Math.min(currentPage, totalPages)}
+            total={totalPages}
+            onPrevious={() => handlePageChange(Math.max(currentPage - 1, 1))}
+            onNext={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+            disablePrevious={currentPage === 1}
+            disableNext={currentPage === totalPages}
+          />
+        }
       </div>
       {dialogNode}
     </>
