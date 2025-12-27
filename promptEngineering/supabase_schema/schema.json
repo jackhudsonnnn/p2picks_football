@@ -508,7 +508,7 @@
     "column_name": "last_activity_at",
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
-    "column_default": "now()",
+    "column_default": "timezone('utc'::text, now())",
     "key_info": ""
   },
   {
