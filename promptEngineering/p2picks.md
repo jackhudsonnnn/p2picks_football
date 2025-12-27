@@ -81,6 +81,12 @@ This mode is a bet on the next score type.
 * **Participant Choices:** `pass`, `TD`, `FG`, `Safety`, `No More Scores`.
 * **Winning Condition:** The winning choice is the type of the next score.
 
+#### Mode 9: Score Sorcerer
+This mode is a bet on which **team** scores next.
+* **Proposer Configuration:** None beyond the standard bet parameters.
+* **Participant Choices:** `pass`, `{Home Team}`, `{Away Team}`, `No More Scores`.
+* **Winning Condition:** The first team to add points after the bet locks wins. If the game reaches its final state without any additional scoring, `No More Scores` wins. If both teams’ scores increase on the same update, the bet is washed.
+
 #### Mode 5: Total Disaster
 Bet on whether the total points scored in the game will be over or under a specified value.
 * **Proposer Configuration:** 

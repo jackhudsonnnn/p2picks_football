@@ -154,9 +154,6 @@ export async function applyModeConfigChoice(sessionId: string, payload: {
   choiceId: string;
 }): Promise<ModeConfigSessionDTO> {
   const session = requireSession(sessionId);
-  if (session.status !== 'mode_config') {
-    throw new Error('Configuration choices are no longer available for this session');
-  }
   const view = await computeSteps(session);
   const targetStep = view.steps.find((step) => step.key === payload.stepKey);
   if (!targetStep) {
@@ -169,6 +166,7 @@ export async function applyModeConfigChoice(sessionId: string, payload: {
   applyChoice(session, targetStep, choice);
   session.selections[targetStep.key] = choice.id ?? choice.value;
   session.preview = null;
+  session.status = 'mode_config';
   session.updatedAt = Date.now();
   return hydrateSessionDTO(session);
 }

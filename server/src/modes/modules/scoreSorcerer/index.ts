@@ -1,0 +1,1 @@
+export { scoreSorcererModule } from './definition';

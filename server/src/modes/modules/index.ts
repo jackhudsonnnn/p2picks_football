@@ -5,6 +5,7 @@ import { spreadTheWealthModule } from './spreadTheWealth';
 import { chooseTheirFateModule } from './chooseTheirFate';
 import { propHuntModule } from './propHunt';
 import { kingOfTheHillModule } from './kingOfTheHill';
+import { scoreSorcererModule } from './scoreSorcerer';
 
 export const MODE_MODULES: ModeModule[] = [
   eitherOrModule,
@@ -13,4 +14,5 @@ export const MODE_MODULES: ModeModule[] = [
   spreadTheWealthModule,
   chooseTheirFateModule,
   propHuntModule,
+  scoreSorcererModule,
 ];
