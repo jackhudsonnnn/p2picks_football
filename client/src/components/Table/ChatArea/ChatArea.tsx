@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { TextMessage } from "../TextMessage/TextMessage";
 import "./ChatArea.css";
 import { formatTimeOfDay } from "@shared/utils/dateTime";
@@ -30,6 +30,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   loadingMore = false,
   tableName = "",
 }) => {
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const newestMessageId = messages.length ? messages[messages.length - 1]?.id : undefined;
@@ -51,16 +52,34 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     }
   }, [isSending, newMessage, onSendMessage]);
 
+  const handleLoadMore = useCallback(async () => {
+    if (!onLoadMore) return;
+
+    const container = messagesContainerRef.current;
+    const prevScrollHeight = container?.scrollHeight ?? 0;
+    const prevScrollTop = container?.scrollTop ?? 0;
+
+    await onLoadMore();
+
+    // After new messages render, preserve viewport position so it doesn't jump to top
+    requestAnimationFrame(() => {
+      const next = messagesContainerRef.current;
+      if (!next) return;
+      const delta = next.scrollHeight - prevScrollHeight;
+      next.scrollTop = prevScrollTop + delta;
+    });
+  }, [onLoadMore]);
+
   return (
     <div className="chat-container">
-      <div className="messages-container">
+      <div className="messages-container" ref={messagesContainerRef}>
         {hasMore && (
           <LoadMoreButton
             label="Load older messages"
             loadingLabel="Loading…"
             loading={loadingMore}
             disabled={loadingMore}
-            onClick={onLoadMore}
+            onClick={handleLoadMore}
           />
         )}
 
