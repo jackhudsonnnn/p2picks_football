@@ -3,7 +3,6 @@ import { fetchJSON } from '@data/clients/restClient';
 import type { Tables } from '@data/types/database.types';
 import type { ChatMessage } from '@shared/types/chat';
 import { normalizeToHundredth } from '@shared/utils/number';
-import { fetchModeConfigs, fetchModePreview } from '@data/repositories/modesRepository';
 
 export type TableRow = Tables<'tables'>;
 type TableMemberRow = Tables<'table_members'>;
@@ -282,218 +281,28 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
 
 export async function getTableFeed(tableId: string, options: TableFeedOptions = {}): Promise<TableFeedPage> {
   const { limit = 10, before } = options;
-  const effectiveLimit = Math.max(1, Math.min(limit, 100));
-
-  let query = supabase
-    .from('messages')
-    .select(`
-      message_id,
-      table_id,
-      message_type,
-      posted_at,
-      text_messages (
-        text_message_id,
-        table_id,
-        user_id,
-        message_text,
-        posted_at,
-        users:user_id (username)
-      ),
-      system_messages (
-        system_message_id,
-        table_id,
-        message_text,
-        generated_at
-      ),
-      bet_proposals (
-        bet_id,
-        table_id,
-        proposer_user_id,
-        nfl_game_id,
-        mode_key,
-        description,
-        wager_amount,
-        time_limit_seconds,
-        proposal_time,
-        bet_status,
-        close_time,
-        winning_choice,
-        resolution_time,
-        users:proposer_user_id (username)
-      )
-    `)
-    .eq('table_id', tableId)
-    .order('posted_at', { ascending: false })
-    .order('message_id', { ascending: false })
-    .limit(effectiveLimit + 1);
-
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
   if (before) {
-    const postedAtIso = new Date(before.postedAt).toISOString();
-    query = query.or(
-      `and(posted_at.lt.${postedAtIso}),and(posted_at.eq.${postedAtIso},message_id.lt.${before.messageId})`,
-    );
+    params.set('beforePostedAt', before.postedAt);
+    params.set('beforeMessageId', before.messageId);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
+  const queryString = params.toString();
+  const url = `/api/tables/${encodeURIComponent(tableId)}/messages${queryString ? `?${queryString}` : ''}`;
 
-  let rows = (data ?? []) as any[];
-  const hasMore = rows.length > effectiveLimit;
-  if (hasMore) {
-    rows = rows.slice(0, effectiveLimit);
-  }
-
-  const normalizeTimestamp = (value: string | null | undefined) => {
-    if (!value) return new Date().toISOString();
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-      return new Date().toISOString();
-    }
-    return parsed.toISOString();
-  };
-
-  const normalizedRows = rows.map((row) => ({
-    ...row,
-    posted_at: row.posted_at ?? row?.text_messages?.posted_at ?? row?.system_messages?.generated_at ?? null,
-  }));
-
-  const nextCursor = normalizedRows.length
-    ? {
-        postedAt: normalizeTimestamp(normalizedRows[normalizedRows.length - 1].posted_at),
-        messageId: normalizedRows[normalizedRows.length - 1].message_id as string,
-      }
-    : null;
-
-  const betRows = normalizedRows
-    .filter((row) => row.message_type === 'bet_proposal' && row.bet_proposals)
-    .map((row) => row.bet_proposals);
-
-  const betIds = Array.from(new Set(betRows.map((bet: any) => bet?.bet_id).filter(Boolean))) as string[];
-  if (betIds.length) {
-    try {
-      const configs = await fetchModeConfigs(betIds);
-      betRows.forEach((bet: any) => {
-        const record = configs[bet.bet_id];
-        if (record && (!bet.mode_key || record.mode_key === bet.mode_key)) {
-          (bet as any).mode_config = record.data;
-        }
-      });
-    } catch (cfgErr) {
-      console.warn('[getTableFeed] failed to hydrate mode config', cfgErr);
-    }
-  }
-
-  const winningConditionByBetId = new Map<string, string>();
-  const previewResults = await Promise.all(
-    betRows.map(async (bet: any) => {
-      const modeKey = typeof bet.mode_key === 'string' ? bet.mode_key.trim() : '';
-      const betId = typeof bet.bet_id === 'string' ? bet.bet_id : '';
-      if (!modeKey || !betId) return null;
-
-      const rawConfig = (bet as any).mode_config;
-      const config = rawConfig && typeof rawConfig === 'object' ? (rawConfig as Record<string, unknown>) : {};
-      try {
-        const preview = await fetchModePreview(
-          modeKey,
-          config,
-          typeof bet.nfl_game_id === 'string' ? bet.nfl_game_id : null,
-          betId,
-        );
-        const winningCondition = preview?.winningCondition?.trim();
-        if (winningCondition) {
-          return { betId, winningCondition };
-        }
-      } catch (previewErr) {
-        console.warn('[getTableFeed] failed to load mode preview', {
-          betId,
-          error: (previewErr as Error)?.message ?? previewErr,
-        });
-      }
-      return null;
-    }),
-  );
-
-  previewResults.forEach((entry) => {
-    if (entry) {
-      winningConditionByBetId.set(entry.betId, entry.winningCondition);
-    }
-  });
-
-  const messages: ChatMessage[] = [];
-
-  normalizedRows
-    .slice()
-    .reverse()
-    .forEach((row) => {
-      const timestampIso = normalizeTimestamp(row.posted_at);
-      if (row.message_type === 'chat') {
-        const txt = row.text_messages;
-        if (!txt) return;
-        const username = txt?.users?.username ?? 'Unknown';
-        messages.push({
-          id: row.message_id as string,
-          type: 'chat',
-          senderUserId: txt.user_id ?? '',
-          senderUsername: username,
-          text: txt.message_text ?? '',
-          timestamp: timestampIso,
-          tableId: txt.table_id ?? row.table_id,
-        });
-        return;
-      }
-
-      if (row.message_type === 'system') {
-        const sys = row.system_messages;
-        if (!sys) return;
-        messages.push({
-          id: row.message_id as string,
-          type: 'system',
-          senderUserId: '',
-          senderUsername: '',
-          text: sys.message_text ?? '',
-          timestamp: timestampIso,
-          tableId: sys.table_id ?? row.table_id,
-        });
-        return;
-      }
-
-      if (row.message_type === 'bet_proposal') {
-        const bet = row.bet_proposals;
-        if (!bet) return;
-
-        const username = bet?.users?.username ?? 'Unknown';
-        const description = typeof bet.description === 'string' && bet.description.length ? bet.description : 'Bet';
-        const winningCondition = typeof bet.bet_id === 'string' ? winningConditionByBetId.get(bet.bet_id) ?? null : null;
-
-        messages.push({
-          id: row.message_id as string,
-          type: 'bet_proposal',
-          senderUserId: bet.proposer_user_id ?? '',
-          senderUsername: username,
-          text: '',
-          timestamp: timestampIso,
-          tableId: bet.table_id ?? row.table_id,
-          betProposalId: bet.bet_id,
-          betDetails: {
-            description,
-            wager_amount: bet.wager_amount,
-            time_limit_seconds: bet.time_limit_seconds,
-            bet_status: bet.bet_status,
-            close_time: bet.close_time,
-            winning_choice: bet.winning_choice,
-            resolution_time: bet.resolution_time,
-            mode_key: bet.mode_key,
-            nfl_game_id: bet.nfl_game_id,
-            winning_condition_text: winningCondition,
-          },
-        });
-      }
-    });
+  const response = await fetchJSON<{
+    messages: ChatMessage[];
+    nextCursor: TableFeedCursor | null;
+    hasMore: boolean;
+    serverTime?: string;
+    limit?: number;
+  }>(url, { method: 'GET' });
 
   return {
-    messages,
-    nextCursor,
-    hasMore,
+    messages: response.messages ?? [],
+    nextCursor: response.nextCursor ?? null,
+    hasMore: Boolean(response.hasMore),
   };
 }
 

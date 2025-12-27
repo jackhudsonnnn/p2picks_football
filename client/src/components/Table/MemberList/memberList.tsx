@@ -61,10 +61,6 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
   return (
     <section className="members-container" aria-label="Table members">
       <div className="members-list">
-        <header className="members-header">
-          <span className="member-name-header">Member</span>
-          <span className="member-balance-header">Balance</span>
-        </header>
         {members.map((member, idx) => {
           const balanceValue = normalizeToHundredth(member.balance);
           const isNegative = balanceValue < 0;

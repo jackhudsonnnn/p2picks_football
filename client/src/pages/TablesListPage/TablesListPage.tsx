@@ -61,7 +61,7 @@ export const TablesListPage: React.FC = () => {
     <>
       <div className="tables-list-page">
         <div className="page-header">
-          <div className="page-title"><h1>My Tables</h1></div>
+          <div className="page-title"><h1>Tables</h1></div>
           <div className="page-action">
             <button className="create-button" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
               <AddIcon className="btn-icon" title="Add" />

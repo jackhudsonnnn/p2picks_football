@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  height: calc(67vh - 195px);
+  height: calc(75vh - 193px);
   overflow-y: auto;
 }
 
@@ -20,7 +20,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
   flex-wrap: wrap;
   gap: var(--spacing-md);
 }
@@ -260,6 +260,10 @@
 @media (max-width: 768px) {
   .tables-list-page {
     padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md);
+  }
+
+  .tables-list-page .page-title h1 {
+    font-size: 2.25rem;
   }
 
   .tables-page-container {

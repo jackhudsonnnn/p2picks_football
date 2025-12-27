@@ -37,6 +37,7 @@ router.post('/mode-config/batch', modeController.getBatchModeConfigs);
 
 // Messages (rate-limited)
 router.post('/tables/:tableId/messages', requireAuth, messageController.sendMessage);
+router.get('/tables/:tableId/messages', requireAuth, messageController.listMessages);
 router.get('/tables/:tableId/messages/rate-limit-status', requireAuth, messageController.getRateLimitStatus);
 
 // Friends

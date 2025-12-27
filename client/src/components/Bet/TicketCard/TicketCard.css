@@ -123,6 +123,7 @@
 
 .bet-details {
   color: var(--neutral-300);
+  font-size: var(--font-size-md);
   font-weight: 500;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -265,13 +266,18 @@
   background-color: var(--neutral-700);
   border: 2px solid var(--neutral-500);
   padding: var(--spacing-sm) var(--spacing-md);
-  width: 80%;
+  width: 25vh;
   font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--text-light);
   border-radius: var(--radius-md);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  box-sizing: border-box; /* include padding & border in width calculation */
+  box-sizing: border-box; 
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-md) center;
+  background-size: 12px;
+  padding-right: calc(var(--spacing-md) * 2 + 12px);
   transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
@@ -290,6 +296,8 @@
   opacity: 0.7;
   box-shadow: none;
   transform: none;
+  background-image: none;
+  padding-right: var(--spacing-md);
 }
 
 .ticket-details h4 {
@@ -543,6 +551,22 @@
 @media (max-width: 768px) {
   .card-footer-left .bet-container {
     width: 100%;
+  }
+
+  .bet-dropdown {
+    font-size: var(--font-size-sm);
+  }
+
+  .bet-details {
+    font-size: var(--font-size-sm);
+  }
+
+  .game-context {
+    font-size: var(--font-size-xs);
+  }
+
+  .ticket-finance {
+    font-size: var(--font-size-sm);
   }
 }
 

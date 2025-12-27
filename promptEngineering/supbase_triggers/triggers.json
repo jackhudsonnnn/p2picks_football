@@ -21,6 +21,16 @@
   },
   {
     "table_schema": "public",
+    "table_name": "bet_participations",
+    "trigger_schema": "public",
+    "trigger_name": "trg_touch_tables_on_bet_participations",
+    "event": "INSERT,UPDATE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION touch_table_last_activity()"
+  },
+  {
+    "table_schema": "public",
     "table_name": "bet_proposals",
     "trigger_schema": "public",
     "trigger_name": "trg_apply_bet_payouts",
@@ -94,7 +104,7 @@
     "table_name": "bet_proposals",
     "trigger_schema": "public",
     "trigger_name": "trg_set_bet_close_time",
-    "event": "UPDATE,INSERT",
+    "event": "INSERT,UPDATE",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION set_bet_close_time()"
@@ -111,6 +121,26 @@
   },
   {
     "table_schema": "public",
+    "table_name": "bet_proposals",
+    "trigger_schema": "public",
+    "trigger_name": "trg_touch_tables_on_bet_proposals",
+    "event": "INSERT,UPDATE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION touch_table_last_activity()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "messages",
+    "trigger_schema": "public",
+    "trigger_name": "trg_touch_tables_on_messages",
+    "event": "UPDATE,INSERT",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION touch_table_last_activity()"
+  },
+  {
+    "table_schema": "public",
     "table_name": "system_messages",
     "trigger_schema": "public",
     "trigger_name": "trg_messages_from_system",
@@ -121,6 +151,26 @@
   },
   {
     "table_schema": "public",
+    "table_name": "system_messages",
+    "trigger_schema": "public",
+    "trigger_name": "trg_touch_tables_on_system_messages",
+    "event": "INSERT,UPDATE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION touch_table_last_activity()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "table_members",
+    "trigger_schema": "public",
+    "trigger_name": "trg_touch_tables_on_table_members",
+    "event": "UPDATE,DELETE,INSERT",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION touch_table_last_activity()"
+  },
+  {
+    "table_schema": "public",
     "table_name": "text_messages",
     "trigger_schema": "public",
     "trigger_name": "trg_messages_from_text",
@@ -128,6 +178,16 @@
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION messages_sync_from_text_messages()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "text_messages",
+    "trigger_schema": "public",
+    "trigger_name": "trg_touch_tables_on_text_messages",
+    "event": "INSERT,UPDATE",
+    "activation": "AFTER",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION touch_table_last_activity()"
   },
   {
     "table_schema": "realtime",
@@ -144,7 +204,7 @@
     "table_name": "buckets",
     "trigger_schema": "storage",
     "trigger_name": "enforce_bucket_name_length_trigger",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION storage.enforce_bucket_name_length()"

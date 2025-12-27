@@ -94,3 +94,9 @@
   margin-top: var(--spacing-sm);
   color: var(--danger, #f87171);
 }
+
+@media (max-width: 600px) {
+  .action-button {
+    width: 100%;
+  }
+}

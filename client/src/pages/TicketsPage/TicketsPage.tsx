@@ -84,9 +84,6 @@ export const TicketsPage: React.FC = () => {
   const totalPages = filteredTickets.length
     ? Math.max(1, Math.ceil(filteredTickets.length / ticketsPerPage))
     : 1;
-  if (loading) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <>
@@ -103,8 +100,11 @@ export const TicketsPage: React.FC = () => {
         </div>
         <div className="tickets-page-container">
 
-
-          {filteredTickets.length > 0 ? (
+          {loading ? (
+            <div className="empty-state">
+              <p>No tickets match your selected filters.</p>
+            </div>
+          ) : filteredTickets.length > 0 ? (
             <div className="tickets-list">
               {currentTickets.map((ticket) => (
                 <TicketCard
