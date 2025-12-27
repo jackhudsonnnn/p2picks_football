@@ -51,9 +51,8 @@
   justify-content: center;
 }
 .ticket-card-footer-left {
-  /* allow the left footer area to grow/shrink so the dropdown can take available space */
   flex: 1 1 auto;
-  min-width: 0; /* allow children (like .bet-container/.bet-dropdown) to shrink inside flex parent */
+  min-width: 0; 
 }
 .ticket-card-footer-right {
   display: flex;
@@ -79,7 +78,6 @@
   transform: scale(1.05);
 }
 
-/* Component-specific ticket styles moved from TicketsPage.css */
 .ticket-header-left {
   display: flex;
   flex-direction: column;
@@ -124,7 +122,7 @@
 .bet-details {
   color: var(--neutral-300);
   font-size: var(--font-size-md);
-  font-weight: 500;
+  font-weight: 700;
   word-wrap: break-word;
   overflow-wrap: break-word;
   padding: 0;
@@ -192,12 +190,11 @@
   font-weight: 600;
 }
 
-/* Betting options */
 .ticket-bet-options {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
-  width: 100%; /* allow child controls to span full available width */
+  width: 100%; 
 }
 
 .bet-option {
@@ -237,7 +234,6 @@
   font-family: monospace;
 }
 
-/* User guess display */
 .user-guess-display {
   display: flex;
   flex-direction: column;
@@ -251,12 +247,12 @@
 
 .bet-container {
   display: flex;
-  flex-direction: row; /* Changed from column to row */
+  flex-direction: row; 
   width: 100%;
   gap: var(--spacing-sm);
-  align-items: center; /* Align items vertically */
+  align-items: center; 
   position: relative;
-  flex: 1; /* ensure it expands to fill the parent flex container */
+  flex: 1; 
 }
 
 .bet-dropdown {
@@ -305,7 +301,6 @@
   color: var(--text-light);
 }
 
-/* New unified status element spacing */
 .ticket-status-repl {
   margin-bottom: 4px;
 }
@@ -351,7 +346,6 @@
   font-size: var(--font-size-sm);
 }
 
-/* State color mapping (match BetProposalCard) */
 .ticket-card.state-active {
   border-left-color: var(--primary-500);
 }
@@ -391,7 +385,6 @@
   border-color: var(--accent-power);
 }
 
-/* Info button styles */
 .ticket-summary-row {
   display: flex;
   align-items: center;
@@ -547,26 +540,14 @@
   padding: var(--spacing-md);
 }
 
-/* Responsive tweaks used by the component */
 @media (max-width: 768px) {
   .card-footer-left .bet-container {
     width: 100%;
   }
 
-  .bet-dropdown {
-    font-size: var(--font-size-sm);
-  }
-
-  .bet-details {
-    font-size: var(--font-size-sm);
-  }
-
-  .game-context {
-    font-size: var(--font-size-xs);
-  }
-
   .ticket-finance {
     font-size: var(--font-size-sm);
+    font-weight: 700;
   }
 }
 

@@ -5,6 +5,7 @@ import { formatTimeOfDay } from "@shared/utils/dateTime";
 import type { ChatMessage } from "@shared/types/chat";
 import { useGroupedMessages } from "@features/table/chat/useGroupedMessages";
 import { useAutoScroll } from "@features/table/chat/useAutoScroll";
+import { LoadMoreButton } from "@shared/widgets";
 
 interface ChatAreaProps {
   messages: ChatMessage[];
@@ -48,22 +49,19 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     } finally {
       setIsSending(false);
     }
-    // input focus intentionally omitted after refactor (could add ref back if needed)
   }, [isSending, newMessage, onSendMessage]);
 
   return (
     <div className="chat-container">
       <div className="messages-container">
         {hasMore && (
-          <div className="load-more-container">
-            <button
-              className="load-more-button"
-              onClick={() => { if (onLoadMore) void onLoadMore(); }}
-              disabled={loadingMore}
-            >
-              {loadingMore ? "Loading…" : "Load older messages"}
-            </button>
-          </div>
+          <LoadMoreButton
+            label="Load older messages"
+            loadingLabel="Loading…"
+            loading={loadingMore}
+            disabled={loadingMore}
+            onClick={onLoadMore}
+          />
         )}
 
         {loading && !messages.length ? (

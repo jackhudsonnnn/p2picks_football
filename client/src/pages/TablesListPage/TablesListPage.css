@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  height: calc(75vh - 193px);
+  height: calc(85vh - 193px);
   overflow-y: auto;
 }
 
@@ -155,6 +155,7 @@
   color: var(--text-secondary);
   margin-right: var(--spacing-sm);
   justify-content: right;
+  font-size: var(--font-size-md);
 }
 
 .activity-time {
@@ -250,7 +251,6 @@
 .empty-state {
   text-align: center;
 }
-
 
 .tables-pagination {
   margin-top: var(--spacing-lg);

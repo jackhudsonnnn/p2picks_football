@@ -58,39 +58,46 @@ export async function acceptBetProposal({
   return data;
 }
 
-export async function getUserTickets(userId: string) {
-  const { data, error } = await supabase
-    .from('bet_participations')
-    .select(
-      `
-      participation_id,
-      bet_id,
-      table_id,
-      user_id,
-      user_guess,
-      participation_time,
-      bet_proposals:bet_id (
-        bet_id,
-        table_id,
-        nfl_game_id,
-        mode_key,
-        description,
-        wager_amount,
-        time_limit_seconds,
-        proposal_time,
-        bet_status,
-        close_time,
-        winning_choice,
-        resolution_time,
-        tables:table_id (table_name)
-      )
-    `,
-    )
-    .eq('user_id', userId)
-    .order('participation_time', { ascending: false });
-  if (error) throw error;
+export type TicketListCursor = {
+  participatedAt: string;
+  participationId: string;
+};
 
-  const rows = data ?? [];
+export type TicketListPage = {
+  participations: any[];
+  nextCursor: TicketListCursor | null;
+  hasMore: boolean;
+  limit: number;
+};
+
+function serializeCursor(params: { before?: TicketListCursor | null; after?: TicketListCursor | null }): string {
+  const parts: string[] = [];
+  const { before, after } = params;
+  if (before) {
+    parts.push(`beforeParticipatedAt=${encodeURIComponent(before.participatedAt)}`);
+    parts.push(`beforeParticipationId=${encodeURIComponent(before.participationId)}`);
+  }
+  if (after) {
+    parts.push(`afterParticipatedAt=${encodeURIComponent(after.participatedAt)}`);
+    parts.push(`afterParticipationId=${encodeURIComponent(after.participationId)}`);
+  }
+  return parts.join('&');
+}
+
+export async function getUserTicketsPage(opts: { limit?: number; before?: TicketListCursor | null; after?: TicketListCursor | null } = {}): Promise<TicketListPage> {
+  const params: string[] = [];
+  if (opts.limit) {
+    params.push(`limit=${opts.limit}`);
+  }
+  const cursorParams = serializeCursor({ before: opts.before ?? undefined, after: opts.after ?? undefined });
+  if (cursorParams) {
+    params.push(cursorParams);
+  }
+  const qs = params.length ? `?${params.join('&')}` : '';
+
+  const page = await fetchJSON<TicketListPage>(`/api/tickets${qs}`);
+
+  const rows = page?.participations ?? [];
   const betIds = Array.from(new Set(rows.map((row: any) => row.bet_id).filter(Boolean))) as string[];
   if (betIds.length) {
     try {
@@ -104,10 +111,22 @@ export async function getUserTickets(userId: string) {
         }
       });
     } catch (cfgErr) {
-      console.warn('[getUserTickets] failed to hydrate mode config', cfgErr);
+      console.warn('[getUserTicketsPage] failed to hydrate mode config', cfgErr);
     }
   }
-  return rows;
+
+  return {
+    participations: rows,
+    nextCursor: page?.nextCursor ?? null,
+    hasMore: Boolean(page?.hasMore),
+    limit: page?.limit ?? opts.limit ?? 0,
+  };
+}
+
+// Backward-compatible helper used by legacy call sites
+export async function getUserTickets(_userId: string) {
+  const page = await getUserTicketsPage({ limit: 50 });
+  return page.participations;
 }
 
 export async function hasUserAcceptedBet(betId: string, userId: string): Promise<boolean> {

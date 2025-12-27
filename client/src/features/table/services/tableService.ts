@@ -1,6 +1,7 @@
 import {
   createTable as createTableRecord,
   getUserTables as getUserTablesRepo,
+  getUserTablesPage,
   getTable as getTableRepo,
   addTableMember as addTableMemberRepo,
   removeTableMember as removeTableMemberRepo,
@@ -13,6 +14,8 @@ import type {
   TableFeedOptions,
   TableFeedPage,
   TableSettlementResult,
+  TableListCursor,
+  TableListPage,
 } from '@data/repositories/tablesRepository';
 import {
   subscribeToTableMembers,
@@ -24,6 +27,7 @@ import { getUsernamesByIds } from '@data/repositories/usersRepository';
 import type { TableListItem, TableWithMembers } from '../types';
 
 export type { TableFeedCursor, TableFeedOptions, TableFeedPage, TableSettlementResult };
+export type { TableListCursor } from '@data/repositories/tablesRepository';
 export { subscribeToTableMembers, subscribeToMessages, subscribeToBetProposals, subscribeToUserTables };
 
 export async function fetchCurrentTable(tableId: string): Promise<TableWithMembers | null> {
@@ -38,6 +42,16 @@ export async function fetchUserTables(userId: string): Promise<TableListItem[]> 
   const hostIds = Array.from(new Set(raw.map((t: any) => t.host_user_id)));
   const idToUsername = await getUsernamesByIds(hostIds);
   return raw.map((t: any) => mapToListItem(t, idToUsername[t.host_user_id] ?? null));
+}
+
+export async function fetchUserTablesPage(options: {
+  limit?: number;
+  before?: TableListCursor | null;
+  after?: TableListCursor | null;
+}): Promise<TableListPage & { items: TableListItem[] }> {
+  const page = await getUserTablesPage(options);
+  const items: TableListItem[] = page.tables.map((t) => mapToListItem(t, t.host_username ?? null, t.memberCount ?? undefined));
+  return { ...page, items };
 }
 
 export async function createTable(tableName: string, hostUserId: string): Promise<TableListItem> {

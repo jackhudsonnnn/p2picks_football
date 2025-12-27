@@ -3,7 +3,7 @@ import "./TicketsPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import TicketCard from "@components/Bet/TicketCard/TicketCard";
-import { FilterBar, PaginationControls } from "@shared/widgets";
+import { FilterBar, LoadMoreButton } from "@shared/widgets";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
 import { useDialog } from "@shared/hooks/useDialog";
@@ -18,11 +18,9 @@ const STATUS_FILTER_OPTIONS = [
 export const TicketsPage: React.FC = () => {
   const { user } = useAuth();
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const ticketsPerPage = 6;
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { tickets, loading, changeGuess } = useTickets(user?.id);
+  const { tickets, loading, loadingMore, hasMore, changeGuess, loadMore } = useTickets(user?.id);
   const { showAlert, dialogNode } = useDialog();
 
   const handleGuessChange = async (ticketId: string, newGuess: string) => {
@@ -45,21 +43,9 @@ export const TicketsPage: React.FC = () => {
     navigate(`/tables/${tableId}`);
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
   const handleFilterChange = (nextFilters: string[]) => {
     setSelectedStatuses(nextFilters);
-    setCurrentPage(1);
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const filteredTickets = useMemo(() => {
@@ -74,16 +60,7 @@ export const TicketsPage: React.FC = () => {
     const statusSet = new Set(effectiveStatuses);
     return tickets.filter((ticket) => statusSet.has(ticket.state));
   }, [selectedStatuses, tickets]);
-
-  const indexOfLastTicket = currentPage * ticketsPerPage;
-  const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
-  const currentTickets = filteredTickets.slice(
-    indexOfFirstTicket,
-    indexOfLastTicket
-  );
-  const totalPages = filteredTickets.length
-    ? Math.max(1, Math.ceil(filteredTickets.length / ticketsPerPage))
-    : 1;
+  const showEmptyState = !loading && filteredTickets.length === 0;
 
   return (
     <>
@@ -99,40 +76,34 @@ export const TicketsPage: React.FC = () => {
           />
         </div>
         <div className="tickets-page-container">
-
-          {loading ? (
+          {loading && !tickets.length ? (
+            <div className="empty-state">
+              <p>Loading tickets…</p>
+            </div>
+          ) : showEmptyState ? (
             <div className="empty-state">
               <p>No tickets match your selected filters.</p>
-            </div>
-          ) : filteredTickets.length > 0 ? (
-            <div className="tickets-list">
-              {currentTickets.map((ticket) => (
-                <TicketCard
-                  key={ticket.id}
-                  ticket={ticket}
-                  onChangeGuess={handleGuessChange}
-                  onEnterTable={handleEnterTable}
-                />
-              ))}
             </div>
           ) : (
-            <div className="empty-state">
-              <p>No tickets match your selected filters.</p>
-            </div>
+            <>
+              <div className="tickets-list">
+                {filteredTickets.map((ticket) => (
+                  <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    onChangeGuess={handleGuessChange}
+                    onEnterTable={handleEnterTable}
+                  />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="tickets-pagination">
+                  <LoadMoreButton disabled={loadingMore} onClick={loadMore} loading={loadingMore} />
+                </div>
+              )}
+            </>
           )}
         </div>
-
-        {
-          <PaginationControls
-            className="tickets-pagination"
-            current={Math.min(currentPage, totalPages)}
-            total={totalPages}
-            onPrevious={() => handlePageChange(Math.max(currentPage - 1, 1))}
-            onNext={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
-            disablePrevious={currentPage === 1}
-            disableNext={currentPage === totalPages}
-          />
-        }
       </div>
       {dialogNode}
     </>

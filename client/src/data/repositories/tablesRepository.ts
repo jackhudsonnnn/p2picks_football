@@ -8,6 +8,29 @@ export type TableRow = Tables<'tables'>;
 type TableMemberRow = Tables<'table_members'>;
 type UserRow = Tables<'users'>;
 
+export interface TableListCursor {
+  activityAt: string;
+  tableId: string;
+}
+
+export type TableListItemPayload = {
+  table_id: string;
+  table_name: string;
+  host_user_id: string;
+  host_username: string | null;
+  created_at: string;
+  last_activity_at: string;
+  memberCount: number | null;
+};
+
+export interface TableListPage {
+  tables: TableListItemPayload[];
+  nextCursor: TableListCursor | null;
+  hasMore: boolean;
+  limit: number;
+  serverTime?: string;
+}
+
 export interface TableMemberWithUser {
   user_id: TableMemberRow['user_id'];
   balance: TableMemberRow['balance'] | null;
@@ -73,6 +96,27 @@ export async function getUserTables(userId: string): Promise<TableWithMembers[]>
       ...table,
       table_members: normalizeMembers(table.table_members),
     }));
+}
+
+export async function getUserTablesPage(options: {
+  limit?: number;
+  before?: TableListCursor | null;
+  after?: TableListCursor | null;
+}): Promise<TableListPage> {
+  const params = new URLSearchParams();
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.before) {
+    params.set('beforeActivityAt', options.before.activityAt);
+    params.set('beforeTableId', options.before.tableId);
+  }
+  if (options.after) {
+    params.set('afterActivityAt', options.after.activityAt);
+    params.set('afterTableId', options.after.tableId);
+  }
+
+  const qs = params.toString();
+  const url = `/api/tables${qs ? `?${qs}` : ''}`;
+  return fetchJSON<TableListPage>(url, { method: 'GET' });
 }
 
 export async function getTable(tableId: string): Promise<TableWithMembers | null> {

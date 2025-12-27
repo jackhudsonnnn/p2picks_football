@@ -3,6 +3,8 @@ import * as betController from '../controllers/betController';
 import * as modeController from '../controllers/modeController';
 import * as messageController from '../controllers/messageController';
 import * as friendController from '../controllers/friendController';
+import * as tableController from '../controllers/tableController';
+import * as ticketController from '../controllers/ticketController';
 import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
@@ -16,6 +18,9 @@ router.get('/bet-proposals/bootstrap', betController.getBetProposalBootstrap);
 router.post('/tables/:tableId/bets', betController.createBetProposal);
 router.post('/bets/:betId/poke', betController.pokeBet);
 router.get('/bets/:betId/live-info', betController.getBetLiveInfo);
+
+// Tables
+router.get('/tables', tableController.listTables);
 
 // Sessions
 router.post('/bet-proposals/sessions', modeController.createSession);
@@ -39,6 +44,9 @@ router.post('/mode-config/batch', modeController.getBatchModeConfigs);
 router.post('/tables/:tableId/messages', requireAuth, messageController.sendMessage);
 router.get('/tables/:tableId/messages', requireAuth, messageController.listMessages);
 router.get('/tables/:tableId/messages/rate-limit-status', requireAuth, messageController.getRateLimitStatus);
+
+// Tickets
+router.get('/tickets', requireAuth, ticketController.listTickets);
 
 // Friends
 router.post('/friends', requireAuth, friendController.addFriend);

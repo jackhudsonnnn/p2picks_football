@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
-import { Modal, PaginationControls, SearchBar } from "@shared/widgets";
+import { Modal, SearchBar, LoadMoreButton } from "@shared/widgets";
 import { useDialog } from "@shared/hooks/useDialog";
 import AddIcon from "@shared/widgets/icons/AddIcon";
 import { useTablesList } from "@features/table/hooks/useTablesList";
@@ -13,24 +13,16 @@ export const TablesListPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const tablesPerPage = 6;
+  const PAGE_LIMIT = 6;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTableName, setNewTableName] = useState("");
 
-  const { tables, create, loading } = useTablesList(user?.id);
+  const { tables, create, loading, loadingMore, loadMore, hasMore } = useTablesList(user?.id);
   const { showAlert, dialogNode } = useDialog();
 
   const filteredTables = tables.filter((table) =>
     searchQuery === "" || table.table_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const indexOfLastTable = currentPage * tablesPerPage;
-  const indexOfFirstTable = indexOfLastTable - tablesPerPage;
-  const currentTables = filteredTables.slice(indexOfFirstTable, indexOfLastTable);
-  const totalPages = filteredTables.length
-    ? Math.max(1, Math.ceil(filteredTables.length / tablesPerPage))
-    : 1;
 
   const handleCreateTable = async () => {
     if (!newTableName.trim()) {
@@ -70,7 +62,7 @@ export const TablesListPage: React.FC = () => {
           </div>
         </div>
 
-        <SearchBar value={searchQuery} onChange={(q) => { setSearchQuery(q); setCurrentPage(1); }} placeholder="Search tables..." />
+        <SearchBar value={searchQuery} onChange={(q) => { setSearchQuery(q); }} placeholder="Search tables..." />
 
         <div className="tables-page-container">
 
@@ -88,7 +80,7 @@ export const TablesListPage: React.FC = () => {
 
           {filteredTables.length > 0 ? (
             <div className="tables-list">
-              {currentTables.map((table) => (
+              {filteredTables.map((table) => (
                 <div key={table.table_id} className="table-card">
                   <div className="table-card-header">
                     <div className="table-header-left">
@@ -108,21 +100,24 @@ export const TablesListPage: React.FC = () => {
                     <button className="view-table-btn" onClick={() => navigate(`/tables/${table.table_id}`)}>View Table →</button>
                   </div>
                 </div>
+
               ))}
             </div>
           ) : (
             <div className="empty-state"><p>No tables match your filter criteria.</p></div>
           )}
+                        {hasMore && (
+                <div className="tables-pagination">
+                  <LoadMoreButton
+                    label="Load more tables"
+                    loadingLabel="Loading..."
+                    loading={loadingMore}
+                    disabled={loadingMore || loading}
+                    onClick={loadMore}
+                  />
+                </div>
+              )}
         </div>
-        <PaginationControls
-          className="tables-pagination"
-          current={Math.min(currentPage, totalPages)}
-          total={totalPages}
-          onPrevious={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-          onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-          disablePrevious={currentPage === 1}
-          disableNext={currentPage === totalPages}
-        />
       </div>
       {dialogNode}
     </>

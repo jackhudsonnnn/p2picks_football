@@ -7,12 +7,15 @@ import {
   fetchBetLiveInfo as fetchBetLiveInfoRepo,
   type BetProposalRequestPayload,
   type BetLiveInfo,
+  type TicketListPage,
+  type TicketListCursor,
+  getUserTicketsPage,
 } from '@data/repositories/betsRepository';
 import {
   fetchModeOverviews as fetchModeOverviewsRepo,
   fetchModePreview as fetchModePreviewRepo,
-  type ModePreviewPayload,
 } from '@data/repositories/modesRepository';
+import type { ModePreviewPayload } from '@shared/types/modes';
 
 export type { BetProposalRequestPayload };
 export type { ModePreviewPayload };
@@ -43,8 +46,15 @@ export async function acceptBetProposal({
 }
 
 export async function getUserTickets(userId: string) {
+  console.warn('[betsService] getUserTickets is deprecated; use getUserTicketsPage');
   return getUserTicketsRepo(userId);
 }
+
+export async function fetchUserTicketsPage(opts: { limit?: number; before?: TicketListCursor | null; after?: TicketListCursor | null } = {}): Promise<TicketListPage> {
+  return getUserTicketsPage(opts);
+}
+
+export type { TicketListCursor, TicketListPage };
 
 export async function hasUserAcceptedBet(betId: string, userId: string): Promise<boolean> {
   return hasUserAcceptedBetRepo(betId, userId);

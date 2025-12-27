@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@data/clients/supabaseClient';
-import { getUserTickets } from '../service';
+import { fetchUserTicketsPage, type TicketListCursor } from '../service';
 import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
 import { subscribeToBetProposals } from '@features/table/services/tableService';
@@ -13,11 +13,16 @@ type RefreshOptions = {
 export function useTickets(userId?: string) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [nextCursor, setNextCursor] = useState<TicketListCursor | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(false);
 
   const refresh = useCallback(async (options?: RefreshOptions) => {
     const silent = Boolean(options?.silent);
     if (!userId) {
       setTickets([]);
+      setNextCursor(null);
+      setHasMore(false);
       if (!silent) {
         setLoading(false);
       }
@@ -27,11 +32,15 @@ export function useTickets(userId?: string) {
       setLoading(true);
     }
     try {
-      const data = await getUserTickets(userId);
-      setTickets((data || []).map(mapParticipationRowToTicket));
+      const page = await fetchUserTicketsPage({ limit: 6 });
+      setTickets((page.participations || []).map(mapParticipationRowToTicket));
+      setNextCursor(page.nextCursor);
+      setHasMore(page.hasMore);
     } catch (error) {
       console.warn('[useTickets] failed to load tickets', error);
       setTickets([]);
+      setNextCursor(null);
+      setHasMore(false);
     } finally {
       if (!silent) {
         setLoading(false);
@@ -129,6 +138,21 @@ export function useTickets(userId?: string) {
     };
   }, [userId, refresh]);
 
+  const loadMore = useCallback(async () => {
+    if (!userId || !hasMore || !nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchUserTicketsPage({ limit: 6, before: nextCursor });
+      setTickets((prev) => [...prev, ...(page.participations || []).map(mapParticipationRowToTicket)]);
+      setNextCursor(page.nextCursor);
+      setHasMore(page.hasMore);
+    } catch (e) {
+      console.warn('[useTickets] failed to load more tickets', e);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [userId, hasMore, nextCursor, loadingMore]);
+
   const counts: TicketCounts = useMemo(() => {
     const active = tickets.filter((t) => t.state === 'active').length;
     const pending = tickets.filter((t) => t.state === 'pending').length;
@@ -164,5 +188,5 @@ export function useTickets(userId?: string) {
     }
   };
 
-  return { tickets, loading, counts, refresh, changeGuess };
+  return { tickets, loading, loadingMore, hasMore, counts, refresh, loadMore, changeGuess };
 }
