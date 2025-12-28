@@ -104,7 +104,6 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
         { label: 'Home Team', value: homeName },
         { label: 'Away Team', value: awayName },
       ],
-      unavailableReason: 'Live tracking data unavailable',
     };
   }
 

@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
+import { getGameDoc } from '../../../utils/refinedDocAccessors';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
@@ -58,7 +58,7 @@ export async function prepareTotalDisasterConfig({
   }
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc) return nextConfig as Record<string, unknown>;
 
     const homeTeam = pickHomeTeam(doc);

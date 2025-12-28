@@ -1,5 +1,5 @@
 import { getGameStatus } from '../../../services/gameDataService';
-import { loadRefinedGame } from '../../../utils/gameData';
+import { getGameDoc } from '../../../utils/refinedDocAccessors';
 import { possessionTeamIdFromDoc } from './evaluator';
 
 export async function validateChooseTheirFateProposal({
@@ -26,7 +26,7 @@ export async function validateChooseTheirFateProposal({
     };
   }
 
-  const doc = await loadRefinedGame(gameIdForCheck);
+  const doc = await getGameDoc(gameIdForCheck);
   if (!doc) {
     return {
       valid: false,

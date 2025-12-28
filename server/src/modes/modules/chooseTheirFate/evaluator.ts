@@ -1,5 +1,5 @@
-import type { RefinedGameDoc } from '../../../utils/gameData';
-import { getCategory } from '../../../utils/gameData';
+import type { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { getCategory } from '../../../utils/refinedDocAccessors';
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeTeamId } from '../../shared/teamUtils';
 

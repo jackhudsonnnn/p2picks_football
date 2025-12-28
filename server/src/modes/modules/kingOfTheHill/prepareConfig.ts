@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { findPlayer, loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
+import { getPlayerFromDoc, getGameDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import {
   KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
@@ -85,7 +85,7 @@ export async function prepareKingOfTheHillConfig({
   }
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc) {
       if (debug) {
         console.warn('[kingOfTheHill][prepareConfig] no refined game document found', {
@@ -166,11 +166,11 @@ async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string, ref: Pla
 
 function lookupPlayer(doc: RefinedGameDoc, ref: PlayerRef) {
   if (ref.id) {
-    const byId = findPlayer(doc, String(ref.id));
+    const byId = getPlayerFromDoc(doc, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = findPlayer(doc, `name:${ref.name}`);
+    const byName = getPlayerFromDoc(doc, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;

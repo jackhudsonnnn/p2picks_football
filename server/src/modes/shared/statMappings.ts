@@ -1,4 +1,4 @@
-import { STAT_KEY_TO_CATEGORY } from '../modules/eitherOr/constants';
+import { STAT_KEY_TO_CATEGORY } from './statConstants';
 
 export const POSITIONS_BY_CATEGORY: Record<string, string[]> = {
   passing: ['QB'],

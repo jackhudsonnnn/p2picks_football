@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../utils/gameData';
+import type { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import { computeTotalPoints } from '../../shared/teamUtils';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 

@@ -1,28 +1,11 @@
-export const STAT_KEY_TO_CATEGORY: Record<string, string> = {
-  passingYards: 'passing',
-  passingTouchdowns: 'passing',
-  rushingYards: 'rushing',
-  rushingTouchdowns: 'rushing',
-  receptions: 'receiving',
-  receivingYards: 'receiving',
-  receivingTouchdowns: 'receiving',
-  totalTackles: 'defensive',
-  sacks: 'defensive',
-  passesDefended: 'defensive'
-};
+import {
+  STAT_KEY_TO_CATEGORY as SHARED_STAT_KEY_TO_CATEGORY,
+  STAT_KEY_LABELS as SHARED_STAT_KEY_LABELS,
+  ALLOWED_RESOLVE_AT as SHARED_ALLOWED_RESOLVE_AT,
+  DEFAULT_RESOLVE_AT as SHARED_DEFAULT_RESOLVE_AT,
+} from '../../shared/statConstants';
 
-export const EITHER_OR_ALLOWED_RESOLVE_AT = ['Halftime', 'End of Game'];
-export const EITHER_OR_DEFAULT_RESOLVE_AT = 'End of Game';
-
-export const STAT_KEY_LABELS: Record<string, string> = {
-  passingYards: 'Passing Yards',
-  passingTouchdowns: 'Passing Touchdowns',
-  rushingYards: 'Rushing Yards',
-  rushingTouchdowns: 'Rushing Touchdowns',
-  receptions: 'Receptions',
-  receivingYards: 'Receiving Yards',
-  receivingTouchdowns: 'Receiving Touchdowns',
-  totalTackles: 'Total Tackles',
-  sacks: 'Sacks',
-  passesDefended: 'Passes Defended',
-};
+export const STAT_KEY_TO_CATEGORY = SHARED_STAT_KEY_TO_CATEGORY;
+export const STAT_KEY_LABELS = SHARED_STAT_KEY_LABELS;
+export const EITHER_OR_ALLOWED_RESOLVE_AT: string[] = [...SHARED_ALLOWED_RESOLVE_AT];
+export const EITHER_OR_DEFAULT_RESOLVE_AT = SHARED_DEFAULT_RESOLVE_AT;

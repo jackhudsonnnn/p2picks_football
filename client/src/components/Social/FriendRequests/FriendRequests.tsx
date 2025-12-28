@@ -75,7 +75,7 @@ export const FriendRequests: React.FC = () => {
         <FriendsList
         mode="select"
         friends={[]}
-        emptyMessage="Loading requests..."
+        emptyMessage="No friend requests right now."
         />
       ) : (
         <FriendsList

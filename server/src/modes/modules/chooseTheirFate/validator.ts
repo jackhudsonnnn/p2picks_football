@@ -1,13 +1,7 @@
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../../supabaseClient';
-import { fetchModeConfig } from '../../../services/modeConfig';
-import { RefinedGameDoc } from '../../../utils/gameData';
-import { ModeRuntimeKernel } from '../../shared/modeRuntimeKernel';
-import { betRepository } from '../../shared/betRepository';
-import { washBetWithHistory } from '../../shared/washService';
-import { RedisJsonStore } from '../../shared/redisJsonStore';
-import { getRedisClient } from '../../shared/redisClient';
-import { ensureRefinedGameDoc, normalizeStatus } from '../../shared/gameDocProvider';
+import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { BaseValidatorService } from '../../shared/baseValidatorService';
+import { normalizeStatus } from '../../shared/gameDocProvider';
 import { normalizeTeamId } from '../../shared/teamUtils';
 import {
   ChooseFateBaseline,
@@ -17,85 +11,41 @@ import {
   possessionTeamIdFromDoc,
 } from './evaluator';
 
-export class ChooseTheirFateValidatorService {
-  private readonly baselineStore: RedisJsonStore<ChooseFateBaseline>;
-  private readonly kernel: ModeRuntimeKernel;
-  private readonly modeLabel = 'Choose Their Fate';
-  private readonly baselineEvent = 'choose_their_fate_baseline';
-  private readonly resultEvent = 'choose_their_fate_result';
-
+export class ChooseTheirFateValidatorService extends BaseValidatorService<ChooseTheirFateConfig, ChooseFateBaseline> {
   constructor() {
-    const redis = getRedisClient();
-    this.baselineStore = new RedisJsonStore(redis, 'choosefate:baseline', 60 * 60 * 6);
-    this.kernel = new ModeRuntimeKernel({
+    super({
       modeKey: 'choose_their_fate',
       channelName: 'choose-their-fate-pending',
-      dedupeGameFeed: true,
-      onPendingUpdate: (payload) => this.handleBetProposalUpdate(payload),
-      onPendingDelete: (payload) => this.handleBetProposalDelete(payload),
-      onGameEvent: (event) => this.processGameUpdate(event.gameId, event.doc),
-      onReady: () => this.syncPendingBaselines(),
+      storeKeyPrefix: 'choosefate:baseline',
+      modeLabel: 'Choose Their Fate',
+      resultEvent: 'choose_their_fate_result',
+      baselineEvent: 'choose_their_fate_baseline',
+      storeTtlSeconds: 60 * 60 * 6,
     });
   }
 
-  start(): void {
-    this.kernel.start();
+  protected async onBetBecamePending(bet: BetProposal): Promise<void> {
+    await this.captureBaselineForBet(bet);
   }
 
-  stop(): void {
-    this.kernel.stop();
-  }
-
-  private async handleBetProposalUpdate(payload: RealtimePostgresChangesPayload<Record<string, unknown>>): Promise<void> {
-    try {
-      const next = (payload.new || {}) as Partial<BetProposal>;
-      const previous = (payload.old || {}) as Partial<BetProposal>;
-      if (!next.bet_id) return;
-      if (next.bet_status === 'pending' && previous.bet_status !== 'pending') {
-        await this.captureBaselineForBet(next as BetProposal);
-      }
-      const exitPending = next.bet_status !== 'pending' && previous.bet_status === 'pending';
-      if (exitPending || (next.winning_choice && !previous.winning_choice)) {
-        await this.baselineStore.delete(next.bet_id);
-      }
-    } catch (err) {
-      console.error('[chooseTheirFate] pending update handler error', err);
+  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc): Promise<void> {
+    const bets = await this.listPendingBets({ gameId });
+    for (const bet of bets) {
+      await this.evaluateBet(bet, doc);
     }
   }
 
-  private async handleBetProposalDelete(payload: RealtimePostgresChangesPayload<Record<string, unknown>>): Promise<void> {
-    try {
-      const previous = (payload.old || {}) as Partial<BetProposal>;
-      if (previous.bet_id) {
-        await this.baselineStore.delete(previous.bet_id);
-      }
-    } catch (err) {
-      console.error('[chooseTheirFate] pending delete handler error', err);
-    }
+  protected async onKernelReady(): Promise<void> {
+    await this.syncPendingBaselines();
   }
 
   private async syncPendingBaselines(): Promise<void> {
-    try {
-      const pending = await betRepository.listPendingBets('choose_their_fate');
-      for (const bet of pending) {
-        const baseline = await this.baselineStore.get(bet.bet_id);
-        if (!baseline) {
-          await this.captureBaselineForBet(bet);
-        }
+    const pending = await this.listPendingBets();
+    for (const bet of pending) {
+      const baseline = await this.store.get(bet.bet_id);
+      if (!baseline) {
+        await this.captureBaselineForBet(bet);
       }
-    } catch (err) {
-      console.error('[chooseTheirFate] sync pending baselines failed', err);
-    }
-  }
-
-  private async processGameUpdate(gameId: string, doc: RefinedGameDoc): Promise<void> {
-    try {
-      const bets = await betRepository.listPendingBets('choose_their_fate', { gameId });
-      for (const bet of bets) {
-        await this.evaluateBet(bet, doc);
-      }
-    } catch (err) {
-      console.error('[chooseTheirFate] process game update error', { gameId }, err);
     }
   }
 
@@ -103,62 +53,72 @@ export class ChooseTheirFateValidatorService {
     try {
       const status = normalizeStatus(doc.status);
       if (this.shouldAutoWashForStatus(status)) {
-        await this.washBet(bet.bet_id, { reason: 'game_status', status: doc.status ?? null }, this.describeStatusWash(doc.status));
+        await this.washBet(
+          bet.bet_id,
+          { reason: 'game_status', status: doc.status ?? null },
+          this.describeStatusWash(doc.status),
+        );
         return;
       }
+
       const config = await this.getConfigForBet(bet.bet_id);
       if (!config) {
-        console.warn('[chooseTheirFate] missing config; skipping bet', { bet_id: bet.bet_id });
+        this.logWarn('missing config; skipping bet', { bet_id: bet.bet_id });
         return;
       }
-      const baseline = (await this.baselineStore.get(bet.bet_id)) || (await this.captureBaselineForBet(bet, doc));
+
+      const baseline =
+        (await this.store.get(bet.bet_id)) ||
+        (await this.captureBaselineForBet(bet, doc));
       if (!baseline) {
-        console.warn('[chooseTheirFate] baseline unavailable; skipping bet', { bet_id: bet.bet_id });
+        this.logWarn('baseline unavailable; skipping bet', { bet_id: bet.bet_id });
         return;
       }
+
       const currentScores = collectTeamScores(doc);
       const possessionTeam = possessionTeamIdFromDoc(doc);
       const outcome = determineChooseFateOutcome(baseline, currentScores, possessionTeam);
       if (!outcome) return;
-      if (outcome.outcome === 'Touchdown') {
-        await this.setResult(bet.bet_id, 'Touchdown', {
-          outcome: 'Touchdown',
-          scoring_team_id: outcome.scoringTeamId,
-        });
-        return;
-      }
-      if (outcome.outcome === 'Field Goal') {
-        await this.setResult(bet.bet_id, 'Field Goal', {
-          outcome: 'Field Goal',
-          scoring_team_id: outcome.scoringTeamId,
-        });
-        return;
-      }
-      if (outcome.outcome === 'Safety') {
-        await this.setResult(bet.bet_id, 'Safety', {
-          outcome: 'Safety',
-          scoring_team_id: outcome.scoringTeamId,
-          forced_by_team_id: outcome.forcedByTeamId ?? null,
-        });
-        return;
-      }
-      if (outcome.outcome === 'Punt') {
-        await this.setResult(bet.bet_id, 'Punt', {
-          outcome: 'Punt',
-          from_team_id: outcome.fromTeamId,
-          to_team_id: outcome.toTeamId,
-        });
-        return;
-      }
-      if (outcome.outcome === 'Turnover') {
-        await this.setResult(bet.bet_id, 'Turnover', {
-          outcome: 'Turnover',
-          from_team_id: outcome.fromTeamId,
-          to_team_id: outcome.toTeamId,
-        });
+
+      switch (outcome.outcome) {
+        case 'Touchdown':
+          await this.setResult(bet.bet_id, 'Touchdown', {
+            outcome: 'Touchdown',
+            scoring_team_id: outcome.scoringTeamId,
+          });
+          return;
+        case 'Field Goal':
+          await this.setResult(bet.bet_id, 'Field Goal', {
+            outcome: 'Field Goal',
+            scoring_team_id: outcome.scoringTeamId,
+          });
+          return;
+        case 'Safety':
+          await this.setResult(bet.bet_id, 'Safety', {
+            outcome: 'Safety',
+            scoring_team_id: outcome.scoringTeamId,
+            forced_by_team_id: outcome.forcedByTeamId ?? null,
+          });
+          return;
+        case 'Punt':
+          await this.setResult(bet.bet_id, 'Punt', {
+            outcome: 'Punt',
+            from_team_id: outcome.fromTeamId,
+            to_team_id: outcome.toTeamId,
+          });
+          return;
+        case 'Turnover':
+          await this.setResult(bet.bet_id, 'Turnover', {
+            outcome: 'Turnover',
+            from_team_id: outcome.fromTeamId,
+            to_team_id: outcome.toTeamId,
+          });
+          return;
+        default:
+          return;
       }
     } catch (err) {
-      console.error('[chooseTheirFate] evaluate bet error', { bet_id: bet.bet_id }, err);
+      this.logError('evaluate bet error', { bet_id: bet.bet_id }, err);
     }
   }
 
@@ -167,41 +127,51 @@ export class ChooseTheirFateValidatorService {
     winningChoice: 'Touchdown' | 'Field Goal' | 'Safety' | 'Punt' | 'Turnover',
     payload: Record<string, unknown>,
   ): Promise<void> {
-    const updated = await betRepository.setWinningChoice(betId, winningChoice);
+    const updated = await this.setWinningChoice(betId, winningChoice);
     if (!updated) return;
-    await betRepository.recordHistory(betId, this.resultEvent, {
+
+    await this.recordHistory(betId, this.config.resultEvent, {
       ...payload,
       captured_at: new Date().toISOString(),
     });
-    await this.baselineStore.delete(betId);
+    await this.store.delete(betId);
   }
 
   private async captureBaselineForBet(
     bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
     prefetchedDoc?: RefinedGameDoc | null,
   ): Promise<ChooseFateBaseline | null> {
-    const existing = await this.baselineStore.get(bet.bet_id);
+    const existing = await this.store.get(bet.bet_id);
     if (existing) return existing;
+
     const config = await this.getConfigForBet(bet.bet_id);
     if (!config) {
-      console.warn('[chooseTheirFate] cannot capture baseline; missing config', { bet_id: bet.bet_id });
+      this.logWarn('cannot capture baseline; missing config', { bet_id: bet.bet_id });
       return null;
     }
+
     const gameId = config.nfl_game_id || bet.nfl_game_id;
     if (!gameId) {
-      console.warn('[chooseTheirFate] missing game id for baseline capture', { bet_id: bet.bet_id });
+      this.logWarn('missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;
     }
-    const doc = await ensureRefinedGameDoc(gameId, prefetchedDoc ?? null);
+
+    const doc = await this.ensureGameDoc(gameId, prefetchedDoc ?? null);
     if (!doc) {
-      console.warn('[chooseTheirFate] refined doc unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
+      this.logWarn('refined doc unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
       return null;
     }
+
     const status = normalizeStatus(doc.status);
     if (this.shouldAutoWashForStatus(status)) {
-      await this.washBet(bet.bet_id, { reason: 'game_status', status: doc.status ?? null }, this.describeStatusWash(doc.status));
+      await this.washBet(
+        bet.bet_id,
+        { reason: 'game_status', status: doc.status ?? null },
+        this.describeStatusWash(doc.status),
+      );
       return null;
     }
+
     const configuredPossessionTeamId = normalizeTeamId(config.possession_team_id ?? null);
     const currentPossessionTeamId = normalizeTeamId(possessionTeamIdFromDoc(doc));
     if (!currentPossessionTeamId) {
@@ -212,6 +182,7 @@ export class ChooseTheirFateValidatorService {
       );
       return null;
     }
+
     if (configuredPossessionTeamId && currentPossessionTeamId !== configuredPossessionTeamId) {
       await this.washBet(
         bet.bet_id,
@@ -224,32 +195,24 @@ export class ChooseTheirFateValidatorService {
       );
       return null;
     }
-  const possessionTeamId = currentPossessionTeamId;
+
+    const possessionTeamId = currentPossessionTeamId;
     const baseline: ChooseFateBaseline = {
       gameId,
       possessionTeamId,
       capturedAt: new Date().toISOString(),
       teams: collectTeamScores(doc),
     };
-    await this.baselineStore.set(bet.bet_id, baseline);
-    await betRepository.recordHistory(bet.bet_id, this.baselineEvent, {
+
+    await this.store.set(bet.bet_id, baseline);
+    await this.recordHistory(bet.bet_id, this.config.baselineEvent, {
       event: 'baseline',
       captured_at: baseline.capturedAt,
       possession_team_id: baseline.possessionTeamId,
       teams: baseline.teams,
     });
-    return baseline;
-  }
 
-  private async getConfigForBet(betId: string): Promise<ChooseTheirFateConfig | null> {
-    try {
-      const record = await fetchModeConfig(betId);
-      if (!record || record.mode_key !== 'choose_their_fate') return null;
-      return record.data as ChooseTheirFateConfig;
-    } catch (err) {
-      console.error('[chooseTheirFate] fetch config error', { betId }, err);
-      return null;
-    }
+    return baseline;
   }
 
   private describeStatusWash(status: string | null | undefined): string {
@@ -264,9 +227,11 @@ export class ChooseTheirFateValidatorService {
     if (status === null || status === undefined) return null;
     const raw = String(status).trim();
     if (!raw) return null;
+
     const withoutPrefix = raw.replace(/^STATUS_/i, '');
     const withSpaces = withoutPrefix.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
     if (!withSpaces) return null;
+
     return withSpaces
       .split(' ')
       .filter(Boolean)
@@ -276,8 +241,10 @@ export class ChooseTheirFateValidatorService {
 
   private shouldAutoWashForStatus(status: string | null | undefined): boolean {
     if (!status) return false;
+
     const normalized = normalizeStatus(status);
     if (!normalized || normalized === 'STATUS_IN_PROGRESS' || normalized === 'STATUS_END_PERIOD') return false;
+
     if (
       normalized.startsWith('STATUS_HALFTIME') ||
       normalized.startsWith('STATUS_FINAL') ||
@@ -286,18 +253,8 @@ export class ChooseTheirFateValidatorService {
     ) {
       return true;
     }
-    return false;
-  }
 
-  private async washBet(betId: string, payload: Record<string, unknown>, explanation: string): Promise<void> {
-    await washBetWithHistory({
-      betId,
-      payload,
-      explanation,
-      eventType: this.resultEvent,
-      modeLabel: this.modeLabel,
-    });
-    await this.baselineStore.delete(betId);
+    return false;
   }
 }
 

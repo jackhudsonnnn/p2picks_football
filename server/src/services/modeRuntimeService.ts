@@ -1,15 +1,29 @@
 import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../modes/registry';
 import type {
   ModeConfigStepDefinition,
+  ModeContext,
   ModeDefinitionDTO,
   ModeUserConfigChoice,
   ModeUserConfigStep,
 } from '../modes/shared/types';
-import { computeModeOptions, renderModeTemplate, runModeValidator } from '../modes/shared/utils';
+import {
+  buildModeContext,
+  computeMatchupDescription,
+  computeModeOptions,
+  computeWinningCondition,
+  renderModeTemplate,
+  runModeValidator,
+} from '../modes/shared/utils';
 import type { BetProposal } from '../supabaseClient';
 import { getSupabaseAdmin } from '../supabaseClient';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadRefinedGame, type RefinedGameDoc, type Team } from '../utils/gameData';
+import {
+  getGameDoc,
+  getHomeTeamFromDoc,
+  getAwayTeamFromDoc,
+  extractTeamId,
+  extractTeamName,
+} from '../utils/refinedDocAccessors';
 
 export type ModeUserConfigInput = {
   nflGameId?: string | null;
@@ -55,19 +69,16 @@ export async function buildModePreview(
 ): Promise<ModePreviewResult> {
   const definition = requireModeDefinition(modeKey);
   await enrichConfigWithGameContext(config, bet);
-  const context = { config, bet, mode: definition } as const;
+  const ctx = buildModeContext(config, bet);
 
   const summary = safeLabel(
-    renderModeTemplate(definition.summaryTemplate, context),
+    renderModeTemplate(definition.summaryTemplate, { config, bet, mode: definition }),
     definition.label,
   );
-  const description = safeLabel(
-    renderModeTemplate(definition.matchupTemplate, context),
-    summary,
-  );
-  const winningCondition = renderModeTemplate(definition.winningConditionTemplate, context);
-  const options = computeModeOptions(definition, context);
-  const errors = runModeValidator(definition.finalizeValidatorExpression, context);
+  const description = computeMatchupDescription(definition, ctx);
+  const winningCondition = computeWinningCondition(definition, ctx);
+  const options = computeModeOptions(definition, ctx);
+  const errors = runModeValidator(definition, ctx);
 
   return {
     summary,
@@ -83,8 +94,8 @@ export function validateModeConfig(
   config: Record<string, unknown>,
 ): string[] {
   const definition = requireModeDefinition(modeKey);
-  const context = { config, bet: null, mode: definition } as const;
-  return runModeValidator(definition.finalizeValidatorExpression, context);
+  const ctx = buildModeContext(config, null);
+  return runModeValidator(definition, ctx);
 }
 
 function requireModeDefinition(modeKey: string): ModeDefinitionDTO {
@@ -178,11 +189,11 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
   }
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc) return;
 
-    const homeTeam = pickHomeTeam(doc);
-    const awayTeam = pickAwayTeam(doc, homeTeam);
+    const homeTeam = getHomeTeamFromDoc(doc);
+    const awayTeam = getAwayTeamFromDoc(doc);
 
     if (needsHomeId && !target.home_team_id) {
       target.home_team_id = extractTeamId(homeTeam);
@@ -203,34 +214,6 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
 
 function isNonEmptyString(value: unknown): boolean {
   return typeof value === 'string' && value.trim().length > 0;
-}
-
-function pickHomeTeam(doc: RefinedGameDoc): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  return (
-    teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'home') ||
-    teams[0] ||
-    null
-  );
-}
-
-function pickAwayTeam(doc: RefinedGameDoc, home: Team | null): Team | null {
-  const teams = Array.isArray(doc.teams) ? doc.teams : [];
-  const byFlag = teams.find((team) => String((team as any)?.homeAway || '').toLowerCase() === 'away');
-  if (byFlag) return byFlag;
-  return teams.find((team) => team !== home) || null;
-}
-
-function extractTeamId(team: Team | null): string | null {
-  if (!team) return null;
-  const rawId = (team as any)?.teamId || (team as any)?.abbreviation;
-  return rawId ? String(rawId) : null;
-}
-
-function extractTeamName(team: Team | null): string | null {
-  if (!team) return null;
-  const name = (team as any)?.name || (team as any)?.abbreviation || (team as any)?.teamId;
-  return name ? String(name) : null;
 }
 
 export async function ensureModeKeyMatchesBet(

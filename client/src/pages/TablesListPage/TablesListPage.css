@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  height: calc(85vh - 193px);
+  height: calc(82vh - 193px);
   overflow-y: auto;
 }
 
@@ -211,14 +211,14 @@
   background-color: var(--primary);
   color: var(--text-light);
   border: none;
-  padding: calc(var(--spacing-sm, 8px) + 4px) var(--spacing-md);
+  padding: 0 var(--spacing-md);
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
   transition: background-color var(--transition), transform 0.12s ease,
     box-shadow 0.12s ease;
   box-shadow: var(--shadow-sm);
-  height: 44px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

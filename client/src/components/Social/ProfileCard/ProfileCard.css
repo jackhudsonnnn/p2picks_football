@@ -3,6 +3,8 @@
     border: 1px solid var(--neutral-700);
     border-radius: var(--radius-md);
     background-color: var(--neutral-800);
+    height: calc(81vh - 155px);
+    overflow: scroll;
 }
 
 .username-section { 

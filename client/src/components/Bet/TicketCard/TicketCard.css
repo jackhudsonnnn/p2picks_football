@@ -549,5 +549,13 @@
     font-size: var(--font-size-sm);
     font-weight: 700;
   }
+
+  .enter-table-btn {
+    font-size: var(--font-size-xs);
+  }
+
+  .bet-details {
+    font-size: var(--font-size-sm);
+  }
 }
 

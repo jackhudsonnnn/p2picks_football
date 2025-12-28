@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../utils/gameData';
+import type { RefinedGameDoc } from '../../utils/refinedDocAccessors';
 import { normalizePlayerPosition } from './playerUtils';
 import { normalizeNumber } from '../../utils/number';
 

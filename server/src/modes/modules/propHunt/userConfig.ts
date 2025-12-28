@@ -3,7 +3,7 @@
  * Uses shared UserConfigBuilder utilities.
  */
 
-import { findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
+import { getPlayerFromDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import {
   loadGameContext,
@@ -226,11 +226,11 @@ function extractPlayerStat(
 
 function lookupPlayer(doc: RefinedGameDoc, ref: { id?: string | null; name?: string | null }) {
   if (ref.id) {
-    const byId = findPlayer(doc, String(ref.id));
+    const byId = getPlayerFromDoc(doc, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = findPlayer(doc, `name:${ref.name}`);
+    const byName = getPlayerFromDoc(doc, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;

@@ -1,4 +1,4 @@
-import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
+import { getGameDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
@@ -59,7 +59,7 @@ async function loadChoices(gameId: string): Promise<{ doc: RefinedGameDoc | null
     return { doc: null, lineChoices: buildBaseLineChoices() };
   }
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     return { doc, lineChoices: buildBaseLineChoices() };
   } catch (err) {
     return { doc: null, lineChoices: buildBaseLineChoices() };

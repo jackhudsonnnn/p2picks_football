@@ -12,6 +12,14 @@ export type PlayerRecord = {
 
 export type ModeUserConfigInputType = 'select' | 'radio';
 
+/**
+ * Context passed to mode definition functions for computing options, validation, etc.
+ */
+export interface ModeContext {
+  config: Record<string, unknown>;
+  bet: BetProposal | null;
+}
+
 export type ModeConfigStepDefinition = {
   key: string;
   component: string;
@@ -20,19 +28,32 @@ export type ModeConfigStepDefinition = {
   inputType?: ModeUserConfigInputType;
   props?: Record<string, unknown>;
   optional?: boolean;
+  /** @deprecated Use validate function instead */
   validatorExpression?: string;
+  /** Type-safe validator function */
+  validate?: (ctx: ModeContext) => string[];
 };
 
 export type ModeDefinitionDTO = {
   key: string;
   label: string;
   summaryTemplate?: string;
+  /** @deprecated matchupTemplate is now handled by default - remove from definitions */
   matchupTemplate?: string;
+  /** @deprecated Use computeWinningCondition function instead */
   winningConditionTemplate?: string;
+  /** Type-safe function to compute winning condition description */
+  computeWinningCondition?: (ctx: ModeContext) => string;
+  /** @deprecated Use computeOptions function instead */
   optionsExpression?: string;
+  /** Type-safe function to compute available options */
+  computeOptions?: (ctx: ModeContext) => string[];
   staticOptions?: string[];
   configSteps: ModeConfigStepDefinition[];
+  /** @deprecated Use validateConfig function instead */
   finalizeValidatorExpression?: string;
+  /** Type-safe function to validate final config */
+  validateConfig?: (ctx: ModeContext) => string[];
   metadata?: Record<string, unknown>;
 };
 

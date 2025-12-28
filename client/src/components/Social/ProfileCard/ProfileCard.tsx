@@ -21,20 +21,9 @@ export const ProfileCard: React.FC = () => {
     trimmedUsername.length <= 10 &&
     /^[a-zA-Z0-9_]+$/.test(trimmedUsername);
   const showInvalid = trimmedUsername.length > 0 && !isUsernameValid;
-
-  if (loading) {
-    return (
-      <>
-        <div>Loading profile...</div>
-        {dialogNode}
-      </>
-    );
-  }
   if (!user || !profile) {
     return (
       <>
-        <div>Please log in to view your account.</div>
-        {dialogNode}
       </>
     );
   }
@@ -63,6 +52,12 @@ export const ProfileCard: React.FC = () => {
   return (
     <>
       <section className="profile-section">
+        {loading ? (
+          <>
+            <div>Loading profile...</div>
+            {dialogNode}
+          </>
+        ) : (
         <div className="username-section">
           <div className="current-username">
             <h3>Username</h3>
@@ -100,6 +95,7 @@ export const ProfileCard: React.FC = () => {
             </div>
           </form>
         </div>
+        )}
       </section>
       {dialogNode}
     </>

@@ -3,7 +3,7 @@
  * Extracts common patterns from eitherOr, kingOfTheHill, propHunt, etc.
  */
 
-import { loadRefinedGame, type RefinedGameDoc } from '../../utils/gameData';
+import { getGameDoc, type RefinedGameDoc } from '../../utils/refinedDocAccessors';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from './playerUtils';
 import { shouldSkipResolveStep } from './resolveUtils';
 import { getValidPositionsForStat } from './statMappings';
@@ -75,7 +75,7 @@ export async function loadGameContext(gameId: string | null | undefined): Promis
   }
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc || !Array.isArray(doc.teams)) {
       return {
         doc,

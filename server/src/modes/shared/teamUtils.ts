@@ -1,4 +1,4 @@
-import type { RefinedGameDoc, Team } from '../../utils/gameData';
+import type { RefinedGameDoc, Team } from '../../utils/refinedDocAccessors';
 import { normalizeNumber } from '../../utils/number';
 
 export function listTeams(doc: RefinedGameDoc | null | undefined): Team[] {

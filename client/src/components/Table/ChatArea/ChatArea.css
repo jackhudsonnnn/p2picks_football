@@ -7,7 +7,7 @@
   border: 1px solid var(--neutral-700);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  height: calc(85vh - 145px);
+  height: calc(82vh - 145px);
 }
 
 .messages-container {

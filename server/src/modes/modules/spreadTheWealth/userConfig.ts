@@ -1,4 +1,4 @@
-import { loadRefinedGame, type RefinedGameDoc } from '../../../utils/gameData';
+import { getGameDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { extractTeamName, pickHomeTeam } from '../../shared/utils';
@@ -23,7 +23,7 @@ export async function buildSpreadTheWealthUserConfig(input: BuildInput = {}): Pr
 
   if (gameId) {
     try {
-      doc = await loadRefinedGame(gameId);
+      doc = await getGameDoc(gameId);
       if (doc) {
         const home = pickHomeTeam(doc);
         const homeName = extractTeamName(home);

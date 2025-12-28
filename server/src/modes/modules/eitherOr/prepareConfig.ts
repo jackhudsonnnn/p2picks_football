@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
+import { getGameDoc, getPlayerFromDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 
@@ -68,7 +68,7 @@ export async function prepareEitherOrConfig({
   }
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc) {
       if (debug) {
         console.warn('[eitherOr][prepareConfig] no refined game document found', {
@@ -174,11 +174,11 @@ async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string, ref: Pla
 
 function lookupPlayer(doc: RefinedGameDoc, ref: PlayerRef) {
   if (ref.id) {
-    const byId = findPlayer(doc, String(ref.id));
+    const byId = getPlayerFromDoc(doc, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = findPlayer(doc, `name:${ref.name}`);
+    const byName = getPlayerFromDoc(doc, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;

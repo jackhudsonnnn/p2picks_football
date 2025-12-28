@@ -13,7 +13,7 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
 import { fetchModeConfig } from '../../services/modeConfig';
-import { RefinedGameDoc } from '../../utils/gameData';
+import { RefinedGameDoc } from '../../utils/refinedDocAccessors';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';

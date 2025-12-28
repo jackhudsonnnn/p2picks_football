@@ -1,10 +1,7 @@
-import { fetchModeConfig } from '../../../services/modeConfig';
-import type { RefinedGameDoc } from '../../../utils/gameData';
-import { ModeRuntimeKernel } from '../../shared/modeRuntimeKernel';
-import { betRepository } from '../../shared/betRepository';
-import { washBetWithHistory } from '../../shared/washService';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import type { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import { formatNumber } from '../../../utils/number';
+import { BaseValidatorService } from '../../shared/baseValidatorService';
+import { normalizeStatus } from '../../shared/gameDocProvider';
 import {
   TotalDisasterConfig,
   describeLine,
@@ -12,44 +9,40 @@ import {
   normalizeLine,
 } from './evaluator';
 
-export class TotalDisasterValidatorService {
-  private readonly kernel: ModeRuntimeKernel;
-  private readonly modeLabel = 'Total Disaster';
-  private readonly resultEvent = 'total_disaster_result';
-
+export class TotalDisasterValidatorService extends BaseValidatorService<TotalDisasterConfig, Record<string, never>> {
   constructor() {
-    this.kernel = new ModeRuntimeKernel({
+    super({
       modeKey: 'total_disaster',
-      dedupeGameFeed: true,
-      onGameEvent: (event) => this.handleGameFeedEvent(event.gameId, event.doc),
+      channelName: 'total-disaster-pending',
+      storeKeyPrefix: 'totalDisaster:noop',
+      modeLabel: 'Total Disaster',
+      resultEvent: 'total_disaster_result',
+      baselineEvent: 'total_disaster_baseline',
+      storeTtlSeconds: 60 * 60,
     });
   }
 
-  start(): void {
-    this.kernel.start();
+  protected async onBetBecamePending(): Promise<void> {
+    // no baseline/state to capture
   }
 
-  stop(): void {
-    this.kernel.stop();
-  }
-
-  private async handleGameFeedEvent(gameId: string, doc: RefinedGameDoc): Promise<void> {
-    try {
-      if (normalizeStatus(doc.status) !== 'STATUS_FINAL') return;
-      const bets = await betRepository.listPendingBets('total_disaster', { gameId });
-      for (const bet of bets) {
-        await this.resolveBet(bet.bet_id, doc);
-      }
-    } catch (err) {
-      console.error('[totalDisaster] game feed error', { gameId }, err);
+  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc): Promise<void> {
+    if (normalizeStatus(doc.status) !== 'STATUS_FINAL') return;
+    const bets = await this.listPendingBets({ gameId });
+    for (const bet of bets) {
+      await this.resolveBet(bet.bet_id, doc);
     }
+  }
+
+  protected async onKernelReady(): Promise<void> {
+    // nothing to sync
   }
 
   private async resolveBet(betId: string, doc: RefinedGameDoc): Promise<void> {
     try {
       const config = await this.getConfigForBet(betId);
       if (!config) {
-        console.warn('[totalDisaster] missing config; skipping bet', { betId });
+        this.logWarn('missing config; skipping bet', { betId });
         return;
       }
       const line = normalizeLine(config);
@@ -75,9 +68,9 @@ export class TotalDisasterValidatorService {
         return;
       }
       const winningChoice = evaluation.decision === 'over' ? 'Over' : 'Under';
-      const updated = await betRepository.setWinningChoice(betId, winningChoice);
+      const updated = await this.setWinningChoice(betId, winningChoice);
       if (!updated) return;
-      await betRepository.recordHistory(betId, this.resultEvent, {
+      await this.recordHistory(betId, this.config.resultEvent, {
         outcome: winningChoice,
         total_points: evaluation.totalPoints,
         line: evaluation.line,
@@ -85,29 +78,8 @@ export class TotalDisasterValidatorService {
         captured_at: new Date().toISOString(),
       });
     } catch (err) {
-      console.error('[totalDisaster] resolve bet error', { betId }, err);
+      this.logError('resolve bet error', { betId }, err);
     }
-  }
-
-  private async getConfigForBet(betId: string): Promise<TotalDisasterConfig | null> {
-    try {
-      const record = await fetchModeConfig(betId);
-      if (!record || record.mode_key !== 'total_disaster') return null;
-      return record.data as TotalDisasterConfig;
-    } catch (err) {
-      console.error('[totalDisaster] fetch config error', { betId }, err);
-      return null;
-    }
-  }
-
-  private async washBet(betId: string, payload: Record<string, unknown>, explanation: string): Promise<void> {
-    await washBetWithHistory({
-      betId,
-      payload,
-      explanation,
-      eventType: this.resultEvent,
-      modeLabel: this.modeLabel,
-    });
   }
 }
 

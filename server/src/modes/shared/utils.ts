@@ -1,13 +1,43 @@
-import type { RefinedGameDoc, Team } from '../../utils/gameData';
-import type { ModeDefinitionDTO, ModeOverview } from './types';
+import type { RefinedGameDoc, Team } from '../../utils/refinedDocAccessors';
+import type { ModeContext, ModeDefinitionDTO, ModeOverview } from './types';
+import type { BetProposal } from '../../supabaseClient';
 
 export function cloneDefinition(definition: ModeDefinitionDTO): ModeDefinitionDTO {
-  return JSON.parse(JSON.stringify(definition));
+  return {
+    ...definition,
+    configSteps: definition.configSteps.map((step) => ({ ...step })),
+    metadata: definition.metadata ? { ...definition.metadata } : undefined,
+  };
 }
 
 export function cloneOverview(overview: ModeOverview): ModeOverview {
   return JSON.parse(JSON.stringify(overview));
 }
+
+/**
+ * Build a ModeContext from config and optional bet.
+ */
+export function buildModeContext(
+  config: Record<string, unknown>,
+  bet?: BetProposal | null,
+): ModeContext {
+  return { config, bet: bet ?? null };
+}
+
+/**
+ * Default matchup description used by all modes.
+ * Returns "{HomeTeam} vs {AwayTeam}" based on config values.
+ */
+export function getMatchupDescription(ctx: ModeContext): string {
+  const { config } = ctx;
+  const home = config.home_team_abbrev || config.home_team_name || config.home_team_id || 'Home Team';
+  const away = config.away_team_abbrev || config.away_team_name || config.away_team_id || 'Away Team';
+  return `${home} vs ${away}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy expression evaluation (deprecated - will be removed)
+// ─────────────────────────────────────────────────────────────────────────────
 
 type ModeExpressionContext = {
   config: Record<string, unknown>;
@@ -15,7 +45,7 @@ type ModeExpressionContext = {
   mode: ModeDefinitionDTO | null;
 };
 
-function buildContext(partial: Partial<ModeExpressionContext>): ModeExpressionContext {
+function buildLegacyContext(partial: Partial<ModeExpressionContext>): ModeExpressionContext {
   return {
     config: partial.config || {},
     bet: partial.bet ?? null,
@@ -23,6 +53,7 @@ function buildContext(partial: Partial<ModeExpressionContext>): ModeExpressionCo
   };
 }
 
+/** @deprecated Use function-based approach instead */
 function evaluateExpression<T = unknown>(expression: string, context: ModeExpressionContext): T | null {
   try {
     const fn = new Function(
@@ -36,12 +67,13 @@ function evaluateExpression<T = unknown>(expression: string, context: ModeExpres
   }
 }
 
+/** @deprecated Use function-based approach instead */
 export function renderModeTemplate(
   template: string | undefined,
   partial: Partial<ModeExpressionContext>,
 ): string {
   if (!template) return '';
-  const context = buildContext(partial);
+  const context = buildLegacyContext(partial);
   try {
     const fn = new Function(
       'context',
@@ -56,12 +88,61 @@ export function renderModeTemplate(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Unified API (supports both functions and legacy expressions)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run mode config validation.
+ * Prefers validateConfig function, falls back to legacy finalizeValidatorExpression.
+ */
+export function runModeValidator(
+  mode: ModeDefinitionDTO | null | undefined,
+  ctx: ModeContext,
+): string[];
+/** @deprecated Use runModeValidator(mode, ctx) instead */
 export function runModeValidator(
   expression: string | undefined,
   partial: Partial<ModeExpressionContext>,
+): string[];
+export function runModeValidator(
+  modeOrExpression: ModeDefinitionDTO | string | null | undefined,
+  ctxOrPartial: ModeContext | Partial<ModeExpressionContext>,
 ): string[] {
+  // New function-based API: runModeValidator(mode, ctx)
+  if (typeof modeOrExpression === 'object' && modeOrExpression !== null && 'key' in modeOrExpression) {
+    const mode = modeOrExpression as ModeDefinitionDTO;
+    const ctx = ctxOrPartial as ModeContext;
+    
+    // Prefer function-based validation
+    if (mode.validateConfig) {
+      try {
+        const errors = mode.validateConfig(ctx);
+        return Array.isArray(errors) ? errors.filter(e => e.trim().length > 0) : [];
+      } catch (err) {
+        console.warn('[modeValidator] validateConfig threw', { modeKey: mode.key, error: err });
+        return ['Validation error'];
+      }
+    }
+    
+    // Fall back to legacy expression
+    if (mode.finalizeValidatorExpression) {
+      const legacyContext = buildLegacyContext({ config: ctx.config, bet: ctx.bet as Record<string, unknown> | null });
+      return runLegacyValidator(mode.finalizeValidatorExpression, legacyContext);
+    }
+    
+    return [];
+  }
+  
+  // Legacy API: runModeValidator(expression, partial)
+  const expression = modeOrExpression as string | undefined;
+  const partial = ctxOrPartial as Partial<ModeExpressionContext>;
   if (!expression) return [];
-  const context = buildContext(partial);
+  const context = buildLegacyContext(partial);
+  return runLegacyValidator(expression, context);
+}
+
+function runLegacyValidator(expression: string, context: ModeExpressionContext): string[] {
   const result = evaluateExpression<unknown>(expression, context);
   if (Array.isArray(result)) {
     return result
@@ -73,28 +154,35 @@ export function runModeValidator(
   return [String(result)];
 }
 
+/**
+ * Compute available betting options for a mode.
+ * Prefers computeOptions function, falls back to legacy optionsExpression.
+ */
+export function computeModeOptions(
+  mode: ModeDefinitionDTO | null | undefined,
+  ctx: ModeContext,
+): string[];
+/** @deprecated Use computeModeOptions(mode, ctx) instead */
 export function computeModeOptions(
   mode: ModeDefinitionDTO | null | undefined,
   partial: Partial<ModeExpressionContext>,
+): string[];
+export function computeModeOptions(
+  mode: ModeDefinitionDTO | null | undefined,
+  ctxOrPartial: ModeContext | Partial<ModeExpressionContext>,
 ): string[] {
   const debug = process.env.DEBUG_MODE_OPTIONS === '1' || process.env.DEBUG_MODE_OPTIONS === 'true';
+  
   if (!mode) {
     if (debug) {
       console.log('[modeOptions] no mode definition provided, defaulting to pass option');
     }
     return ['pass'];
   }
-  const context = buildContext(partial);
+  
   const modeKey = mode.key || 'unknown';
-  if (debug) {
-    console.log('[modeOptions] computing options', {
-      modeKey,
-      hasStaticOptions: Array.isArray(mode.staticOptions) && mode.staticOptions.length > 0,
-      hasOptionsExpression: Boolean(mode.optionsExpression),
-      config: context.config,
-      betId: context.bet && 'bet_id' in context.bet ? (context.bet as Record<string, unknown>).bet_id : null,
-    });
-  }
+  
+  // Check for static options first
   if (mode.staticOptions && mode.staticOptions.length > 0) {
     const options = ensurePassOption(dedupeOptions(mode.staticOptions));
     if (debug) {
@@ -102,7 +190,36 @@ export function computeModeOptions(
     }
     return options;
   }
+  
+  // Prefer function-based computeOptions
+  if (mode.computeOptions) {
+    const ctx: ModeContext = 'bet' in ctxOrPartial && ctxOrPartial.bet !== undefined
+      ? ctxOrPartial as ModeContext
+      : { config: ctxOrPartial.config || {}, bet: (ctxOrPartial as Partial<ModeExpressionContext>).bet as BetProposal | null ?? null };
+    
+    try {
+      const result = mode.computeOptions(ctx);
+      if (debug) {
+        console.log('[modeOptions] computeOptions called', { modeKey, result });
+      }
+      if (Array.isArray(result)) {
+        const options = result
+          .map((item) => String(item))
+          .filter((item) => item.trim().length > 0);
+        const finalOptions = ensurePassOption(dedupeOptions(options));
+        if (debug) {
+          console.log('[modeOptions] computeOptions produced options', { modeKey, finalOptions });
+        }
+        return finalOptions;
+      }
+    } catch (err) {
+      console.warn('[modeOptions] computeOptions threw', { modeKey, error: err });
+    }
+  }
+  
+  // Fall back to legacy optionsExpression
   if (mode.optionsExpression) {
+    const context = buildLegacyContext(ctxOrPartial as Partial<ModeExpressionContext>);
     const result = evaluateExpression<unknown>(mode.optionsExpression, context);
     if (debug) {
       console.log('[modeOptions] expression evaluated', { modeKey, result });
@@ -131,10 +248,56 @@ export function computeModeOptions(
       config: context.config,
     });
   }
+  
   if (debug) {
     console.log('[modeOptions] falling back to default pass option', { modeKey });
   }
   return ensurePassOption(['pass']);
+}
+
+/**
+ * Compute winning condition description.
+ * Prefers computeWinningCondition function, falls back to legacy winningConditionTemplate.
+ */
+export function computeWinningCondition(
+  mode: ModeDefinitionDTO | null | undefined,
+  ctx: ModeContext,
+): string {
+  if (!mode) return '';
+  
+  // Prefer function-based computeWinningCondition
+  if (mode.computeWinningCondition) {
+    try {
+      return mode.computeWinningCondition(ctx) || '';
+    } catch (err) {
+      console.warn('[modeWinningCondition] computeWinningCondition threw', { modeKey: mode.key, error: err });
+      return '';
+    }
+  }
+  
+  // Fall back to legacy winningConditionTemplate
+  if (mode.winningConditionTemplate) {
+    const legacyContext = buildLegacyContext({ 
+      config: ctx.config, 
+      bet: ctx.bet as Record<string, unknown> | null,
+      mode 
+    });
+    return renderModeTemplate(mode.winningConditionTemplate, legacyContext);
+  }
+  
+  return '';
+}
+
+/**
+ * Compute matchup description.
+ * Uses the shared getMatchupDescription helper (all modes use same format).
+ */
+export function computeMatchupDescription(
+  mode: ModeDefinitionDTO | null | undefined,
+  ctx: ModeContext,
+): string {
+  // Always use the standard matchup format
+  return getMatchupDescription(ctx);
 }
 
 function ensurePassOption(options: string[]): string[] {

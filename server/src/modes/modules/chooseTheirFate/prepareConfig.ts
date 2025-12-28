@@ -1,15 +1,13 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, type RefinedGameDoc, type Team, findTeam } from '../../../utils/gameData';
+import { getGameDoc, getTeamFromDoc, getPossessionTeamFromDoc, type RefinedGameDoc, type Team } from '../../../utils/refinedDocAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 function resolvePossessionTeam(doc: RefinedGameDoc, teamId?: string | null): Team | null {
   if (teamId) {
-    const team = findTeam(doc, String(teamId));
+    const team = getTeamFromDoc(doc, String(teamId));
     if (team) return team;
   }
-  const flagged = (doc.teams || []).find((team) => Boolean((team as any)?.possession));
-  if (flagged) return flagged;
-  return null;
+  return getPossessionTeamFromDoc(doc);
 }
 
 export async function prepareChooseTheirFateConfig({
@@ -41,7 +39,7 @@ export async function prepareChooseTheirFateConfig({
   }
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc) return nextConfig;
 
     const homeTeam = pickHomeTeam(doc);

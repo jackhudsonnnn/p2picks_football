@@ -1,7 +1,15 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { findTeam, loadRefinedGame, REFINED_DIR } from '../utils/gameData';
-import type { RefinedGameDoc } from '../utils/gameData';
+import {
+  getGameDoc,
+  getTeamFromDoc,
+  getTeamId,
+  getTeamName,
+  getAllTeamsFromDoc,
+  getGameStatusFromDoc,
+  REFINED_DIR,
+  type RefinedGameDoc,
+} from '../utils/refinedDocAccessors';
 
 export async function getAvailableGames(): Promise<Record<string, string>> {
   try {
@@ -15,13 +23,14 @@ export async function getAvailableGames(): Promise<Record<string, string>> {
     await Promise.all(
       jsonFiles.map(async (gameId: string) => {
         try {
-          const doc = await loadRefinedGame(gameId);
-          if (doc && Array.isArray(doc.teams) && doc.teams.length >= 2) {
-            const a = (doc.teams[0] as any)?.name || '';
-            const b = (doc.teams[1] as any)?.name || '';
+          const doc = await getGameDoc(gameId);
+          const teams = getAllTeamsFromDoc(doc);
+          if (teams.length >= 2) {
+            const a = getTeamName(teams[0]) || '';
+            const b = getTeamName(teams[1]) || '';
             results[gameId] = `${a} vs ${b}`.trim();
-          } else if (doc && Array.isArray(doc.teams) && doc.teams.length === 1) {
-            const a = (doc.teams[0] as any)?.name || '';
+          } else if (teams.length === 1) {
+            const a = getTeamName(teams[0]) || '';
             results[gameId] = `${a}`;
           } else {
             console.warn(`Warning: Refined game file for gameId ${gameId} has no teams array`);
@@ -42,12 +51,12 @@ export async function getAvailableGames(): Promise<Record<string, string>> {
 }
 
 export async function getGameTeams(gameId: string): Promise<Array<Record<string, string>>> {
-  const doc = await loadRefinedGame(gameId);
-  if (!doc || !Array.isArray(doc.teams)) return [];
-  return (doc.teams as any[]).map((t) => ({
-    teamId: (t as any).teamId || (t as any).abbreviation || '',
+  const doc = await getGameDoc(gameId);
+  const teams = getAllTeamsFromDoc(doc);
+  return teams.map((t) => ({
+    teamId: getTeamId(t) || '',
     abbreviation: (t as any).abbreviation || '',
-    name: (t as any).name || '',
+    name: getTeamName(t) || '',
   }));
 }
 
@@ -55,7 +64,7 @@ export async function getGameStatus(gameId: string, prefetchedDoc?: RefinedGameD
   let doc: RefinedGameDoc | null = prefetchedDoc ?? null;
   if (!doc) {
     try {
-      doc = await loadRefinedGame(gameId);
+      doc = await getGameDoc(gameId);
     } catch (err) {
       return null;
     }
@@ -88,7 +97,7 @@ export async function getTeamScoreStats(
   let doc: any = prefetchedDoc ?? null;
   if (!doc) {
     try {
-      doc = await loadRefinedGame(gameId);
+      doc = await getGameDoc(gameId);
     } catch (err) {
       log('error loading game', err);
     }
@@ -97,7 +106,7 @@ export async function getTeamScoreStats(
     log('no game doc found');
     return { score: 0, touchdowns: 0, fieldGoalsMade: 0, extraPointsMade: 0, safeties: 0 };
   }
-  const team: any = findTeam(doc, teamId);
+  const team: any = getTeamFromDoc(doc, teamId);
   if (!team) {
     log('team not found among teams', (doc.teams || []).map((t: any) => ({ teamId: t.teamId, abbreviation: t.abbreviation })));
     return { score: 0, touchdowns: 0, fieldGoalsMade: 0, extraPointsMade: 0, safeties: 0 };

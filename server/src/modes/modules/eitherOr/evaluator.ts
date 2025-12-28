@@ -1,4 +1,4 @@
-import { RefinedGameDoc } from '../../../utils/gameData';
+import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
 
 export interface EitherOrConfig {

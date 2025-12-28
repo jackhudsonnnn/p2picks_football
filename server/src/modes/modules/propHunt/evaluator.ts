@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../utils/gameData';
+import type { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
 
 export interface PropHuntConfig {

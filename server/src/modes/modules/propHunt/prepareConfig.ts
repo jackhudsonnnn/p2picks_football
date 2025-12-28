@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame, findPlayer, type RefinedGameDoc } from '../../../utils/gameData';
+import { getGameDoc, getPlayerFromDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
@@ -56,7 +56,7 @@ export async function preparePropHuntConfig({
   }
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc) {
       return normalizeConfigPayload(next);
     }
@@ -194,11 +194,11 @@ async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string | null | 
 
 function lookupPlayer(doc: RefinedGameDoc, ref: PlayerRef) {
   if (ref.id) {
-    const byId = findPlayer(doc, String(ref.id));
+    const byId = getPlayerFromDoc(doc, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = findPlayer(doc, `name:${ref.name}`);
+    const byName = getPlayerFromDoc(doc, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;

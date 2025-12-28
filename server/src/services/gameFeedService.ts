@@ -2,7 +2,7 @@ import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { loadRefinedGame, REFINED_DIR, type RefinedGameDoc } from '../utils/gameData';
+import { getGameDoc, REFINED_DIR, type RefinedGameDoc } from '../utils/refinedDocAccessors';
 
 export type GameFeedEvent = {
   gameId: string;
@@ -94,7 +94,7 @@ class GameFeedService extends EventEmitter {
 
   private async readAndEmit(gameId: string): Promise<void> {
     try {
-      const doc = await loadRefinedGame(gameId);
+      const doc = await getGameDoc(gameId);
       if (!doc) return;
       const signature = this.computeSignature(doc);
       const cached = this.cache.get(gameId);

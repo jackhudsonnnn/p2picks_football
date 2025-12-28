@@ -13,7 +13,6 @@ export const TablesListPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const PAGE_LIMIT = 6;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTableName, setNewTableName] = useState("");
 

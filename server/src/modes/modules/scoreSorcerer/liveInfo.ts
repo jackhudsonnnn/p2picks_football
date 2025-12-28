@@ -51,12 +51,10 @@ export async function getScoreSorcererLiveInfo(input: GetLiveInfoInput): Promise
   const fields = [
     { label: homeLabel, value: formatScore(snapshot.homeScore, baseline?.homeScore) },
     { label: awayLabel, value: formatScore(snapshot.awayScore, baseline?.awayScore) },
-    { label: 'No More Scores', value: SCORE_SORCERER_NO_MORE_SCORES },
   ];
 
-  const unavailableReason = !baseline ? 'Baseline not captured yet' : undefined;
 
-  return { ...base, fields, unavailableReason };
+  return { ...base, fields };
 }
 
 function formatScore(current: number, baseline?: number): string | number {

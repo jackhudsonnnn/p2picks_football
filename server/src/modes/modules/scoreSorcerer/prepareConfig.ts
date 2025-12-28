@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { loadRefinedGame } from '../../../utils/gameData';
+import { getGameDoc } from '../../../utils/refinedDocAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import type { ScoreSorcererConfig } from './evaluator';
 
@@ -20,7 +20,7 @@ export async function prepareScoreSorcererConfig({
   if (!gameId) return nextConfig as Record<string, unknown>;
 
   try {
-    const doc = await loadRefinedGame(gameId);
+    const doc = await getGameDoc(gameId);
     if (!doc) return nextConfig as Record<string, unknown>;
 
     const homeTeam = pickHomeTeam(doc);
