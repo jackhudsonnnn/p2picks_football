@@ -128,11 +128,10 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
       aria-label={accepted ? 'Open tickets' : phase !== 'active' ? 'View tickets (not active)' : 'Accept bet'}
       data-bet-id={message.betProposalId}
     >
-      {/* Header */}
       <div className="bp-header">
         <div className="bp-header-left">
           <span className="bp-id">#{betIdShort}</span>
-          <span className="bp-wager">{formatToHundredth(message.betDetails.wager_amount)} pt(s)</span>
+          <span className="bp-wager">${formatToHundredth(message.betDetails.wager_amount)}</span>
         </div>
         <div className="bp-header-right">
           <BetStatus phase={phase} timeLeft={timeLeft} />
@@ -140,7 +139,6 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="bp-footer">
         <div className="bp-footer-left">
           {clickable ? (

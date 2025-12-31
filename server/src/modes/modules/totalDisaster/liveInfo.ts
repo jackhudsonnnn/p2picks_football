@@ -1,6 +1,6 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
-import { listTeams } from '../../shared/teamUtils';
+import { listTeams, formatMatchup } from '../../shared/teamUtils';
 import { normalizeLine, describeLine, type TotalDisasterConfig } from './evaluator';
 import { normalizeNumber, formatNumber } from '../../../utils/number';
 
@@ -57,13 +57,18 @@ export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise
   const homeName = typedConfig.home_team_name ?? (homeTeam as any)?.name ?? 'Home';
   const awayName = typedConfig.away_team_name ?? (awayTeam as any)?.name ?? 'Away';
 
+  const matchup = formatMatchup({ doc, homeName, awayName });
+
+  const fields = [
+    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
+    { label: homeName, value: homeScore },
+    { label: awayName, value: awayScore },
+    { label: 'Total Points', value: totalPoints },
+    { label: 'Target Line', value: formatNumber(line) },
+  ];
+
   return {
     ...baseResult,
-    fields: [
-      { label: homeName, value: homeScore },
-      { label: awayName, value: awayScore },
-      { label: 'Total Points', value: totalPoints },
-      { label: 'Target Line', value: formatNumber(line) },
-    ],
+    fields,
   };
 }

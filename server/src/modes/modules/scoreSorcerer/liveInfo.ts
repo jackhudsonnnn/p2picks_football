@@ -2,7 +2,7 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
-import { choiceLabel } from '../../shared/teamUtils';
+import { choiceLabel, formatMatchup } from '../../shared/teamUtils';
 import { formatNumber } from '../../../utils/number';
 import {
   SCORE_SORCERER_LABEL,
@@ -48,7 +48,10 @@ export async function getScoreSorcererLiveInfo(input: GetLiveInfoInput): Promise
   const homeLabel = homeChoiceLabel({ ...typedConfig, home_team_name: snapshot.homeTeamName });
   const awayLabel = awayChoiceLabel({ ...typedConfig, away_team_name: snapshot.awayTeamName });
 
+  const matchup = formatMatchup({ doc, homeName: snapshot.homeTeamName, awayName: snapshot.awayTeamName });
+
   const fields = [
+    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
     { label: homeLabel, value: formatScore(snapshot.homeScore, baseline?.homeScore) },
     { label: awayLabel, value: formatScore(snapshot.awayScore, baseline?.awayScore) },
   ];

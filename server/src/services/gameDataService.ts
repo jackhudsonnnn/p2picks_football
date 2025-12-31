@@ -6,10 +6,9 @@ import {
   getTeamId,
   getTeamName,
   getAllTeamsFromDoc,
-  getGameStatusFromDoc,
   REFINED_DIR,
   type RefinedGameDoc,
-} from '../utils/refinedDocAccessors';
+} from './nflRefinedDataService';
 
 export async function getAvailableGames(): Promise<Record<string, string>> {
   try {

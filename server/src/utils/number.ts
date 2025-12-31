@@ -1,8 +1,4 @@
 /**
- * Consolidated number utilities for the application.
- */
-
-/**
  * Round a number to the nearest hundredth (2 decimal places).
  */
 export function normalizeToHundredth(value: number): number {

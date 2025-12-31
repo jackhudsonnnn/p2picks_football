@@ -1,4 +1,4 @@
-import { getGameDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { getGameDoc, type RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';

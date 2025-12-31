@@ -15,7 +15,7 @@ import {
   createModeConfigSession,
   getModeConfigSession,
   setModeConfigGeneral,
-} from '../services/configSessionService';
+} from '../services/bet/configSessionService';
 import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../services/modeConfig';
 import { BetProposal } from '../supabaseClient';
 

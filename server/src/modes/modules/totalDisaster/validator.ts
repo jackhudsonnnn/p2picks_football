@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import type { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { formatNumber } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
@@ -68,14 +68,15 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
         return;
       }
       const winningChoice = evaluation.decision === 'over' ? 'Over' : 'Under';
-      const updated = await this.setWinningChoice(betId, winningChoice);
-      if (!updated) return;
-      await this.recordHistory(betId, this.config.resultEvent, {
-        outcome: winningChoice,
-        total_points: evaluation.totalPoints,
-        line: evaluation.line,
-        line_label: config.line_label ?? config.line ?? null,
-        captured_at: new Date().toISOString(),
+      await this.resolveWithWinner(betId, winningChoice, {
+        eventType: this.config.resultEvent,
+        payload: {
+          outcome: winningChoice,
+          total_points: evaluation.totalPoints,
+          line: evaluation.line,
+          line_label: config.line_label ?? config.line ?? null,
+          captured_at: new Date().toISOString(),
+        },
       });
     } catch (err) {
       this.logError('resolve bet error', { betId }, err);

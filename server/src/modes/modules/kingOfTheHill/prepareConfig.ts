@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getPlayerFromDoc, getGameDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { getPlayerFromDoc, getGameDoc, type RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import {
   KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,

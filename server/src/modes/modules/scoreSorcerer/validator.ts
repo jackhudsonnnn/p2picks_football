@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import {
   SCORE_SORCERER_BASELINE_EVENT,
@@ -113,7 +113,6 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
         },
         'Both teams scored before a winner could be determined.',
       );
-      await this.store.delete(bet.bet_id);
       return;
     }
 
@@ -126,21 +125,20 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
         ? awayChoice
         : noMoreScoresChoice();
 
-    const updated = await this.setWinningChoice(bet.bet_id, winningChoice);
-    if (!updated) return;
-
-    await this.recordHistory(bet.bet_id, SCORE_SORCERER_RESULT_EVENT, {
-      outcome: winningChoice,
-      decision: evaluation.decision,
-      home_score: evaluation.homeScore,
-      away_score: evaluation.awayScore,
-      delta_home: evaluation.deltaHome,
-      delta_away: evaluation.deltaAway,
-      home_choice: homeChoice,
-      away_choice: awayChoice,
-      captured_at: this.normalizeTimestamp(updatedAt, doc.generatedAt),
+    await this.resolveWithWinner(bet.bet_id, winningChoice, {
+      eventType: SCORE_SORCERER_RESULT_EVENT,
+      payload: {
+        outcome: winningChoice,
+        decision: evaluation.decision,
+        home_score: evaluation.homeScore,
+        away_score: evaluation.awayScore,
+        delta_home: evaluation.deltaHome,
+        delta_away: evaluation.deltaAway,
+        home_choice: homeChoice,
+        away_choice: awayChoice,
+        captured_at: this.normalizeTimestamp(updatedAt, doc.generatedAt),
+      },
     });
-    await this.store.delete(bet.bet_id);
   }
 }
 

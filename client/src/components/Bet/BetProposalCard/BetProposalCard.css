@@ -20,14 +20,15 @@
   transition: background var(--transition), border-color var(--transition);
   font-size: var(--font-size-sm);
 }
+
 .bet-proposal-card.is-clickable {
   cursor: pointer;
 }
+
 .bet-proposal-card.is-clickable:hover {
   background: var(--neutral-750, #2b3545);
 }
 
-/* Header */
 .bet-proposal-card .bp-header {
   grid-area: header;
   display: flex;
@@ -35,6 +36,7 @@
   align-items: flex-start;
   gap: var(--spacing-sm);
 }
+
 .bet-proposal-card .bp-header-left {
   display: flex;
   flex-direction: column;
@@ -47,40 +49,6 @@
   gap: 2px;
 }
 
-/* Content */
-.bet-proposal-card .bp-content {
-  grid-area: content;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-.bet-proposal-card .bp-tags {
-  display: flex;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
-}
-
-.bet-proposal-card .bp-description {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-}
-
-.bet-proposal-card .bp-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-}
-
-.bet-proposal-card .bp-meta-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-sm);
-  padding: 2px 6px;
-}
-
-/* Footer */
 .bet-proposal-card .bp-footer {
   grid-area: footer;
   display: flex;
@@ -90,13 +58,16 @@
   padding-top: var(--spacing-sm);
   margin-top: var(--spacing-xs);
 }
+
 .bet-proposal-card .bp-hint {
   font-size: var(--font-size-xs);
   color: var(--accent-energy);
 }
+
 .bet-proposal-card .bp-hint.inactive {
   color: var(--text-secondary);
 }
+
 .bet-proposal-card .bp-view-btn {
   background: transparent;
   border: 1px solid var(--accent-victory);
@@ -108,19 +79,21 @@
   cursor: pointer;
   transition: background var(--transition), color var(--transition);
 }
+
 .bet-proposal-card .bp-view-btn:hover {
   background: var(--accent-victory);
   color: var(--neutral-900);
 }
 
-/* Re-map some legacy element styles to fit within new layout */
 .bet-proposal-card .bp-id {
   font-weight: 600;
 }
+
 .bet-proposal-card .bp-wager {
   font-weight: 600;
   color: var(--accent-victory);
 }
+
 .bet-proposal-card .bp-participants {
   font-size: var(--font-size-xs);
   color: var(--text-light);
@@ -129,12 +102,15 @@
 .bet-proposal-card.state-active {
   border-left-color: var(--primary-500);
 }
+
 .bet-proposal-card.state-pending {
   border-left-color: var(--accent-energy);
 }
+
 .bet-proposal-card.state-resolved {
   border-left-color: var(--neutral-500);
 }
+
 .bet-proposal-card.state-washed {
   border-left-color: var(--neutral-600);
 }

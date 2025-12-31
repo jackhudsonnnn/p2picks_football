@@ -1,5 +1,5 @@
 import { getCachedGameDoc } from '../../services/gameFeedService';
-import { getGameDoc, type RefinedGameDoc } from '../../utils/refinedDocAccessors';
+import { getGameDoc, type RefinedGameDoc } from '../../services/nflRefinedDataService';
 
 export async function ensureRefinedGameDoc(gameId: string, prefetched?: RefinedGameDoc | null): Promise<RefinedGameDoc | null> {
   if (prefetched) return prefetched;

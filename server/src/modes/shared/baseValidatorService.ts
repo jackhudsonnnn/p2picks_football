@@ -13,7 +13,7 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
 import { fetchModeConfig } from '../../services/modeConfig';
-import { RefinedGameDoc } from '../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../services/nflRefinedDataService';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
@@ -21,6 +21,7 @@ import { RedisJsonStore } from './redisJsonStore';
 import { getRedisClient } from './redisClient';
 import { ensureRefinedGameDoc } from './gameDocProvider';
 import type { GameFeedEvent } from '../../services/gameFeedService';
+import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
 
 export interface BaseValidatorConfig {
   /** Unique mode key (e.g., 'either_or', 'king_of_the_hill') */
@@ -41,6 +42,8 @@ export interface BaseValidatorConfig {
   dedupeGameFeed?: boolean;
   /** Enable debug logging via environment variable check */
   debugEnvVar?: string;
+  /** Use queue for resolution operations (default: true in production) */
+  useResolutionQueue?: boolean;
 }
 
 export abstract class BaseValidatorService<TConfig, TStore> {
@@ -48,12 +51,15 @@ export abstract class BaseValidatorService<TConfig, TStore> {
   protected readonly store: RedisJsonStore<TStore>;
   protected readonly config: BaseValidatorConfig;
   protected readonly debugEnabled: boolean;
+  protected readonly useQueue: boolean;
 
   constructor(config: BaseValidatorConfig) {
     this.config = config;
     this.debugEnabled = config.debugEnvVar
       ? process.env[config.debugEnvVar] === '1' || process.env[config.debugEnvVar] === 'true'
       : false;
+    // Default to using queue unless explicitly disabled
+    this.useQueue = config.useResolutionQueue ?? (process.env.USE_RESOLUTION_QUEUE !== '0');
 
     const redis = getRedisClient();
     this.store = new RedisJsonStore<TStore>(
@@ -140,10 +146,38 @@ export abstract class BaseValidatorService<TConfig, TStore> {
   }
 
   /**
-   * Set the winning choice for a bet.
+   * Set the winning choice for a bet (direct DB call, no queue).
+   * @deprecated Use resolveWithWinner for new code.
    */
   protected async setWinningChoice(betId: string, winningChoice: string): Promise<boolean> {
     return betRepository.setWinningChoice(betId, winningChoice);
+  }
+
+  /**
+   * Resolve a bet with a winning choice.
+   * If queue is enabled, this enqueues the resolution and returns true immediately.
+   * The history is recorded as part of the queued job.
+   * Store cleanup is done immediately since the bet is considered resolved.
+   */
+  protected async resolveWithWinner(
+    betId: string,
+    winningChoice: string,
+    history: { eventType: string; payload: Record<string, unknown> },
+  ): Promise<boolean> {
+    if (this.useQueue) {
+      await enqueueSetWinningChoice(betId, winningChoice, history);
+      await this.store.delete(betId);
+      this.logDebug('resolution_queued', { betId, winningChoice });
+      return true; // Assume success; failures will be retried by queue
+    }
+    
+    // Direct execution (non-queued)
+    const updated = await betRepository.setWinningChoice(betId, winningChoice);
+    if (updated) {
+      await betRepository.recordHistory(betId, history.eventType, history.payload);
+      await this.store.delete(betId);
+    }
+    return updated;
   }
 
   /**
@@ -159,15 +193,32 @@ export abstract class BaseValidatorService<TConfig, TStore> {
 
   /**
    * Wash a bet (mark as no action) with explanation and history.
+   * If queue is enabled, this enqueues the wash operation.
    */
   protected async washBet(
     betId: string,
     payload: Record<string, unknown>,
     explanation: string
   ): Promise<void> {
+    const washPayload = { outcome: 'wash', ...payload };
+    
+    if (this.useQueue) {
+      await enqueueWashBet({
+        betId,
+        payload: washPayload,
+        explanation,
+        eventType: this.config.resultEvent,
+        modeLabel: this.config.modeLabel,
+      });
+      await this.store.delete(betId);
+      this.logDebug('wash_queued', { betId });
+      return;
+    }
+    
+    // Direct execution (non-queued)
     await washBetWithHistory({
       betId,
-      payload: { outcome: 'wash', ...payload },
+      payload: washPayload,
       explanation,
       eventType: this.config.resultEvent,
       modeLabel: this.config.modeLabel,

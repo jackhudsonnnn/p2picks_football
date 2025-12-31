@@ -1,4 +1,4 @@
-import type { RefinedGameDoc, Team } from '../../utils/refinedDocAccessors';
+import type { RefinedGameDoc, Team } from '../../services/nflRefinedDataService';
 import type { ModeContext, ModeDefinitionDTO, ModeOverview } from './types';
 import type { BetProposal } from '../../supabaseClient';
 

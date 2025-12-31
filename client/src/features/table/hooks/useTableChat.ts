@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { BetProposalFormValues } from '@components/Bet/BetProposalForm/BetProposalForm';
+import type { BetProposalFormValues } from '@features/bets/hooks/useBetProposalSession';
 import { sendTextMessage } from '../services/tableService';
 import { createBetProposal } from '@features/bets/service';
 import { useTableFeed } from '@features/bets/hooks/useTableFeed';

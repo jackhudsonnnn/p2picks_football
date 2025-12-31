@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
@@ -166,24 +166,23 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
             ? `Net progress (${formatNumber(evaluation.metricValue)}) matched the line.`
             : `Final value (${formatNumber(evaluation.metricValue)}) matched the line.`,
         );
-        await this.store.delete(bet.bet_id);
         return;
       }
       const winningChoice = evaluation.metricValue > line ? 'Over' : 'Under';
-      const updated = await this.setWinningChoice(bet.bet_id, winningChoice);
-      if (!updated) return;
-      await this.recordHistory(bet.bet_id, this.config.resultEvent, {
-        outcome: winningChoice,
-        final_value: evaluation.finalValue,
-        baseline_value: evaluation.baselineValue,
-        metric_value: evaluation.metricValue,
-        line,
-        stat_key: evaluation.statKey,
-        resolve_at: resolveAt,
-        progress_mode: progressMode,
-        captured_at: new Date().toISOString(),
+      await this.resolveWithWinner(bet.bet_id, winningChoice, {
+        eventType: this.config.resultEvent,
+        payload: {
+          outcome: winningChoice,
+          final_value: evaluation.finalValue,
+          baseline_value: evaluation.baselineValue,
+          metric_value: evaluation.metricValue,
+          line,
+          stat_key: evaluation.statKey,
+          resolve_at: resolveAt,
+          progress_mode: progressMode,
+          captured_at: new Date().toISOString(),
+        },
       });
-      await this.store.delete(bet.bet_id);
     } catch (err) {
       this.logError('resolve bet error', { bet_id: bet.bet_id }, err);
     }

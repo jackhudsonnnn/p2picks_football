@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
               </button>
             ) : (
               <button className="btn-sign-out" onClick={signInWithGoogle}>
-                Sign In
+                Login
               </button>
             )}
           </div>

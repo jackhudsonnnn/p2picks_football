@@ -60,10 +60,9 @@ export const ProfileCard: React.FC = () => {
         ) : (
         <div className="username-section">
           <div className="current-username">
-            <h3>Username</h3>
-            <p>
+            <p className="change-username-label">
               {profile.username
-                ? `Hello, ${profile.username}!`
+                ? "Change Username"
                 : "No username set. Please create one."}
             </p>
           </div>

@@ -31,7 +31,7 @@
   padding: var(--spacing-sm) 0;
 }
 .tickets-filter-dropdown {
-  margin-left: auto;
+  margin-left: 0;
   flex: 0 1 clamp(140px, 45vw, 220px);
   min-width: 0;
   display: flex;
@@ -44,6 +44,7 @@
 .tickets-filter-dropdown .filter-trigger {
   width: 100%;
   min-width: 0;
+  padding: var(--spacing-sm) var(--spacing-sm);
 }
 
 .tickets-list {
@@ -59,7 +60,6 @@
   text-align: center;
 }
 
-/* Responsive styles for the page */
 @media (max-width: 768px) {
   .tickets-page {
     padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md);
@@ -79,5 +79,11 @@
   .tickets-list {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 330px) {
+  .tickets-page .page-title h1 {
+    font-size: var(--font-size-3xl);
   }
 }

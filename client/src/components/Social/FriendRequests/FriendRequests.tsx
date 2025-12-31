@@ -59,8 +59,7 @@ export const FriendRequests: React.FC = () => {
 
   return (
     <section className="profile-section">
-      <h3>Friend Requests</h3>
-      <div style={{ marginTop: "1rem" }}>
+      <div>
         <SearchBar
           value={searchTerm}
           onChange={(v: string) => setSearchTerm(v.replace(/[^a-zA-Z0-9_]/g, ""))}

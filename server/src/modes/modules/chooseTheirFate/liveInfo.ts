@@ -2,6 +2,7 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
+import { formatMatchup } from '../../shared/teamUtils';
 import {
   type ChooseFateBaseline,
   type ChooseTheirFateConfig,
@@ -76,7 +77,13 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
     }
   }
 
+  const matchup = formatMatchup({ doc, homeName, awayName });
+
   const fields: { label: string; value: string | number }[] = [];
+
+  if (matchup) {
+    fields.push({ label: 'Matchup', value: matchup });
+  }
 
   // Show drive/possession info
   if (possessionTeam) {

@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
@@ -119,7 +119,6 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
           },
           this.tieExplanation(config, evaluation.player1.ref.name, evaluation.player2.ref.name, evaluation.statKey),
         );
-        await this.store.delete(betId);
         return;
       }
 
@@ -128,29 +127,28 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
           ? config.player1_name || evaluation.player1.ref.name || 'Player 1'
           : config.player2_name || evaluation.player2.ref.name || 'Player 2';
 
-      const updated = await this.setWinningChoice(betId, winnerName);
-      if (!updated) return;
-
-      await this.recordHistory(betId, this.config.resultEvent, {
-        outcome: 'winner',
-        winning_choice: winnerName,
-        stat: evaluation.statKey,
-        player1: {
-          ...evaluation.player1.ref,
-          baseline: evaluation.player1.baseline,
-          final: evaluation.player1.final,
-          delta: evaluation.player1.metric,
+      await this.resolveWithWinner(betId, winnerName, {
+        eventType: this.config.resultEvent,
+        payload: {
+          outcome: 'winner',
+          winning_choice: winnerName,
+          stat: evaluation.statKey,
+          player1: {
+            ...evaluation.player1.ref,
+            baseline: evaluation.player1.baseline,
+            final: evaluation.player1.final,
+            delta: evaluation.player1.metric,
+          },
+          player2: {
+            ...evaluation.player2.ref,
+            baseline: evaluation.player2.baseline,
+            final: evaluation.player2.final,
+            delta: evaluation.player2.metric,
+          },
+          progress_mode: progressMode,
+          captured_at: new Date().toISOString(),
         },
-        player2: {
-          ...evaluation.player2.ref,
-          baseline: evaluation.player2.baseline,
-          final: evaluation.player2.final,
-          delta: evaluation.player2.metric,
-        },
-        progress_mode: progressMode,
-        captured_at: new Date().toISOString(),
       });
-      await this.store.delete(betId);
     } catch (err) {
       this.logError('resolve bet error', { betId }, err);
     }

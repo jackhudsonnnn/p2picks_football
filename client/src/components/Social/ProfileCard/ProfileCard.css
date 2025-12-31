@@ -3,7 +3,7 @@
     border: 1px solid var(--neutral-700);
     border-radius: var(--radius-md);
     background-color: var(--neutral-800);
-    height: calc(81vh - 155px);
+    height: calc(85vh - 130px);
     overflow: scroll;
 }
 
@@ -13,6 +13,10 @@
 
 .current-username { 
     margin-bottom: var(--space-md); 
+}
+
+.change-username-label {
+    color: var(--text-light)
 }
 
 .username-form { 

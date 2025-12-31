@@ -23,7 +23,7 @@ import {
   getAwayTeamFromDoc,
   extractTeamId,
   extractTeamName,
-} from '../utils/refinedDocAccessors';
+} from './nflRefinedDataService';
 
 export type ModeUserConfigInput = {
   nflGameId?: string | null;

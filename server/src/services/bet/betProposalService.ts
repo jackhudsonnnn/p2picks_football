@@ -18,10 +18,10 @@ import {
   normalizeTimeLimitSeconds,
   normalizeWagerAmount,
   type ConsumedModeConfigSession,
-} from '../configSessionService';
-import { registerBetLifecycle } from '../betLifecycleService';
-import { createBetProposalAnnouncement, type BetAnnouncementResult } from '../betAnnouncementService';
-import { fetchActivePokeChildren, recordBetPokeLink } from '../betPokeService';
+} from './configSessionService';
+import { registerBetLifecycle } from './betLifecycleService';
+import { createBetProposalAnnouncement, type BetAnnouncementResult } from './betAnnouncementService';
+import { fetchActivePokeChildren, recordBetPokeLink } from './betPokeService';
 import { getModeModule } from '../../modes/registry';
 import { normalizeToHundredth } from '../../utils/number';
 import {

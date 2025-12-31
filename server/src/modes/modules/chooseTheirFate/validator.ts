@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
 import { normalizeTeamId } from '../../shared/teamUtils';
@@ -127,14 +127,13 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
     winningChoice: 'Touchdown' | 'Field Goal' | 'Safety' | 'Punt' | 'Turnover',
     payload: Record<string, unknown>,
   ): Promise<void> {
-    const updated = await this.setWinningChoice(betId, winningChoice);
-    if (!updated) return;
-
-    await this.recordHistory(betId, this.config.resultEvent, {
-      ...payload,
-      captured_at: new Date().toISOString(),
+    await this.resolveWithWinner(betId, winningChoice, {
+      eventType: this.config.resultEvent,
+      payload: {
+        ...payload,
+        captured_at: new Date().toISOString(),
+      },
     });
-    await this.store.delete(betId);
   }
 
   private async captureBaselineForBet(

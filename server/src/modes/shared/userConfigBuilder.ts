@@ -3,7 +3,7 @@
  * Extracts common patterns from eitherOr, kingOfTheHill, propHunt, etc.
  */
 
-import { getGameDoc, type RefinedGameDoc } from '../../utils/refinedDocAccessors';
+import { getGameDoc, type RefinedGameDoc } from '../../services/nflRefinedDataService';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from './playerUtils';
 import { shouldSkipResolveStep } from './resolveUtils';
 import { getValidPositionsForStat } from './statMappings';
@@ -149,13 +149,6 @@ function extractPlayersFromDoc(doc: RefinedGameDoc): PlayerRecord[] {
   return records;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Step Builders
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Build stat selection step.
- */
 export function buildStatStep(options: StatChoiceOptions): ModeUserConfigStep {
   const choices: ModeUserConfigChoice[] = Object.keys(options.statKeyToCategory)
     .sort()

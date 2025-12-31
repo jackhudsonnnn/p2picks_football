@@ -1,4 +1,4 @@
-import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
 
 export interface KingOfTheHillConfig {

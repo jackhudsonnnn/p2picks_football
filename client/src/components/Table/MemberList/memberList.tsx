@@ -96,8 +96,8 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
                   <span className="member-username">{member.username}</span>
                 </span>
               </div>
-              <span className={`member-balance${balanceClass}`} title={`${balanceLabel} pts`}>
-                <span className="balance-badge">{balanceLabel} pts</span>
+              <span className={`member-balance${balanceClass}`} title={`$${balanceLabel}`}>
+                <span className="balance-badge">${balanceLabel}</span>
               </span>
             </div>
           );

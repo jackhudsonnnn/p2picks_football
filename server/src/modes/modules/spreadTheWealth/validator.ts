@@ -1,4 +1,4 @@
-import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { formatNumber } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
@@ -79,16 +79,17 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
           return;
         }
 
-        const updatedTie = await this.setWinningChoice(betId, 'Tie');
-        if (!updatedTie) return;
-        await this.recordHistory(betId, this.config.resultEvent, {
-          outcome: 'Tie',
-          home_score: evaluation.homeScore,
-          away_score: evaluation.awayScore,
-          adjusted_home: evaluation.adjustedHomeScore,
-          spread,
-          spread_label: config.spread_label ?? config.spread ?? null,
-          captured_at: new Date().toISOString(),
+        await this.resolveWithWinner(betId, 'Tie', {
+          eventType: this.config.resultEvent,
+          payload: {
+            outcome: 'Tie',
+            home_score: evaluation.homeScore,
+            away_score: evaluation.awayScore,
+            adjusted_home: evaluation.adjustedHomeScore,
+            spread,
+            spread_label: config.spread_label ?? config.spread ?? null,
+            captured_at: new Date().toISOString(),
+          },
         });
         return;
       }
@@ -100,16 +101,17 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
         : evaluation.decision === 'home'
         ? homeChoice
         : awayChoice;
-      const updated = await this.setWinningChoice(betId, winningChoice);
-      if (!updated) return;
-      await this.recordHistory(betId, this.config.resultEvent, {
-        outcome: winningChoice,
-        home_score: evaluation.homeScore,
-        away_score: evaluation.awayScore,
-        adjusted_home: evaluation.adjustedHomeScore,
-        spread,
-        spread_label: config.spread_label ?? config.spread ?? null,
-        captured_at: new Date().toISOString(),
+      await this.resolveWithWinner(betId, winningChoice, {
+        eventType: this.config.resultEvent,
+        payload: {
+          outcome: winningChoice,
+          home_score: evaluation.homeScore,
+          away_score: evaluation.awayScore,
+          adjusted_home: evaluation.adjustedHomeScore,
+          spread,
+          spread_label: config.spread_label ?? config.spread ?? null,
+          captured_at: new Date().toISOString(),
+        },
       });
     } catch (err) {
       this.logError('resolve bet error', { betId }, err);

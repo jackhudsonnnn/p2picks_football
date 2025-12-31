@@ -8,10 +8,10 @@ import { useAuth } from "@features/auth";
 import { ChatArea } from "@components/Table/ChatArea/ChatArea";
 import { MemberList } from "@components/Table/MemberList/memberList";
 import { HostControls } from "@components/Table/HostControls/hostControls";
-import { Navigation, TableNavigationTab } from "@components/Table/Navigation/Navigation";
+import { TableNavigation, TableNavigationTab } from "@components/Table/TableNavigation/TableNavigation";
 import { ModeReference } from "@components/Table/ModeReference/ModeReference";
 import BetProposalForm from "@components/Bet/BetProposalForm/BetProposalForm";
-import type { BetProposalFormValues } from "@components/Bet/BetProposalForm/BetProposalForm";
+import type { BetProposalFormValues } from "@features/bets/hooks/useBetProposalSession";
 import { Modal } from "@shared/widgets";
 import { useTableView } from "@features/table/hooks";
 import { useTableChat } from "@features/table/hooks/useTableChat";
@@ -111,7 +111,7 @@ export const TableView: React.FC = () => {
 
   return (
     <main className="table-container">
-      <Navigation
+      <TableNavigation
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         isHost={isHost}

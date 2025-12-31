@@ -22,6 +22,8 @@ import {
   KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
   KING_OF_THE_HILL_STAT_KEY_LABELS,
   KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
+  getStatResolveRange,
+  getAllowedResolveValuesForStat,
 } from './constants';
 import { readPlayerStat, resolveStatKey, type KingOfTheHillConfig } from './evaluator';
 
@@ -117,6 +119,7 @@ interface ResolveValueContext {
   values: number[];
   filterApplied: boolean;
   minAllowed: number;
+  maxAllowed: number;
   highestValue: number;
   player1Value: number;
   player2Value: number;
@@ -169,11 +172,14 @@ function computeResolveValueFilter(input: {
   progressMode: 'starting_now' | 'cumulative' | null;
   existingConfig?: Record<string, unknown>;
 }): ResolveValueContext {
-  const baseValues = [...KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES];
+  // Use stat-specific allowed values
+  const baseValues = getAllowedResolveValuesForStat(input.statKey);
+  const { max: statMax } = getStatResolveRange(input.statKey);
   const defaultResult: ResolveValueContext = {
     values: baseValues,
     filterApplied: false,
     minAllowed: KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
+    maxAllowed: statMax,
     highestValue: 0,
     player1Value: 0,
     player2Value: 0,
@@ -208,6 +214,7 @@ function computeResolveValueFilter(input: {
     values: filteredValues,
     filterApplied: true,
     minAllowed,
+    maxAllowed: statMax,
     highestValue,
     player1Value,
     player2Value,
@@ -226,7 +233,7 @@ function buildResolveValueDescription(
   if (!context.values.length) {
     return `No resolve values remain because ${player1Name} (${formatStatValue(context.player1Value)}) and ${player2Name} (${formatStatValue(
       context.player2Value,
-    )}) already exceed the maximum of ${KING_OF_THE_HILL_MAX_RESOLVE_VALUE}. Pick different players or stats.`;
+    )}) already exceed the maximum of ${context.maxAllowed}. Pick different players or stats.`;
   }
   
   return `Current totals — ${player1Name}: ${formatStatValue(context.player1Value)}, ${player2Name}: ${formatStatValue(

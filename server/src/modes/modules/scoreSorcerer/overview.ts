@@ -4,7 +4,7 @@ import { SCORE_SORCERER_LABEL, SCORE_SORCERER_NO_MORE_SCORES } from './constants
 export const scoreSorcererOverview: ModeOverview = {
   key: 'score_sorcerer',
   label: SCORE_SORCERER_LABEL,
-  tagline: 'Pick which team scores next.',
+  tagline: 'Pick which team scores the next point.',
   description: 'A quick-pick wager: choose which side will put up the next points. If nobody scores again, "No More Scores" wins.',
   proposerConfiguration: [
     'No extra configuration beyond selecting the game/table.',

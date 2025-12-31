@@ -1,4 +1,3 @@
-// filepath: /home/jhudson/projects/test1/p2picks/client/src/pages/TablesListPage.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
@@ -73,7 +72,7 @@ export const TablesListPage: React.FC = () => {
           }>
             <div className="form-group">
               <label htmlFor="tableName">Table Name</label>
-              <input type="text" id="tableName" className="form-control" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} placeholder="Enter table name" autoFocus />
+              <input type="text" id="tableName" className="form-control" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} placeholder="Enter name..." autoFocus />
             </div>
           </Modal>
 
@@ -94,7 +93,7 @@ export const TablesListPage: React.FC = () => {
                   <div className="table-card-content" />
                   <div className="table-card-footer">
                     <div className="table-activity">
-                      <span className="members-count">{table.memberCount ?? 0} members</span>
+                      <span className="members-count">{table.memberCount ?? 0} {(table.memberCount ?? 0) > 1 ? "members" : "member"}</span>
                     </div>
                     <button className="view-table-btn" onClick={() => navigate(`/tables/${table.table_id}`)}>View Table →</button>
                   </div>
@@ -105,17 +104,17 @@ export const TablesListPage: React.FC = () => {
           ) : (
             <div className="empty-state"><p>No tables match your filter criteria.</p></div>
           )}
-                        {hasMore && (
-                <div className="tables-pagination">
-                  <LoadMoreButton
-                    label="Load more tables"
-                    loadingLabel="Loading..."
-                    loading={loadingMore}
-                    disabled={loadingMore || loading}
-                    onClick={loadMore}
-                  />
-                </div>
-              )}
+          {hasMore && (
+            <div className="tables-pagination">
+              <LoadMoreButton
+                label="Load more tables"
+                loadingLabel="Loading..."
+                loading={loadingMore}
+                disabled={loadingMore || loading}
+                onClick={loadMore}
+              />
+            </div>
+          )}
         </div>
       </div>
       {dialogNode}

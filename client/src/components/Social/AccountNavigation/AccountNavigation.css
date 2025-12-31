@@ -8,18 +8,6 @@
   margin-bottom: var(--spacing-md);
 }
 
-.account-greeting {
-  flex: 1 1 auto;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-light);
-  font-size: var(--font-size-md);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
 .account-tab-section {
   width: 100%;
   display: flex;
@@ -28,8 +16,6 @@
 
 .account-tab-buttons {
   display: flex;
-  gap: var(--spacing-lg);
-  justify-content: center;
   overflow: hidden;
 }
 
@@ -54,7 +40,6 @@
 
 .account-tab-button.active {
   color: var(--text-light);
-  font-weight: 600;
 }
 
 .account-tab-button.active::after {
@@ -66,4 +51,12 @@
   height: 2px;
   background-color: var(--primary-500);
   border-radius: var(--radius-full);
+}
+
+@media (max-width: 385px) {
+  .account-tab-button {
+    font-size: var(--font-size-sm);
+    font-weight: 600;  
+    padding: var(--spacing-sm);
+  }
 }

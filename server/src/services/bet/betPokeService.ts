@@ -1,4 +1,4 @@
-import { getSupabaseAdmin, type BetProposal } from '../supabaseClient';
+import { getSupabaseAdmin, type BetProposal } from '../../supabaseClient';
 
 const EVENT_POKE_SPAWNED = 'bet_poke_spawned';
 const EVENT_POKE_ORIGIN = 'bet_poke_origin';

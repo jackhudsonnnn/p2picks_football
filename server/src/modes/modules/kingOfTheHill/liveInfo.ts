@@ -3,6 +3,7 @@ import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
+import { formatMatchup } from '../../shared/teamUtils';
 import { KING_OF_THE_HILL_STAT_KEY_LABELS } from './constants';
 import {
   type KingOfTheHillConfig,
@@ -70,7 +71,10 @@ export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise
   // Calculate delta (progress) for starting_now mode
   const isStartingNow = progressMode === 'starting_now';
 
+  const matchup = formatMatchup({ doc });
+
   const fields: { label: string; value: string | number }[] = [
+    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
     { label: 'Tracking', value: isStartingNow ? 'Starting Now' : 'Cumulative' },
     { label: 'Stat', value: statLabel },
     { label: 'Target', value: Number.isFinite(target) ? formatNumber(target) : 'N/A' },

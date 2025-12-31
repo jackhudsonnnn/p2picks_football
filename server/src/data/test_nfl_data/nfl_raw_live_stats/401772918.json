@@ -17806,7 +17806,7 @@
               }
             ],
             "timeoutsUsed": 0,
-            "possession": true
+            "possession": false
           },
           {
             "id": "33",
@@ -17971,7 +17971,7 @@
                 }
               ]
             },
-            "score": "40",
+            "score": "44",
             "linescores": [
               {
                 "displayValue": "3"
@@ -18004,7 +18004,7 @@
               }
             ],
             "timeoutsUsed": 0,
-            "possession": false
+            "possession": true
           }
         ],
         "status": {

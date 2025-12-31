@@ -1,20 +1,20 @@
 import { randomUUID } from 'crypto';
-import { getModeDefinition } from '../modes/registry';
-import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../modes/shared/types';
-import { runModeValidator } from '../modes/shared/utils';
-import { normalizeToHundredth } from '../utils/number';
+import { getModeDefinition } from '../../modes/registry';
+import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../modes/shared/types';
+import { runModeValidator } from '../../modes/shared/utils';
+import { normalizeToHundredth } from '../../utils/number';
 import {
   buildModePreview,
   getModeUserConfigSteps,
   type ModePreviewResult,
-} from './modeRuntimeService';
+} from '../modeRuntimeService';
 
 const SESSION_TTL_MS = 15 * 60 * 1000;
 const WAGER_MIN = 0.25;
 const WAGER_MAX = 5;
 const WAGER_STEP = 0.25;
 const DEFAULT_WAGER = 0.25;
-const TIME_LIMIT_MIN = 15;
+const TIME_LIMIT_MIN = 30;
 const TIME_LIMIT_MAX = 120;
 const TIME_LIMIT_STEP = 15;
 const DEFAULT_TIME_LIMIT = 30;
@@ -55,7 +55,7 @@ export const GENERAL_CONFIG_SCHEMA: GeneralConfigSchema = {
     min: WAGER_MIN,
     max: WAGER_MAX,
     step: WAGER_STEP,
-    unit: 'points',
+    unit: '$$$',
     defaultValue: DEFAULT_WAGER,
     choices: WAGER_CHOICES,
   },

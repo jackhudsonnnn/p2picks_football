@@ -4,7 +4,6 @@ import './HomePage.css';
 export const HomePage: React.FC = () => {
   return (
     <div className="home-container">
-      {/* Hero Section */}
       <section className="hero-section">
         <div className="container">
           <h1><strong>Welcome to P2Picks</strong></h1>
@@ -14,7 +13,6 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* How It Works Section */}
       <section className="how-it-works-section container">
         <div className="how-it-works-container">
           <div className="steps-container">

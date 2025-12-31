@@ -2,7 +2,7 @@ import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { getGameDoc, REFINED_DIR, type RefinedGameDoc } from '../utils/refinedDocAccessors';
+import { getGameDoc, REFINED_DIR, type RefinedGameDoc } from './nflRefinedDataService';
 
 export type GameFeedEvent = {
   gameId: string;

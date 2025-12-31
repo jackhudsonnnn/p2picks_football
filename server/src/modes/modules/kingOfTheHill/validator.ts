@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
@@ -109,13 +109,11 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
       if (outcome === 'player1') {
         this.logDebug('progress.outcome', { betId, outcome: 'player1', statKey: updatedProgress.statKey, threshold });
         await this.setWinner(betId, config.player1_name || updatedProgress.player1.name || 'Player 1', updatedProgress);
-        await this.store.delete(betId);
         return;
       }
       if (outcome === 'player2') {
         this.logDebug('progress.outcome', { betId, outcome: 'player2', statKey: updatedProgress.statKey, threshold });
         await this.setWinner(betId, config.player2_name || updatedProgress.player2.name || 'Player 2', updatedProgress);
-        await this.store.delete(betId);
         return;
       }
       if (outcome === 'tie') {
@@ -131,14 +129,12 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
           },
           'Both players reached the resolve value at the same time.',
         );
-        await this.store.delete(betId);
         return;
       }
 
       const status = normalizeStatus(doc.status);
       if (status === 'STATUS_FINAL' && outcome === 'none') {
         await this.setNeitherResult(betId, updatedProgress);
-        await this.store.delete(betId);
       }
     } catch (err) {
       this.logError('evaluate bet error', { betId }, err);
@@ -226,32 +222,32 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
   }
 
   private async setWinner(betId: string, winningChoice: string, progress: ProgressRecord): Promise<void> {
-    const updated = await this.setWinningChoice(betId, winningChoice);
-    if (!updated) return;
-
-    await this.recordHistory(betId, this.config.resultEvent, {
-      outcome: winningChoice,
-      threshold: progress.threshold,
-      player1: progress.player1,
-      player2: progress.player2,
-      stat_key: progress.statKey,
-      progress_mode: progress.progressMode,
-      captured_at: new Date().toISOString(),
+    await this.resolveWithWinner(betId, winningChoice, {
+      eventType: this.config.resultEvent,
+      payload: {
+        outcome: winningChoice,
+        threshold: progress.threshold,
+        player1: progress.player1,
+        player2: progress.player2,
+        stat_key: progress.statKey,
+        progress_mode: progress.progressMode,
+        captured_at: new Date().toISOString(),
+      },
     });
   }
 
   private async setNeitherResult(betId: string, progress: ProgressRecord): Promise<void> {
-    const updated = await this.setWinningChoice(betId, 'Neither');
-    if (!updated) return;
-
-    await this.recordHistory(betId, this.config.resultEvent, {
-      outcome: 'Neither',
-      threshold: progress.threshold,
-      player1: progress.player1,
-      player2: progress.player2,
-      stat_key: progress.statKey,
-      progress_mode: progress.progressMode,
-      captured_at: new Date().toISOString(),
+    await this.resolveWithWinner(betId, 'Neither', {
+      eventType: this.config.resultEvent,
+      payload: {
+        outcome: 'Neither',
+        threshold: progress.threshold,
+        player1: progress.player1,
+        player2: progress.player2,
+        stat_key: progress.statKey,
+        progress_mode: progress.progressMode,
+        captured_at: new Date().toISOString(),
+      },
     });
   }
 

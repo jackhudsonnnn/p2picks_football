@@ -1,11 +1,9 @@
-/* moved from components/layout/Navbar.css */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   background-color: var(--neutral-800);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   height: 60px;
 }
@@ -82,20 +80,21 @@
   border-color: var(--neutral-500);
 }
 
-@media (max-width: 768px) {
-  .navbar-container {
-    padding: 0 var(--space-md);
-  }
-  
+@media (max-width: 630px) {  
   .navbar-logo {
-    margin-right: var(--space-2xl);
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
   }
   
   .navbar-links {
-    gap: var(--space-xl);
+    gap: var(--space-sm);
   }
-  
+}
+
+@media (max-width: 580px) {  
+  .navbar-logo {
+    margin-right: 0;
+  }
+
   .nav-text {
     display: none;
   }
@@ -105,25 +104,29 @@
     width: 25px;
     height: 25px;
   }
-}
 
-@media (max-width: 550px) {  
-  .navbar-logo {
-    margin-right: var(--space-lg);
-  }
-  
   .navbar-links {
-    gap: var(--space-lg);
+    justify-content: center;
+    width: 100%;
+    gap: min(calc(55vw - 210px), var(--space-lg));
   }
 }
 
-@media (max-width: 510px) {  
-  .navbar-logo {
-    margin-right: var(--space-md);
+@media (max-width: 330px) {  
+  .nav-icon {
+    width: 22px;
+    height: 22px;
   }
-  
-  .navbar-links {
-    gap: var(--space-md);
+
+  .navbar-logo {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+  }
+
+  .btn-sign-out {
+    padding: var(--space-sm);
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-sm);
   }
 }
 

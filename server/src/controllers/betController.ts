@@ -6,7 +6,7 @@
 import { Request, Response } from 'express';
 import { getAvailableGames } from '../services/gameDataService';
 import { listModeDefinitions, getModeLiveInfo } from '../modes/registry';
-import { GENERAL_CONFIG_SCHEMA } from '../services/configSessionService';
+import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
   createBetProposal as createBetProposalService,
   pokeBet as pokeBetService,

@@ -86,7 +86,6 @@ export const FriendsManager: React.FC = () => {
   return (
     <>
       <section className="profile-section">
-        <h3>Friends</h3>
         <form onSubmit={handleAddFriend} className="add-friend-form">
           <SearchBar
             value={friendUsernameToAdd}

@@ -3,6 +3,7 @@ import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
+import { formatMatchup } from '../../shared/teamUtils';
 import { normalizeProgressMode, getPlayerStatValue, type PlayerRef } from '../../shared/playerStatUtils';
 import { STAT_KEY_LABELS } from './constants';
 import {
@@ -98,7 +99,10 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
     player2Progress = player2Current - player2Baseline;
   }
 
+  const matchup = formatMatchup({ doc });
+
   const fields: { label: string; value: string | number }[] = [
+    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
     { label: 'Tracking', value: isStartingNow ? 'Starting Now' : 'Cumulative' },
     { label: 'Stat', value: statLabel },
   ];

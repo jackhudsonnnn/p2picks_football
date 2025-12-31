@@ -134,3 +134,15 @@
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
 }
+
+@media (max-width: 400px) {
+  .mode-reference {
+    margin: var(--spacing-xs);
+    padding: 0;
+    gap: var(--spacing-sm);
+  }
+
+.mode-reference__grid {
+  gap: var(--spacing-sm);
+}
+}

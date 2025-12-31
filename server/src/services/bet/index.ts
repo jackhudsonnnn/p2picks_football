@@ -6,4 +6,4 @@ export {
   type CreateBetProposalResult,
   type PokeBetInput,
   type PokeBetResult,
-} from './proposalService';
+} from './betProposalService';

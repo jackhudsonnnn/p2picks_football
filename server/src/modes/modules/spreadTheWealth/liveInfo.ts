@@ -1,5 +1,6 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
+import { formatMatchup } from '../../shared/teamUtils';
 import { formatNumber, normalizeNumber } from '../../../utils/number';
 import { type SpreadTheWealthConfig, normalizeSpread, describeSpread, resolveTeams } from './evaluator';
 
@@ -58,11 +59,16 @@ export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promi
   const awayScore = normalizeNumber((awayTeam as any)?.score);
   const adjustedHomeScore = homeScore + spread;
 
+  const matchup = formatMatchup({ doc, homeName, awayName });
+
+  const fields = [
+    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
+    { label: `${homeName} (Adjusted)`, value: formatNumber(adjustedHomeScore) },
+    { label: awayName, value: awayScore },
+  ];
+
   return {
     ...baseResult,
-    fields: [
-      { label: `${homeName} (Adjusted)`, value: formatNumber(adjustedHomeScore) },
-      { label: awayName, value: awayScore },
-    ],
+    fields,
   };
 }

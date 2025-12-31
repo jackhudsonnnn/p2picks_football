@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from '../supabaseClient';
+import { getSupabaseAdmin } from '../../supabaseClient';
 
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 const FIRE_GRACE_MS = 250;

@@ -3,6 +3,8 @@ import {
   STAT_KEY_LABELS as SHARED_STAT_KEY_LABELS,
   ALLOWED_RESOLVE_AT,
   DEFAULT_RESOLVE_AT,
+  getStatRange,
+  DEFAULT_STAT_RANGE,
 } from '../../shared/statConstants';
 
 export const PROP_HUNT_ALLOWED_RESOLVE_AT = [...ALLOWED_RESOLVE_AT];
@@ -11,11 +13,8 @@ export const PROP_HUNT_DEFAULT_RESOLVE_AT = DEFAULT_RESOLVE_AT;
 export const STAT_KEY_TO_CATEGORY = SHARED_STAT_KEY_TO_CATEGORY;
 export const STAT_KEY_LABELS = SHARED_STAT_KEY_LABELS;
 
-export const PROP_HUNT_LINE_RANGE = {
-  min: 0.5,
-  max: 499.5,
-  step: 1,
-  unit: 'points',
-};
+export const PROP_HUNT_LINE_RANGE = DEFAULT_STAT_RANGE;
+
+export { getStatRange };
 
 export const PROP_HUNT_DEBUG_FLAG = 'DEBUG_PROP_HUNT';

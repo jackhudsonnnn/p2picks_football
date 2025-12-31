@@ -1,5 +1,5 @@
-import { getSupabaseAdmin, type BetProposal } from '../supabaseClient';
-import type { ModePreviewResult } from './modeRuntimeService';
+import { getSupabaseAdmin, type BetProposal } from '../../supabaseClient';
+import type { ModePreviewResult } from '../modeRuntimeService';
 
 const DEFAULT_WINNING_CONDITION = 'Winning condition available at kickoff.';
 

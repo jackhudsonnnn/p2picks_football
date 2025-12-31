@@ -111,7 +111,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       <div className="message-input-container">
         <input
           type="text"
-          placeholder={`Type a message for ${tableName || "this table"}...`}
+          placeholder={`Message for ${tableName || "this table"}...`}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => {

@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc, getTeamFromDoc, getPossessionTeamFromDoc, type RefinedGameDoc, type Team } from '../../../utils/refinedDocAccessors';
+import { getGameDoc, getTeamFromDoc, getPossessionTeamFromDoc, type RefinedGameDoc, type Team } from '../../../services/nflRefinedDataService';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 
 function resolvePossessionTeam(doc: RefinedGameDoc, teamId?: string | null): Team | null {

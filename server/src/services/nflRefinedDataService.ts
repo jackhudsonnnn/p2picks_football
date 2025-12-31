@@ -7,8 +7,120 @@
  * to avoid redundant file reads when multiple getters are called in sequence.
  */
 
-import type { RefinedGameDoc, Team, Player, StatsByCategory } from './gameData';
-import { loadRefinedGame, findTeam as baseFindTeam, findPlayer as baseFindPlayer, getCategory } from './gameData';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+
+export const REFINED_DIR = path.join('src', 'data', 'nfl_refined_live_stats');
+
+export type StatCategory =
+  | 'passing'
+  | 'rushing'
+  | 'receiving'
+  | 'fumbles'
+  | 'defensive'
+  | 'interceptions'
+  | 'kickReturns'
+  | 'puntReturns'
+  | 'kicking'
+  | 'punting'
+  | 'scoring';
+
+export interface StatsByCategory {
+  [category: string]: Record<string, unknown>;
+}
+
+export interface Player {
+  athleteId: string;
+  fullName: string;
+  position: string;
+  jersey: string;
+  headshot: string;
+  stats: StatsByCategory;
+}
+
+export interface Team {
+  teamId: string;
+  abbreviation: string;
+  displayName: string;
+  score: number;
+  stats: StatsByCategory;
+  players: Player[];
+  homeAway?: string;
+  displayOrder?: number;
+  possession?: boolean;
+}
+
+export interface RefinedGameDoc {
+  eventId: string;
+  generatedAt: string;
+  source?: string;
+  status?: string; // STATUS_IN_PROGRESS, STATUS_FINAL, STATUS_HALFTIME, STATUS_SCHEDULED, STATUS_END_PERIOD
+  period?: number | null;
+  teams: Team[];
+  note?: string;
+}
+
+export function resolveGamePath(gameId: string): string {
+  // If DATA_REFINED_DIR is absolute, use it directly; else resolve from repo root
+  const base = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
+  return path.join(base, `${gameId}.json`);
+}
+
+export async function readJson<T = unknown>(filePath: string): Promise<T> {
+  const data = await fs.readFile(filePath, 'utf8');
+  return JSON.parse(data) as T;
+}
+
+export async function loadRefinedGame(gameId: string): Promise<RefinedGameDoc | null> {
+  try {
+    return await readJson<RefinedGameDoc>(resolveGamePath(gameId));
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') return null;
+    throw err;
+  }
+}
+
+export function findPlayer(doc: RefinedGameDoc, playerId: string): Player | null {
+  for (const team of doc.teams || []) {
+    const players = (team as any).players as any;
+    if (!players) continue;
+    if (!Array.isArray(players)) {
+      const direct = (players as Record<string, Player>)[playerId];
+      if (direct) return direct;
+      for (const candidate of Object.values(players as Record<string, Player>)) {
+        if (candidate.athleteId === playerId) return candidate;
+      }
+    } else {
+      for (const candidate of players as Player[]) {
+        if (candidate.athleteId === playerId) return candidate;
+        if (`name:${candidate.fullName}` === playerId) return candidate;
+      }
+    }
+  }
+  return null;
+}
+
+export function findTeam(doc: RefinedGameDoc, teamId: string): Team | null {
+  return (
+    doc.teams.find(
+      (t) => (t as any).teamId === teamId || (t as any).abbreviation === teamId,
+    ) || null
+  );
+}
+
+export function getCategory(
+  statsByCategory: Record<string, Record<string, unknown>>,
+  category: string,
+): Record<string, unknown> | undefined {
+  if (!statsByCategory) return undefined;
+  const direct = (statsByCategory as any)[category];
+  if (direct) return direct;
+  const lower = category.toLowerCase();
+  for (const [k, v] of Object.entries(statsByCategory)) {
+    if (k.toLowerCase() === lower) return v as Record<string, unknown>;
+  }
+  return undefined;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cache Configuration
@@ -107,7 +219,7 @@ export async function getGamePeriod(gameId: string): Promise<number | null> {
 export async function getTeam(gameId: string, teamId: string): Promise<Team | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc) return null;
-  return baseFindTeam(doc, teamId);
+  return findTeam(doc, teamId);
 }
 
 /**
@@ -268,7 +380,7 @@ export async function getScores(gameId: string): Promise<{ home: number; away: n
 export async function getPlayer(gameId: string, playerId: string): Promise<Player | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc) return null;
-  return baseFindPlayer(doc, playerId);
+  return findPlayer(doc, playerId);
 }
 
 /**
@@ -440,7 +552,7 @@ export function getPossessionTeamFromDoc(doc: RefinedGameDoc | null | undefined)
  */
 export function getTeamFromDoc(doc: RefinedGameDoc | null | undefined, teamId: string): Team | null {
   if (!doc) return null;
-  return baseFindTeam(doc, teamId);
+  return findTeam(doc, teamId);
 }
 
 /**
@@ -448,7 +560,7 @@ export function getTeamFromDoc(doc: RefinedGameDoc | null | undefined, teamId: s
  */
 export function getPlayerFromDoc(doc: RefinedGameDoc | null | undefined, playerId: string): Player | null {
   if (!doc) return null;
-  return baseFindPlayer(doc, playerId);
+  return findPlayer(doc, playerId);
 }
 
 /**
@@ -476,16 +588,11 @@ export function getGamePeriodFromDoc(doc: RefinedGameDoc | null | undefined): nu
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Get the full RefinedGameDoc for advanced use cases.
+ * Get the full RefinedGameDoc.
  * Prefer using specific getters when possible.
+ * TODO: depreate
  */
 export async function getGameDoc(gameId: string): Promise<RefinedGameDoc | null> {
   return getCachedDoc(gameId);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Convenience Re-exports
-// ─────────────────────────────────────────────────────────────────────────────
-
-export { loadRefinedGame, findTeam, findPlayer, getCategory, REFINED_DIR, resolveGamePath, readJson } from './gameData';
-export type { RefinedGameDoc, Team, Player, StatsByCategory, StatCategory } from './gameData';

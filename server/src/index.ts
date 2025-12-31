@@ -5,7 +5,8 @@ import apiRouter from './routes/api';
 import { startModeValidators } from './services/modeValidatorService';
 import { startNflGameStatusSync } from './services/nflGameStatusSyncService';
 import { startNflDataIngestService } from './services/nflData';
-import { startBetLifecycleService } from './services/betLifecycleService';
+import { startBetLifecycleService } from './services/bet/betLifecycleService';
+import { startResolutionQueue, stopResolutionQueue } from './modes/shared/resolutionQueue';
 import { requireAuth } from './middleware/auth';
 
 assertRequiredEnv();
@@ -20,10 +21,25 @@ app.use(express.json());
 app.use('/api', requireAuth, apiRouter);
 
 app.listen(PORT, () => {
+  // Start resolution queue first (validators depend on it)
+  startResolutionQueue();
   startModeValidators();
   startNflGameStatusSync();
   startBetLifecycleService();
   startNflDataIngestService();
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('[server] SIGTERM received, shutting down...');
+  await stopResolutionQueue();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('[server] SIGINT received, shutting down...');
+  await stopResolutionQueue();
+  process.exit(0);
 });
 
 function assertRequiredEnv(): void {

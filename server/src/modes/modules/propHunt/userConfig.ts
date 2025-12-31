@@ -3,7 +3,7 @@
  * Uses shared UserConfigBuilder utilities.
  */
 
-import { getPlayerFromDoc, type RefinedGameDoc } from '../../../utils/refinedDocAccessors';
+import { getPlayerFromDoc, type RefinedGameDoc } from '../../../services/nflRefinedDataService';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import {
   loadGameContext,
@@ -19,9 +19,9 @@ import { prepareValidPlayers } from '../../shared/playerUtils';
 import {
   PROP_HUNT_ALLOWED_RESOLVE_AT,
   PROP_HUNT_DEFAULT_RESOLVE_AT,
-  PROP_HUNT_LINE_RANGE,
   STAT_KEY_LABELS,
   STAT_KEY_TO_CATEGORY,
+  getStatRange,
 } from './constants';
 
 const DEBUG = process.env.DEBUG_PROP_HUNT === '1' || process.env.DEBUG_PROP_HUNT === 'true';
@@ -99,7 +99,7 @@ export async function buildPropHuntUserConfig(input: {
   }
 
   // Line step
-  steps.push(buildLineStep(input.existingConfig ?? {}, currentStat, progressModeForLines));
+  steps.push(buildLineStep(input.existingConfig ?? {}, currentStat, progressModeForLines, statKey));
 
   return steps;
 }
@@ -112,8 +112,9 @@ function buildLineStep(
   existingConfig: Record<string, unknown>,
   currentStat: number | null,
   progressMode: 'starting_now' | 'cumulative',
+  statKey?: string,
 ): ModeUserConfigStep {
-  const choices = buildLineChoices(existingConfig, currentStat, progressMode);
+  const choices = buildLineChoices(existingConfig, currentStat, progressMode, statKey);
   return {
     key: 'line',
     title: 'Set Line',
@@ -126,9 +127,10 @@ function buildLineChoices(
   existingConfig: Record<string, unknown>,
   currentStat: number | null,
   progressMode: 'starting_now' | 'cumulative',
+  statKey?: string,
 ): ModeUserConfigChoice[] {
   const choices: ModeUserConfigChoice[] = [];
-  const { min, max, step } = PROP_HUNT_LINE_RANGE;
+  const { min, max, step } = getStatRange(statKey);
   
   const minimumBase =
     progressMode === 'starting_now'
@@ -144,7 +146,7 @@ function buildLineChoices(
         id: 'unavailable',
         value: 'unavailable',
         label: 'No valid lines available',
-        description: 'The selected stat already exceeds the maximum supported line (499.5).',
+        description: `The selected stat already exceeds the maximum supported line (${max}).`,
         disabled: true,
       },
     ];
@@ -192,10 +194,6 @@ function extractLine(config: Record<string, unknown>): string | null {
   if (value == null) return null;
   return value.toFixed(1);
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stat Value Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 function getCurrentStatValue(doc: RefinedGameDoc, config: Record<string, unknown>): number | null {
   const statKey = typeof config.stat === 'string' ? config.stat : '';
