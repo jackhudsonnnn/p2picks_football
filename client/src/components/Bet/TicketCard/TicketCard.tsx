@@ -416,7 +416,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
             <p className="live-info-winning-condition-text">{winningConditionText}</p>
           </div>
         ) : null}
-        <div className="live-info-content">
+        <div>
           {liveInfoLoading && <div className="live-info-loading">Loading...</div>}
           {liveInfoError && <div className="live-info-error">{liveInfoError}</div>}
           {!liveInfoLoading && !liveInfoError && liveInfo && (
