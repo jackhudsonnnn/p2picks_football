@@ -1,5 +1,5 @@
-import type { RefinedGameDoc } from '../../../services/nflRefinedDataService';
-import { getCategory } from '../../../services/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import { getCategory } from '../../../services/nflData/nflRefinedDataService';
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeTeamId } from '../../shared/teamUtils';
 

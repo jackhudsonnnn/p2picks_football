@@ -3,7 +3,7 @@
  * Uses shared UserConfigBuilder utilities.
  */
 
-import { getPlayerFromDoc, type RefinedGameDoc } from '../../../services/nflRefinedDataService';
+import { getPlayer } from '../../../services/nflData/nflRefinedDataService';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import {
   loadGameContext,
@@ -33,7 +33,7 @@ export async function buildPropHuntUserConfig(input: {
   const gameId = input.nflGameId ? String(input.nflGameId) : null;
   const context = await loadGameContext(gameId);
   const statKey = input.existingConfig?.stat as string | undefined;
-  const currentStat = context.doc ? getCurrentStatValue(context.doc, input.existingConfig ?? {}) : null;
+  const currentStat = gameId ? await getCurrentStatValue(gameId, input.existingConfig ?? {}) : null;
   const progressModeForLines = context.showProgressStep
     ? normalizeProgressMode(input.existingConfig?.progress_mode)
     : 'starting_now';
@@ -195,7 +195,7 @@ function extractLine(config: Record<string, unknown>): string | null {
   return value.toFixed(1);
 }
 
-function getCurrentStatValue(doc: RefinedGameDoc, config: Record<string, unknown>): number | null {
+async function getCurrentStatValue(gameId: string, config: Record<string, unknown>): Promise<number | null> {
   const statKey = typeof config.stat === 'string' ? config.stat : '';
   if (!statKey || !STAT_KEY_TO_CATEGORY[statKey]) {
     return null;
@@ -204,17 +204,17 @@ function getCurrentStatValue(doc: RefinedGameDoc, config: Record<string, unknown
     id: typeof config.player_id === 'string' ? config.player_id : null,
     name: typeof config.player_name === 'string' ? config.player_name : null,
   };
-  return extractPlayerStat(doc, statKey, ref);
+  return extractPlayerStat(gameId, statKey, ref);
 }
 
-function extractPlayerStat(
-  doc: RefinedGameDoc,
+async function extractPlayerStat(
+  gameId: string,
   statKey: string,
   ref: { id?: string | null; name?: string | null },
-): number | null {
+): Promise<number | null> {
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
-  const player = lookupPlayer(doc, ref);
+  const player = await lookupPlayer(gameId, ref);
   if (!player) return null;
   const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
   const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
@@ -222,13 +222,13 @@ function extractPlayerStat(
   return normalizeStatValue(categoryStats[statKey]);
 }
 
-function lookupPlayer(doc: RefinedGameDoc, ref: { id?: string | null; name?: string | null }) {
+async function lookupPlayer(gameId: string, ref: { id?: string | null; name?: string | null }) {
   if (ref.id) {
-    const byId = getPlayerFromDoc(doc, String(ref.id));
+    const byId = await getPlayer(gameId, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = getPlayerFromDoc(doc, `name:${ref.name}`);
+    const byName = await getPlayer(gameId, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;

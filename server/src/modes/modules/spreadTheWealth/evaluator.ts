@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../services/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
 import { formatNumber, isApproximatelyEqual, normalizeNumber } from '../../../utils/number';
 import { listTeams, normalizeTeamId } from '../../shared/teamUtils';
 

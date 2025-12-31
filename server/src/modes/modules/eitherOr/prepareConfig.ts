@@ -1,6 +1,10 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc, getPlayerFromDoc, type RefinedGameDoc } from '../../../services/nflRefinedDataService';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import {
+  getPlayer,
+  getHomeTeam,
+  getAwayTeam,
+} from '../../../services/nflData/nflRefinedDataService';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 
 export async function prepareEitherOrConfig({
@@ -68,22 +72,11 @@ export async function prepareEitherOrConfig({
   }
 
   try {
-    const doc = await getGameDoc(gameId);
-    if (!doc) {
-      if (debug) {
-        console.warn('[eitherOr][prepareConfig] no refined game document found', {
-          betId: bet.bet_id,
-          gameId,
-        });
-      }
-      return normalizeConfigPayload(cfg);
-    }
-
-    enrichWithTeamContext(cfg, doc);
+    await enrichWithTeamContext(cfg, gameId);
 
     const [baselinePlayer1, baselinePlayer2] = await Promise.all([
-      getPlayerStatValue(doc, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
-      getPlayerStatValue(doc, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
+      getPlayerStatValue(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
+      getPlayerStatValue(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
 
     if (debug) {
@@ -143,11 +136,11 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
   } as Record<string, unknown>;
 }
 
-async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string, ref: PlayerRef): Promise<number | null> {
+async function getPlayerStatValue(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
   const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
-  const player = lookupPlayer(doc, ref);
+  const player = await lookupPlayer(gameId, ref);
   if (!player) {
     if (debug) {
       console.warn('[eitherOr][prepareConfig] player not found for baseline lookup', {
@@ -172,13 +165,13 @@ async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string, ref: Pla
   return normalizeStatValue(raw);
 }
 
-function lookupPlayer(doc: RefinedGameDoc, ref: PlayerRef) {
+async function lookupPlayer(gameId: string, ref: PlayerRef) {
   if (ref.id) {
-    const byId = getPlayerFromDoc(doc, String(ref.id));
+    const byId = await getPlayer(gameId, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = getPlayerFromDoc(doc, `name:${ref.name}`);
+    const byName = await getPlayer(gameId, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;
@@ -196,7 +189,7 @@ function normalizeStatValue(raw: unknown): number | null {
   return null;
 }
 
-function enrichWithTeamContext(
+async function enrichWithTeamContext(
   cfg: {
     home_team_id?: string | null;
     home_team_name?: string | null;
@@ -205,10 +198,10 @@ function enrichWithTeamContext(
     away_team_name?: string | null;
     away_team_abbrev?: string | null;
   },
-  doc: RefinedGameDoc,
+  gameId: string,
 ) {
-  const homeTeam = pickHomeTeam(doc);
-  const awayTeam = pickAwayTeam(doc, homeTeam);
+  const homeTeam = await getHomeTeam(gameId);
+  const awayTeam = await getAwayTeam(gameId);
 
   if (!cfg.home_team_id) {
     cfg.home_team_id = extractTeamId(homeTeam);

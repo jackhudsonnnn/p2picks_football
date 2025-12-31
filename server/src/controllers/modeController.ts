@@ -9,14 +9,14 @@ import {
   ensureModeKeyMatchesBet,
   getModeUserConfigSteps,
   prepareModeConfig,
-} from '../services/modeRuntimeService';
+} from '../services/bet/modeRuntimeService';
 import {
   applyModeConfigChoice,
   createModeConfigSession,
   getModeConfigSession,
   setModeConfigGeneral,
 } from '../services/bet/configSessionService';
-import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../services/modeConfig';
+import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../services/bet/modeConfig';
 import { BetProposal } from '../supabaseClient';
 
 export function listModes(_req: Request, res: Response) {

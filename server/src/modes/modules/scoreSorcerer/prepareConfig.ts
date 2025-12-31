@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc } from '../../../services/nflRefinedDataService';
+import { getGameDoc } from '../../../services/nflData/nflRefinedDataService';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import type { ScoreSorcererConfig } from './evaluator';
 

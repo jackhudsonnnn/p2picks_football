@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from 'express';
-import { getAvailableGames } from '../services/gameDataService';
+import { getAvailableGames } from '../services/nflData/nflRefinedDataService';
 import { listModeDefinitions, getModeLiveInfo } from '../modes/registry';
 import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
@@ -12,7 +12,7 @@ import {
   pokeBet as pokeBetService,
   BetProposalError,
 } from '../services/bet';
-import { fetchModeConfig } from '../services/modeConfig';
+import { fetchModeConfig } from '../services/bet/modeConfig';
 import { getRedisClient } from '../modes/shared/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
 

@@ -1,13 +1,19 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc, getTeamFromDoc, getPossessionTeamFromDoc, type RefinedGameDoc, type Team } from '../../../services/nflRefinedDataService';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import {
+  getTeam,
+  getPossessionTeam,
+  getHomeTeam,
+  getAwayTeam,
+  type Team,
+} from '../../../services/nflData/nflRefinedDataService';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 
-function resolvePossessionTeam(doc: RefinedGameDoc, teamId?: string | null): Team | null {
+async function resolvePossessionTeam(gameId: string, teamId?: string | null): Promise<Team | null> {
   if (teamId) {
-    const team = getTeamFromDoc(doc, String(teamId));
+    const team = await getTeam(gameId, String(teamId));
     if (team) return team;
   }
-  return getPossessionTeamFromDoc(doc);
+  return getPossessionTeam(gameId);
 }
 
 export async function prepareChooseTheirFateConfig({
@@ -39,11 +45,8 @@ export async function prepareChooseTheirFateConfig({
   }
 
   try {
-    const doc = await getGameDoc(gameId);
-    if (!doc) return nextConfig;
-
-    const homeTeam = pickHomeTeam(doc);
-    const awayTeam = pickAwayTeam(doc, homeTeam);
+    const homeTeam = await getHomeTeam(gameId);
+    const awayTeam = await getAwayTeam(gameId);
 
     if (!nextConfig.home_team_id) {
       nextConfig.home_team_id = extractTeamId(homeTeam);
@@ -64,7 +67,7 @@ export async function prepareChooseTheirFateConfig({
       nextConfig.away_team_name = extractTeamName(awayTeam);
     }
 
-    const possessionTeam = resolvePossessionTeam(doc, nextConfig.possession_team_id ?? null);
+    const possessionTeam = await resolvePossessionTeam(gameId, nextConfig.possession_team_id ?? null);
     if (possessionTeam) {
       if (!nextConfig.possession_team_id) {
         nextConfig.possession_team_id = extractTeamId(possessionTeam);

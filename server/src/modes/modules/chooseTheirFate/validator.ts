@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
+import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
 import { normalizeTeamId } from '../../shared/teamUtils';

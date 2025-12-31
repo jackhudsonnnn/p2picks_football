@@ -1,5 +1,5 @@
-import { getAvailableGames, getGameStatus } from './gameDataService';
-import { getSupabaseAdmin } from '../supabaseClient';
+import { getAvailableGames, getGameStatus } from './nflRefinedDataService';
+import { getSupabaseAdmin } from '../../supabaseClient';
 
 type StatusCache = Map<string, string | null>;
 

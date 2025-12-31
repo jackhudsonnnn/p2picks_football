@@ -62,8 +62,50 @@ export interface RefinedGameDoc {
 
 export function resolveGamePath(gameId: string): string {
   // If DATA_REFINED_DIR is absolute, use it directly; else resolve from repo root
-  const base = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-  return path.join(base, `${gameId}.json`);
+  const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
+  return path.join(dir, `${gameId}.json`);
+}
+
+/**
+ * List available games by reading refined JSON files and deriving a human-friendly label.
+ * Uses cached accessors to avoid direct doc handling.
+ */
+export async function getAvailableGames(): Promise<Record<string, string>> {
+  try {
+    const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
+    const files = await fs.readdir(dir, { withFileTypes: true } as any);
+    const jsonFiles = files
+      .filter((d: any) => d.isFile() && d.name.endsWith('.json'))
+      .map((d: any) => d.name.replace(/\.json$/i, ''));
+
+    const results: Record<string, string> = {};
+    await Promise.all(
+      jsonFiles.map(async (gameId: string) => {
+        try {
+          const teams = await getAllTeams(gameId);
+          if (teams.length >= 2) {
+            const a = extractTeamName(teams[0]) || '';
+            const b = extractTeamName(teams[1]) || '';
+            results[gameId] = `${a} vs ${b}`.trim();
+          } else if (teams.length === 1) {
+            const a = extractTeamName(teams[0]) || '';
+            results[gameId] = `${a}`;
+          } else {
+            console.warn(`Warning: Refined game file for gameId ${gameId} has no teams array`);
+            results[gameId] = gameId;
+          }
+        } catch {
+          console.warn(`Warning: Could not load or parse refined game file for gameId ${gameId}`);
+          results[gameId] = gameId;
+        }
+      })
+    );
+
+    return results;
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') return {};
+    throw err;
+  }
 }
 
 export async function readJson<T = unknown>(filePath: string): Promise<T> {
@@ -78,34 +120,6 @@ export async function loadRefinedGame(gameId: string): Promise<RefinedGameDoc | 
     if (err?.code === 'ENOENT') return null;
     throw err;
   }
-}
-
-export function findPlayer(doc: RefinedGameDoc, playerId: string): Player | null {
-  for (const team of doc.teams || []) {
-    const players = (team as any).players as any;
-    if (!players) continue;
-    if (!Array.isArray(players)) {
-      const direct = (players as Record<string, Player>)[playerId];
-      if (direct) return direct;
-      for (const candidate of Object.values(players as Record<string, Player>)) {
-        if (candidate.athleteId === playerId) return candidate;
-      }
-    } else {
-      for (const candidate of players as Player[]) {
-        if (candidate.athleteId === playerId) return candidate;
-        if (`name:${candidate.fullName}` === playerId) return candidate;
-      }
-    }
-  }
-  return null;
-}
-
-export function findTeam(doc: RefinedGameDoc, teamId: string): Team | null {
-  return (
-    doc.teams.find(
-      (t) => (t as any).teamId === teamId || (t as any).abbreviation === teamId,
-    ) || null
-  );
 }
 
 export function getCategory(
@@ -219,7 +233,11 @@ export async function getGamePeriod(gameId: string): Promise<number | null> {
 export async function getTeam(gameId: string, teamId: string): Promise<Team | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc) return null;
-  return findTeam(doc, teamId);
+  return (
+    doc.teams.find(
+      (t) => (t as any).teamId === teamId || (t as any).abbreviation === teamId,
+    ) || null
+  );
 }
 
 /**
@@ -247,31 +265,24 @@ export async function getAwayTeam(gameId: string): Promise<Team | null> {
 }
 
 /**
- * Get both teams as [home, away].
- */
-export async function getTeams(gameId: string): Promise<[Team | null, Team | null]> {
-  const doc = await getCachedDoc(gameId);
-  if (!doc || !Array.isArray(doc.teams)) return [null, null];
-  
-  let home: Team | null = doc.teams.find((t) => (t as any).homeAway === 'home') ?? null;
-  let away: Team | null = doc.teams.find((t) => (t as any).homeAway === 'away') ?? null;
-  
-  if (!home || !away) {
-    const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-    home = home ?? sorted[0] ?? null;
-    away = away ?? sorted[1] ?? null;
-  }
-  
-  return [home, away];
-}
-
-/**
  * Get all teams from doc.
  */
 export async function getAllTeams(gameId: string): Promise<Team[]> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return [];
   return doc.teams;
+}
+
+/**
+ * Get both teams's names, abbreviations, and IDs.
+ */
+export async function getGameTeams(gameId: string): Promise<Array<Record<string, string>>> {
+  const teams = await getAllTeams(gameId);
+  return teams.map((t) => ({
+    teamId: extractTeamId(t) || '',
+    abbreviation: (t as any).abbreviation || '',
+    name: extractTeamName(t) || '',
+  }));
 }
 
 /**
@@ -309,11 +320,44 @@ export async function getPossessionTeamId(gameId: string): Promise<string | null
  * Get team score by team ID.
  */
 export async function getTeamScore(gameId: string, teamId: string): Promise<number> {
-  const team = await getTeam(gameId, teamId);
-  if (!team) return 0;
-  const score = (team as any).score;
-  return typeof score === 'number' && Number.isFinite(score) ? score : 0;
+  const team: any = await getTeam(gameId, teamId);
+  if (!team) {
+    return -1;
+  }
+
+  return team.score || -1;
 }
+
+/**
+ * Get team score stats (score, touchdowns, field goals, and safeties) by team ID.
+ */
+export async function getTeamScoreStats(
+  gameId: string,
+  teamId: string,
+): Promise<{
+  score: number;
+  touchdowns: number;
+  fieldGoals: number;
+  safeties: number;
+}> {
+  const team: any = await getTeam(gameId, teamId);
+  if (!team) {
+    return { score: -1, touchdowns: -1, fieldGoals: -1, safeties: -1 };
+  }
+
+  let score: number = team.score || -1;
+
+  if (!team.scoring) {
+    return { score, touchdowns: -1, fieldGoals: -1, safeties: -1 };
+  }
+
+  let touchdowns: number = team.scoring.touchdowns || -1;
+  let fieldGoals: number = team.scoring.fieldGoals || -1;
+  let safeties: number = team.scoring.safeties || -1;
+
+  return { score, touchdowns, fieldGoals, safeties };
+}
+
 
 /**
  * Get home team score.
@@ -380,7 +424,24 @@ export async function getScores(gameId: string): Promise<{ home: number; away: n
 export async function getPlayer(gameId: string, playerId: string): Promise<Player | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc) return null;
-  return findPlayer(doc, playerId);
+
+  for (const team of doc.teams || []) {
+    const players = (team as any).players as any;
+    if (!players) continue;
+    if (!Array.isArray(players)) {
+      const direct = (players as Record<string, Player>)[playerId];
+      if (direct) return direct;
+      for (const candidate of Object.values(players as Record<string, Player>)) {
+        if (candidate.athleteId === playerId) return candidate;
+      }
+    } else {
+      for (const candidate of players as Player[]) {
+        if (candidate.athleteId === playerId) return candidate;
+        if (`name:${candidate.fullName}` === playerId) return candidate;
+      }
+    }
+  }
+  return null;
 }
 
 /**
@@ -498,89 +559,6 @@ export function extractTeamName(team: Team | null | undefined): string | null {
 export function extractTeamAbbreviation(team: Team | null | undefined): string | null {
   if (!team) return null;
   return (team as any).abbreviation ?? null;
-}
-
-// Aliases for backward compatibility
-export const getTeamId = extractTeamId;
-export const getTeamName = extractTeamName;
-export const getTeamAbbreviation = extractTeamAbbreviation;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sync Doc Helpers (for code that already has doc loaded)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Get all teams from a doc object (sync).
- */
-export function getAllTeamsFromDoc(doc: RefinedGameDoc | null | undefined): Team[] {
-  if (!doc || !Array.isArray(doc.teams)) return [];
-  return doc.teams;
-}
-
-/**
- * Get home team from a doc object (sync).
- */
-export function getHomeTeamFromDoc(doc: RefinedGameDoc | null | undefined): Team | null {
-  if (!doc || !Array.isArray(doc.teams)) return null;
-  const byHomeAway = doc.teams.find((t) => (t as any).homeAway === 'home');
-  if (byHomeAway) return byHomeAway;
-  const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-  return sorted[0] ?? null;
-}
-
-/**
- * Get away team from a doc object (sync).
- */
-export function getAwayTeamFromDoc(doc: RefinedGameDoc | null | undefined): Team | null {
-  if (!doc || !Array.isArray(doc.teams)) return null;
-  const byHomeAway = doc.teams.find((t) => (t as any).homeAway === 'away');
-  if (byHomeAway) return byHomeAway;
-  const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-  return sorted[1] ?? null;
-}
-
-/**
- * Get possession team from a doc object (sync).
- */
-export function getPossessionTeamFromDoc(doc: RefinedGameDoc | null | undefined): Team | null {
-  if (!doc || !Array.isArray(doc.teams)) return null;
-  return doc.teams.find((t) => (t as any).possession === true) ?? null;
-}
-
-/**
- * Get team by ID from a doc object (sync).
- */
-export function getTeamFromDoc(doc: RefinedGameDoc | null | undefined, teamId: string): Team | null {
-  if (!doc) return null;
-  return findTeam(doc, teamId);
-}
-
-/**
- * Get player by ID from a doc object (sync).
- */
-export function getPlayerFromDoc(doc: RefinedGameDoc | null | undefined, playerId: string): Player | null {
-  if (!doc) return null;
-  return findPlayer(doc, playerId);
-}
-
-/**
- * Get game status from a doc object (sync).
- */
-export function getGameStatusFromDoc(doc: RefinedGameDoc | null | undefined): string | null {
-  if (!doc) return null;
-  const status = doc.status;
-  if (typeof status === 'string' && status.trim().length) return status.trim();
-  return null;
-}
-
-/**
- * Get game period from a doc object (sync).
- */
-export function getGamePeriodFromDoc(doc: RefinedGameDoc | null | undefined): number | null {
-  if (!doc) return null;
-  const period = doc.period;
-  if (typeof period === 'number' && Number.isFinite(period)) return period;
-  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

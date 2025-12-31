@@ -7,7 +7,7 @@ import {
   buildModePreview,
   getModeUserConfigSteps,
   type ModePreviewResult,
-} from '../modeRuntimeService';
+} from './modeRuntimeService';
 
 const SESSION_TTL_MS = 15 * 60 * 1000;
 const WAGER_MIN = 0.25;

@@ -22,6 +22,7 @@ import {
   RAW_DIR,
   REFINED_DIR,
   TEST_DATA_DIR,
+  ROSTERS_DIR,
 } from './fileStorage';
 
 const logger = createLogger('nflDataIngest');
@@ -30,14 +31,16 @@ interface IngestConfig {
   rawIntervalSeconds: number;
   rawJitterPercent: number;
   refinedIntervalSeconds: number;
-  testingMode: boolean;
+  testMode: TestMode;
 }
+
+type TestMode = 'off' | 'raw' | 'refined';
 
 const DEFAULT_CONFIG: IngestConfig = {
   rawIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_RAW_INTERVAL_SECONDS) || 20),
   rawJitterPercent: Math.max(0, Number(process.env.NFL_DATA_RAW_JITTER_PERCENT) || 10),
   refinedIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_REFINED_INTERVAL_SECONDS) || 20),
-  testingMode: String(process.env.NFL_DATA_TEST_MODE || '').toLowerCase() === 'true',
+  testMode: parseTestMode(process.env.NFL_DATA_TEST_MODE),
 };
 
 const CLEANUP_CUTOFF_MINUTES = 30;
@@ -92,11 +95,7 @@ async function scheduleRawTick(firstTick = false): Promise<void> {
 
   rawTimer = setTimeout(async () => {
     try {
-      if (DEFAULT_CONFIG.testingMode) {
-        await copyTestData();
-      } else {
-        await runRawTick(firstTick);
-      }
+      await runRawFlow(firstTick);
     } catch (err) {
       logger.error({ err }, 'Raw tick failed');
     } finally {
@@ -158,6 +157,11 @@ async function runRawTick(firstTick: boolean): Promise<void> {
 }
 
 async function runRefineCycle(): Promise<void> {
+  if (DEFAULT_CONFIG.testMode === 'refined') {
+    logger.debug('Skipping refine cycle in refined test mode');
+    return;
+  }
+
   await ensureDirectories();
   const rawIds = await listJsonIds(RAW_DIR);
   if (!rawIds.length) {
@@ -185,17 +189,81 @@ async function runRefineCycle(): Promise<void> {
   }
 }
 
-async function copyTestData(): Promise<void> {
-  await ensureDirectories();
-  await purgeInitialRaw();
-  const testRaw = path.join(TEST_DATA_DIR, 'nfl_raw_live_stats');
+async function runRawFlow(firstTick: boolean): Promise<void> {
+  if (DEFAULT_CONFIG.testMode === 'raw') {
+    await copyTestDataRaw(firstTick);
+    return;
+  }
 
-  const rawFiles = await safeListFiles(testRaw);
+  if (DEFAULT_CONFIG.testMode === 'refined') {
+    await copyTestDataRefined(firstTick);
+    return;
+  }
+
+  await runRawTick(firstTick);
+}
+
+async function copyTestDataRaw(firstTick: boolean): Promise<void> {
+  await ensureDirectories();
+  if (firstTick) {
+    await purgeInitialRaw();
+  }
+
+  const testRawDir = path.join(TEST_DATA_DIR, 'raw', 'nfl_raw_live_stats');
+  const rawFiles = await safeListFiles(testRawDir);
+
+  if (!rawFiles.length) {
+    logger.warn({ testRawDir }, 'No raw test games found');
+  }
+
   for (const file of rawFiles) {
-    const src = path.join(testRaw, file);
+    const src = path.join(testRawDir, file);
     const data = await readJson(src);
     if (!data) continue;
     await writeJsonAtomic(data, RAW_DIR, file, true);
+  }
+
+  await copyTestRosters(firstTick);
+}
+
+async function copyTestRosters(firstTick: boolean): Promise<void> {
+  if (!firstTick) return;
+
+  const testRostersDir = path.join(TEST_DATA_DIR, 'raw', 'nfl_rosters');
+  const rosterFiles = await safeListFiles(testRostersDir);
+
+  if (!rosterFiles.length) {
+    logger.debug({ testRostersDir }, 'No test rosters found to copy');
+    return;
+  }
+
+  for (const file of rosterFiles) {
+    const src = path.join(testRostersDir, file);
+    const data = await readJson(src);
+    if (!data) continue;
+    await writeJsonAtomic(data, ROSTERS_DIR, file, true);
+  }
+}
+
+async function copyTestDataRefined(firstTick: boolean): Promise<void> {
+  await ensureDirectories();
+  if (firstTick) {
+    await purgeInitialRaw();
+    await purgeRefined();
+  }
+
+  const testRefinedDir = path.join(TEST_DATA_DIR, 'refined', 'nfl_refined_live_stats');
+  const refinedFiles = await safeListFiles(testRefinedDir);
+
+  if (!refinedFiles.length) {
+    logger.warn({ testRefinedDir }, 'No refined test games found');
+  }
+
+  for (const file of refinedFiles) {
+    const src = path.join(testRefinedDir, file);
+    const data = await readJson(src);
+    if (!data) continue;
+    await writeJsonAtomic(data, REFINED_DIR, file, true);
   }
 }
 
@@ -268,16 +336,28 @@ function isFinal(data: unknown): boolean {
 }
 
 async function purgeInitialRaw(): Promise<void> {
-  const files = await safeListFiles(RAW_DIR);
-  let removed = 0;
-  for (const file of files) {
-    if (await deleteFile(path.join(RAW_DIR, file))) {
-      removed++;
-    }
-  }
+  const removed = await purgeDir(RAW_DIR);
   if (removed) {
     logger.info({ removed }, 'Purged existing raw files on start');
   }
+}
+
+async function purgeRefined(): Promise<void> {
+  const removed = await purgeDir(REFINED_DIR);
+  if (removed) {
+    logger.info({ removed }, 'Purged existing refined files on start');
+  }
+}
+
+async function purgeDir(dir: string): Promise<number> {
+  const files = await safeListFiles(dir);
+  let removed = 0;
+  for (const file of files) {
+    if (await deleteFile(path.join(dir, file))) {
+      removed++;
+    }
+  }
+  return removed;
 }
 
 async function cleanupOrphanRefinedGames(sourceIds: Set<string>): Promise<number> {
@@ -305,4 +385,11 @@ function jitterDelay(baseMs: number, jitterPercent: number): number {
 function clampInterval(value: number): number {
   if (!Number.isFinite(value)) return 60;
   return Math.max(10, Math.min(300, value));
+}
+
+function parseTestMode(value: string | undefined): TestMode {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'refined') return 'refined';
+  if (normalized === 'raw' || normalized === '1' || normalized === 'true') return 'raw';
+  return 'off';
 }

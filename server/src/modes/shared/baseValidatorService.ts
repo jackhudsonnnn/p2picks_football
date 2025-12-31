@@ -12,15 +12,15 @@
 
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
-import { fetchModeConfig } from '../../services/modeConfig';
-import { RefinedGameDoc } from '../../services/nflRefinedDataService';
+import { fetchModeConfig } from '../../services/bet/modeConfig';
+import { RefinedGameDoc } from '../../services/nflData/nflRefinedDataService';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
 import { RedisJsonStore } from './redisJsonStore';
 import { getRedisClient } from './redisClient';
 import { ensureRefinedGameDoc } from './gameDocProvider';
-import type { GameFeedEvent } from '../../services/gameFeedService';
+import type { GameFeedEvent } from '../../services/nflData/gameFeedService';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
 
 export interface BaseValidatorConfig {

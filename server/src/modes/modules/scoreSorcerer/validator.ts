@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../services/nflRefinedDataService';
+import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import {
   SCORE_SORCERER_BASELINE_EVENT,

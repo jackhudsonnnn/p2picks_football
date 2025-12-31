@@ -1,6 +1,10 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc, getPlayerFromDoc, type RefinedGameDoc } from '../../../services/nflRefinedDataService';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import {
+  getPlayer,
+  getHomeTeam,
+  getAwayTeam,
+} from '../../../services/nflData/nflRefinedDataService';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
 
@@ -56,14 +60,9 @@ export async function preparePropHuntConfig({
   }
 
   try {
-    const doc = await getGameDoc(gameId);
-    if (!doc) {
-      return normalizeConfigPayload(next);
-    }
+    await enrichWithTeamContext(next, gameId);
 
-    enrichWithTeamContext(next, doc);
-
-    const currentStat = await getPlayerStatValue(doc, next.stat, {
+    const currentStat = await getPlayerStatValue(gameId, next.stat, {
       id: next.player_id,
       name: next.player_name,
     });
@@ -180,11 +179,11 @@ function toNumber(raw: unknown): number | null {
 
 type PlayerRef = { id?: string | null; name?: string | null };
 
-async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string | null | undefined, ref: PlayerRef): Promise<number | null> {
+async function getPlayerStatValue(gameId: string, statKey: string | null | undefined, ref: PlayerRef): Promise<number | null> {
   if (!statKey) return null;
   const category = STAT_KEY_TO_CATEGORY[String(statKey)];
   if (!category) return null;
-  const player = lookupPlayer(doc, ref);
+  const player = await lookupPlayer(gameId, ref);
   if (!player) return null;
   const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
   const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
@@ -192,13 +191,13 @@ async function getPlayerStatValue(doc: RefinedGameDoc, statKey: string | null | 
   return normalizeStatValue(categoryStats[String(statKey)]);
 }
 
-function lookupPlayer(doc: RefinedGameDoc, ref: PlayerRef) {
+async function lookupPlayer(gameId: string, ref: PlayerRef) {
   if (ref.id) {
-    const byId = getPlayerFromDoc(doc, String(ref.id));
+    const byId = await getPlayer(gameId, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = getPlayerFromDoc(doc, `name:${ref.name}`);
+    const byName = await getPlayer(gameId, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;
@@ -216,9 +215,9 @@ function normalizeStatValue(raw: unknown): number | null {
   return null;
 }
 
-function enrichWithTeamContext(config: PropHuntConfig, doc: RefinedGameDoc): void {
-  const homeTeam = pickHomeTeam(doc);
-  const awayTeam = pickAwayTeam(doc, homeTeam);
+async function enrichWithTeamContext(config: PropHuntConfig, gameId: string): Promise<void> {
+  const homeTeam = await getHomeTeam(gameId);
+  const awayTeam = await getAwayTeam(gameId);
 
   if (!config.home_team_id) {
     config.home_team_id = extractTeamId(homeTeam);

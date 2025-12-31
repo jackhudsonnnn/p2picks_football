@@ -1,6 +1,6 @@
-import { MODE_MODULES } from '../modes/modules';
-import type { ModeValidator } from '../modes/shared/types';
-import { startGameFeedService, stopGameFeedService } from './gameFeedService';
+import { MODE_MODULES } from '../../modes/modules';
+import type { ModeValidator } from '../../modes/shared/types';
+import { startGameFeedService, stopGameFeedService } from '../nflData/gameFeedService';
 
 const activeValidators: ModeValidator[] = [];
 let started = false;

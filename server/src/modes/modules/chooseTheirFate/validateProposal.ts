@@ -1,5 +1,5 @@
-import { getGameStatus } from '../../../services/gameDataService';
-import { getGameDoc } from '../../../services/nflRefinedDataService';
+import { getGameStatus } from '../../../services/nflData/nflRefinedDataService';
+import { getGameDoc } from '../../../services/nflData/nflRefinedDataService';
 import { possessionTeamIdFromDoc } from './evaluator';
 
 export async function validateChooseTheirFateProposal({

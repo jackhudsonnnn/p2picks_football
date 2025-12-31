@@ -1,11 +1,10 @@
-import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../modes/registry';
+import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../../modes/registry';
 import type {
   ModeConfigStepDefinition,
-  ModeContext,
   ModeDefinitionDTO,
   ModeUserConfigChoice,
   ModeUserConfigStep,
-} from '../modes/shared/types';
+} from '../../modes/shared/types';
 import {
   buildModeContext,
   computeMatchupDescription,
@@ -13,17 +12,16 @@ import {
   computeWinningCondition,
   renderModeTemplate,
   runModeValidator,
-} from '../modes/shared/utils';
-import type { BetProposal } from '../supabaseClient';
-import { getSupabaseAdmin } from '../supabaseClient';
+} from '../../modes/shared/utils';
+import type { BetProposal } from '../../supabaseClient';
+import { getSupabaseAdmin } from '../../supabaseClient';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  getGameDoc,
-  getHomeTeamFromDoc,
-  getAwayTeamFromDoc,
+  getHomeTeam,
+  getAwayTeam,
   extractTeamId,
   extractTeamName,
-} from './nflRefinedDataService';
+} from '../nflData/nflRefinedDataService';
 
 export type ModeUserConfigInput = {
   nflGameId?: string | null;
@@ -189,11 +187,8 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
   }
 
   try {
-    const doc = await getGameDoc(gameId);
-    if (!doc) return;
-
-    const homeTeam = getHomeTeamFromDoc(doc);
-    const awayTeam = getAwayTeamFromDoc(doc);
+    const homeTeam = await getHomeTeam(gameId);
+    const awayTeam = await getAwayTeam(gameId);
 
     if (needsHomeId && !target.home_team_id) {
       target.home_team_id = extractTeamId(homeTeam);

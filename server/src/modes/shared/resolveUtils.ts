@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../services/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../services/nflData/nflRefinedDataService';
 
 export function shouldSkipResolveStep(doc: RefinedGameDoc | null | undefined): boolean {
   if (!doc) return false;

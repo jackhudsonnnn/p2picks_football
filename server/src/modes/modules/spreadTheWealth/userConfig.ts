@@ -1,4 +1,4 @@
-import { getGameDoc, type RefinedGameDoc } from '../../../services/nflRefinedDataService';
+import { getGameDoc, type RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { extractTeamName, pickHomeTeam } from '../../shared/utils';

@@ -5,14 +5,14 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin, type BetProposal } from '../../supabaseClient';
-import { getGameStatus } from '../gameDataService';
-import { storeModeConfig, fetchModeConfig } from '../modeConfig';
+import { getGameStatus } from '../nflData/nflRefinedDataService';
+import { storeModeConfig, fetchModeConfig } from './modeConfig';
 import {
   buildModePreview,
   prepareModeConfig,
   validateModeConfig,
   type ModePreviewResult,
-} from '../modeRuntimeService';
+} from './modeRuntimeService';
 import {
   consumeModeConfigSession,
   normalizeTimeLimitSeconds,
