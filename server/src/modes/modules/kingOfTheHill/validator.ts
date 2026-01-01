@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
@@ -176,14 +176,19 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return null;
       }
 
-      const doc = await this.ensureGameDoc(gameId, prefetchedDoc ?? null);
-      if (!doc) {
-        this.logWarn('refined doc unavailable for progress capture', { betId: bet.bet_id, gameId });
+      const capturedAt = this.normalizeTimestamp(eventTimestamp, (prefetchedDoc as any)?.generatedAt);
+      const progress = await buildProgressRecordFromAccessors(
+        gameId,
+        config,
+        statKey,
+        threshold,
+        progressMode,
+        capturedAt,
+      );
+      if (!progress) {
+        this.logWarn('unable to build progress from accessors', { betId: bet.bet_id, gameId });
         return null;
       }
-
-      const capturedAt = this.normalizeTimestamp(eventTimestamp, (doc as any)?.generatedAt);
-      const progress = buildProgressRecord(doc, config, statKey, threshold, progressMode, gameId, capturedAt);
       const player1Value = progress.player1.lastValue;
       const player2Value = progress.player2.lastValue;
 
@@ -288,3 +293,78 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
 }
 
 export const kingOfTheHillValidator = new KingOfTheHillValidatorService();
+
+async function buildProgressRecordFromAccessors(
+  gameId: string,
+  config: KingOfTheHillConfig,
+  statKey: string,
+  threshold: number,
+  progressMode: 'starting_now' | 'cumulative',
+  capturedAt: string,
+): Promise<ProgressRecord | null> {
+  const spec = PLAYER_STAT_MAP[statKey];
+  if (!spec) return null;
+
+  const player1Key = resolvePlayerKey(config.player1_id, config.player1_name);
+  const player2Key = resolvePlayerKey(config.player2_id, config.player2_name);
+  if (!player1Key || !player2Key) return null;
+
+  const [player1Value, player2Value] = await Promise.all([
+    getPlayerStat(gameId, player1Key, spec.category, spec.field),
+    getPlayerStat(gameId, player2Key, spec.category, spec.field),
+  ]);
+
+  return {
+    statKey,
+    threshold,
+    gameId,
+    capturedAt,
+    progressMode,
+    player1: createPlayerProgressLocal(config.player1_id, config.player1_name, Number(player1Value) || 0),
+    player2: createPlayerProgressLocal(config.player2_id, config.player2_name, Number(player2Value) || 0),
+  };
+}
+
+function createPlayerProgressLocal(id?: string | null, name?: string | null, baselineValue = 0): PlayerProgress {
+  return {
+    id,
+    name,
+    baselineValue,
+    lastValue: baselineValue,
+    reached: false,
+    reachedAt: null,
+    valueAtReach: null,
+    deltaAtReach: null,
+    metricAtReach: null,
+  };
+}
+
+function resolvePlayerKey(id?: string | null, name?: string | null): string | null {
+  const trimmedId = (id ?? '').trim();
+  if (trimmedId) return trimmedId;
+  const trimmedName = (name ?? '').trim();
+  if (trimmedName) return `name:${trimmedName}`;
+  return null;
+}
+
+const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
+  passingYards: { category: 'passing', field: 'passingYards' },
+  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
+  rushingYards: { category: 'rushing', field: 'rushingYards' },
+  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
+  longRushing: { category: 'rushing', field: 'longRushing' },
+  receptions: { category: 'receiving', field: 'receptions' },
+  receivingYards: { category: 'receiving', field: 'receivingYards' },
+  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
+  longReception: { category: 'receiving', field: 'longReception' },
+  totalTackles: { category: 'defensive', field: 'totalTackles' },
+  sacks: { category: 'defensive', field: 'sacks' },
+  passesDefended: { category: 'defensive', field: 'passesDefended' },
+  interceptions: { category: 'interceptions', field: 'interceptions' },
+  kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
+  longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
+  puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
+  longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
+  puntsInside20: { category: 'punting', field: 'puntsInside20' },
+  longPunt: { category: 'punting', field: 'longPunt' },
+};

@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeStatus } from '../../shared/gameDocProvider';
 import { choiceLabel } from '../../shared/teamUtils';

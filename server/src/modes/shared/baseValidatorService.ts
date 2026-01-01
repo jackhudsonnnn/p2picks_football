@@ -13,13 +13,12 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
 import { fetchModeConfig } from '../../services/bet/modeConfig';
-import { RefinedGameDoc } from '../../services/nflData/nflRefinedDataService';
+import { RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
 import { RedisJsonStore } from './redisJsonStore';
 import { getRedisClient } from './redisClient';
-import { ensureRefinedGameDoc } from './gameDocProvider';
 import type { GameFeedEvent } from '../../services/nflData/gameFeedService';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
 
@@ -224,17 +223,6 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       modeLabel: this.config.modeLabel,
     });
     await this.store.delete(betId);
-  }
-
-  /**
-   * Ensure a refined game document is available.
-   */
-  protected async ensureGameDoc(
-    gameId: string | null | undefined,
-    prefetchedDoc?: RefinedGameDoc | null
-  ): Promise<RefinedGameDoc | null> {
-    if (!gameId) return null;
-    return ensureRefinedGameDoc(gameId, prefetchedDoc ?? null);
   }
 
   /**

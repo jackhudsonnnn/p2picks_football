@@ -1,15 +1,10 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from './constants';
-import {
-  buildEitherOrBaseline,
-  evaluateEitherOr,
-  EitherOrBaseline,
-  EitherOrConfig,
-} from './evaluator';
+import { evaluateEitherOr, EitherOrBaseline, EitherOrConfig } from './evaluator';
 
 export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfig, EitherOrBaseline> {
   constructor() {
@@ -180,13 +175,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
       return null;
     }
 
-    const doc = await this.ensureGameDoc(gameId, prefetchedDoc ?? null);
-    if (!doc) {
-      this.logWarn('refined doc unavailable for baseline capture', { betId: bet.bet_id, gameId });
-      return null;
-    }
-
-    const baseline = buildEitherOrBaseline(doc, config, gameId);
+    const baseline = await buildEitherOrBaselineFromAccessors(gameId, config);
     if (!baseline) {
       this.logWarn('failed to build baseline; unsupported config', { betId: bet.bet_id });
       return null;
@@ -222,3 +211,61 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
 }
 
 export const eitherOrValidator = new EitherOrValidatorService();
+
+async function buildEitherOrBaselineFromAccessors(
+  gameId: string,
+  config: EitherOrConfig,
+  capturedAt: string = new Date().toISOString(),
+): Promise<EitherOrBaseline | null> {
+  const statKey = resolveStatKey(config);
+  if (!statKey) return null;
+
+  const spec = PLAYER_STAT_MAP[statKey];
+  if (!spec) return null;
+
+  const player1Key = resolvePlayerKey(config.player1_id, config.player1_name);
+  const player2Key = resolvePlayerKey(config.player2_id, config.player2_name);
+  if (!player1Key || !player2Key) return null;
+
+  const [player1Value, player2Value] = await Promise.all([
+    getPlayerStat(gameId, player1Key, spec.category, spec.field),
+    getPlayerStat(gameId, player2Key, spec.category, spec.field),
+  ]);
+
+  return {
+    statKey,
+    capturedAt,
+    gameId,
+    player1: { ref: { id: config.player1_id, name: config.player1_name }, value: Number(player1Value) || 0 },
+    player2: { ref: { id: config.player2_id, name: config.player2_name }, value: Number(player2Value) || 0 },
+  };
+}
+
+function resolvePlayerKey(id?: string | null, name?: string | null): string | null {
+  const trimmedId = (id ?? '').trim();
+  if (trimmedId) return trimmedId;
+  const trimmedName = (name ?? '').trim();
+  if (trimmedName) return `name:${trimmedName}`;
+  return null;
+}
+
+function resolveStatKey(config: EitherOrConfig | null | undefined): string | null {
+  const statKey = (config?.stat || '').trim();
+  if (!statKey || !PLAYER_STAT_MAP[statKey]) return null;
+  return statKey;
+}
+
+const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
+  passingYards: { category: 'passing', field: 'passingYards' },
+  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
+  rushingYards: { category: 'rushing', field: 'rushingYards' },
+  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
+  longRushing: { category: 'rushing', field: 'longRushing' },
+  receptions: { category: 'receiving', field: 'receptions' },
+  receivingYards: { category: 'receiving', field: 'receivingYards' },
+  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
+  longReception: { category: 'receiving', field: 'longReception' },
+  totalTackles: { category: 'defensive', field: 'totalTackles' },
+  sacks: { category: 'defensive', field: 'sacks' },
+  passesDefended: { category: 'defensive', field: 'passesDefended' },
+};

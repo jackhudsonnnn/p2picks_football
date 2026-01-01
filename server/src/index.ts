@@ -4,7 +4,7 @@ import 'dotenv/config';
 import apiRouter from './routes/api';
 import { startModeValidators } from './services/bet/modeValidatorService';
 import { startNflGameStatusSync } from './services/nflData/nflGameStatusSyncService';
-import { startNflDataIngestService } from './services/nflData';
+import { startNflDataIngestService } from './services/nflData/nflDataIngestService';
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
 import { startResolutionQueue, stopResolutionQueue } from './modes/shared/resolutionQueue';
 import { requireAuth } from './middleware/auth';

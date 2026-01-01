@@ -1,5 +1,4 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
@@ -10,8 +9,14 @@ import {
   type PropHuntBaseline,
   normalizePropHuntLine,
   normalizePropHuntProgressMode,
-  readStatValue,
 } from './evaluator';
+import {
+  extractTeamAbbreviation,
+  extractTeamName,
+  getAwayTeam,
+  getHomeTeam,
+  getPlayerStat,
+} from '../../../services/nflData/nflRefinedDataAccessors';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();
@@ -47,7 +52,9 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
 
   // Get live game data for current value
   const gameId = nflGameId ?? typedConfig.nfl_game_id ?? null;
-  const doc = gameId ? await ensureRefinedGameDoc(gameId) : null;
+  const [homeTeam, awayTeam] = gameId
+    ? await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)])
+    : [null, null];
 
   // Build baseline and current values
   let baselineValue: number | string = 'N/A';
@@ -57,8 +64,8 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
     baselineValue = baseline.value;
   }
 
-  if (doc) {
-    const statValue = readStatValue(doc, typedConfig);
+  if (gameId) {
+    const statValue = await readStatValueFromAccessors(gameId, typedConfig);
     if (statValue !== null) {
       currentValue = statValue;
     }
@@ -70,7 +77,10 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
     progress = currentValue - baselineValue;
   }
 
-  const matchup = formatMatchup({ doc });
+  const matchup = formatMatchup({
+    homeName: resolveTeamLabel(homeTeam),
+    awayName: resolveTeamLabel(awayTeam),
+  });
 
   const fields: { label: string; value: string | number }[] = [
     ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
@@ -101,7 +111,7 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
   }
 
   // Add unavailable reason if no data
-  if (!baseline && !doc) {
+  if (!baseline && !gameId) {
     return {
       ...baseResult,
       fields,
@@ -113,4 +123,40 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
     ...baseResult,
     fields,
   };
+}
+
+async function readStatValueFromAccessors(gameId: string, config: PropHuntConfig): Promise<number | null> {
+  const statKey = (config.stat || '').trim();
+  const spec = STAT_ACCESSOR_MAP[statKey];
+  if (!spec) return null;
+  const playerId = config.player_id || (config.player_name ? `name:${config.player_name}` : null);
+  if (!playerId) return null;
+  const value = await getPlayerStat(gameId, playerId, spec.category, spec.field);
+  return Number.isFinite(value) ? value : null;
+}
+
+const STAT_ACCESSOR_MAP: Record<string, { category: string; field: string }> = {
+  passingYards: { category: 'passing', field: 'passingYards' },
+  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
+  rushingYards: { category: 'rushing', field: 'rushingYards' },
+  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
+  longRushing: { category: 'rushing', field: 'longRushing' },
+  receptions: { category: 'receiving', field: 'receptions' },
+  receivingYards: { category: 'receiving', field: 'receivingYards' },
+  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
+  longReception: { category: 'receiving', field: 'longReception' },
+  totalTackles: { category: 'defensive', field: 'totalTackles' },
+  sacks: { category: 'defensive', field: 'sacks' },
+  passesDefended: { category: 'defensive', field: 'passesDefended' },
+  interceptions: { category: 'interceptions', field: 'interceptions' },
+  kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
+  longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
+  puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
+  longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
+  puntsInside20: { category: 'punting', field: 'puntsInside20' },
+  longPunt: { category: 'punting', field: 'longPunt' },
+};
+
+function resolveTeamLabel(team: unknown): string | null {
+  return extractTeamAbbreviation(team as any) ?? extractTeamName(team as any) ?? null;
 }

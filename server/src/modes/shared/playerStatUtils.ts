@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../services/nflData/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
 import { normalizePlayerPosition } from './playerUtils';
 import { normalizeNumber } from '../../utils/number';
 

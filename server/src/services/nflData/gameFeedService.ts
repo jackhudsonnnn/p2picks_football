@@ -1,8 +1,16 @@
+/**
+ * Game Feed Service
+ *
+ * Watches refined NFL game JSON files and emits updates when they change.
+ * Provides an in-memory cache and subscription mechanism for downstream
+ * consumers to react to live game data without repeatedly reading from disk.
+ */
+
 import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { getGameDoc, REFINED_DIR, type RefinedGameDoc } from './nflRefinedDataService';
+import { getGameDoc, REFINED_DIR, type RefinedGameDoc } from './nflRefinedDataAccessors';
 
 export type GameFeedEvent = {
   gameId: string;

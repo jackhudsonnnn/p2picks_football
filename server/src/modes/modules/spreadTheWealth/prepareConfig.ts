@@ -1,5 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc, type RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import { getGameDoc, type RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';

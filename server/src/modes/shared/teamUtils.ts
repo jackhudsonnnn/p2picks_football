@@ -1,4 +1,4 @@
-import type { RefinedGameDoc, Team } from '../../services/nflData/nflRefinedDataService';
+import type { RefinedGameDoc, Team } from '../../services/nflData/nflRefinedDataAccessors';
 import { normalizeNumber } from '../../utils/number';
 
 export function listTeams(doc: RefinedGameDoc | null | undefined): Team[] {

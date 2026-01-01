@@ -5,7 +5,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin, type BetProposal } from '../../supabaseClient';
-import { getGameStatus } from '../nflData/nflRefinedDataService';
+import { getGameStatus } from '../nflData/nflRefinedDataAccessors';
 import { storeModeConfig, fetchModeConfig } from './modeConfig';
 import {
   buildModePreview,

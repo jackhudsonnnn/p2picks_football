@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { computeTotalPoints } from '../../shared/teamUtils';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 

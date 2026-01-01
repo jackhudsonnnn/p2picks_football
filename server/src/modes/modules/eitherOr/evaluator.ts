@@ -1,4 +1,4 @@
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
 
 export interface EitherOrConfig {

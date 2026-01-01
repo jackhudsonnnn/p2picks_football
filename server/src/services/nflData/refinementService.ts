@@ -19,6 +19,7 @@ interface TeamEntry {
   stats: Record<string, PlayerStats>;
   players: Record<string, RefinedPlayerEntry>;
   possession: boolean;
+  homeAway: 'home' | 'away' | '';
 }
 
 interface RefinedPlayerEntry {
@@ -45,6 +46,7 @@ export interface RefinedGame {
     stats: Record<string, PlayerStats>;
     players: RefinedPlayerEntry[];
     possession: boolean;
+    homeAway: 'home' | 'away' | '';
   }>;
 }
 
@@ -147,6 +149,7 @@ export function refineBoxscore(
   const teams = new Map<string, TeamEntry>();
   const scores = extractScores(raw);
   const possession = extractPossession(raw);
+  const homeAway = extractHomeAway(raw);
 
   const playersBlocks = Array.isArray(box.players) ? box.players : [];
   for (const block of playersBlocks) {
@@ -158,7 +161,15 @@ export function refineBoxscore(
     const abbr = String(teamInfo.abbreviation ?? '');
     const displayName = String(teamInfo.displayName ?? teamInfo.name ?? '');
     const name = String(teamInfo.name ?? teamInfo.shortDisplayName ?? displayName);
-    const teamEntry = ensureTeamEntry(teams, teamId, abbr, displayName, name, scores);
+    const teamEntry = ensureTeamEntry(
+      teams,
+      teamId,
+      abbr,
+      displayName,
+      name,
+      scores,
+      homeAway.get(teamId)
+    );
     teamEntry.possession = Boolean(possession.get(teamId));
 
     const statistics = Array.isArray(blockObj.statistics) ? blockObj.statistics : [];
@@ -193,7 +204,15 @@ export function refineBoxscore(
     const abbr = String(team.abbreviation ?? '');
     const displayName = String(team.displayName ?? team.name ?? '');
     const name = String(team.name ?? team.shortDisplayName ?? displayName);
-    const teamEntry = ensureTeamEntry(teams, teamId, abbr, displayName, name, scores);
+    const teamEntry = ensureTeamEntry(
+      teams,
+      teamId,
+      abbr,
+      displayName,
+      name,
+      scores,
+      homeAway.get(teamId)
+    );
 
     const totalsBlock = Array.isArray(blockObj.statistics) ? blockObj.statistics : [];
     const rosterPlayers = rosterMap.get(teamId);
@@ -260,6 +279,7 @@ export function refineBoxscore(
     stats: team.stats,
     players: Object.values(team.players),
     possession: team.possession,
+    homeAway: team.homeAway,
   }));
 
   const { status, period } = extractStatus(raw);
@@ -291,15 +311,19 @@ function ensureTeamEntry(
   abbr: string,
   displayName: string,
   name: string,
-  scores: Map<string, number>
+  scores: Map<string, number>,
+  homeAway?: string
 ): TeamEntry {
   const existing = teams.get(teamId);
   if (existing) {
     if (abbr && !existing.abbreviation) existing.abbreviation = abbr;
     if (displayName && !existing.displayName) existing.displayName = displayName;
     if (name && !existing.name) existing.name = name;
+    const normalized = normalizeHomeAway(homeAway);
+    if (normalized && !existing.homeAway) existing.homeAway = normalized;
     return existing;
   }
+  const normalized = normalizeHomeAway(homeAway);
   const entry: TeamEntry = {
     teamId,
     abbreviation: abbr,
@@ -309,9 +333,17 @@ function ensureTeamEntry(
     stats: initTargetStats({ includeScoring: true }),
     players: {},
     possession: false,
+    homeAway: normalized,
   };
   teams.set(teamId, entry);
   return entry;
+}
+
+function normalizeHomeAway(value: unknown): 'home' | 'away' | '' {
+  const v = String(value ?? '').trim().toLowerCase();
+  if (v === 'home') return 'home';
+  if (v === 'away') return 'away';
+  return '';
 }
 
 function getBoxscoreRoot(data: unknown): Record<string, unknown> | null {
@@ -372,6 +404,49 @@ function extractPossession(raw: unknown): Map<string, boolean> {
     logger.debug({ err }, 'extractPossession failed');
   }
   return possession;
+}
+
+function extractHomeAway(raw: unknown): Map<string, 'home' | 'away'> {
+  const mapping = new Map<string, 'home' | 'away'>();
+  try {
+    const obj = raw as Record<string, unknown>;
+    const header = obj.header as Record<string, unknown>;
+    const competitions = header?.competitions as unknown[];
+    const comp0 = competitions?.[0] as Record<string, unknown>;
+    const comps = (comp0?.competitors as unknown[]) ?? [];
+    for (const comp of comps) {
+      const compObj = comp as Record<string, unknown>;
+      const team = compObj.team as Record<string, unknown>;
+      const teamId = String(team?.id ?? '');
+      if (!teamId) continue;
+      const normalized = normalizeHomeAway(
+        compObj.homeAway ?? (compObj.isHome ? 'home' : compObj.isAway ? 'away' : '')
+      );
+      if (normalized) mapping.set(teamId, normalized);
+    }
+  } catch (err) {
+    logger.debug({ err }, 'extractHomeAway from header failed');
+  }
+
+  // Fallback to boxscore teams block
+  try {
+    const box = getBoxscoreRoot(raw);
+    const teams = Array.isArray(box?.teams) ? box!.teams : [];
+    for (const block of teams) {
+      const blockObj = block as Record<string, unknown>;
+      const team = (blockObj.team as Record<string, unknown>) ?? {};
+      const teamId = String(team.id ?? '');
+      if (!teamId || mapping.has(teamId)) continue;
+      const normalized = normalizeHomeAway(
+        (blockObj.homeAway as string | undefined) ?? (blockObj.homeaway as string | undefined)
+      );
+      if (normalized) mapping.set(teamId, normalized);
+    }
+  } catch (err) {
+    logger.debug({ err }, 'extractHomeAway from boxscore failed');
+  }
+
+  return mapping;
 }
 
 function extractStatus(raw: unknown): { status: string; period: number | null } {

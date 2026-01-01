@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/gameDocProvider';
@@ -78,25 +78,24 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
         return;
       }
       const progressMode = normalizePropHuntProgressMode(config.progress_mode);
-      const doc = await this.fetchGameDoc(config, bet);
+      const gameId = config.nfl_game_id || bet.nfl_game_id || null;
       if (progressMode === 'starting_now') {
-        await this.captureBaselineForBet(bet, doc, config);
+        await this.captureBaselineForBet({ ...bet, nfl_game_id: gameId }, null, config);
       }
-      if (doc) {
-        const check = evaluateLineCrossed(doc, config, line, progressMode);
-        if (check.crossed) {
-          await this.washBet(
-            bet.bet_id,
-            {
-              reason: 'line_already_crossed',
-              current_value: check.currentValue,
-              line,
-              progress_mode: progressMode,
-              captured_at: new Date().toISOString(),
-            },
-            `Line (${formatNumber(line)}) already met before betting closed.`,
-          );
-        }
+
+      const currentValue = await readStatValueFromAccessors(config, gameId);
+      if (progressMode === 'cumulative' && currentValue !== null && currentValue >= line) {
+        await this.washBet(
+          bet.bet_id,
+          {
+            reason: 'line_already_crossed',
+            current_value: currentValue,
+            line,
+            progress_mode: progressMode,
+            captured_at: new Date().toISOString(),
+          },
+          `Line (${formatNumber(line)}) already met before betting closed.`,
+        );
       }
     } catch (err) {
       this.logError('pending transition error', { bet_id: bet.bet_id }, err);
@@ -228,12 +227,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
       this.logWarn('missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;
     }
-    const doc = await this.ensureGameDoc(gameId, prefetchedDoc ?? null);
-    if (!doc) {
-      this.logWarn('refined doc unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
-      return null;
-    }
-    const value = readStatValue(doc, config);
+  const value = await readStatValueFromAccessors(config, gameId);
     const baseline: PropHuntBaseline = {
       statKey,
       capturedAt: new Date().toISOString(),
@@ -256,10 +250,41 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
     config: PropHuntConfig,
     bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
   ): Promise<RefinedGameDoc | null> {
-    const gameId = config.nfl_game_id || bet.nfl_game_id;
-    if (!gameId) return null;
-    return this.ensureGameDoc(gameId, null);
+    return null;
   }
 }
 
 export const propHuntValidator = new PropHuntValidatorService();
+
+async function readStatValueFromAccessors(config: PropHuntConfig, gameId?: string | null): Promise<number | null> {
+  const statKey = (config.stat || '').trim();
+  const spec = STAT_ACCESSOR_MAP[statKey];
+  if (!spec) return null;
+  const playerId = config.player_id || (config.player_name ? `name:${config.player_name.trim()}` : null);
+  const resolvedGameId = gameId ?? config.nfl_game_id ?? null;
+  if (!playerId || !resolvedGameId) return null;
+  const value = await getPlayerStat(resolvedGameId, playerId, spec.category, spec.field);
+  return Number.isFinite(value) ? value : null;
+}
+
+const STAT_ACCESSOR_MAP: Record<string, { category: string; field: string }> = {
+  passingYards: { category: 'passing', field: 'passingYards' },
+  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
+  rushingYards: { category: 'rushing', field: 'rushingYards' },
+  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
+  longRushing: { category: 'rushing', field: 'longRushing' },
+  receptions: { category: 'receiving', field: 'receptions' },
+  receivingYards: { category: 'receiving', field: 'receivingYards' },
+  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
+  longReception: { category: 'receiving', field: 'longReception' },
+  totalTackles: { category: 'defensive', field: 'totalTackles' },
+  sacks: { category: 'defensive', field: 'sacks' },
+  passesDefended: { category: 'defensive', field: 'passesDefended' },
+  interceptions: { category: 'interceptions', field: 'interceptions' },
+  kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
+  longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
+  puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
+  longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
+  puntsInside20: { category: 'punting', field: 'puntsInside20' },
+  longPunt: { category: 'punting', field: 'longPunt' },
+};

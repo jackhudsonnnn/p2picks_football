@@ -4,14 +4,14 @@
  */
 
 import { Request, Response } from 'express';
-import { getAvailableGames } from '../services/nflData/nflRefinedDataService';
+import { getAvailableGames } from '../services/nflData/nflRefinedDataAccessors';
 import { listModeDefinitions, getModeLiveInfo } from '../modes/registry';
 import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
   createBetProposal as createBetProposalService,
   pokeBet as pokeBetService,
   BetProposalError,
-} from '../services/bet';
+} from '../services/bet/betProposalService';
 import { fetchModeConfig } from '../services/bet/modeConfig';
 import { getRedisClient } from '../modes/shared/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';

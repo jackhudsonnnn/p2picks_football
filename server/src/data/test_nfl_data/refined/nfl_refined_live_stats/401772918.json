@@ -5013,7 +5013,7 @@
           }
         }
       ],
-      "possession": false
+      "possession": true
     },
     {
       "teamId": "2",
@@ -5096,7 +5096,7 @@
           "longPunt": 48
         },
         "scoring": {
-          "touchdowns": 3,
+          "touchdowns": 4,
           "fieldGoals": 2,
           "safeties": 0
         }
@@ -9941,7 +9941,7 @@
           }
         }
       ],
-      "possession": true
+      "possession": false
     }
   ]
 }

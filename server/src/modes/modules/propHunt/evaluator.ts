@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
 
 export interface PropHuntConfig {

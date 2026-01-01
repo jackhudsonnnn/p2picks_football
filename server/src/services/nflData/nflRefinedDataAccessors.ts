@@ -1,5 +1,5 @@
 /**
- * Centralized accessors for RefinedGameDoc data.
+ * Centralized accessors for refined nfl data.
  * 
  * This module acts as a data access layer for refined NFL game data.
  * Instead of passing doc objects around, consumers call getters with a gameId.
@@ -60,15 +60,13 @@ export interface RefinedGameDoc {
   note?: string;
 }
 
-export function resolveGamePath(gameId: string): string {
-  // If DATA_REFINED_DIR is absolute, use it directly; else resolve from repo root
-  const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-  return path.join(dir, `${gameId}.json`);
+export async function readJson<T = unknown>(filePath: string): Promise<T> {
+  const data = await fs.readFile(filePath, 'utf8');
+  return JSON.parse(data) as T;
 }
 
 /**
  * List available games by reading refined JSON files and deriving a human-friendly label.
- * Uses cached accessors to avoid direct doc handling.
  */
 export async function getAvailableGames(): Promise<Record<string, string>> {
   try {
@@ -87,11 +85,8 @@ export async function getAvailableGames(): Promise<Record<string, string>> {
             const a = extractTeamName(teams[0]) || '';
             const b = extractTeamName(teams[1]) || '';
             results[gameId] = `${a} vs ${b}`.trim();
-          } else if (teams.length === 1) {
-            const a = extractTeamName(teams[0]) || '';
-            results[gameId] = `${a}`;
           } else {
-            console.warn(`Warning: Refined game file for gameId ${gameId} has no teams array`);
+            console.warn(`Warning: Refined game file for gameId ${gameId} has fewer than 2 teams`);
             results[gameId] = gameId;
           }
         } catch {
@@ -104,20 +99,6 @@ export async function getAvailableGames(): Promise<Record<string, string>> {
     return results;
   } catch (err: any) {
     if (err?.code === 'ENOENT') return {};
-    throw err;
-  }
-}
-
-export async function readJson<T = unknown>(filePath: string): Promise<T> {
-  const data = await fs.readFile(filePath, 'utf8');
-  return JSON.parse(data) as T;
-}
-
-export async function loadRefinedGame(gameId: string): Promise<RefinedGameDoc | null> {
-  try {
-    return await readJson<RefinedGameDoc>(resolveGamePath(gameId));
-  } catch (err: any) {
-    if (err?.code === 'ENOENT') return null;
     throw err;
   }
 }
@@ -178,14 +159,20 @@ async function getCachedDoc(gameId: string): Promise<RefinedGameDoc | null> {
   if (cached && (now - cached.loadedAt) < getCacheTtlMs()) {
     return cached.doc;
   }
-  
-  const doc = await loadRefinedGame(gameId);
-  if (doc) {
-    cache.set(gameId, { doc, loadedAt: now });
-  } else {
-    cache.delete(gameId);
+
+  try {
+    const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
+    const doc = await readJson<RefinedGameDoc>(path.join(dir, `${gameId}.json`));
+    if (doc) {
+      cache.set(gameId, { doc, loadedAt: now });
+    } else {
+      cache.delete(gameId);
+    }
+    return doc;
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') return null;
+    throw err;
   }
-  return doc;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -201,15 +188,6 @@ export async function getGameStatus(gameId: string): Promise<string | null> {
   const status = doc.status;
   if (typeof status === 'string' && status.trim().length) return status.trim();
   return null;
-}
-
-/**
- * Check if game status matches a given value (case-insensitive prefix match).
- */
-export async function isGameStatus(gameId: string, expected: string): Promise<boolean> {
-  const status = await getGameStatus(gameId);
-  if (!status) return false;
-  return status.toUpperCase().startsWith(expected.toUpperCase());
 }
 
 /**
@@ -241,7 +219,7 @@ export async function getTeam(gameId: string, teamId: string): Promise<Team | nu
 }
 
 /**
- * Get home team (homeAway === 'home' or displayOrder === 0).
+ * Get home team (homeAway === 'home' or displayOrder === 1).
  */
 export async function getHomeTeam(gameId: string): Promise<Team | null> {
   const doc = await getCachedDoc(gameId);
@@ -249,11 +227,11 @@ export async function getHomeTeam(gameId: string): Promise<Team | null> {
   const byHomeAway = doc.teams.find((t) => (t as any).homeAway === 'home');
   if (byHomeAway) return byHomeAway;
   const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-  return sorted[0] ?? null;
+  return sorted[1] ?? null;
 }
 
 /**
- * Get away team (homeAway === 'away' or displayOrder === 1).
+ * Get away team (homeAway === 'away' or displayOrder === 0).
  */
 export async function getAwayTeam(gameId: string): Promise<Team | null> {
   const doc = await getCachedDoc(gameId);
@@ -261,7 +239,7 @@ export async function getAwayTeam(gameId: string): Promise<Team | null> {
   const byHomeAway = doc.teams.find((t) => (t as any).homeAway === 'away');
   if (byHomeAway) return byHomeAway;
   const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-  return sorted[1] ?? null;
+  return sorted[0] ?? null;
 }
 
 /**

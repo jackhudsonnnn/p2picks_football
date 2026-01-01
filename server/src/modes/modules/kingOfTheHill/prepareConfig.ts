@@ -3,7 +3,7 @@ import {
   getPlayer,
   getHomeTeam,
   getAwayTeam,
-} from '../../../services/nflData/nflRefinedDataService';
+} from '../../../services/nflData/nflRefinedDataAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import {
   KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,

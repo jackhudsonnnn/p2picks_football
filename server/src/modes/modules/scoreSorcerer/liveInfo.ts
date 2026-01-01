@@ -1,9 +1,17 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
-import { choiceLabel, formatMatchup } from '../../shared/teamUtils';
+import { formatMatchup } from '../../shared/teamUtils';
 import { formatNumber } from '../../../utils/number';
+import {
+  extractTeamAbbreviation,
+  extractTeamId,
+  extractTeamName,
+  getAwayScore,
+  getAwayTeam,
+  getHomeScore,
+  getHomeTeam,
+} from '../../../services/nflData/nflRefinedDataAccessors';
 import {
   SCORE_SORCERER_LABEL,
   SCORE_SORCERER_MODE_KEY,
@@ -15,7 +23,6 @@ import {
   ScoreSorcererConfig,
   homeChoiceLabel,
   awayChoiceLabel,
-  buildScoreSorcererBaseline,
 } from './evaluator';
 
 const redis = getRedisClient();
@@ -38,17 +45,15 @@ export async function getScoreSorcererLiveInfo(input: GetLiveInfoInput): Promise
     return { ...base, unavailableReason: 'No game associated with this bet' };
   }
 
-  const doc = await ensureRefinedGameDoc(gameId);
-  if (!doc) {
+  const snapshot = await buildScoreSorcererSnapshotFromAccessors(gameId, typedConfig);
+  if (!snapshot) {
     return { ...base, unavailableReason: 'Game data unavailable' };
   }
-
-  const snapshot = buildScoreSorcererBaseline(doc, typedConfig, gameId, new Date().toISOString());
 
   const homeLabel = homeChoiceLabel({ ...typedConfig, home_team_name: snapshot.homeTeamName });
   const awayLabel = awayChoiceLabel({ ...typedConfig, away_team_name: snapshot.awayTeamName });
 
-  const matchup = formatMatchup({ doc, homeName: snapshot.homeTeamName, awayName: snapshot.awayTeamName });
+  const matchup = formatMatchup({ homeName: snapshot.homeTeamName, awayName: snapshot.awayTeamName });
 
   const fields = [
     ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
@@ -65,4 +70,31 @@ function formatScore(current: number, baseline?: number): string | number {
     return formatNumber(current);
   }
   return `${formatNumber(baseline)} → ${formatNumber(current)}`;
+}
+
+async function buildScoreSorcererSnapshotFromAccessors(
+  gameId: string,
+  config: ScoreSorcererConfig,
+): Promise<ScoreSorcererBaseline | null> {
+  const [homeTeam, awayTeam, homeScoreRaw, awayScoreRaw] = await Promise.all([
+    getHomeTeam(gameId),
+    getAwayTeam(gameId),
+    getHomeScore(gameId),
+    getAwayScore(gameId),
+  ]);
+
+  if (!homeTeam && !awayTeam) return null;
+
+  return {
+    gameId,
+    capturedAt: new Date().toISOString(),
+    homeScore: Number(homeScoreRaw) || 0,
+    awayScore: Number(awayScoreRaw) || 0,
+    homeTeamId: extractTeamId(homeTeam) ?? config.home_team_id ?? null,
+    awayTeamId: extractTeamId(awayTeam) ?? config.away_team_id ?? null,
+    homeTeamName: extractTeamName(homeTeam) ?? config.home_team_name ?? null,
+    awayTeamName: extractTeamName(awayTeam) ?? config.away_team_name ?? null,
+    homeTeamAbbrev: extractTeamAbbreviation(homeTeam) ?? config.home_team_abbrev ?? null,
+    awayTeamAbbrev: extractTeamAbbreviation(awayTeam) ?? config.away_team_abbrev ?? null,
+  };
 }

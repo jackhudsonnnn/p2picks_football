@@ -3,7 +3,7 @@
  * Uses shared UserConfigBuilder utilities.
  */
 
-import { getPlayer } from '../../../services/nflData/nflRefinedDataService';
+import { getPlayer } from '../../../services/nflData/nflRefinedDataAccessors';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import {
   loadGameContext,

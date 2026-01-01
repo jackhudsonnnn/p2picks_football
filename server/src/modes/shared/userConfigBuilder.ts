@@ -3,7 +3,7 @@
  * Extracts common patterns from eitherOr, kingOfTheHill, propHunt, etc.
  */
 
-import { getGameDoc, type RefinedGameDoc } from '../../services/nflData/nflRefinedDataService';
+import { getGameDoc, type RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from './playerUtils';
 import { shouldSkipResolveStep } from './resolveUtils';
 import { getValidPositionsForStat } from './statMappings';

@@ -1,6 +1,4 @@
-import { getGameStatus } from '../../../services/nflData/nflRefinedDataService';
-import { getGameDoc } from '../../../services/nflData/nflRefinedDataService';
-import { possessionTeamIdFromDoc } from './evaluator';
+import { getGameStatus, getPossessionTeamId } from '../../../services/nflData/nflRefinedDataAccessors';
 
 export async function validateChooseTheirFateProposal({
   nflGameId,
@@ -26,16 +24,7 @@ export async function validateChooseTheirFateProposal({
     };
   }
 
-  const doc = await getGameDoc(gameIdForCheck);
-  if (!doc) {
-    return {
-      valid: false,
-      error: 'Choose Their Fate bets require live game data',
-      details: { game_id: gameIdForCheck },
-    };
-  }
-
-  const possessionTeamId = possessionTeamIdFromDoc(doc);
+  const possessionTeamId = await getPossessionTeamId(gameIdForCheck);
   if (!possessionTeamId) {
     return {
       valid: false,

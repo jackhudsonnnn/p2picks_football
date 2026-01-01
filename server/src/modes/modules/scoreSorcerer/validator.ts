@@ -1,5 +1,14 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
+import {
+  RefinedGameDoc,
+  getHomeScore,
+  getAwayScore,
+  getHomeTeam,
+  getAwayTeam,
+  extractTeamAbbreviation,
+  extractTeamId,
+  extractTeamName,
+} from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import {
   SCORE_SORCERER_BASELINE_EVENT,
@@ -13,7 +22,6 @@ import {
   ScoreSorcererBaseline,
   ScoreSorcererConfig,
   awayChoiceLabel,
-  buildScoreSorcererBaseline,
   evaluateScoreSorcerer,
   homeChoiceLabel,
   noMoreScoresChoice,
@@ -72,13 +80,11 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
       return null;
     }
 
-    const doc = await this.ensureGameDoc(gameId, prefetched ?? null);
-    if (!doc) {
+    const baseline = await buildScoreSorcererBaselineFromAccessors(gameId, config, new Date().toISOString());
+    if (!baseline) {
       await this.washBet(bet.bet_id, { reason: 'missing_game_doc', gameId }, 'Could not capture baseline because game data was unavailable.');
       return null;
     }
-
-    const baseline = buildScoreSorcererBaseline(doc, config, gameId, new Date().toISOString());
     await this.store.set(bet.bet_id, baseline);
     await this.recordHistory(bet.bet_id, SCORE_SORCERER_BASELINE_EVENT, { ...baseline });
     this.logDebug('baseline_captured', { betId: bet.bet_id, baseline });
@@ -144,3 +150,34 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
 
 export const scoreSorcererValidator = new ScoreSorcererValidatorService();
 export type ScoreSorcererValidatorType = ScoreSorcererValidatorService;
+
+async function buildScoreSorcererBaselineFromAccessors(
+  gameId: string,
+  config: ScoreSorcererConfig,
+  capturedAt: string,
+): Promise<ScoreSorcererBaseline | null> {
+  const [homeTeam, awayTeam, homeScoreRaw, awayScoreRaw] = await Promise.all([
+    getHomeTeam(gameId),
+    getAwayTeam(gameId),
+    getHomeScore(gameId),
+    getAwayScore(gameId),
+  ]);
+
+  if (!homeTeam && !awayTeam) return null;
+
+  const homeScore = Number(homeScoreRaw) || 0;
+  const awayScore = Number(awayScoreRaw) || 0;
+
+  return {
+    gameId,
+    capturedAt,
+    homeScore,
+    awayScore,
+    homeTeamId: extractTeamId(homeTeam) ?? config.home_team_id ?? null,
+    awayTeamId: extractTeamId(awayTeam) ?? config.away_team_id ?? null,
+    homeTeamName: extractTeamName(homeTeam) ?? config.home_team_name ?? null,
+    awayTeamName: extractTeamName(awayTeam) ?? config.away_team_name ?? null,
+    homeTeamAbbrev: extractTeamAbbreviation(homeTeam) ?? config.home_team_abbrev ?? null,
+    awayTeamAbbrev: extractTeamAbbreviation(awayTeam) ?? config.away_team_abbrev ?? null,
+  };
+}

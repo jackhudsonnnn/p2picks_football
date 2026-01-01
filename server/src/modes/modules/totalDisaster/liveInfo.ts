@@ -1,8 +1,8 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
-import { listTeams, formatMatchup } from '../../shared/teamUtils';
+import { formatMatchup } from '../../shared/teamUtils';
 import { normalizeLine, describeLine, type TotalDisasterConfig } from './evaluator';
 import { normalizeNumber, formatNumber } from '../../../utils/number';
+import { getScores, getHomeTeam, getAwayTeam, extractTeamAbbreviation, extractTeamName } from '../../../services/nflData/nflRefinedDataAccessors';
 
 export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { config, nflGameId } = input;
@@ -36,28 +36,20 @@ export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise
     };
   }
 
-  const doc = await ensureRefinedGameDoc(gameId);
-  if (!doc) {
-    return {
-      ...baseResult,
-      fields: [{ label: 'Target Line', value: formatNumber(line) }],
-      unavailableReason: 'Game data unavailable',
-    };
-  }
+  const [homeTeam, awayTeam, scoreBundle] = await Promise.all([
+    getHomeTeam(gameId),
+    getAwayTeam(gameId),
+    getScores(gameId),
+  ]);
 
-  // Extract team scores
-  const teams = listTeams(doc);
-  const homeTeam = teams.find((t) => (t as any)?.homeAway === 'home') ?? teams[0];
-  const awayTeam = teams.find((t) => (t as any)?.homeAway === 'away') ?? teams[1];
-
-  const homeScore = normalizeNumber((homeTeam as any)?.score);
-  const awayScore = normalizeNumber((awayTeam as any)?.score);
+  const homeScore = normalizeNumber(scoreBundle.home);
+  const awayScore = normalizeNumber(scoreBundle.away);
   const totalPoints = homeScore + awayScore;
 
-  const homeName = typedConfig.home_team_name ?? (homeTeam as any)?.name ?? 'Home';
-  const awayName = typedConfig.away_team_name ?? (awayTeam as any)?.name ?? 'Away';
+  const homeName = typedConfig.home_team_name ?? resolveTeamLabel(homeTeam) ?? 'Home';
+  const awayName = typedConfig.away_team_name ?? resolveTeamLabel(awayTeam) ?? 'Away';
 
-  const matchup = formatMatchup({ doc, homeName, awayName });
+  const matchup = formatMatchup({ homeName, awayName });
 
   const fields = [
     ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
@@ -71,4 +63,8 @@ export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise
     ...baseResult,
     fields,
   };
+}
+
+function resolveTeamLabel(team: unknown): string | null {
+  return extractTeamAbbreviation(team as any) ?? extractTeamName(team as any) ?? null;
 }

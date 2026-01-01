@@ -3,7 +3,7 @@ import {
   getPlayer,
   getHomeTeam,
   getAwayTeam,
-} from '../../../services/nflData/nflRefinedDataService';
+} from '../../../services/nflData/nflRefinedDataAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
 

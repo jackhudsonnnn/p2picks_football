@@ -1,15 +1,21 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
 import { formatMatchup } from '../../shared/teamUtils';
-import { normalizeProgressMode, getPlayerStatValue, type PlayerRef } from '../../shared/playerStatUtils';
+import { normalizeProgressMode, type PlayerRef } from '../../shared/playerStatUtils';
 import { STAT_KEY_LABELS } from './constants';
 import {
   type EitherOrConfig,
   type EitherOrBaseline,
 } from './evaluator';
+import {
+  extractTeamAbbreviation,
+  extractTeamName,
+  getAwayTeam,
+  getHomeTeam,
+  getPlayerStat,
+} from '../../../services/nflData/nflRefinedDataAccessors';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();
@@ -30,16 +36,6 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
   sacks: { category: 'defensive', field: 'sacks' },
   passesDefended: { category: 'defensive', field: 'passesDefended' },
 };
-
-function readPlayerStat(doc: any, ref: PlayerRef, statKey: string): number {
-  const spec = PLAYER_STAT_MAP[statKey];
-  if (!spec) return 0;
-  return getPlayerStatValue(doc, ref, (player) => {
-    const categories = player?.stats || {};
-    const category = categories?.[spec.category];
-    return category ? category[spec.field] : undefined;
-  });
-}
 
 export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { betId, config, nflGameId } = input;
@@ -68,7 +64,9 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
 
   // Get live game data for current values
   const gameId = nflGameId ?? typedConfig.nfl_game_id ?? baseline?.gameId ?? null;
-  const doc = gameId ? await ensureRefinedGameDoc(gameId) : null;
+  const [homeTeam, awayTeam] = gameId
+    ? await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)])
+    : [null, null];
 
   // Build baseline and current values
   let player1Baseline: number | string = 'N/A';
@@ -81,11 +79,11 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
     player2Baseline = baseline.player2.value;
   }
 
-  if (doc && statKey) {
+  if (gameId && statKey) {
     const p1Ref: PlayerRef = { id: typedConfig.player1_id, name: typedConfig.player1_name };
     const p2Ref: PlayerRef = { id: typedConfig.player2_id, name: typedConfig.player2_name };
-    player1Current = readPlayerStat(doc, p1Ref, statKey);
-    player2Current = readPlayerStat(doc, p2Ref, statKey);
+    player1Current = await readPlayerStatFromAccessors(gameId, p1Ref, statKey);
+    player2Current = await readPlayerStatFromAccessors(gameId, p2Ref, statKey);
   }
 
   // Calculate progress for starting_now mode
@@ -99,7 +97,9 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
     player2Progress = player2Current - player2Baseline;
   }
 
-  const matchup = formatMatchup({ doc });
+  const resolvedHome = resolveTeamLabel(homeTeam, null);
+  const resolvedAway = resolveTeamLabel(awayTeam, null);
+  const matchup = formatMatchup({ homeName: resolvedHome, awayName: resolvedAway });
 
   const fields: { label: string; value: string | number }[] = [
     ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
@@ -130,7 +130,7 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
   }
 
   // Add unavailable reason if no data
-  if (!baseline && !doc) {
+  if (!baseline && !gameId) {
     return {
       ...baseResult,
       fields,
@@ -142,4 +142,21 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
     ...baseResult,
     fields,
   };
+}
+
+async function readPlayerStatFromAccessors(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
+  const spec = PLAYER_STAT_MAP[statKey];
+  if (!spec) return 0;
+  const idOrName = ref.id || (ref.name ? `name:${ref.name}` : null);
+  if (!idOrName) return 0;
+  return getPlayerStat(gameId, idOrName, spec.category, spec.field);
+}
+
+function resolveTeamLabel(team: unknown, fallback: string | null): string | null {
+  return (
+    extractTeamAbbreviation(team as any) ??
+    extractTeamName(team as any) ??
+    fallback ??
+    null
+  );
 }

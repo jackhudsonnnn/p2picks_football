@@ -1,8 +1,15 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { formatMatchup } from '../../shared/teamUtils';
 import { formatNumber, normalizeNumber } from '../../../utils/number';
-import { type SpreadTheWealthConfig, normalizeSpread, describeSpread, resolveTeams } from './evaluator';
+import { type SpreadTheWealthConfig, normalizeSpread, describeSpread } from './evaluator';
+import {
+  extractTeamAbbreviation,
+  extractTeamName,
+  getAwayTeam,
+  getHomeScore,
+  getAwayScore,
+  getHomeTeam,
+} from '../../../services/nflData/nflRefinedDataAccessors';
 
 export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { config, nflGameId } = input;
@@ -42,24 +49,21 @@ export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promi
     };
   }
 
-  const doc = await ensureRefinedGameDoc(gameId);
-  if (!doc) {
-    return {
-      ...baseResult,
-      fields: [
-        { label: `${homeName} Spread`, value: formatNumber(spread) },
-      ],
-      unavailableReason: 'Game data unavailable',
-    };
-  }
+  const [homeTeam, awayTeam, homeScoreRaw, awayScoreRaw] = await Promise.all([
+    getHomeTeam(gameId),
+    getAwayTeam(gameId),
+    getHomeScore(gameId),
+    getAwayScore(gameId),
+  ]);
 
-  // Extract team scores
-  const { homeTeam, awayTeam } = resolveTeams(doc, typedConfig);
-  const homeScore = normalizeNumber((homeTeam as any)?.score);
-  const awayScore = normalizeNumber((awayTeam as any)?.score);
+  const homeScore = normalizeNumber(homeScoreRaw);
+  const awayScore = normalizeNumber(awayScoreRaw);
   const adjustedHomeScore = homeScore + spread;
 
-  const matchup = formatMatchup({ doc, homeName, awayName });
+  const matchup = formatMatchup({
+    homeName: resolveTeamLabel(homeTeam, homeName),
+    awayName: resolveTeamLabel(awayTeam, awayName),
+  });
 
   const fields = [
     ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
@@ -71,4 +75,8 @@ export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promi
     ...baseResult,
     fields,
   };
+}
+
+function resolveTeamLabel(team: unknown, fallback: string | null): string | null {
+  return extractTeamAbbreviation(team as any) ?? extractTeamName(team as any) ?? fallback ?? null;
 }

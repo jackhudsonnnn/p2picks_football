@@ -1,5 +1,5 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataService';
-import { getCategory } from '../../../services/nflData/nflRefinedDataService';
+import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getCategory } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeTeamId } from '../../shared/teamUtils';
 
@@ -56,10 +56,10 @@ export function collectTeamScores(doc: RefinedGameDoc | null | undefined): Choos
 			teamId: normalizeTeamId((team as any)?.teamId),
 			abbreviation: normalizeTeamId((team as any)?.abbreviation),
 			homeAway: typeof (team as any)?.homeAway === 'string' ? (team as any)?.homeAway : null,
-			touchdowns: readStat(scoring, ['touchdowns', 'Touchdowns']),
-			fieldGoals: readStat(scoring, ['fieldGoals', 'FieldGoals', 'fgMade', 'made']),
-			safeties: readStat(scoring, ['safeties', 'Safeties']),
-			punts: readStat(punting, ['punts', 'Punts', 'attempts']),
+			touchdowns: readStat(scoring, 'touchdowns'),
+			fieldGoals: readStat(scoring, 'fieldGoals'),
+			safeties: readStat(scoring, 'safeties'),
+			punts: readStat(punting, 'punts'),
 			hasPossession: Boolean((team as any)?.possession),
 		};
 	});
@@ -169,17 +169,15 @@ function resolveTeamKey(team: unknown, fallbackIndex: number): string {
 	return `team_${fallbackIndex}`;
 }
 
-function readStat(bucket: Record<string, unknown> | undefined, keys: string[]): number {
+function readStat(bucket: Record<string, unknown> | undefined, key: string): number {
 	if (!bucket) return 0;
-	for (const key of keys) {
-		if (Object.prototype.hasOwnProperty.call(bucket, key)) {
-			return normalizeNumber(bucket[key]);
-		}
-		const lower = key.toLowerCase();
-		const entry = Object.entries(bucket).find(([candidate]) => candidate.toLowerCase() === lower);
-		if (entry) {
-			return normalizeNumber(entry[1]);
-		}
+	if (Object.prototype.hasOwnProperty.call(bucket, key)) {
+		return normalizeNumber(bucket[key]);
+	}
+	const lower = key.toLowerCase();
+	const entry = Object.entries(bucket).find(([candidate]) => candidate.toLowerCase() === lower);
+	if (entry) {
+		return normalizeNumber(entry[1]);
 	}
 	return 0;
 }

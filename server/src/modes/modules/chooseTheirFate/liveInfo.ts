@@ -1,14 +1,16 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { ensureRefinedGameDoc } from '../../shared/gameDocProvider';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatMatchup } from '../../shared/teamUtils';
 import {
-  type ChooseFateBaseline,
-  type ChooseTheirFateConfig,
-  collectTeamScores,
-  possessionTeamIdFromDoc,
-} from './evaluator';
+  extractTeamAbbreviation,
+  extractTeamId,
+  extractTeamName,
+  getAwayTeam,
+  getHomeTeam,
+  getPossessionTeamId,
+} from '../../../services/nflData/nflRefinedDataAccessors';
+import { type ChooseFateBaseline, type ChooseTheirFateConfig } from './evaluator';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();
@@ -33,9 +35,15 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
 
   // Get live game data
   const gameId = nflGameId ?? typedConfig.nfl_game_id ?? baseline?.gameId ?? null;
-  const doc = gameId ? await ensureRefinedGameDoc(gameId) : null;
 
-  // Get possession team from baseline or current doc
+  const [homeTeam, awayTeam, livePossessionTeamId] = gameId
+    ? await Promise.all([
+        getHomeTeam(gameId),
+        getAwayTeam(gameId),
+        getPossessionTeamId(gameId),
+      ])
+    : [null, null, null];
+
   let possessionTeam = typedConfig.possession_team_name ?? typedConfig.possession_team_id ?? null;
   
   if (baseline?.possessionTeamId) {
@@ -52,32 +60,14 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
     }
   }
 
-  // Get current scores if we have a doc
-  let currentScores: { home: number; away: number } | null = null;
-  let currentPossession: string | null = null;
-
-  if (doc) {
-    const scores = collectTeamScores(doc);
-    const teams = Object.values(scores);
-    const homeTeam = teams.find(t => t.homeAway === 'home');
-    const awayTeam = teams.find(t => t.homeAway === 'away');
-    
-    if (homeTeam && awayTeam) {
-      // Calculate approximate score from TDs, FGs, and Safeties
-      const homeScore = (homeTeam.touchdowns * 7) + (homeTeam.fieldGoals * 3) + (homeTeam.safeties * 2);
-      const awayScore = (awayTeam.touchdowns * 7) + (awayTeam.fieldGoals * 3) + (awayTeam.safeties * 2);
-      currentScores = { home: homeScore, away: awayScore };
-    }
-
-    // Get current possession
-    const possTeamId = possessionTeamIdFromDoc(doc);
-    if (possTeamId) {
-      const possTeam = teams.find(t => t.teamId === possTeamId || t.abbreviation === possTeamId);
-      currentPossession = possTeam?.abbreviation ?? possTeamId;
-    }
+  if (!possessionTeam && livePossessionTeamId) {
+    possessionTeam = resolvePossessionLabel(livePossessionTeamId, homeTeam, awayTeam);
   }
 
-  const matchup = formatMatchup({ doc, homeName, awayName });
+  const resolvedHomeName = resolveTeamLabel(homeTeam, homeName);
+  const resolvedAwayName = resolveTeamLabel(awayTeam, awayName);
+
+  const matchup = formatMatchup({ homeName: resolvedHomeName, awayName: resolvedAwayName });
 
   const fields: { label: string; value: string | number }[] = [];
 
@@ -104,12 +94,12 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
   // }
 
   // Add unavailable reason if no data
-  if (!baseline && !doc) {
+  if (!baseline && !homeTeam && !awayTeam && !livePossessionTeamId) {
     return {
       ...baseResult,
       fields: [
-        { label: 'Home Team', value: homeName },
-        { label: 'Away Team', value: awayName },
+        { label: 'Home Team', value: resolvedHomeName ?? homeName },
+        { label: 'Away Team', value: resolvedAwayName ?? awayName },
       ],
     };
   }
@@ -118,4 +108,31 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
     ...baseResult,
     fields,
   };
+}
+
+function resolveTeamLabel(team: unknown, fallback: string | null): string | null {
+  return (
+    extractTeamAbbreviation(team as any) ??
+    extractTeamId(team as any) ??
+    extractTeamName(team as any) ??
+    (fallback ?? null)
+  );
+}
+
+function resolvePossessionLabel(possTeamId: string, homeTeam: unknown, awayTeam: unknown): string {
+  const normalized = possTeamId?.toLowerCase?.();
+  if (normalized) {
+    const candidates = [homeTeam, awayTeam];
+    for (const team of candidates) {
+      const teamId = extractTeamId(team as any)?.toLowerCase?.();
+      const abbr = extractTeamAbbreviation(team as any)?.toLowerCase?.();
+      if (teamId && teamId === normalized) {
+        return extractTeamAbbreviation(team as any) ?? extractTeamId(team as any) ?? possTeamId;
+      }
+      if (abbr && abbr === normalized) {
+        return extractTeamAbbreviation(team as any) ?? possTeamId;
+      }
+    }
+  }
+  return possTeamId;
 }

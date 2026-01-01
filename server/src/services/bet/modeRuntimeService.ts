@@ -21,7 +21,7 @@ import {
   getAwayTeam,
   extractTeamId,
   extractTeamName,
-} from '../nflData/nflRefinedDataService';
+} from '../nflData/nflRefinedDataAccessors';
 
 export type ModeUserConfigInput = {
   nflGameId?: string | null;
