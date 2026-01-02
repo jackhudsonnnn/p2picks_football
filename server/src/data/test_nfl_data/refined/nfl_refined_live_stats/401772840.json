@@ -1,6 +1,6 @@
 {
   "eventId": "401772840",
-  "generatedAt": "2025-12-31T21:04:42.074Z",
+  "generatedAt": "2026-01-02T02:20:50.975Z",
   "source": "espn-nfl-boxscore",
   "status": "STATUS_IN_PROGRESS",
   "period": 2,
@@ -503,6 +503,88 @@
           }
         },
         {
+          "athleteId": "3115306",
+          "fullName": "Josh Reynolds",
+          "position": "WR",
+          "jersey": "83",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3115306.png",
+          "stats": {
+            "passing": {
+              "completions/passingAttempts": "0/0",
+              "passingYards": 0,
+              "yardsPerPassAttempt": 0,
+              "passingTouchdowns": 0,
+              "interceptions": 0,
+              "sacks-sackYardsLost": "0-0",
+              "adjQBR": 0,
+              "QBRating": 0
+            },
+            "rushing": {
+              "rushingAttempts": 0,
+              "rushingYards": 0,
+              "yardsPerRushAttempt": 0,
+              "rushingTouchdowns": 0,
+              "longRushing": 0
+            },
+            "receiving": {
+              "receptions": 0,
+              "receivingYards": 0,
+              "yardsPerReception": 0,
+              "receivingTouchdowns": 0,
+              "longReception": 0,
+              "receivingTargets": 0
+            },
+            "fumbles": {
+              "fumbles": 0,
+              "fumblesLost": 0,
+              "fumblesRecovered": 0
+            },
+            "defensive": {
+              "totalTackles": 0,
+              "soloTackles": 0,
+              "sacks": 0,
+              "tacklesForLoss": 0,
+              "passesDefended": 0,
+              "QBHits": 0,
+              "defensiveTouchdowns": 0
+            },
+            "interceptions": {
+              "interceptions": 0,
+              "interceptionYards": 0,
+              "interceptionTouchdowns": 0
+            },
+            "kickReturns": {
+              "kickReturns": 0,
+              "kickReturnYards": 0,
+              "yardsPerKickReturn": 0,
+              "longKickReturn": 0,
+              "kickReturnTouchdowns": 0
+            },
+            "puntReturns": {
+              "puntReturns": 0,
+              "puntReturnYards": 0,
+              "yardsPerPuntReturn": 0,
+              "longPuntReturn": 0,
+              "puntReturnTouchdowns": 0
+            },
+            "kicking": {
+              "fieldGoalsMade/fieldGoalAttempts": "0/0",
+              "fieldGoalPct": 0,
+              "longFieldGoalMade": 0,
+              "extraPointsMade/extraPointAttempts": "0/0",
+              "totalKickingPoints": 0
+            },
+            "punting": {
+              "punts": 0,
+              "puntYards": 0,
+              "grossAvgPuntYards": 0,
+              "touchbacks": 0,
+              "puntsInside20": 0,
+              "longPunt": 0
+            }
+          }
+        },
+        {
           "athleteId": "3117255",
           "fullName": "Harrison Phillips",
           "position": "DT",
@@ -585,11 +667,11 @@
           }
         },
         {
-          "athleteId": "3121634",
-          "fullName": "Khalen Saunders",
-          "position": "DT",
-          "jersey": "99",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3121634.png",
+          "athleteId": "3125107",
+          "fullName": "Andrew Beck",
+          "position": "FB",
+          "jersey": "47",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3125107.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -622,7 +704,7 @@
               "fumblesRecovered": 0
             },
             "defensive": {
-              "totalTackles": 0,
+              "totalTackles": 1,
               "soloTackles": 0,
               "sacks": 0,
               "tacklesForLoss": 0,
@@ -667,11 +749,11 @@
           }
         },
         {
-          "athleteId": "3125107",
-          "fullName": "Andrew Beck",
-          "position": "FB",
-          "jersey": "47",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3125107.png",
+          "athleteId": "3128390",
+          "fullName": "Allen Lazard",
+          "position": "WR",
+          "jersey": "10",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3128390.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -704,7 +786,7 @@
               "fumblesRecovered": 0
             },
             "defensive": {
-              "totalTackles": 1,
+              "totalTackles": 0,
               "soloTackles": 0,
               "sacks": 0,
               "tacklesForLoss": 0,
@@ -833,7 +915,7 @@
         {
           "athleteId": "3915437",
           "fullName": "Isaiah Oliver",
-          "position": "",
+          "position": "S",
           "jersey": "26",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3915437.png",
           "stats": {
@@ -1159,91 +1241,9 @@
           }
         },
         {
-          "athleteId": "4035886",
-          "fullName": "Khalil Herbert",
-          "position": "RB",
-          "jersey": "31",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4035886.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
           "athleteId": "4040982",
           "fullName": "Quinnen Williams",
-          "position": "",
+          "position": "DT",
           "jersey": "95",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4040982.png",
           "stats": {
@@ -1323,11 +1323,11 @@
           }
         },
         {
-          "athleteId": "4240434",
-          "fullName": "Ja'Sir Taylor",
-          "position": "CB",
-          "jersey": "36",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4240434.png",
+          "athleteId": "4045299",
+          "fullName": "Marcelino McCrary-Ball",
+          "position": "LB",
+          "jersey": "41",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4045299.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -1407,7 +1407,7 @@
         {
           "athleteId": "4240456",
           "fullName": "Michael Carter II",
-          "position": "",
+          "position": "CB",
           "jersey": "30",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4240456.png",
           "stats": {
@@ -1444,6 +1444,88 @@
             "defensive": {
               "totalTackles": 3,
               "soloTackles": 2,
+              "sacks": 0,
+              "tacklesForLoss": 0,
+              "passesDefended": 0,
+              "QBHits": 0,
+              "defensiveTouchdowns": 0
+            },
+            "interceptions": {
+              "interceptions": 0,
+              "interceptionYards": 0,
+              "interceptionTouchdowns": 0
+            },
+            "kickReturns": {
+              "kickReturns": 0,
+              "kickReturnYards": 0,
+              "yardsPerKickReturn": 0,
+              "longKickReturn": 0,
+              "kickReturnTouchdowns": 0
+            },
+            "puntReturns": {
+              "puntReturns": 0,
+              "puntReturnYards": 0,
+              "yardsPerPuntReturn": 0,
+              "longPuntReturn": 0,
+              "puntReturnTouchdowns": 0
+            },
+            "kicking": {
+              "fieldGoalsMade/fieldGoalAttempts": "0/0",
+              "fieldGoalPct": 0,
+              "longFieldGoalMade": 0,
+              "extraPointsMade/extraPointAttempts": "0/0",
+              "totalKickingPoints": 0
+            },
+            "punting": {
+              "punts": 0,
+              "puntYards": 0,
+              "grossAvgPuntYards": 0,
+              "touchbacks": 0,
+              "puntsInside20": 0,
+              "longPunt": 0
+            }
+          }
+        },
+        {
+          "athleteId": "4240532",
+          "fullName": "Tony Adams",
+          "position": "S",
+          "jersey": "22",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4240532.png",
+          "stats": {
+            "passing": {
+              "completions/passingAttempts": "0/0",
+              "passingYards": 0,
+              "yardsPerPassAttempt": 0,
+              "passingTouchdowns": 0,
+              "interceptions": 0,
+              "sacks-sackYardsLost": "0-0",
+              "adjQBR": 0,
+              "QBRating": 0
+            },
+            "rushing": {
+              "rushingAttempts": 0,
+              "rushingYards": 0,
+              "yardsPerRushAttempt": 0,
+              "rushingTouchdowns": 0,
+              "longRushing": 0
+            },
+            "receiving": {
+              "receptions": 0,
+              "receivingYards": 0,
+              "yardsPerReception": 0,
+              "receivingTouchdowns": 0,
+              "longReception": 0,
+              "receivingTargets": 0
+            },
+            "fumbles": {
+              "fumbles": 0,
+              "fumblesLost": 0,
+              "fumblesRecovered": 0
+            },
+            "defensive": {
+              "totalTackles": 0,
+              "soloTackles": 0,
               "sacks": 0,
               "tacklesForLoss": 0,
               "passesDefended": 0,
@@ -1656,88 +1738,6 @@
           "position": "C",
           "jersey": "71",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4242000.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4243009",
-          "fullName": "Mykal Walker",
-          "position": "LB",
-          "jersey": "53",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4243009.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -2309,7 +2309,7 @@
         {
           "athleteId": "4361939",
           "fullName": "Andre Cisco",
-          "position": "",
+          "position": "S",
           "jersey": "8",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4361939.png",
           "stats": {
@@ -2389,11 +2389,11 @@
           }
         },
         {
-          "athleteId": "4371959",
-          "fullName": "Cam Jones",
-          "position": "LB",
-          "jersey": "43",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4371959.png",
+          "athleteId": "4362887",
+          "fullName": "Justin Fields",
+          "position": "QB",
+          "jersey": "7",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4362887.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -2471,11 +2471,11 @@
           }
         },
         {
-          "athleteId": "4372418",
-          "fullName": "Keidron Smith",
-          "position": "S",
-          "jersey": "46",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4372418.png",
+          "athleteId": "4371959",
+          "fullName": "Cam Jones",
+          "position": "LB",
+          "jersey": "43",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4371959.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -2635,252 +2635,6 @@
           }
         },
         {
-          "athleteId": "4373951",
-          "fullName": "Kohl Levao",
-          "position": "G",
-          "jersey": "",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4373951.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4379413",
-          "fullName": "Chris Smith II",
-          "position": "S",
-          "jersey": "",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4379413.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4426347",
-          "fullName": "Mazi Smith",
-          "position": "DT",
-          "jersey": "58",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4426347.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
           "athleteId": "4426676",
           "fullName": "Jowon Briggs",
           "position": "DT",
@@ -2963,11 +2717,11 @@
           }
         },
         {
-          "athleteId": "4426921",
-          "fullName": "Dean Clark",
-          "position": "S",
-          "jersey": "35",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4426921.png",
+          "athleteId": "4426817",
+          "fullName": "Jarvis Brownlee Jr.",
+          "position": "CB",
+          "jersey": "",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4426817.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -3047,7 +2801,7 @@
         {
           "athleteId": "4427250",
           "fullName": "Sauce Gardner",
-          "position": "",
+          "position": "CB",
           "jersey": "1",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4427250.png",
           "stats": {
@@ -3293,7 +3047,7 @@
         {
           "athleteId": "4428681",
           "fullName": "Joe Tippmann",
-          "position": "G",
+          "position": "C",
           "jersey": "66",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4428681.png",
           "stats": {
@@ -3537,257 +3291,11 @@
           }
         },
         {
-          "athleteId": "4429411",
-          "fullName": "Jordan Clark",
-          "position": "CB",
-          "jersey": "33",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4429411.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4429435",
-          "fullName": "Brady Cook",
-          "position": "QB",
-          "jersey": "4",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4429435.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4430182",
-          "fullName": "Jarius Monroe",
-          "position": "S",
-          "jersey": "25",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4430182.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4431582",
-          "fullName": "Payton Page",
+          "athleteId": "4431598",
+          "fullName": "Leonard Taylor III",
           "position": "DT",
-          "jersey": "69",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4431582.png",
+          "jersey": "96",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4431598.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -3947,175 +3455,11 @@
           }
         },
         {
-          "athleteId": "4567096",
-          "fullName": "John Metchie III",
-          "position": "WR",
-          "jersey": "3",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4567096.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
           "athleteId": "4567962",
           "fullName": "Jermaine Johnson",
           "position": "LB",
           "jersey": "11",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4567962.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4569016",
-          "fullName": "Eric Watts",
-          "position": "DE",
-          "jersey": "95",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4569016.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -4277,7 +3621,7 @@
         {
           "athleteId": "4569618",
           "fullName": "Garrett Wilson",
-          "position": "",
+          "position": "WR",
           "jersey": "5",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4569618.png",
           "stats": {
@@ -4357,173 +3701,9 @@
           }
         },
         {
-          "athleteId": "4588300",
-          "fullName": "Kobe King",
-          "position": "LB",
-          "jersey": "45",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4588300.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4597500",
-          "fullName": "Adonai Mitchell",
-          "position": "WR",
-          "jersey": "15",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4597500.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
           "athleteId": "4685247",
           "fullName": "Braelon Allen",
-          "position": "",
+          "position": "RB",
           "jersey": "0",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4685247.png",
           "stats": {
@@ -4576,6 +3756,88 @@
               "kickReturnYards": 56,
               "yardsPerKickReturn": 28,
               "longKickReturn": 31,
+              "kickReturnTouchdowns": 0
+            },
+            "puntReturns": {
+              "puntReturns": 0,
+              "puntReturnYards": 0,
+              "yardsPerPuntReturn": 0,
+              "longPuntReturn": 0,
+              "puntReturnTouchdowns": 0
+            },
+            "kicking": {
+              "fieldGoalsMade/fieldGoalAttempts": "0/0",
+              "fieldGoalPct": 0,
+              "longFieldGoalMade": 0,
+              "extraPointsMade/extraPointAttempts": "0/0",
+              "totalKickingPoints": 0
+            },
+            "punting": {
+              "punts": 0,
+              "puntYards": 0,
+              "grossAvgPuntYards": 0,
+              "touchbacks": 0,
+              "puntsInside20": 0,
+              "longPunt": 0
+            }
+          }
+        },
+        {
+          "athleteId": "4685596",
+          "fullName": "Azareye'h Thomas",
+          "position": "CB",
+          "jersey": "23",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4685596.png",
+          "stats": {
+            "passing": {
+              "completions/passingAttempts": "0/0",
+              "passingYards": 0,
+              "yardsPerPassAttempt": 0,
+              "passingTouchdowns": 0,
+              "interceptions": 0,
+              "sacks-sackYardsLost": "0-0",
+              "adjQBR": 0,
+              "QBRating": 0
+            },
+            "rushing": {
+              "rushingAttempts": 0,
+              "rushingYards": 0,
+              "yardsPerRushAttempt": 0,
+              "rushingTouchdowns": 0,
+              "longRushing": 0
+            },
+            "receiving": {
+              "receptions": 0,
+              "receivingYards": 0,
+              "yardsPerReception": 0,
+              "receivingTouchdowns": 0,
+              "longReception": 0,
+              "receivingTargets": 0
+            },
+            "fumbles": {
+              "fumbles": 0,
+              "fumblesLost": 0,
+              "fumblesRecovered": 0
+            },
+            "defensive": {
+              "totalTackles": 0,
+              "soloTackles": 0,
+              "sacks": 0,
+              "tacklesForLoss": 0,
+              "passesDefended": 0,
+              "QBHits": 0,
+              "defensiveTouchdowns": 0
+            },
+            "interceptions": {
+              "interceptions": 0,
+              "interceptionYards": 0,
+              "interceptionTouchdowns": 0
+            },
+            "kickReturns": {
+              "kickReturns": 0,
+              "kickReturnYards": 0,
+              "yardsPerKickReturn": 0,
+              "longKickReturn": 0,
               "kickReturnTouchdowns": 0
             },
             "puntReturns": {
@@ -4687,7 +3949,7 @@
         {
           "athleteId": "4692555",
           "fullName": "Tyler Baron",
-          "position": "",
+          "position": "DE",
           "jersey": "94",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4692555.png",
           "stats": {
@@ -5095,6 +4357,88 @@
           }
         },
         {
+          "athleteId": "5153070",
+          "fullName": "Esa Pole",
+          "position": "OT",
+          "jersey": "67",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/5153070.png",
+          "stats": {
+            "passing": {
+              "completions/passingAttempts": "0/0",
+              "passingYards": 0,
+              "yardsPerPassAttempt": 0,
+              "passingTouchdowns": 0,
+              "interceptions": 0,
+              "sacks-sackYardsLost": "0-0",
+              "adjQBR": 0,
+              "QBRating": 0
+            },
+            "rushing": {
+              "rushingAttempts": 0,
+              "rushingYards": 0,
+              "yardsPerRushAttempt": 0,
+              "rushingTouchdowns": 0,
+              "longRushing": 0
+            },
+            "receiving": {
+              "receptions": 0,
+              "receivingYards": 0,
+              "yardsPerReception": 0,
+              "receivingTouchdowns": 0,
+              "longReception": 0,
+              "receivingTargets": 0
+            },
+            "fumbles": {
+              "fumbles": 0,
+              "fumblesLost": 0,
+              "fumblesRecovered": 0
+            },
+            "defensive": {
+              "totalTackles": 0,
+              "soloTackles": 0,
+              "sacks": 0,
+              "tacklesForLoss": 0,
+              "passesDefended": 0,
+              "QBHits": 0,
+              "defensiveTouchdowns": 0
+            },
+            "interceptions": {
+              "interceptions": 0,
+              "interceptionYards": 0,
+              "interceptionTouchdowns": 0
+            },
+            "kickReturns": {
+              "kickReturns": 0,
+              "kickReturnYards": 0,
+              "yardsPerKickReturn": 0,
+              "longKickReturn": 0,
+              "kickReturnTouchdowns": 0
+            },
+            "puntReturns": {
+              "puntReturns": 0,
+              "puntReturnYards": 0,
+              "yardsPerPuntReturn": 0,
+              "longPuntReturn": 0,
+              "puntReturnTouchdowns": 0
+            },
+            "kicking": {
+              "fieldGoalsMade/fieldGoalAttempts": "0/0",
+              "fieldGoalPct": 0,
+              "longFieldGoalMade": 0,
+              "extraPointsMade/extraPointAttempts": "0/0",
+              "totalKickingPoints": 0
+            },
+            "punting": {
+              "punts": 0,
+              "puntYards": 0,
+              "grossAvgPuntYards": 0,
+              "touchbacks": 0,
+              "puntsInside20": 0,
+              "longPunt": 0
+            }
+          }
+        },
+        {
           "athleteId": "5208977",
           "fullName": "Qwan'tez Stiggers",
           "position": "CB",
@@ -5177,7 +4521,8 @@
           }
         }
       ],
-      "possession": true
+      "possession": true,
+      "homeAway": "away"
     },
     {
       "teamId": "27",
@@ -5923,88 +5268,6 @@
           }
         },
         {
-          "athleteId": "3045251",
-          "fullName": "Anthony Walker Jr.",
-          "position": "LB",
-          "jersey": "3",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3045251.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
           "athleteId": "3052587",
           "fullName": "Baker Mayfield",
           "position": "QB",
@@ -6038,88 +5301,6 @@
             },
             "fumbles": {
               "fumbles": 1,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "3115481",
-          "fullName": "J.T. Gray",
-          "position": "S",
-          "jersey": "48",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/3115481.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
               "fumblesLost": 0,
               "fumblesRecovered": 0
             },
@@ -6745,7 +5926,7 @@
         {
           "athleteId": "4034779",
           "fullName": "Ko Kieft",
-          "position": "",
+          "position": "TE",
           "jersey": "41",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4034779.png",
           "stats": {
@@ -6989,11 +6170,11 @@
           }
         },
         {
-          "athleteId": "4040622",
-          "fullName": "Mike Jordan",
+          "athleteId": "4046551",
+          "fullName": "Ben Bredeson",
           "position": "G",
-          "jersey": "60",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4040622.png",
+          "jersey": "68",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4046551.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -7319,7 +6500,7 @@
         {
           "athleteId": "4250392",
           "fullName": "Zyon McCollum",
-          "position": "",
+          "position": "CB",
           "jersey": "27",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4250392.png",
           "stats": {
@@ -7437,6 +6618,88 @@
             },
             "defensive": {
               "totalTackles": 1,
+              "soloTackles": 0,
+              "sacks": 0,
+              "tacklesForLoss": 0,
+              "passesDefended": 0,
+              "QBHits": 0,
+              "defensiveTouchdowns": 0
+            },
+            "interceptions": {
+              "interceptions": 0,
+              "interceptionYards": 0,
+              "interceptionTouchdowns": 0
+            },
+            "kickReturns": {
+              "kickReturns": 0,
+              "kickReturnYards": 0,
+              "yardsPerKickReturn": 0,
+              "longKickReturn": 0,
+              "kickReturnTouchdowns": 0
+            },
+            "puntReturns": {
+              "puntReturns": 0,
+              "puntReturnYards": 0,
+              "yardsPerPuntReturn": 0,
+              "longPuntReturn": 0,
+              "puntReturnTouchdowns": 0
+            },
+            "kicking": {
+              "fieldGoalsMade/fieldGoalAttempts": "0/0",
+              "fieldGoalPct": 0,
+              "longFieldGoalMade": 0,
+              "extraPointsMade/extraPointAttempts": "0/0",
+              "totalKickingPoints": 0
+            },
+            "punting": {
+              "punts": 0,
+              "puntYards": 0,
+              "grossAvgPuntYards": 0,
+              "touchbacks": 0,
+              "puntsInside20": 0,
+              "longPunt": 0
+            }
+          }
+        },
+        {
+          "athleteId": "4360502",
+          "fullName": "Kaevon Merriweather",
+          "position": "S",
+          "jersey": "26",
+          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4360502.png",
+          "stats": {
+            "passing": {
+              "completions/passingAttempts": "0/0",
+              "passingYards": 0,
+              "yardsPerPassAttempt": 0,
+              "passingTouchdowns": 0,
+              "interceptions": 0,
+              "sacks-sackYardsLost": "0-0",
+              "adjQBR": 0,
+              "QBRating": 0
+            },
+            "rushing": {
+              "rushingAttempts": 0,
+              "rushingYards": 0,
+              "yardsPerRushAttempt": 0,
+              "rushingTouchdowns": 0,
+              "longRushing": 0
+            },
+            "receiving": {
+              "receptions": 0,
+              "receivingYards": 0,
+              "yardsPerReception": 0,
+              "receivingTouchdowns": 0,
+              "longReception": 0,
+              "receivingTargets": 0
+            },
+            "fumbles": {
+              "fumbles": 0,
+              "fumblesLost": 0,
+              "fumblesRecovered": 0
+            },
+            "defensive": {
+              "totalTackles": 0,
               "soloTackles": 0,
               "sacks": 0,
               "tacklesForLoss": 0,
@@ -7729,7 +6992,7 @@
         {
           "athleteId": "4369466",
           "fullName": "Ryan Miller",
-          "position": "",
+          "position": "WR",
           "jersey": "81",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4369466.png",
           "stats": {
@@ -8011,170 +7274,6 @@
             },
             "defensive": {
               "totalTackles": 1,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4380507",
-          "fullName": "Luke Goedeke",
-          "position": "OT",
-          "jersey": "67",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4380507.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4426444",
-          "fullName": "Connor Bazelak",
-          "position": "QB",
-          "jersey": "16",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4426444.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
               "soloTackles": 0,
               "sacks": 0,
               "tacklesForLoss": 0,
@@ -8634,88 +7733,6 @@
           "position": "DT",
           "jersey": "92",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4430478.png",
-          "stats": {
-            "passing": {
-              "completions/passingAttempts": "0/0",
-              "passingYards": 0,
-              "yardsPerPassAttempt": 0,
-              "passingTouchdowns": 0,
-              "interceptions": 0,
-              "sacks-sackYardsLost": "0-0",
-              "adjQBR": 0,
-              "QBRating": 0
-            },
-            "rushing": {
-              "rushingAttempts": 0,
-              "rushingYards": 0,
-              "yardsPerRushAttempt": 0,
-              "rushingTouchdowns": 0,
-              "longRushing": 0
-            },
-            "receiving": {
-              "receptions": 0,
-              "receivingYards": 0,
-              "yardsPerReception": 0,
-              "receivingTouchdowns": 0,
-              "longReception": 0,
-              "receivingTargets": 0
-            },
-            "fumbles": {
-              "fumbles": 0,
-              "fumblesLost": 0,
-              "fumblesRecovered": 0
-            },
-            "defensive": {
-              "totalTackles": 0,
-              "soloTackles": 0,
-              "sacks": 0,
-              "tacklesForLoss": 0,
-              "passesDefended": 0,
-              "QBHits": 0,
-              "defensiveTouchdowns": 0
-            },
-            "interceptions": {
-              "interceptions": 0,
-              "interceptionYards": 0,
-              "interceptionTouchdowns": 0
-            },
-            "kickReturns": {
-              "kickReturns": 0,
-              "kickReturnYards": 0,
-              "yardsPerKickReturn": 0,
-              "longKickReturn": 0,
-              "kickReturnTouchdowns": 0
-            },
-            "puntReturns": {
-              "puntReturns": 0,
-              "puntReturnYards": 0,
-              "yardsPerPuntReturn": 0,
-              "longPuntReturn": 0,
-              "puntReturnTouchdowns": 0
-            },
-            "kicking": {
-              "fieldGoalsMade/fieldGoalAttempts": "0/0",
-              "fieldGoalPct": 0,
-              "longFieldGoalMade": 0,
-              "extraPointsMade/extraPointAttempts": "0/0",
-              "totalKickingPoints": 0
-            },
-            "punting": {
-              "punts": 0,
-              "puntYards": 0,
-              "grossAvgPuntYards": 0,
-              "touchbacks": 0,
-              "puntsInside20": 0,
-              "longPunt": 0
-            }
-          }
-        },
-        {
-          "athleteId": "4430834",
-          "fullName": "Jalen McMillan",
-          "position": "WR",
-          "jersey": "11",
-          "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4430834.png",
           "stats": {
             "passing": {
               "completions/passingAttempts": "0/0",
@@ -9369,7 +8386,7 @@
         {
           "athleteId": "4686884",
           "fullName": "Luke Haggard",
-          "position": "G",
+          "position": "OT",
           "jersey": "72",
           "headshot": "https://a.espncdn.com/i/headshots/nfl/players/full/4686884.png",
           "stats": {
@@ -9941,7 +8958,8 @@
           }
         }
       ],
-      "possession": false
+      "possession": false,
+      "homeAway": "home"
     }
   ]
 }
