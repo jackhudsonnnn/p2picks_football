@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriendRequests, useFriends } from "@features/social/hooks";
-import SearchBar from "@shared/widgets/SearchBar/SearchBar";
-import { FriendsList } from "@shared/widgets";
+import { SearchBar } from "@shared/widgets/SearchBar/SearchBar";
+import { FriendsList } from "@components/Social/FriendsList/FriendsList";
 import { useDialog } from "@shared/hooks/useDialog";
 import "./FriendRequests.css";
 

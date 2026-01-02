@@ -6,7 +6,7 @@ type Props = {
   size?: number;
 };
 
-export const AddIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
+export const RemoveIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
   <svg
     width={size}
     height={size}
@@ -19,10 +19,10 @@ export const AddIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
   >
     {title ? <title>{title}</title> : null}
     <path
-      d="M20.285 5.709a1 1 0 0 0-1.57-1.25l-8.59 10.784-4.24-4.24a1 1 0 1 0-1.414 1.414l5.04 5.04a1 1 0 0 0 1.485-.074L20.285 5.71Z"
-      fill="#0FBD46"
+      d="m13.414 12 5.293-5.293a1 1 0 1 0-1.414-1.414L12 10.586 6.707 5.293A1 1 0 0 0 5.293 6.707L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12Z"
+      fill="#F22525"
     />
   </svg>
 );
 
-export default AddIcon;
+export default RemoveIcon;

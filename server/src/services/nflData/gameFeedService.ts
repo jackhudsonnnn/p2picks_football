@@ -10,7 +10,7 @@ import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { getGameDoc, REFINED_DIR, type RefinedGameDoc } from './nflRefinedDataAccessors';
+import { getGameDoc, type RefinedGameDoc } from './nflRefinedDataAccessors';
 
 export type GameFeedEvent = {
   gameId: string;
@@ -27,6 +27,7 @@ interface CachedDoc {
   updatedAt: string;
 }
 
+const REFINED_DIR = path.join('src', 'data', 'nfl_refined_live_stats');
 const GAME_UPDATE_EVENT = 'game-update';
 
 class GameFeedService extends EventEmitter {

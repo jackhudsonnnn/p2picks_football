@@ -3,7 +3,7 @@ import './TicketCard.css';
 import type { Ticket } from '@features/bets/types';
 import { extractModeConfig } from '@features/bets/mappers';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
-import Modal from '@shared/widgets/Modal/Modal';
+import { Modal } from '@shared/widgets/Modal/Modal';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
 import { fetchModePreview, fetchBetLiveInfo, type ModePreviewPayload, type BetLiveInfo, pokeBet } from '@features/bets/service';

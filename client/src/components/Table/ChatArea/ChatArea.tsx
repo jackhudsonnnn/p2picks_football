@@ -5,7 +5,7 @@ import { formatTimeOfDay } from "@shared/utils/dateTime";
 import type { ChatMessage } from "@shared/types/chat";
 import { useGroupedMessages } from "@features/table/chat/useGroupedMessages";
 import { useAutoScroll } from "@features/table/chat/useAutoScroll";
-import { LoadMoreButton } from "@shared/widgets";
+import { LoadMoreButton } from "@shared/widgets/LoadMore/LoadMore";
 
 interface ChatAreaProps {
   messages: ChatMessage[];

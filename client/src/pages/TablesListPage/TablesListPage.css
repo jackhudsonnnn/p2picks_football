@@ -175,18 +175,6 @@
   transform: translateY(-1px);
 }
 
-.create-button:disabled {
-  background-color: var(--neutral-700);
-  cursor: not-allowed;
-  opacity: 0.7;
-  box-shadow: none;
-}
-
-.create-button:focus {
-  outline: 3px solid color-mix(in srgb, var(--primary) 20%, transparent);
-  outline-offset: 2px;
-}
-
 .empty-state {
   text-align: center;
 }

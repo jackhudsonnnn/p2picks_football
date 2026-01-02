@@ -12,7 +12,7 @@ interface SearchBarProps {
   ariaLabel?: string;
 }
 
-const SearchBar = ({ 
+export const SearchBar = ({ 
   value, 
   onChange, 
   placeholder = "Search...", 
@@ -56,5 +56,3 @@ const SearchBar = ({
     </div>
   );
 };
-
-export default SearchBar;

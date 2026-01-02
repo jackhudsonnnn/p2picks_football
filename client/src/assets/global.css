@@ -1,33 +1,33 @@
 :root {
   /* Core Colors - Sports-inspired color scheme */
-  --primary-100: #E3F3FF;
-  --primary-300: #60B2FF;
-  --primary-500: #2196F3;  
-  --primary-700: #1565C0;
-  --primary-900: #0D47A1;
+  --primary-100: hsl(206, 100%, 95%);
+  --primary-300: hsl(209, 100%, 69%);
+  --primary-500: hsl(207, 90%, 54%);  
+  --primary-700: hsl(212, 80%, 42%);
+  --primary-900: hsl(216, 85%, 34%);
 
   /* Neutrals - Dark mode focused */
-  --neutral-100: #F8FAFC;
-  --neutral-200: #E2E8F0;
-  --neutral-300: #CBD5E1;
-  --neutral-400: #94A3B8;
-  --neutral-500: #64748B;
-  --neutral-600: #475569;
-  --neutral-700: #334155;
-  --neutral-800: #1E293B;
-  --neutral-850: #192231;
-  --neutral-900: #0F172A;
-  --neutral-1000: #0d1322;
+  --neutral-100: hsl(210, 40%, 98%);
+  --neutral-200: hsl(214, 32%, 91%);
+  --neutral-300: hsl(213, 27%, 84%);
+  --neutral-400: hsl(215, 20%, 65%);
+  --neutral-500: hsl(215, 16%, 47%);
+  --neutral-600: hsl(215, 19%, 35%);
+  --neutral-700: hsl(215, 25%, 27%);
+  --neutral-800: hsl(217, 33%, 17%);
+  --neutral-850: hsl(218, 32%, 15%);
+  --neutral-900: hsl(222, 47%, 11%);
+  --neutral-1000: hsl(223, 45%, 9%);
 
   /* Accent Colors - Sports themes */
-  --accent-victory: #00C853;
-  --accent-energy: #FFB300;
-  --accent-power: #F44336;
-  --accent-focus: #3D5AFE;
+  --accent-victory: hsl(145, 100%, 39%);
+  --accent-energy: hsl(42, 100%, 50%);
+  --accent-power: hsl(4, 90%, 58%);
+  --accent-focus: hsl(231, 99%, 62%);
   --accent-success: var(--accent-victory);
   --accent-danger: var(--accent-power);
-  --accent-energy-dark: #e59d00;
-  --primary-transparent: rgba(33, 150, 243, 0.15);
+  --accent-energy-dark: hsl(41, 100%, 45%);
+  --primary-transparent: hsla(207, 90%, 54%, 0.15);
 
   /* Semantic Colors */
   --success: var(--accent-victory);
@@ -35,11 +35,11 @@
   --warning: var(--accent-energy);
   --info: var(--accent-focus);
 
-  /* Status background tokens (use rgba variants for subtle backgrounds) */
-  --status-neutral-bg: rgba(100, 116, 139, 0.15);
-  --status-win-bg: rgba(0, 200, 83, 0.12);
-  --status-loss-bg: rgba(244, 67, 54, 0.12);
-  --status-wash-bg: rgba(148, 163, 184, 0.12);
+  /* Status background tokens (use hsla variants for subtle backgrounds) */
+  --status-neutral-bg: hsla(215, 16%, 47%, 0.15);
+  --status-win-bg: hsla(145, 100%, 39%, 0.12);
+  --status-loss-bg: hsla(4, 90%, 58%, 0.12);
+  --status-wash-bg: hsla(215, 20%, 65%, 0.12);
 
   /* Typography */
   --font-family: monospace;
@@ -68,36 +68,50 @@
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(255, 255, 255, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(255, 255, 255, 0.1);
-  --shadow-glow: 0 0 15px rgb(33 150 243 / 0.3);
-  --shadow-power: 0 0 15px rgb(244, 67, 54 / 0.3);
+  --shadow-sm: 0 1px 2px 0 hsla(0, 0%, 100%, 0.05);
+  --shadow-md: 0 4px 6px -1px hsla(0, 0%, 100%, 0.1);
+  --shadow-lg: 0 10px 15px -3px hsla(0, 0%, 100%, 0.1);
+  --shadow-glow: 0 0 15px hsla(207, 90%, 54%, 0.3);
+  --shadow-power: 0 0 15px hsla(4, 90%, 58%, 0.3);
   
+  /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  
+  --transition: var(--transition-normal);
+
+  /* Primary Colors */
   --primary: var(--primary-700);
   --primary-light: var(--primary-500);
   --primary-dark: var(--primary-900);
+
+  /* Accent Colors */
   --accent: var(--accent-victory);
-  --accent-hover: #00a844; 
+  --accent-hover: hsl(144, 100%, 33%); 
+
+  /* Background Colors */
   --bg-dark: var(--neutral-900);
   --bg-darker: var(--neutral-1000);
   --bg-surface: var(--neutral-800);
   --bg-surface-secondary: var(--neutral-700);
+
+  /* Grey Scale Aliases */
   --grey-100: var(--neutral-100);
   --grey-300: var(--neutral-300);
   --grey-600: var(--neutral-500);
   --grey-800: var(--neutral-700);
+
+  /* Text Colors */
   --text-light: var(--neutral-100);
-  --text-secondary: rgba(248, 250, 252, 0.7);
+  --text-secondary: hsla(210, 40%, 98%, 0.7);
+
+  /* Spacing Aliases */
   --spacing-sm: var(--space-sm);
   --spacing-md: var(--space-md);
   --spacing-lg: var(--space-xl);
   --spacing-xl: var(--space-3xl);
   --spacing-xxl: 6rem;
-  --transition: var(--transition-normal);
+  
+  /* Breakpoints */
   --breakpoint-xs: 480px;
   --breakpoint-sm: 576px;
   --breakpoint-md: 768px;

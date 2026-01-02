@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import "./Filter.css";
+import "./FilterBar.css";
 
 export interface FilterOption {
   id: string;
@@ -16,7 +16,7 @@ interface FilterBarProps {
   label?: string;
 }
 
-const FilterBar = ({
+export const FilterBar = ({
   options,
   selectedFilters,
   onFilterChange,
@@ -125,5 +125,3 @@ const FilterBar = ({
     </div>
   );
 };
-
-export default FilterBar;

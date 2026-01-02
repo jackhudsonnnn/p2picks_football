@@ -14,7 +14,7 @@ function classNames(...values: Array<string | false | null | undefined>): string
   return values.filter(Boolean).join(' ');
 }
 
-const LoadMoreButton: React.FC<LoadMoreButtonProps> = ({
+export const LoadMoreButton: React.FC<LoadMoreButtonProps> = ({
   label = 'Load more',
   loadingLabel = 'Loading…',
   loading = false,
@@ -36,5 +36,3 @@ const LoadMoreButton: React.FC<LoadMoreButtonProps> = ({
     </div>
   );
 };
-
-export default LoadMoreButton;

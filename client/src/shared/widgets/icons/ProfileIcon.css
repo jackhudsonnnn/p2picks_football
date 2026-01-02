@@ -2,7 +2,7 @@
   width: 32px;
   height: 32px;
   background: linear-gradient(135deg, var(--accent-focus) 60%, var(--accent) 100%);
-  color: #fff;
+  color: var(--text-light);
   border-radius: 50%;
   font-weight: 700;
   font-size: 1.08em;

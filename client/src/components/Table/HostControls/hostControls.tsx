@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Modal } from "@shared/widgets";
-import { FriendsList } from "@shared/widgets/FriendsList/FriendsList";
+import { Modal } from "@shared/widgets/Modal/Modal";
+import { FriendsList } from "@components/Social/FriendsList/FriendsList";
 import { useFriends } from "@features/social/hooks";
 import {
   addTableMember,
@@ -98,7 +98,6 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
           variant="add"
           friends={eligibleFriends}
           disabled={mutating || friendsLoading}
-          addSymbol="✔"
           onAction={async (userId: string, username: string) => {
             if (!tableId) return;
             const confirmed = await showConfirm({
@@ -128,7 +127,6 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
           variant="remove"
           friends={removableMembers}
           disabled={mutating}
-          removeSymbol="✖"
           onAction={async (userId: string, username: string) => {
             if (!tableId) return;
             const confirmed = await showConfirm({

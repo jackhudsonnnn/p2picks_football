@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
-import { Modal, SearchBar, LoadMoreButton } from "@shared/widgets";
+import { Modal } from "@shared/widgets/Modal/Modal";
+import { SearchBar } from "@shared/widgets/SearchBar/SearchBar";
+import { LoadMoreButton } from "@shared/widgets/LoadMore/LoadMore";
 import { useDialog } from "@shared/hooks/useDialog";
-import AddIcon from "@shared/widgets/icons/AddIcon";
+import { PlusIcon } from "@shared/widgets/icons/PlusIcon";
 import { useTablesList } from "@features/table/hooks/useTablesList";
 import { formatDateTime } from "@shared/utils/dateTime";
 
@@ -54,7 +56,7 @@ export const TablesListPage: React.FC = () => {
           <div className="page-title"><h1>Tables</h1></div>
           <div className="page-action">
             <button className="create-button" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
-              <AddIcon className="btn-icon" title="Add" />
+              <PlusIcon className="btn-icon" title="Add" />
               <span>Create Table</span>
             </button>
           </div>

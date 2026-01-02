@@ -9,7 +9,7 @@ interface ModalProps {
   footer?: ReactNode;
 }
 
-const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) => {
+export const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -48,5 +48,3 @@ const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) => {
     </div>
   );
 };
-
-export default Modal;

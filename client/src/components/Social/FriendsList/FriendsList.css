@@ -87,7 +87,6 @@
   height: 20px;
 }
 
-/* hover: slightly larger and more visible; color depends on variant */
 .friend-row.action:hover .friend-row-symbol {
   transform: scale(1.15);
 }
@@ -98,7 +97,6 @@
   color: var(--accent-victory);
 }
 
-/* selected/pressed: larger and highlighted by variant */
 .friends-list-shared.selectable
   .friend-row.action.selected
   .friend-row-symbol.remove,

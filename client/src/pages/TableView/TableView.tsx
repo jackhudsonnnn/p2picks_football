@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "./TableView.css";
-import "@shared/widgets/FriendsList/FriendsList.css";
 import { useAuth } from "@features/auth";
 import { ChatArea } from "@components/Table/ChatArea/ChatArea";
 import { MemberList } from "@components/Table/MemberList/memberList";
@@ -12,13 +11,12 @@ import { TableNavigation, TableNavigationTab } from "@components/Table/TableNavi
 import { ModeReference } from "@components/Table/ModeReference/ModeReference";
 import BetProposalForm from "@components/Bet/BetProposalForm/BetProposalForm";
 import type { BetProposalFormValues } from "@features/bets/hooks/useBetProposalSession";
-import { Modal } from "@shared/widgets";
+import { Modal } from "@shared/widgets/Modal/Modal";
 import { useTableView } from "@features/table/hooks";
 import { useTableChat } from "@features/table/hooks/useTableChat";
 import { useModeCatalog } from "@features/bets/hooks/useModeCatalog";
 import { HttpError } from "@data/clients/restClient";
 
-const RATE_LIMIT_TITLE = "Knock it off!!";
 const RATE_LIMIT_MESSAGE = "You've sent 20 messages and bet proposals in the last minute. Chill out a bit.";
 
 function isRateLimitError(error: unknown): error is HttpError {
@@ -165,7 +163,7 @@ export const TableView: React.FC = () => {
             <Modal
               isOpen={showMessageRateLimitModal}
               onClose={handleMessageRateLimitClose}
-              title={RATE_LIMIT_TITLE}
+              title={"Knock it off!!"}
             >
               <div className="friends-list-shared empty bet-error-modal-message" role="alert">
                 {RATE_LIMIT_MESSAGE}

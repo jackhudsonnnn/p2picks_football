@@ -1,5 +1,5 @@
 import { useCallback, useState, type ReactNode } from 'react';
-import Modal from '@shared/widgets/Modal/Modal';
+import { Modal } from '@shared/widgets/Modal/Modal';
 
 type DialogType = 'alert' | 'confirm';
 

@@ -15,7 +15,7 @@ export interface PaginationControlsProps {
   nextLabel?: string;
 }
 
-const PaginationControls: React.FC<PaginationControlsProps> = ({
+export const PaginationControls: React.FC<PaginationControlsProps> = ({
   current,
   total,
   onPrevious,
@@ -55,5 +55,3 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     </div>
   );
 };
-
-export default PaginationControls;
