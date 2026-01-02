@@ -6,7 +6,7 @@ type Props = {
   size?: number;
 };
 
-export const AddIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
+export const CheckIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
   <svg
     width={size}
     height={size}
@@ -25,4 +25,4 @@ export const AddIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
   </svg>
 );
 
-export default AddIcon;
+export default CheckIcon;

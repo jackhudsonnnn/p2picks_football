@@ -27,7 +27,11 @@
   --accent-success: var(--accent-victory);
   --accent-danger: var(--accent-power);
   --accent-energy-dark: hsl(41, 100%, 45%);
+
+  /* Transparent Variants */
   --primary-transparent: hsla(207, 90%, 54%, 0.15);
+  --secondary-transparent: hsla(209, 100%, 69%, 0.15);
+  --dark-transparent: hsla(0, 0%, 0%, 0.65);
 
   /* Semantic Colors */
   --success: var(--accent-victory);

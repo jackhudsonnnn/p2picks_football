@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import "./memberList.css";
 import type { TableMember } from "@features/table/types";
-import { ProfileIcon } from "@shared/widgets/icons/ProfileIcon";
+import { ProfileIcon } from "@shared/widgets/icons/ProfileIcon/ProfileIcon";
 import { formatToHundredth, normalizeToHundredth } from "@shared/utils/number";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends } from "@features/social/hooks";

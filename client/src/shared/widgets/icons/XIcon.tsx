@@ -6,7 +6,7 @@ type Props = {
   size?: number;
 };
 
-export const RemoveIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
+export const XIcon: React.FC<Props> = ({ className, title, size = 20 }) => (
   <svg
     width={size}
     height={size}
@@ -24,5 +24,3 @@ export const RemoveIcon: React.FC<Props> = ({ className, title, size = 20 }) => 
     />
   </svg>
 );
-
-export default RemoveIcon;

@@ -1,8 +1,8 @@
 import React from 'react';
 import './FriendsList.css';
-import { ProfileIcon } from '@shared/widgets/icons/ProfileIcon';
-import { AddIcon } from '@shared/widgets/icons/AddIcon';
-import { RemoveIcon } from '@shared/widgets/icons/RemoveIcon';
+import { ProfileIcon } from '@shared/widgets/icons/ProfileIcon/ProfileIcon';
+import { CheckIcon } from '@shared/widgets/icons/CheckIcon';
+import { XIcon } from '@shared/widgets/icons/XIcon';
 
 export interface FriendItem {
   user_id: string;
@@ -86,7 +86,7 @@ export const FriendsList: React.FC<FriendsListProps> = (props) => {
                 className={`friend-row-symbol ${isAdd ? 'add' : 'remove'} ${selected ? 'active' : ''}`}
                 aria-hidden
               >
-                {isAdd ? <AddIcon /> : <RemoveIcon />}
+                {isAdd ? <CheckIcon /> : <XIcon />}
               </span>
             )}
           </button>

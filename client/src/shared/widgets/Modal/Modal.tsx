@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import './Modal.css';
+import { XIcon } from '@shared/widgets/icons/XIcon';
 
 interface ModalProps {
   isOpen: boolean;
@@ -35,8 +36,8 @@ export const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) 
         <div className="modal-panel">
           <div className="modal-header">
             <h2>{title}</h2>
-            <button className="modal-close" onClick={onClose}>
-              &times;
+            <button className="modal-close" onClick={onClose} aria-label="Close modal">
+              <XIcon />
             </button>
           </div>
           <div className="modal-body">
