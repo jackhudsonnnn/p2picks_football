@@ -9,6 +9,7 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { NFL_DATA_REFINED_INTERVAL_SECONDS } from '../../constants/environment'
 
 export const REFINED_DIR = path.join('src', 'data', 'nfl_refined_live_stats');
 
@@ -130,7 +131,7 @@ const cache = new Map<string, CachedDoc>();
 
 /** Cache TTL in ms - data only changes every NFL_DATA_REFINED_INTERVAL_SECONDS */
 function getCacheTtlMs(): number {
-  const seconds = Number(process.env.NFL_DATA_REFINED_INTERVAL_SECONDS) || 20;
+  const seconds = Number(NFL_DATA_REFINED_INTERVAL_SECONDS) || 20;
   // Use 90% of the interval to ensure we refresh before stale
   return Math.max(5000, seconds * 900);
 }

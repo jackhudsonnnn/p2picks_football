@@ -1,5 +1,6 @@
 import { getAvailableGames, getGameStatus } from './nflRefinedDataAccessors';
 import { getSupabaseAdmin } from '../../supabaseClient';
+import { NFL_GAME_STATUS_POLL_MS } from '../../constants/environment'
 
 type StatusCache = Map<string, string | null>;
 
@@ -7,16 +8,6 @@ const cachedStatuses: StatusCache = new Map();
 let intervalHandle: NodeJS.Timeout | null = null;
 let isSyncRunning = false;
 let cacheHydrated = false;
-
-const DEFAULT_POLL_INTERVAL_MS = 30_000;
-
-function getPollInterval(): number {
-  const raw = process.env.NFL_GAME_STATUS_POLL_MS;
-  if (!raw) return DEFAULT_POLL_INTERVAL_MS;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_POLL_INTERVAL_MS;
-  return parsed;
-}
 
 async function hydrateCache(): Promise<void> {
   if (cacheHydrated) return;
@@ -97,7 +88,7 @@ async function performSync(): Promise<void> {
 
 export function startNflGameStatusSync(): void {
   if (intervalHandle) return;
-  const intervalMs = getPollInterval();
+  const intervalMs = NFL_GAME_STATUS_POLL_MS;
   void performSync();
   intervalHandle = setInterval(() => {
     void performSync();

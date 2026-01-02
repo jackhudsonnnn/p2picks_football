@@ -2,6 +2,8 @@
  * Shared logger utility for NFL data services.
  */
 
+import { NODE_ENV } from '../constants/environment';
+
 export type LogPayload = Record<string, unknown>;
 
 export interface Logger {
@@ -22,7 +24,7 @@ export function createLogger(prefix: string): Logger {
       }
     },
     debug(payload: LogPayload | string, message?: string) {
-      if (process.env.NODE_ENV === 'production') return;
+      if (NODE_ENV === 'production') return;
       if (typeof payload === 'string') {
         console.debug(tag, payload);
       } else {

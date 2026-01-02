@@ -1,8 +1,8 @@
 import { getSupabaseAdmin } from '../../supabaseClient';
+import { BET_LIFECYCLE_CATCHUP_MS } from '../../constants/environment'
 
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 const FIRE_GRACE_MS = 250;
-const DEFAULT_CATCHUP_INTERVAL_MS = 60_000;
 
 const scheduledTimers = new Map<string, NodeJS.Timeout>();
 const inFlightTransitions = new Set<string>();
@@ -15,7 +15,7 @@ export function startBetLifecycleService(): void {
   void hydrateActiveBets();
   catchupHandle = setInterval(() => {
     void runCatchupCycle();
-  }, getCatchupInterval());
+  }, BET_LIFECYCLE_CATCHUP_MS);
 }
 
 export function stopBetLifecycleService(): void {
@@ -34,14 +34,6 @@ export function stopBetLifecycleService(): void {
 export function registerBetLifecycle(betId: string, closeTimeIso?: string | null): void {
   if (!betId) return;
   scheduleBetTransition(betId, closeTimeIso ?? null);
-}
-
-function getCatchupInterval(): number {
-  const raw = process.env.BET_LIFECYCLE_CATCHUP_MS;
-  if (!raw) return DEFAULT_CATCHUP_INTERVAL_MS;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_CATCHUP_INTERVAL_MS;
-  return parsed;
 }
 
 async function hydrateActiveBets(): Promise<void> {

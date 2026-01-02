@@ -9,7 +9,7 @@ import { createLogger } from './logger';
 
 const logger = createLogger('fileStorage');
 
-const DATA_ROOT = path.resolve(__dirname, '..', '..', 'data');
+const DATA_ROOT = path.resolve(__dirname, '..', 'data');
 
 export const RAW_DIR = path.join(DATA_ROOT, 'nfl_raw_live_stats');
 export const REFINED_DIR = path.join(DATA_ROOT, 'nfl_refined_live_stats');

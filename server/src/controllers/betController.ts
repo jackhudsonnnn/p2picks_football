@@ -12,7 +12,7 @@ import {
   pokeBet as pokeBetService,
   BetProposalError,
 } from '../services/bet/betProposalService';
-import { fetchModeConfig } from '../services/bet/modeConfig';
+import { fetchModeConfig } from '../utils/modeConfig';
 import { getRedisClient } from '../modes/shared/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
 

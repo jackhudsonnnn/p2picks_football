@@ -3,7 +3,7 @@
  * Transforms raw ESPN boxscore data into a normalized, usable format.
  */
 
-import { createLogger } from './logger';
+import { createLogger } from '../../utils/logger';
 import type { PlayerEntry } from './rosterService';
 
 const logger = createLogger('refinementService');

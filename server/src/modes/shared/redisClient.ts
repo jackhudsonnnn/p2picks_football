@@ -1,13 +1,13 @@
 import Redis from 'ioredis';
+import { REDIS_URL } from '../../constants/environment';
 
 let sharedRedis: Redis | null = null;
 
 function buildRedis(): Redis {
-  const url = process.env.REDIS_URL;
-  if (!url) {
+  if (!REDIS_URL) {
     throw new Error('[modes] REDIS_URL not configured; Redis is required for validator services');
   }
-  const client = new Redis(url);
+  const client = new Redis(REDIS_URL);
   client.on('error', (err: unknown) => {
     console.error('[modes] redis error', err);
   });

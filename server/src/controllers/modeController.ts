@@ -16,7 +16,7 @@ import {
   getModeConfigSession,
   setModeConfigGeneral,
 } from '../services/bet/configSessionService';
-import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../services/bet/modeConfig';
+import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../utils/modeConfig';
 import { BetProposal } from '../supabaseClient';
 
 export function listModes(_req: Request, res: Response) {

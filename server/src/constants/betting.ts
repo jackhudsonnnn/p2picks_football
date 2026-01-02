@@ -2,6 +2,9 @@
  * Betting-related constants shared across the application.
  */
 
+// Session configuration
+export const SESSION_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
 // Wager configuration
 export const WAGER_MIN = 0.25;
 export const WAGER_MAX = 5;
@@ -14,25 +17,14 @@ export const TIME_LIMIT_MAX = 120;
 export const TIME_LIMIT_STEP = 15;
 export const DEFAULT_TIME_LIMIT = 60;
 
-// Session configuration
-export const SESSION_TTL_MS = 15 * 60 * 1000; // 15 minutes
+// Generated choices for wagers
+export const WAGER_CHOICES = Array.from(
+    { length: Math.floor((WAGER_MAX - WAGER_MIN) / WAGER_STEP + 1e-9) + 1 },
+    (_, i) => Number((WAGER_MIN + i * WAGER_STEP).toFixed(2))
+  );
 
-// Generate choices arrays
-export function generateWagerChoices(): number[] {
-  const choices: number[] = [];
-  for (let value = WAGER_MIN; value <= WAGER_MAX + 1e-9; value += WAGER_STEP) {
-    choices.push(Number(value.toFixed(2)));
-  }
-  return choices;
-}
-
-export function generateTimeLimitChoices(): number[] {
-  const choices: number[] = [];
-  for (let value = TIME_LIMIT_MIN; value <= TIME_LIMIT_MAX; value += TIME_LIMIT_STEP) {
-    choices.push(value);
-  }
-  return choices;
-}
-
-export const WAGER_CHOICES = generateWagerChoices();
-export const TIME_LIMIT_CHOICES = generateTimeLimitChoices();
+// Generated choices for time limits
+export const TIME_LIMIT_CHOICES = Array.from(
+    { length: Math.floor((TIME_LIMIT_MAX - TIME_LIMIT_MIN) / TIME_LIMIT_STEP) + 1 },
+    (_, i) => TIME_LIMIT_MIN + i * TIME_LIMIT_STEP
+  );

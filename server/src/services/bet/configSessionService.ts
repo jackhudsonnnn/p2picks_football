@@ -8,16 +8,17 @@ import {
   getModeUserConfigSteps,
   type ModePreviewResult,
 } from './modeRuntimeService';
-
-const SESSION_TTL_MS = 15 * 60 * 1000;
-const WAGER_MIN = 0.25;
-const WAGER_MAX = 5;
-const WAGER_STEP = 0.25;
-const DEFAULT_WAGER = 0.25;
-const TIME_LIMIT_MIN = 30;
-const TIME_LIMIT_MAX = 120;
-const TIME_LIMIT_STEP = 15;
-const DEFAULT_TIME_LIMIT = 30;
+import {
+  SESSION_TTL_MS,
+  WAGER_MIN,
+  WAGER_MAX,
+  WAGER_STEP,
+  DEFAULT_WAGER,
+  TIME_LIMIT_MIN,
+  TIME_LIMIT_MAX,
+  TIME_LIMIT_STEP,
+  DEFAULT_TIME_LIMIT,
+} from '../../constants/betting';
 
 export type ModeConfigSessionStatus = 'mode_config' | 'general' | 'summary';
 

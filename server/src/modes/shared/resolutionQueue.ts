@@ -12,6 +12,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import type { ConnectionOptions } from 'bullmq';
 import { betRepository } from './betRepository';
 import { washBetWithHistory, type WashOptions } from './washService';
+import { REDIS_URL, RESOLUTION_QUEUE_CONCURRENCY } from '../../constants/environment';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -72,13 +73,12 @@ const DEFAULT_RETRY_ATTEMPTS = 3;
 const BACKOFF_DELAY_MS = 1000;
 
 function getRedisConnection(): ConnectionOptions {
-  const url = process.env.REDIS_URL;
-  if (!url) {
+  if (!REDIS_URL) {
     throw new Error('[resolutionQueue] REDIS_URL not configured');
   }
   
   // Parse Redis URL for BullMQ connection options
-  const parsed = new URL(url);
+  const parsed = new URL(REDIS_URL);
   return {
     host: parsed.hostname,
     port: parseInt(parsed.port || '6379', 10),
@@ -90,9 +90,8 @@ function getRedisConnection(): ConnectionOptions {
 }
 
 function getConcurrency(): number {
-  const raw = process.env.RESOLUTION_QUEUE_CONCURRENCY;
-  if (!raw) return DEFAULT_CONCURRENCY;
-  const parsed = parseInt(raw, 10);
+  if (!RESOLUTION_QUEUE_CONCURRENCY) return DEFAULT_CONCURRENCY;
+  const parsed = parseInt(RESOLUTION_QUEUE_CONCURRENCY, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_CONCURRENCY;
 }
 

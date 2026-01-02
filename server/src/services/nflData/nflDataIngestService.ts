@@ -7,8 +7,8 @@
  */
 
 import path from 'path';
-import { createLogger } from './logger';
-import { getLiveEvents, fetchBoxscore } from './espnClient';
+import { createLogger } from '../../utils/logger';
+import { getLiveEvents, fetchBoxscore } from '../../utils/espnClient';
 import { refineBoxscore } from './refinementService';
 import { loadRosterPlayers, updateRostersForGame } from './rosterService';
 import {
@@ -23,7 +23,13 @@ import {
   REFINED_DIR,
   TEST_DATA_DIR,
   ROSTERS_DIR,
-} from './fileStorage';
+} from '../../utils/fileStorage';
+import { 
+  NFL_DATA_REFINED_INTERVAL_SECONDS, 
+  NFL_DATA_RAW_INTERVAL_SECONDS, 
+  NFL_DATA_RAW_JITTER_PERCENT, 
+  NFL_DATA_TEST_MODE,
+ } from '../../constants/environment';
 
 const logger = createLogger('nflDataIngest');
 
@@ -31,16 +37,14 @@ interface IngestConfig {
   rawIntervalSeconds: number;
   rawJitterPercent: number;
   refinedIntervalSeconds: number;
-  testMode: TestMode;
+  testMode: string;
 }
 
-type TestMode = 'off' | 'raw' | 'refined';
-
 const DEFAULT_CONFIG: IngestConfig = {
-  rawIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_RAW_INTERVAL_SECONDS) || 20),
-  rawJitterPercent: Math.max(0, Number(process.env.NFL_DATA_RAW_JITTER_PERCENT) || 10),
-  refinedIntervalSeconds: clampInterval(Number(process.env.NFL_DATA_REFINED_INTERVAL_SECONDS) || 20),
-  testMode: parseTestMode(process.env.NFL_DATA_TEST_MODE),
+  rawIntervalSeconds: NFL_DATA_RAW_INTERVAL_SECONDS,
+  rawJitterPercent: NFL_DATA_RAW_JITTER_PERCENT,
+  refinedIntervalSeconds: NFL_DATA_REFINED_INTERVAL_SECONDS,
+  testMode: NFL_DATA_TEST_MODE,
 };
 
 const CLEANUP_CUTOFF_MINUTES = 30;
@@ -380,16 +384,4 @@ function jitterDelay(baseMs: number, jitterPercent: number): number {
   const low = Math.max(1000, baseMs - span);
   const high = baseMs + span;
   return Math.floor(low + Math.random() * (high - low));
-}
-
-function clampInterval(value: number): number {
-  if (!Number.isFinite(value)) return 60;
-  return Math.max(10, Math.min(300, value));
-}
-
-function parseTestMode(value: string | undefined): TestMode {
-  const normalized = String(value || '').trim().toLowerCase();
-  if (normalized === 'refined') return 'refined';
-  if (normalized === 'raw' || normalized === '1' || normalized === 'true') return 'raw';
-  return 'off';
 }

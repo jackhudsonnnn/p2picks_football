@@ -8,11 +8,11 @@ import { startNflDataIngestService } from './services/nflData/nflDataIngestServi
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
 import { startResolutionQueue, stopResolutionQueue } from './modes/shared/resolutionQueue';
 import { requireAuth } from './middleware/auth';
+import { PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, REDIS_URL, CORS_ALLOWED_ORIGINS } from './constants/environment';
 
 assertRequiredEnv();
 
 const app = express();
-const PORT = Number(process.env.PORT || 5001);
 
 const corsOptions: CorsOptions = buildCorsOptions();
 app.use(cors(corsOptions));
@@ -44,17 +44,17 @@ process.on('SIGINT', async () => {
 
 function assertRequiredEnv(): void {
   const missing: string[] = [];
-  if (!process.env.SUPABASE_URL) missing.push('SUPABASE_URL');
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
-  if (!process.env.SUPABASE_ANON_KEY) missing.push('SUPABASE_ANON_KEY');
-  if (!process.env.REDIS_URL) missing.push('REDIS_URL');
+  if (!SUPABASE_URL) missing.push('SUPABASE_URL');
+  if (!SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (!SUPABASE_ANON_KEY) missing.push('SUPABASE_ANON_KEY');
+  if (!REDIS_URL) missing.push('REDIS_URL');
   if (missing.length) {
     throw new Error(`Missing required environment variable(s): ${missing.join(', ')}`);
   }
 }
 
 function buildCorsOptions(): CorsOptions {
-  const allowedOrigins = resolveAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS);
+  const allowedOrigins = resolveAllowedOrigins(CORS_ALLOWED_ORIGINS);
   const allowAll = allowedOrigins.has('*');
 
   return {

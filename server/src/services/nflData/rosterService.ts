@@ -4,15 +4,16 @@
  */
 
 import path from 'path';
-import { createLogger } from './logger';
-import { fetchRoster } from './espnClient';
+import { createLogger } from '../../utils/logger';
+import { fetchRoster } from '../../utils/espnClient';
 import {
   ROSTERS_DIR,
   writeJsonAtomic,
   readJson,
   safeListFiles,
   getFileMtime,
-} from './fileStorage';
+} from '../../utils/fileStorage';
+import { NFL_ROSTER_REFRESH_SECONDS } from '../../constants/environment';
 
 const logger = createLogger('rosterService');
 
@@ -28,15 +29,11 @@ export interface PlayerEntry {
 /** In-memory cache of last roster refresh timestamps by team ID */
 const lastRosterRefresh = new Map<string, number>();
 
-/** Default refresh interval (24 hours) */
-const DEFAULT_ROSTER_REFRESH_SECONDS =
-  Number(process.env.NFL_DATA_ROSTER_REFRESH_SECONDS) || 24 * 60 * 60;
-
 /**
  * Check if a roster file is stale and needs refreshing.
  */
 export async function isRosterStale(teamId: string): Promise<boolean> {
-  const refreshInterval = DEFAULT_ROSTER_REFRESH_SECONDS * 1000;
+  const refreshInterval = NFL_ROSTER_REFRESH_SECONDS;
   const last = lastRosterRefresh.get(teamId);
   if (last && Date.now() - last < refreshInterval) {
     return false;

@@ -5013,7 +5013,7 @@
           }
         }
       ],
-      "possession": true
+      "possession": false
     },
     {
       "teamId": "2",
@@ -9941,7 +9941,7 @@
           }
         }
       ],
-      "possession": false
+      "possession": true
     }
   ]
 }

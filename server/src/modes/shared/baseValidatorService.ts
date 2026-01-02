@@ -12,7 +12,7 @@
 
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
-import { fetchModeConfig } from '../../services/bet/modeConfig';
+import { fetchModeConfig } from '../../utils/modeConfig';
 import { RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
@@ -21,6 +21,7 @@ import { RedisJsonStore } from './redisJsonStore';
 import { getRedisClient } from './redisClient';
 import type { GameFeedEvent } from '../../services/nflData/gameFeedService';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
+import { USE_RESOLUTION_QUEUE } from '../../constants/environment';
 
 export interface BaseValidatorConfig {
   /** Unique mode key (e.g., 'either_or', 'king_of_the_hill') */
@@ -58,7 +59,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       ? process.env[config.debugEnvVar] === '1' || process.env[config.debugEnvVar] === 'true'
       : false;
     // Default to using queue unless explicitly disabled
-    this.useQueue = config.useResolutionQueue ?? (process.env.USE_RESOLUTION_QUEUE !== '0');
+    this.useQueue = config.useResolutionQueue ?? (USE_RESOLUTION_QUEUE !== '0');
 
     const redis = getRedisClient();
     this.store = new RedisJsonStore<TStore>(

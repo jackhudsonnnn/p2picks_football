@@ -11,14 +11,10 @@ import {
   buildProgressModeStep,
   getDefaultProgressPatch,
   filterPlayersByStatPosition,
-  normalizeProgressMode,
 } from '../../shared/userConfigBuilder';
 import { prepareValidPlayers } from '../../shared/playerUtils';
 import type { PlayerRef } from '../../shared/playerStatUtils';
 import {
-  KING_OF_THE_HILL_ALLOWED_RESOLVE_VALUES,
-  KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
-  KING_OF_THE_HILL_MAX_RESOLVE_VALUE,
   KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
   KING_OF_THE_HILL_STAT_KEY_LABELS,
   KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
