@@ -51,7 +51,7 @@ export const ProfileCard: React.FC = () => {
 
   return (
     <>
-      <section className="profile-section">
+      <section className="profile-container">
         {loading ? (
           <>
             <div>Loading profile...</div>
@@ -73,7 +73,7 @@ export const ProfileCard: React.FC = () => {
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               placeholder={
-                profile.username ? "Enter new username" : "Create a Username"
+                profile.username ? "New username" : "Create a Username"
               }
               className={`profile-input ${
                 showInvalid ? "profile-input-invalid" : ""
@@ -89,7 +89,7 @@ export const ProfileCard: React.FC = () => {
                 className="btn-primary save-btn"
                 disabled={updating || !isUsernameValid}
               >
-                {updating ? "Saving..." : "Confirm"}
+                {updating ? "Saving..." : "Save"}
               </button>
             </div>
           </form>

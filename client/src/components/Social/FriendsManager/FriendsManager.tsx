@@ -92,7 +92,7 @@ export const FriendsManager: React.FC = () => {
             onChange={(v: string) =>
               setFriendUsernameToAdd(v.replace(/[^a-zA-Z0-9_]/g, ""))
             }
-            placeholder="Enter username"
+            placeholder="Add friend"
             inputClassName="profile-input"
             ariaLabel="Friend username input"
             className="add-friend-search"

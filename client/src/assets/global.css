@@ -5,6 +5,8 @@
   --primary-500: hsl(207, 90%, 54%);  
   --primary-700: hsl(212, 80%, 42%);
   --primary-900: hsl(216, 85%, 34%);
+  --primary-1000: hsl(218, 90%, 28%);
+
 
   /* Neutrals - Dark mode focused */
   --neutral-100: hsl(210, 40%, 98%);
@@ -20,6 +22,7 @@
   --neutral-1000: hsl(223, 45%, 9%);
 
   /* Accent Colors - Sports themes */
+  --accent-hover: hsl(144, 100%, 33%); 
   --accent-victory: hsl(145, 100%, 39%);
   --accent-energy: hsl(42, 100%, 50%);
   --accent-power: hsl(4, 90%, 58%);
@@ -32,6 +35,7 @@
   --primary-transparent: hsla(207, 90%, 54%, 0.15);
   --secondary-transparent: hsla(209, 100%, 69%, 0.15);
   --dark-transparent: hsla(0, 0%, 0%, 0.65);
+  --transparent: hsla(0, 0%, 100%, 0);
 
   /* Semantic Colors */
   --success: var(--accent-victory);
@@ -79,24 +83,20 @@
   --shadow-power: 0 0 15px hsla(4, 90%, 58%, 0.3);
   
   /* Transitions */
+  --transition: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition: var(--transition-normal);
+  --transtion-slow: 600ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Primary Colors */
   --primary: var(--primary-700);
   --primary-light: var(--primary-500);
   --primary-dark: var(--primary-900);
 
-  /* Accent Colors */
-  --accent: var(--accent-victory);
-  --accent-hover: hsl(144, 100%, 33%); 
-
   /* Background Colors */
   --bg-dark: var(--neutral-900);
   --bg-darker: var(--neutral-1000);
-  --bg-surface: var(--neutral-800);
-  --bg-surface-secondary: var(--neutral-700);
+  --bg-surface: var(--neutral-850);
+  --bg-surface-secondary: var(--neutral-800);
 
   /* Grey Scale Aliases */
   --grey-100: var(--neutral-100);
@@ -105,22 +105,46 @@
   --grey-800: var(--neutral-700);
 
   /* Text Colors */
-  --text-light: var(--neutral-100);
-  --text-secondary: hsla(210, 40%, 98%, 0.7);
+  --text-light: hsl(206, 100%, 95%);
+  --text-secondary: hsl(205, 20%, 78%);
+  --text-blue: var(--primary-500);
 
   /* Spacing Aliases */
+  --spacing-xs: var(--space-xs);
   --spacing-sm: var(--space-sm);
   --spacing-md: var(--space-md);
   --spacing-lg: var(--space-xl);
   --spacing-xl: var(--space-3xl);
   --spacing-xxl: 6rem;
-  
-  /* Breakpoints */
-  --breakpoint-xs: 480px;
-  --breakpoint-sm: 576px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 992px;
-  --breakpoint-xl: 1200px;
+
+  /* Button Styles */
+  --btn-primary-bg: var(--primary-700);
+  --btn-primary-hover-bg: var(--primary-500);
+  --btn-primary-disabled-bg: var(--neutral-600);
+  --btn-primary-text: var(--text-light);
+  --btn-primary-border: 1px solid var(--primary-500);
+  --btn-primary-hover-border: 1px solid var(--primary-700);
+  --btn-primary-disabled-border: 1px solid var(--neutral-500);
+
+  --btn-secondary-bg: var(--neutral-700);
+  --btn-secondary-hover-bg: var(--neutral-500);
+  --btn-secondary-disabled-bg: var(--neutral-600);
+  --btn-secondary-text: var(--text-light);
+  --btn-secondary-border: 1px solid var(--neutral-500);
+  --btn-secondary-hover-border: 1px solid var(--neutral-700);
+  --btn-secondary-disabled-border: 1px solid var(--neutral-500);
+
+  /* Container Styles */
+  --container-bg: var(--neutral-850);
+  --container-border: 1px solid var(--neutral-700);
+  --container-radius: var(--radius-md);
+
+  --container-secondary-bg: var(--neutral-800);
+
+  /* Card Styles */
+  --card-bg: var(--neutral-700);
+  --card-border: 1px solid var(--neutral-600);
+  --card-radius: var(--radius-md);
 }
 
 /* Global Resets */
@@ -133,13 +157,22 @@
 }
 
 /* Base Styles */
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none; 
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 body {
-  background-color: var(--bg-dark);
-  margin-top: 60px;
+  min-width: 320px;
+  background-color: var(--bg-darker);
   color: var(--text-light);
   line-height: 1.6;
-  padding-bottom: 20px;
-  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 html, body {
@@ -147,36 +180,9 @@ html, body {
 }
 
 body, body * {
-font-family: monospace, Tahoma, sans-serif !important;
-}
-
-h1, h2, h3 {
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  margin-bottom: var(--spacing-md);
-}
-
-h1 { font-size: 2.25rem; }
-h2 { font-size: 1.875rem; }
-h3 { font-size: 1.5rem; }
-
-p, span {
-  color: var(--text-secondary);
+  font-family: var(--font-family), Tahoma, sans-serif !important;
 }
 
 a {
-  color: var(--accent);
   text-decoration: none;
-  transition: color var(--transition-normal);
-}
-
-a:hover {
-  color: var(--accent-hover);
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.75rem; }
-  h3 { font-size: 1.5rem; }
 }

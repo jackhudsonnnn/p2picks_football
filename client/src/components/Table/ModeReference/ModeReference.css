@@ -6,6 +6,8 @@
   padding: var(--spacing-lg);
   gap: var(--spacing-lg);
   height: calc(75vh - 85px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--neutral-600) var(--transparent);
 }
 
 .mode-reference__status {
@@ -54,17 +56,12 @@
   border: 1px solid var(--neutral-700);
   cursor: pointer;
   transition: border-color var(--transition), background-color var(--transition), transform var(--transition);
-}
-
-.mode-card:focus-visible {
-  outline: 2px solid var(--accent-energy);
-  outline-offset: 2px;
+  margin: var(--spacing-xs) var(--spacing-md);
 }
 
 .mode-card:hover {
   border-color: var(--accent-energy);
   background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-1px);
 }
 
 .mode-card.is-expanded {
@@ -78,15 +75,15 @@
   gap: var(--spacing-xs);
 }
 
-.mode-card__header h2 {
+.mode-card__title {
   margin: 0;
   font-size: var(--font-size-lg);
-  color: var(--success);
+  color: var(--text-blue);
 }
 
 .mode-card__tag {
   margin: 0;
-  color: var(--accent-energy);
+  color: var(--text-secondary);
   font-size: var(--font-size-sm);
 }
 
@@ -113,7 +110,7 @@
   font-size: var(--font-size-sm);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--accent-energy);
+  color: var(--text-blue);
 }
 
 .mode-card__section ul {
@@ -142,7 +139,7 @@
     gap: var(--spacing-sm);
   }
 
-.mode-reference__grid {
-  gap: var(--spacing-sm);
-}
+  .mode-reference__grid {
+    gap: var(--spacing-sm);
+  }
 }

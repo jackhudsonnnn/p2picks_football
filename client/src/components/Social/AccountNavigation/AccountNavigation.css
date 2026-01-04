@@ -26,10 +26,8 @@
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-md);
   cursor: pointer;
-  position: relative;
   transition: color var(--transition);
   white-space: nowrap;
-  border-radius: var(--radius-sm);
 }
 
 .account-tab-button:hover,
@@ -40,17 +38,6 @@
 
 .account-tab-button.active {
   color: var(--text-light);
-}
-
-.account-tab-button.active::after {
-  content: "";
-  position: absolute;
-  left: var(--spacing-xs);
-  right: var(--spacing-xs);
-  bottom: -var(--spacing-xs);
-  height: 2px;
-  background-color: var(--primary-500);
-  border-radius: var(--radius-full);
 }
 
 @media (max-width: 385px) {

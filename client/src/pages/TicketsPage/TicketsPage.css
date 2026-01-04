@@ -5,9 +5,9 @@
 }
 
 .tickets-page-container {
-  background-color: var(--neutral-800);
-  border: 1px solid var(--neutral-700);
-  border-radius: var(--radius-md);
+  background-color: var(--container-bg);
+  border: var(--container-border);
+  border-radius: var(--container-radius);
   padding: var(--space-xl, var(--spacing-lg));
   display: flex;
   flex-direction: column;

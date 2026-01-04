@@ -19,21 +19,6 @@
   gap: var(--spacing-md);
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--neutral-700);
-  scrollbar-width: thin;
-  scrollbar-color: var(--neutral-600) var(--neutral-800);
-}
-
-.messages-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.messages-container::-webkit-scrollbar-track {
-  background: var(--neutral-800);
-}
-
-.messages-container::-webkit-scrollbar-thumb {
-  background-color: var(--neutral-600);
-  border-radius: 20px;
 }
 
 .message-input-container {
@@ -41,7 +26,7 @@
   padding: var(--spacing-md);
   gap: var(--spacing-sm);
   border-top: 1px solid var(--neutral-700);
-  background-color: var(--neutral-850);
+  background-color: var(--bg-surface-secondary);
 }
 
 .message-input {
@@ -62,7 +47,7 @@
 }
 
 .send-button {
-  background-color: var(--primary);
+  background-color: var(--btn-primary-bg);
   color: var(--text-light);
   border: none;
   padding: var(--spacing-sm) var(--spacing-md);
@@ -73,17 +58,17 @@
 }
 
 .send-button:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--btn-primary-hover-bg);
 }
 
 .send-button:disabled {
-  background-color: var(--neutral-700);
+  background-color: var(--btn-primary-disabled-bg);
   cursor: not-allowed;
 }
 
 .place-bet-button {
-  background-color: var(--accent-energy);
-  color: var(--neutral-900);
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   border: none;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
@@ -93,7 +78,7 @@
 }
 
 .place-bet-button:hover {
-  background-color: var(--accent-energy-dark);
+  background-color: var(--btn-primary-hover-bg);
 }
 
 .message-group {

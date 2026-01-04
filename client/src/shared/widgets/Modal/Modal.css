@@ -24,7 +24,7 @@
 }
 
 .modal-panel {
-  background-color: var(--bg-dark);
+  background-color: var(--bg-darker);
   border-radius: inherit;
   width: 100%;
   max-height: 100%;

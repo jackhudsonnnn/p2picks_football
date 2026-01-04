@@ -15,7 +15,7 @@ export interface HostControlsMember { user_id: string; username: string; balance
 
 interface HostControlsProps {
   tableId: string;
-  members: HostControlsMember[]; // passed from parent (already subscribed)
+  members: HostControlsMember[];
   currentUserId: string;
 }
 
@@ -80,16 +80,14 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
 
   return (
     <section className="host-controls-container" aria-label="Host controls">
-      <div className="host-controls-panel">
-        <header className="controls-header">
-          <span>Host Controls</span>
-        </header>
-        <div className="host-actions">
-          <div className="action-buttons">
-            <button className="action-button" onClick={() => setShowAdd(true)} type="button">Add Members</button>
-            <button className="action-button" onClick={() => setShowRemove(true)} type="button">Remove Members</button>
-            <button className="action-button" onClick={handleOpenSettlement} type="button">Settle Table Balances</button>
-          </div>
+      <header className="controls-header">
+        <span>Host Controls</span>
+      </header>
+      <div className="host-actions">
+        <div className="action-buttons">
+          <button className="action-button" onClick={() => setShowAdd(true)} type="button">Add Members</button>
+          <button className="action-button" onClick={() => setShowRemove(true)} type="button">Remove Members</button>
+          <button className="action-button" onClick={handleOpenSettlement} type="button">Settle Table Balances</button>
         </div>
       </div>
       <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add Members">

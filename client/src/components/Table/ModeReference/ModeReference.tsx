@@ -71,7 +71,7 @@ export const ModeReference: React.FC<ModeReferenceProps> = ({ overviews, loading
             onKeyDown={(event) => handleKeyToggle(event, overview.key)}
           >
             <header className="mode-card__header">
-              <h2>{overview.label}</h2>
+              <h2 className="mode-card__title">{overview.label}</h2>
               <p className="mode-card__tag">{overview.tagline}</p>
             </header>
             {expandedKeys.has(overview.key) && (

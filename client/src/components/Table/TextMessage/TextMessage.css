@@ -4,43 +4,40 @@
   width: fit-content;
   margin-bottom: var(--spacing-sm);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .message.own-message {
-  background-color: #192746;
+  /* Not a button, but keeps message color consistent */
+  background-color: var(--primary-1000);
+  border: 1px solid var(--primary-900);
+  color: var(--text-light);
   align-self: flex-end;
 }
 
 .message.other-message {
   background-color: var(--neutral-700);
+  border: 1px solid var(--neutral-500);
   align-self: flex-start;
 }
 
 .message.system {
+  background-color: var(--container-secondary-bg);
+  border: var(--container-border);
+  border-radius: var(--radius-md);
   align-self: center;
   margin-left: auto;
   margin-right: auto;
-  border: 1px solid rgba(0, 0, 0, 0.25);
-}
-
-.system-message {
   text-align: center;
   color: var(--text-secondary);
   font-size: var(--font-size-xl);
-  margin: var(--spacing-xs) 0;
-  background-color: var(--neutral-850);
   padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
   display: inline-block;
   white-space: pre-wrap;
-  border: 1px solid rgb(0, 0, 0);
 }
 
 .chat-message {
   border-radius: var(--radius-md);
   padding: var(--spacing-sm) var(--spacing-md);
-  box-shadow: var(--shadow-sm);
   word-break: break-word;
 }
 
@@ -63,13 +60,10 @@
 }
 
 @media (max-width: 600px) {
-  .message-text {
-    font-size: var(--font-size-md) !important;
+  .message-text, .message.system {
+    font-size: var(--font-size-md);
   }
-
-  .system-message {
-    font-size: var(--font-size-md) !important;
-  }
+  
   .bet-actions.bet-actions-flex-end {
     align-items: stretch;
     min-width: 0;

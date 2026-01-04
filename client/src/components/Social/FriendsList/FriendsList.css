@@ -5,7 +5,7 @@
   height: 30vh;
   overflow-y: auto;
   padding: var(--space-sm, 8px);
-  background: var(--neutral-700);
+  background: var(--bg-surface-secondary);
   border: 1px solid var(--neutral-600);
   border-radius: var(--radius-md, 8px);
   scrollbar-width: thin;
@@ -19,23 +19,22 @@
 }
 
 .friend-row {
+  background-color: var(--btn-secondary-bg);
+  border: var(--btn-secondary-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--space-sm, 8px) var(--space-md, 12px);
   border-radius: var(--radius-sm, 6px);
-  background: var(--neutral-600);
   gap: var(--space-md, 12px);
   transition: background-color 0.25s ease, box-shadow 0.25s ease,
     transform 0.15s ease;
   text-align: left;
 }
 
-.friend-row:nth-child(odd) {
-  background: var(--neutral-500);
-}
-.friend-row:nth-child(even) {
-  background: var(--neutral-600);
+.friend-row:hover {
+  background-color: var(--btn-secondary-hover-bg);
+  border: var(--btn-secondary-hover-border);
 }
 
 .friend-row-info {
@@ -55,22 +54,13 @@
 }
 
 .friend-row-username {
-  color: var(--neutral-100);
+  color: var(--text-light);
   font-weight: 500;
 }
 
 .friends-list-shared.selectable .friend-row.action {
   cursor: pointer;
   border: 1px solid transparent;
-}
-
-.friends-list-shared.selectable
-  .friend-row.action:not(.selected):nth-child(odd) {
-  background: var(--neutral-850);
-}
-.friends-list-shared.selectable
-  .friend-row.action:not(.selected):nth-child(even) {
-  background: var(--neutral-800);
 }
 
 .friend-row-symbol {
@@ -87,50 +77,6 @@
   height: 20px;
 }
 
-.friend-row.action:hover .friend-row-symbol {
-  transform: scale(1.15);
-}
-.friend-row.action:hover .friend-row-symbol.remove {
-  color: var(--accent-power);
-}
-.friend-row.action:hover .friend-row-symbol.add {
-  color: var(--accent-victory);
-}
-
-.friends-list-shared.selectable
-  .friend-row.action.selected
-  .friend-row-symbol.remove,
-.friends-list-shared.selectable
-  .friend-row.action[aria-pressed="true"]
-  .friend-row-symbol.remove {
-  transform: scale(1.45);
-  color: var(--accent-power);
-  opacity: 1;
-}
-.friends-list-shared.selectable
-  .friend-row.action.selected
-  .friend-row-symbol.add,
-.friends-list-shared.selectable
-  .friend-row.action[aria-pressed="true"]
-  .friend-row-symbol.add {
-  transform: scale(1.45);
-  color: var(--accent-victory);
-  opacity: 1;
-}
-
-.friends-list-shared.selectable .friend-row.action.selected .friend-row-avatar,
-.friends-list-shared.selectable
-  .friend-row.action[aria-pressed="true"]
-  .friend-row-avatar {
-  transform: scale(1.06);
-  border-color: var(--accent-power);
-}
-
-.friend-row.action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 @media (max-width: 480px) {
   .friend-row {
     padding: 6px 10px;
@@ -142,15 +88,4 @@
   .friend-row-symbol {
     font-size: 1rem;
   }
-}
-
-.friends-list-shared::-webkit-scrollbar {
-  width: 6px;
-}
-.friends-list-shared::-webkit-scrollbar-track {
-  background: var(--neutral-800);
-}
-.friends-list-shared::-webkit-scrollbar-thumb {
-  background-color: var(--neutral-600);
-  border-radius: 20px;
 }

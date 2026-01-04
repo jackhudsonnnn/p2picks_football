@@ -1,9 +1,9 @@
 .navbar {
-  position: fixed;
+  position: top;
   top: 0;
   left: 0;
   right: 0;
-  background-color: var(--neutral-800);
+  background-color: var(--bg-surface);
   z-index: 1000;
   height: 60px;
 }
@@ -21,8 +21,13 @@
 .navbar-logo {
   font-size: var(--font-size-xl);
   font-weight: 700;
-  color: var(--primary-500);
+  color: var(--btn-primary-bg);
   margin-right: var(--space-xl);
+  transition: color var(--transition);
+}
+
+.navbar-logo:hover {
+  color: var(--btn-primary-hover-bg);
 }
 
 .navbar-menu {
@@ -64,20 +69,20 @@
 }
 
 .btn-sign-out {
-  background-color: transparent;
-  border: 1px solid var(--neutral-600);
+  background-color: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
   color: var(--text-light);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
-  cursor: pointer;
   font-size: var(--font-size-sm);
-  font-weight: 800;
-  transition: all var(--transition-normal);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition);
 }
 
 .btn-sign-out:hover {
-  background-color: var(--neutral-700);
-  border-color: var(--neutral-500);
+  background-color: var(--btn-primary-hover-bg);
+  border: var(--btn-primary-hover-border);
 }
 
 @media (max-width: 630px) {  
@@ -126,7 +131,6 @@
   .btn-sign-out {
     padding: var(--space-sm);
     font-size: var(--font-size-sm);
-    border-radius: var(--radius-sm);
   }
 }
 

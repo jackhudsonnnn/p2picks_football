@@ -6,9 +6,9 @@
 }
 
 .members-list {
-  background-color: var(--neutral-700);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--neutral-700);
+  background-color: var(--container-bg);
+  border: var(--container-border);
+  border-radius: var(--container-radius);
   display: flex;
   flex-direction: column;
   flex: 0 1 auto; 
@@ -16,21 +16,6 @@
   height: calc(82.5vh - 145px);
   padding: var(--space-sm, 8px);
   gap: var(--space-sm, 8px);
-  scrollbar-width: thin;
-  scrollbar-color: var(--neutral-600) var(--neutral-800);
-}
-
-.members-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.members-list::-webkit-scrollbar-track {
-  background: var(--neutral-800);
-}
-
-.members-list::-webkit-scrollbar-thumb {
-  background-color: var(--neutral-600);
-  border-radius: 20px;
 }
 
 .member-row {
@@ -40,7 +25,7 @@
   padding: 10px 28px 10px 18px;
   transition: background-color var(--transition);
   font-size: 0.97em;
-  background: var(--neutral-800);
+  background-color: var(--btn-secondary-bg);
   gap: 8px;
   min-height: 48px;
   border-radius: 6px;
@@ -51,16 +36,12 @@
 }
 
 .member-row-clickable:hover {
-  background-color: var(--neutral-500);
+  background-color: var(--btn-primary-hover-bg);
 }
 
 .member-row-busy {
   opacity: 0.6;
   pointer-events: none;
-}
-
-.member-row-alt {
-  background-color: var(--neutral-850);
 }
 
 .member-row:last-child {
@@ -78,7 +59,7 @@
 .member-avatar {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--accent-focus) 60%, var(--accent) 100%);
+  background: linear-gradient(135deg, var(--accent-focus) 60%, var(--accent-victory) 100%);
   color: #fff;
   border-radius: 50%;
   font-weight: 700;
@@ -97,7 +78,6 @@
   align-items: center;
   gap: 8px;
   overflow: hidden;
-  text-overflow: ellipsis;
   min-width: 0;
   max-width: 180px;
   font-size: 1em;
@@ -114,41 +94,6 @@
   color: var(--text-primary);
 }
 
-.host-badge, .you-badge {
-  font-size: 0.72em;
-  padding: 2px 7px 2px 5px;
-  border-radius: 10px;
-  font-weight: 500;
-  white-space: nowrap;
-  margin-left: 4px;
-  opacity: 0.92;
-  border-width: 1.5px;
-  border-style: solid;
-  background-clip: padding-box;
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.03);
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.host-badge {
-  background-color: rgba(61, 90, 254, 0.13);
-  color: var(--accent-focus);
-  border-color: rgba(61, 90, 254, 0.22);
-}
-
-.you-badge {
-  background-color: rgba(248, 250, 252, 0.13);
-  color: var(--text-light);
-  border-color: rgba(248, 250, 252, 0.18);
-}
-
-.badge-icon {
-  margin-right: 2px;
-  vertical-align: middle;
-  opacity: 0.85;
-}
-
 .member-balance {
   font-weight: 600;
   white-space: nowrap;
@@ -158,7 +103,6 @@
   align-items: center;
   justify-content: flex-end;
   min-width: 110px;
-  font-family: "JetBrains Mono", "Fira Mono", "Menlo", "monospace";
 }
 
 .member-balance .balance-badge {

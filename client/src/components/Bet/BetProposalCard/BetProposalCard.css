@@ -8,16 +8,13 @@
     "footer footer";
   grid-template-columns: 1fr auto;
   gap: var(--spacing-sm);
-  background: var(--neutral-850);
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: var(--container-secondary-bg);
+  border: var(--container-border);
   border-left: 4px solid var(--accent-victory);
-  border-radius: var(--radius-md);
+  border-radius: var(--container-radius);
   padding: var(--spacing-md);
   margin: var(--spacing-sm) auto var(--spacing-md);
-  width: min(520px, 100%);
-  box-sizing: border-box;
-  box-shadow: var(--shadow-sm);
-  transition: background var(--transition), border-color var(--transition);
+  width: 85%;
   font-size: var(--font-size-sm);
 }
 

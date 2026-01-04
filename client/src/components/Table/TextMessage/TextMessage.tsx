@@ -19,7 +19,7 @@ export const TextMessage: React.FC<TextMessageProps> = ({ message, isOwnMessage,
   return (
     <div className={`message ${message.type} ${isOwnMessage ? "own-message" : "other-message"}`}>
       {message.type === "system" ? (
-        <div className="system-message">{message.text}</div>
+        <div>{message.text}</div>
       ) : (
         <div className="chat-message">
           <div className="message-header">
