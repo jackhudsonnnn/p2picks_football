@@ -9,7 +9,7 @@
   align-items: center;
   z-index: 1000;
   backdrop-filter: blur(5px);
-  background-color: var(--dark-transparent);
+  background-color: var(--light-transparent);
 }
 
 .modal-content {
@@ -24,7 +24,7 @@
 }
 
 .modal-panel {
-  background-color: var(--container-bg);
+  background-color: var(--bg-darker);
   border-radius: inherit;
   width: 100%;
   max-height: 100%;
@@ -34,12 +34,12 @@
 }
 
 .modal-header {
+  /* TODO change to scrollable fixed height */
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--neutral-700);
-  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -73,13 +73,12 @@
 }
 
 .modal-body-inner {
-  background: var(--card-bg);
+  background: var(--container-bg);
   padding: var(--spacing-md);
-  box-sizing: border-box;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
+  max-height: 50vh;
+  overflow: scroll;
   width: 100%;
-  max-width: var(--modal-inner-max-width, 520px);
-  margin: 0 auto;
 }
 
 .modal-footer {

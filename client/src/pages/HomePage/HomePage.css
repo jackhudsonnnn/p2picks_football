@@ -1,16 +1,16 @@
 .hero-section {
   text-align: center;
-  padding: var(--space-md);
+  padding: var(--spacing-md);
 }
 
 .hero-title {
   font-size: var(--font-size-3xl);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .hero-subtitle {
   max-width: 600px;
-  margin: 0 auto var(--space-sm);
+  margin: 0 auto var(--spacing-sm);
   font-size: var(--font-size-md);
   color: var(--neutral-300);
   text-align: center;
@@ -23,7 +23,7 @@
   border: var(--container-border);
   border-radius: var(--container-radius);
   margin: 0 var(--spacing-md);  
-  padding: 0 var(--space-md);
+  padding: 0 var(--spacing-md);
   max-height: calc(80vh - 200px);
   overflow: hidden;
   position: relative;
@@ -37,7 +37,7 @@
 .teaser-track {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--spacing-md);
   animation: teaser-scroll 56s linear infinite;
   will-change: transform;
 }
@@ -56,12 +56,12 @@
   background-color: var(--card-bg);
   border-radius: var(--card-radius);
   border: var(--card-border);
-  padding: var(--space-lg);
+  padding: var(--spacing-lg);
 }
 
 .teaser-title {
   color: var(--text-blue);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--spacing-sm);
   font-size: var(--font-size-xl);
 }
 
@@ -76,7 +76,7 @@
   }
 
   .hero-section {
-    padding: var(--space-md) var(--space-sm);
+    padding: var(--spacing-md) var(--spacing-sm);
   }
 
   .hero-subtitle {

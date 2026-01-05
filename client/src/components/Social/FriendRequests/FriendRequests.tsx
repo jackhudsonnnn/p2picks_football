@@ -4,6 +4,7 @@ import { useAuthProfile, useFriendRequests, useFriends } from "@features/social/
 import { SearchBar } from "@shared/widgets/SearchBar/SearchBar";
 import { UserList, type UserItem, type UserActionProps } from "@components/Social/UserList/UserList";
 import { useDialog } from "@shared/hooks/useDialog";
+import CheckIcon from "@shared/widgets/icons/CheckIcon";
 import "./FriendRequests.css";
 
 type RequestAction = "accept" | "decline" | "cancel";
@@ -12,17 +13,34 @@ interface RequestActionComponentProps extends UserActionProps {
   onAction: (requestId: string, username: string) => void;
 }
 
-const RequestActionButton: React.FC<RequestActionComponentProps> = ({ user, disabled, onAction }) => (
-  <button
-    type="button"
-    className="user-action-button request"
-    onClick={() => onAction(user.id, user.username)}
-    disabled={disabled}
-    aria-label={`Respond to request from ${user.username}`}
-  >
-    Respond
-  </button>
-);
+const RequestActionIcon: React.FC<RequestActionComponentProps> = ({ user, disabled, onAction }) => {
+  const handleActivate = () => {
+    if (disabled) return;
+    onAction(user.id, user.username);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleActivate();
+    }
+  };
+
+  return (
+    <span
+      className="user-action-icon request"
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      onClick={handleActivate}
+      onKeyDown={onKeyDown}
+      aria-label={`Respond to request from ${user.username}`}
+      aria-disabled={disabled || undefined}
+    >
+      <CheckIcon className={disabled ? "icon-disabled" : ""} title={`Respond to ${user.username}`} />
+    </span>
+  );
+};
 
 export const FriendRequests: React.FC = () => {
   const { user } = useAuth();
@@ -72,14 +90,14 @@ export const FriendRequests: React.FC = () => {
   }, [showConfirm, handleAction]);
 
   const ActionComponent = useCallback(
-    (props: UserActionProps) => <RequestActionButton {...props} onAction={handleRequestClick} />,
+    (props: UserActionProps) => <RequestActionIcon {...props} onAction={handleRequestClick} />,
     [handleRequestClick]
   );
 
   if (!user || !profile) return null;
 
   return (
-    <section className="profile-section">
+    <section className="friends-requests-container">
       <div>
         <SearchBar
           value={searchTerm}

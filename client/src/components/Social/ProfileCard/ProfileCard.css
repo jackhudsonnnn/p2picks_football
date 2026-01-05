@@ -2,17 +2,17 @@
     background-color: var(--container-bg);
     border: var(--container-border);
     border-radius: var(--container-radius);
-    padding: var(--space-xl);
+    padding: var(--spacing-xl);
     height: calc(85vh - 130px);
     overflow: scroll;
 }
 
 .username-section { 
-    margin-bottom: var(--space-xl); 
+    margin-bottom: var(--spacing-xl); 
 }
 
 .current-username { 
-    margin-bottom: var(--space-md); 
+    margin-bottom: var(--spacing-md); 
 }
 
 .change-username-label {
@@ -21,8 +21,8 @@
 
 .username-form { 
     display: flex; 
-    gap: var(--space-md); 
-    margin-top: var(--space-md); 
+    gap: var(--spacing-md); 
+    margin-top: var(--spacing-md); 
 }
 
 .profile-input { 
@@ -55,11 +55,11 @@
 
 .form-buttons { 
     display: flex; 
-    gap: var(--space-md); 
+    gap: var(--spacing-md); 
 }
 
 .username-hint {
-    margin-top: var(--space-sm);
+    margin-top: var(--spacing-sm);
     font-size: var(--font-size-sm);
     color: var(--neutral-400);
 }
@@ -89,10 +89,10 @@
 
 @media (max-width: 768px) { 
     .username-form { 
-        gap: var(--space-sm); 
+        gap: var(--spacing-sm); 
     }
 
     .form-buttons {
-        gap: var(--space-sm);
+        gap: var(--spacing-sm);
     }
 }

@@ -1,7 +1,16 @@
+.friends-manager-container {
+    background-color: var(--container-bg);
+    border: var(--container-border);
+    border-radius: var(--container-radius);
+    padding: var(--spacing-xl);
+    height: calc(85vh - 130px);
+    overflow: scroll;
+}
+
 .add-friend-form { 
     display:flex; 
-    gap: var(--space-sm); 
-    margin-top: var(--space-md); 
+    gap: var(--spacing-sm); 
+    margin-top: var(--spacing-md); 
     align-items: stretch; 
 }
 
@@ -12,7 +21,7 @@
 .add-friend-form .profile-input {
     height: 40px;
     box-sizing: border-box;
-    padding: var(--space-xs) var(--space-md);
+    padding: var(--spacing-xs) var(--spacing-md);
     border-radius: var(--radius-md);
 }
 
@@ -21,17 +30,21 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 var(--space-md);
+    padding: 0 var(--spacing-md);
 }
 
 .user-action-button {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: var(--space-xs);
+  padding: var(--spacing-xs);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--neutral-300);
   transition: color 0.2s ease, transform 0.18s ease;
+}
+
+.friends-search-bar {
+    margin-top: var(--spacing-sm);
 }

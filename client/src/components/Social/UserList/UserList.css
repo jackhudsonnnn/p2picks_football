@@ -1,19 +1,19 @@
 .user-list {
+  background: var(--card-bg);
+  border: 1px solid var(--neutral-600);
+  border-radius: var(--card-radius);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm, 8px);
+  gap: var(--spacing-sm);
   height: 30vh;
   overflow-y: auto;
-  padding: var(--space-sm, 8px);
-  background: var(--bg-surface-secondary);
-  border: 1px solid var(--neutral-600);
-  border-radius: var(--radius-md, 8px);
+  padding: var(--spacing-sm);
 }
 
 .user-list.empty {
-  color: var(--neutral-400);
-  font-size: 0.9rem;
   text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
 }
 
 .user-row {
@@ -24,33 +24,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-sm, 8px) var(--space-md, 12px);
-  gap: var(--space-md, 12px);
+  padding: var(--spacing-sm) var(--spacing-md);
+  gap: var(--spacing-md);
   text-align: left;
   width: 100%;
   cursor: default;
   color: inherit;
+  cursor: pointer
 }
 
-.user-row.clickable {
-  cursor: pointer;
-}
-
-.user-row:hover:not(:disabled),
-.user-row:focus-visible:not(:disabled) {
+.user-row:hover {
   background-color: var(--btn-primary-hover-bg);
   border: var(--btn-primary-hover-border);
-}
-
-.user-row:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .user-row-info {
   display: flex;
   align-items: center;
-  gap: var(--space-md, 12px);
+  gap: var(--spacing-md);
 }
 
 .user-row-avatar,
@@ -60,7 +51,7 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--neutral-700);
-  transition: border-color 0.3s ease, transform 0.3s ease;
+  transition: all var(--transition);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -74,12 +65,12 @@
 .user-row-action {
   display: flex;
   align-items: center;
-  gap: var(--space-sm, 8px);
+  gap: var(--spacing-sm);
 }
 
 @media (max-width: 480px) {
   .user-row {
-    padding: 6px 10px;
+    padding: var(--spacing-xs) var(--spacing-md);
   }
   .user-row-avatar,
   .user-avatar {

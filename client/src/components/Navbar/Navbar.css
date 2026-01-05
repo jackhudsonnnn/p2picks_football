@@ -14,7 +14,7 @@
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--space-lg);
+  padding: 0 var(--spacing-lg);
   height: 100%;
 }
 
@@ -22,7 +22,7 @@
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--btn-primary-bg);
-  margin-right: var(--space-xl);
+  margin-right: var(--spacing-xl);
   transition: color var(--transition);
 }
 
@@ -39,7 +39,7 @@
 
 .navbar-links {
   display: flex;
-  gap: var(--space-lg);
+  gap: var(--spacing-lg);
 }
 
 .nav-icon {
@@ -58,7 +58,7 @@
   align-items: center;
   color: var(--text-light);
   font-size: var(--font-size-sm);
-  padding: var(--space-sm) var(--space-sm);
+  padding: var(--spacing-sm) var(--spacing-sm);
   border-radius: var(--radius-sm);
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
@@ -72,7 +72,7 @@
   background-color: var(--btn-primary-bg);
   border: var(--btn-primary-border);
   color: var(--text-light);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   cursor: pointer;
@@ -91,7 +91,7 @@
   }
   
   .navbar-links {
-    gap: var(--space-sm);
+    gap: var(--spacing-sm);
   }
 }
 
@@ -113,7 +113,7 @@
   .navbar-links {
     justify-content: center;
     width: 100%;
-    gap: min(calc(55vw - 210px), var(--space-lg));
+    gap: min(calc(55vw - 210px), var(--spacing-lg));
   }
 }
 
@@ -129,7 +129,7 @@
   }
 
   .btn-sign-out {
-    padding: var(--space-sm);
+    padding: var(--spacing-sm);
     font-size: var(--font-size-sm);
   }
 }

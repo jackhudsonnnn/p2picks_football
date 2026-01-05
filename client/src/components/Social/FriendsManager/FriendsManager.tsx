@@ -18,17 +18,34 @@ interface RemoveFriendActionProps extends UserActionProps {
   onRemove: (user: UserItem) => void;
 }
 
-const RemoveFriendAction: React.FC<RemoveFriendActionProps> = ({ user, disabled, onRemove }) => (
-  <button
-    type="button"
-    className="user-action-button remove"
-    onClick={() => onRemove(user)}
-    disabled={disabled}
-    aria-label={`Remove ${user.username}`}
-  >
-    <XIcon />
-  </button>
-);
+const RemoveFriendAction: React.FC<RemoveFriendActionProps> = ({ user, disabled, onRemove }) => {
+  const handleActivate = () => {
+    if (disabled) return;
+    onRemove(user);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleActivate();
+    }
+  };
+
+  return (
+    <span
+      className="user-action-icon remove"
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      onClick={handleActivate}
+      onKeyDown={onKeyDown}
+      aria-label={`Remove ${user.username}`}
+      aria-disabled={disabled || undefined}
+    >
+      <XIcon />
+    </span>
+  );
+};
 
 export const FriendsManager: React.FC = () => {
   const { user } = useAuth();
@@ -115,7 +132,7 @@ export const FriendsManager: React.FC = () => {
 
   return (
     <>
-      <section className="profile-section">
+      <section className="friends-manager-container">
         <form onSubmit={handleAddFriend} className="add-friend-form">
           <SearchBar
             value={friendUsernameToAdd}
@@ -135,7 +152,7 @@ export const FriendsManager: React.FC = () => {
             {busy ? "Adding..." : "Add"}
           </button>
         </form>
-        <div style={{ marginTop: "1rem" }}>
+        <div className="friends-search-bar">
           <SearchBar
             value={searchTerm}
             onChange={(v: string) =>
@@ -153,7 +170,7 @@ export const FriendsManager: React.FC = () => {
           onRowClick={handleRemoveFriend}
           loading={loading}
           loadingMessage="Loading friends..."
-          emptyMessage="No friends yet. Add some friends using their username!"
+          emptyMessage="No friends yet. Add by entering their username!"
           disabled={busy}
         />
       </section>

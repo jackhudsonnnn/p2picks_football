@@ -8,7 +8,7 @@
   background-color: var(--container-bg);
   border: var(--container-border);
   border-radius: var(--container-radius);
-  padding: var(--space-xl, var(--spacing-lg));
+  padding: var(--spacing-xl);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
@@ -82,7 +82,7 @@
   }
 }
 
-@media (max-width: 330px) {
+@media (max-width: 335px) {
   .tickets-page .page-title h1 {
     font-size: var(--font-size-3xl);
   }

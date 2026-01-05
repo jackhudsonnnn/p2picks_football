@@ -12,6 +12,15 @@
   height: calc(82.5vh - 145px);
 }
 
+.members-list-wrapper.empty,
+.members-list-wrapper.user-list.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
 .member-balance-action {
   background: transparent;
   border: none;
@@ -19,50 +28,36 @@
   font-weight: 600;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  font-size: 1em;
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  min-width: 110px;
+  min-width: var(--spacing-2xl);
   transition: transform 0.18s ease, opacity 0.2s ease;
 }
 
-.member-balance-action:hover:not(:disabled) {
-  transform: scale(1.02);
-}
-
-.member-balance-action:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.member-balance-action .balance-badge {
+.balance-badge {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 8px;
-  font-size: 0.98em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
   font-weight: 600;
-  background: rgba(0,0,0,0.07);
+  background: var(--neutral-800);
 }
 
 .member-balance-action.positive .balance-badge {
   color: var(--accent-success);
-  background: rgba(46, 204, 113, 0.09);
 }
 
 .member-balance-action.negative .balance-badge {
   color: var(--accent-danger);
-  background: rgba(231, 76, 60, 0.09);
 }
 
 .member-balance-action.zero .balance-badge {
   color: var(--text-secondary);
-  background: rgba(255,255,255,0.03);
 }
 
 @media (max-width: 360px) {
   .member-balance-action {
     font-size: var(--font-size-xs);
-    min-width: 80px;
   }
 }

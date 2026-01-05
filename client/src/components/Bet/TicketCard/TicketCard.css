@@ -1,8 +1,8 @@
 .ticket-card {
   background-color: var(--card-bg);
-  border-radius: var(--card-radius);
   border: var(--card-border);
-  border-left: 4px solid var(--neutral-600);
+  border-left: var(--spacing-xs) solid var(--accent-victory);
+  border-radius: var(--card-radius);
   padding: var(--spacing-md);
   width: 100%;
   position: relative;
@@ -132,11 +132,12 @@
   overflow-wrap: break-word;
   padding: 0;
   flex: 1;
-  min-width: 0;
 }
 
 .ticket-finance {
+  font-size: var(--font-size-md);
   color: var(--accent-victory);
+  font-weight: 600;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -144,7 +145,6 @@
   padding-right: var(--spacing-sm);
   border-radius: var(--radius-sm);
 }
-
 
 .ticket-bet-options {
   display: flex;
@@ -431,17 +431,16 @@
     width: 100%;
   }
 
-  .ticket-finance {
-    font-size: var(--font-size-sm);
-    font-weight: 700;
-  }
-
   .enter-table-btn {
     font-size: var(--font-size-xs);
   }
 }
 
 @media (max-width: 335px) {
+  .ticket-finance {
+    font-size: var(--font-size-sm);
+  }
+
   .bet-details {
     font-size: var(--font-size-sm);
   }

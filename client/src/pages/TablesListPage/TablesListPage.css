@@ -8,7 +8,7 @@
   background-color: var(--container-bg);
   border: var(--container-border);
   border-radius: var(--container-radius);
-  padding: var(--space-xl, var(--spacing-lg));
+  padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
@@ -36,7 +36,7 @@
 .tables-list-page .page-title h1 {
   margin-bottom: 0;
   font-weight: 600;
-  font-size: 2.5rem;
+  font-size: var(--font-size-5xl);
   padding: var(--spacing-sm) 0;
 }
 
@@ -50,7 +50,6 @@
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-md);
   width: 100%;
-  margin: 0 auto;
 }
 
 .table-card {
@@ -94,11 +93,8 @@
 .table-name {
   font-weight: 700;
   color: var(--text-blue);
-  margin-bottom: 2px;
   font-size: var(--font-size-xl);
   justify-content: left;
-  padding-left: 0;
-  margin-left: 0;
 }
 
 .table-host {
@@ -118,7 +114,6 @@
 
 .activity-label {
   color: var(--text-secondary);
-  margin-right: 0;
   justify-content: right;
   font-size: var(--font-size-md);
 }
@@ -150,24 +145,22 @@
 }
 
 .create-button {
-  background-color: var(--primary);
+  background-color: var(--primary-700);
   color: var(--text-light);
-  padding: 0 var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   border: var(--btn-primary-border);
   font-weight: 600;
   cursor: pointer;
-  height: 38px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   transition: all var(--transition); 
 }
 
-.create-button .btn-icon {
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
+.btn-icon {
+  width: var(--font-size-md);
+  height: var(--font-size-md);
+  margin-right: var(--spacing-sm);
   display: inline-block;
 }
 
@@ -178,6 +171,8 @@
 
 .empty-state {
   text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
 }
 
 .tables-pagination {
@@ -187,13 +182,12 @@
 
 @media (max-width: 768px) {
   .tables-list-page .page-title h1 {
-    font-size: 2.25rem;
+    font-size: var(--font-size-4xl);
   }
 
   .tables-page-container {
     padding: var(--spacing-md);
     gap: var(--spacing-md);
-    max-height: none;
   }
 
   .tables-list {
@@ -216,7 +210,7 @@
   }
 }
 
-@media (max-width: 330px) {
+@media (max-width: 335px) {
   .tables-list-page .page-title h1 {
     font-size: var(--font-size-3xl);
   }

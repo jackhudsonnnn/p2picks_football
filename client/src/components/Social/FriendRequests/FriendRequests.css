@@ -1,9 +1,18 @@
+.friends-requests-container {
+    background-color: var(--container-bg);
+    border: var(--container-border);
+    border-radius: var(--container-radius);
+    padding: var(--spacing-xl);
+    height: calc(85vh - 130px);
+    overflow: scroll;
+}
+
 .user-action-button.request {
   background: var(--btn-primary-bg);
   border: var(--btn-primary-border);
   border-radius: var(--btn-primary-radius);
   cursor: pointer;
-  padding: var(--space-xs, 4px) var(--space-sm, 8px);
+  padding: var(--spacing-xs) var(--spacing-sm);
   color: var(--text-light);
   font-size: 0.85rem;
   font-weight: 500;

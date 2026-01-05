@@ -102,7 +102,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: var(--space-xs, 4px);
+  padding: var(--spacing-xs, 4px);
   display: inline-flex;
   align-items: center;
   justify-content: center;

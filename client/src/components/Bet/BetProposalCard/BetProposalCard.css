@@ -1,7 +1,7 @@
 .bet-proposal-card {
-  background: var(--card-bg);
+  background-color: var(--card-bg);
   border: var(--card-border);
-  border-left: 4px solid var(--accent-victory);
+  border-left: var(--spacing-xs) solid var(--accent-victory);
   border-radius: var(--card-radius);
   position: relative;
   align-self: center;
@@ -23,7 +23,7 @@
 }
 
 .bet-proposal-card.is-clickable:hover {
-  background: var(--neutral-750, #2b3545);
+  background: var(--neutral-800);
 }
 
 .bet-proposal-card .bp-header {

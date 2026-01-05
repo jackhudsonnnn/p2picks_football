@@ -1,9 +1,13 @@
 :root {
   /* Core Colors */
   --primary-100: hsl(205, 100%, 96%);
+  --primary-200: hsl(206, 97%, 84%);
   --primary-300: hsl(207, 95%, 72%);
+  --primary-400: hsl(208, 92%, 62%);
   --primary-500: hsl(208, 88%, 58%);  
+  --primary-600: hsl(210, 84%, 52%);
   --primary-700: hsl(210, 82%, 46%);
+  --primary-800: hsl(212, 76%, 36%);
   --primary-900: hsl(214, 72%, 36%);
   --primary-1000: hsl(218, 70%, 28%);
 
@@ -21,19 +25,18 @@
   --neutral-1000: hsl(236, 59%, 6%);
 
   /* Accent Colors - Sports themes */
-  --accent-hover: hsl(145, 72%, 38%); 
-  --accent-victory: hsl(146, 70%, 44%);
-  --accent-energy: hsl(38, 100%, 55%);
-  --accent-power: hsl(4, 85%, 58%);
-  --accent-focus: hsl(230, 90%, 65%);
+  --accent-victory: hsl(145, 72%, 38%);
   --accent-success: var(--accent-victory);
+  --accent-energy: hsl(38, 100%, 55%);
+  --accent-power: hsl(4, 80%, 53%);
   --accent-danger: var(--accent-power);
-  --accent-energy-dark: hsl(38, 95%, 50%);
+  --accent-focus: hsl(230, 90%, 65%);
 
   /* Transparent Variants */
   --primary-transparent: hsla(208, 88%, 58%, 0.18);
   --secondary-transparent: hsla(207, 95%, 72%, 0.16);
   --dark-transparent: hsla(0, 0%, 0%, 0.5);
+  --light-transparent: hsla(0, 0%, 100%, 0.049);
   --transparent: hsla(0, 0%, 100%, 0);
 
   /* Semantic Colors */
@@ -52,21 +55,22 @@
   --font-family: monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-md: var(--font-size-base);
+  --font-size-md: 1rem;
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.25rem;
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 1.9rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 2.5rem;
   
   /* Spacing */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 2.5rem;
-  --space-3xl: 3rem;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 2.5rem;
+  --spacing-3xl: 3rem;
 
   /* Border Radius */
   --radius-sm: 0.25rem;
@@ -74,13 +78,6 @@
   --radius-lg: 1rem;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 hsla(0, 0%, 100%, 0.05);
-  --shadow-md: 0 4px 6px -1px hsla(0, 0%, 100%, 0.1);
-  --shadow-lg: 0 10px 15px -3px hsla(0, 0%, 100%, 0.1);
-  --shadow-glow: 0 0 15px hsla(207, 90%, 54%, 0.3);
-  --shadow-power: 0 0 15px hsla(4, 90%, 58%, 0.3);
-  
   /* Transitions */
   --transition: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -97,26 +94,12 @@
   --bg-surface: var(--neutral-850);
   --bg-surface-secondary: var(--neutral-800);
 
-  /* Grey Scale Aliases */
-  --grey-100: var(--neutral-100);
-  --grey-300: var(--neutral-300);
-  --grey-600: var(--neutral-500);
-  --grey-800: var(--neutral-700);
-
   /* Text Colors */
   --text-light: hsl(210, 40%, 96%);
   --text-dark: hsl(215, 18%, 35%);
   --text-secondary: hsl(215, 18%, 75%);
   --text-blue: var(--primary-300);
   --text-dark-blue: var(--primary-700);
-
-  /* Spacing Aliases */
-  --spacing-xs: var(--space-xs);
-  --spacing-sm: var(--space-sm);
-  --spacing-md: var(--space-md);
-  --spacing-lg: var(--space-xl);
-  --spacing-xl: var(--space-3xl);
-  --spacing-xxl: 6rem;
 
   /* Button Styles */
   --btn-primary-text: var(--text-light);
@@ -138,6 +121,7 @@
   /* Form Styles */
   --form-bg: var(--btn-secondary-bg);
   --form-border: var(--btn-secondary-border);
+  --form-active-border: var(--primary-500);
   --form-radius: var(--btn-primary-radius);
   --form-text: var(--btn-primary-text);
 

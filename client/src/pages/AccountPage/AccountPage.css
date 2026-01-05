@@ -1,11 +1,11 @@
 .account-page {
-  padding: var(--space-md);
+  padding: var(--spacing-md);
 }
 
 .account-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--spacing-xl);
 }
 
 .account-tab-panel {
@@ -20,7 +20,7 @@
   font-size: var(--font-size-lg);
   color: var(--text-secondary);
   text-align: center;
-  padding: var(--space-xl) var(--space-md);
+  padding: var(--spacing-xl) var(--spacing-md);
 }
 
 
