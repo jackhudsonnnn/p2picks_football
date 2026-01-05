@@ -21,8 +21,8 @@
 }
 
 .message.system {
-  background-color: var(--container-secondary-bg);
-  border: var(--container-border);
+  background-color: var(--card-bg);
+  border: var(--card-border);
   border-radius: var(--radius-md);
   align-self: center;
   margin-left: auto;

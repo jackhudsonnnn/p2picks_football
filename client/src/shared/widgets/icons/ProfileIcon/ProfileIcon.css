@@ -1,8 +1,8 @@
 .member-avatar {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--accent-focus) 60%, var(--accent-victory) 100%);
-  color: var(--text-light);
+  background: linear-gradient(135deg, var(--neutral-300) 60%, var(--neutral-500) 100%);
+  color: var(--text-dark);
   border-radius: 50%;
   font-weight: 700;
   font-size: 1.08em;

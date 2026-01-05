@@ -1,0 +1,89 @@
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+  height: 30vh;
+  overflow-y: auto;
+  padding: var(--space-sm, 8px);
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--neutral-600);
+  border-radius: var(--radius-md, 8px);
+}
+
+.user-list.empty {
+  color: var(--neutral-400);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.user-row {
+  background-color: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  border-radius: var(--btn-primary-radius);
+  transition: all var(--transition);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm, 8px) var(--space-md, 12px);
+  gap: var(--space-md, 12px);
+  text-align: left;
+  width: 100%;
+  cursor: default;
+  color: inherit;
+}
+
+.user-row.clickable {
+  cursor: pointer;
+}
+
+.user-row:hover:not(:disabled),
+.user-row:focus-visible:not(:disabled) {
+  background-color: var(--btn-primary-hover-bg);
+  border: var(--btn-primary-hover-border);
+}
+
+.user-row:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.user-row-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 12px);
+}
+
+.user-row-avatar,
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--neutral-700);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-row-username {
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.user-row-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+}
+
+@media (max-width: 480px) {
+  .user-row {
+    padding: 6px 10px;
+  }
+  .user-row-avatar,
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}

@@ -1,38 +1,37 @@
 .add-friend-form { 
     display:flex; 
-    gap: var(--space-md); 
+    gap: var(--space-sm); 
     margin-top: var(--space-md); 
-    align-items:stretch; 
-}
-
-:root { 
-    --account-control-height:44px; 
+    align-items: stretch; 
 }
 
 .add-friend-form .add-friend-search { 
-    flex:1; 
+    flex: 1; 
 }
 
-.add-friend-form .search-input.profile-input, .add-friend-form .add-friend-search .profile-input { 
-    height: var(--account-control-height); 
-    box-sizing: border-box; 
+.add-friend-form .profile-input {
+    height: 40px;
+    box-sizing: border-box;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-md);
 }
 
-.add-friend-form > .btn-primary, .add-friend-form .btn-primary { 
-    display: inline-flex; 
-    align-items: center; 
-    justify-content: center; 
-    height: var(--account-control-height); 
-    padding: 0 1rem; 
+.add-friend-form .btn-primary {
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--space-md);
 }
 
-.account-search .search-input.profile-input, .account-search .profile-input { 
-    height: var(--account-control-height); 
-    box-sizing: border-box; 
-}
-
-@media (max-width: 768px) { 
-    .add-friend-form { 
-        gap: var(--space-sm); 
-    }
+.user-action-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neutral-300);
+  transition: color 0.2s ease, transform 0.18s ease;
 }

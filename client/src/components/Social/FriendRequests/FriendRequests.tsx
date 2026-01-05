@@ -1,12 +1,28 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriendRequests, useFriends } from "@features/social/hooks";
 import { SearchBar } from "@shared/widgets/SearchBar/SearchBar";
-import { FriendsList } from "@components/Social/FriendsList/FriendsList";
+import { UserList, type UserItem, type UserActionProps } from "@components/Social/UserList/UserList";
 import { useDialog } from "@shared/hooks/useDialog";
 import "./FriendRequests.css";
 
 type RequestAction = "accept" | "decline" | "cancel";
+
+interface RequestActionComponentProps extends UserActionProps {
+  onAction: (requestId: string, username: string) => void;
+}
+
+const RequestActionButton: React.FC<RequestActionComponentProps> = ({ user, disabled, onAction }) => (
+  <button
+    type="button"
+    className="user-action-button request"
+    onClick={() => onAction(user.id, user.username)}
+    disabled={disabled}
+    aria-label={`Respond to request from ${user.username}`}
+  >
+    Respond
+  </button>
+);
 
 export const FriendRequests: React.FC = () => {
   const { user } = useAuth();
@@ -17,21 +33,19 @@ export const FriendRequests: React.FC = () => {
   const [busyRequest, setBusyRequest] = useState<string | null>(null);
   const { showConfirm, dialogNode } = useDialog();
 
-  const filtered = useMemo(() => {
+  const filtered: UserItem[] = useMemo(() => {
     const term = searchTerm.toLowerCase();
     return requests
       .filter((r) => r.receiver_user_id === profile?.user_id) // incoming only
       .filter((r) => r.status === "pending")
       .map((r) => ({
-        ...r,
-        otherUser: r.sender,
+        id: r.request_id,
+        username: r.sender.username ?? "Unknown",
       }))
-      .filter((r) => (r.otherUser.username ?? "").toLowerCase().includes(term));
+      .filter((r) => r.username.toLowerCase().includes(term));
   }, [requests, profile?.user_id, searchTerm]);
 
-  if (!user || !profile) return null;
-
-  const handleAction = async (requestId: string, action: RequestAction) => {
+  const handleAction = useCallback(async (requestId: string, action: RequestAction) => {
     setBusyRequest(requestId);
     try {
       const { status } = await respond(requestId, action);
@@ -41,9 +55,9 @@ export const FriendRequests: React.FC = () => {
     } finally {
       setBusyRequest(null);
     }
-  };
+  }, [respond, refreshFriends]);
 
-  const handleRequestClick = async (requestId: string, username: string) => {
+  const handleRequestClick = useCallback(async (requestId: string, username: string) => {
     const accept = await showConfirm({
       title: "Friend Request",
       message: `Accept friend request from ${username}?`,
@@ -55,7 +69,14 @@ export const FriendRequests: React.FC = () => {
     } else {
       await handleAction(requestId, "decline");
     }
-  };
+  }, [showConfirm, handleAction]);
+
+  const ActionComponent = useCallback(
+    (props: UserActionProps) => <RequestActionButton {...props} onAction={handleRequestClick} />,
+    [handleRequestClick]
+  );
+
+  if (!user || !profile) return null;
 
   return (
     <section className="profile-section">
@@ -70,23 +91,15 @@ export const FriendRequests: React.FC = () => {
         />
       </div>
 
-      {loading ? (
-        <FriendsList
-        mode="select"
-        friends={[]}
+      <UserList
+        users={filtered}
+        ActionComponent={ActionComponent}
+        onRowClick={(user) => void handleRequestClick(user.id, user.username)}
+        loading={loading}
+        loadingMessage="Loading requests..."
         emptyMessage="No friend requests right now."
-        />
-      ) : (
-        <FriendsList
-        mode="select"
-        friends={filtered.map((r) => ({ user_id: r.request_id, username: r.otherUser.username ?? "Unknown" }))}
-        onAction={(requestId, username) => void handleRequestClick(requestId, username)}
-        variant="add"
-        hideActionSymbol
         disabled={busyRequest !== null}
-        emptyMessage="No friend requests right now."
-        />
-      )}
+      />
       {dialogNode}
     </section>
   );

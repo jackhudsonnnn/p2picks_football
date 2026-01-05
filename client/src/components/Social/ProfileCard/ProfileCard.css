@@ -42,18 +42,15 @@
 
 .profile-input:focus { 
     border-color: var(--primary-500); 
-    outline:none; 
-    box-shadow: var(--shadow-glow); 
+    outline: none; 
 }
 
 .profile-input-invalid { 
-    background-color: rgba(244,67,54,0.15)!important; 
     border-color: var(--accent-power)!important; 
 }
 
 .profile-input-invalid:focus { 
     border-color: var(--accent-power)!important; 
-    box-shadow: var(--shadow-power)!important; 
 }
 
 .form-buttons { 

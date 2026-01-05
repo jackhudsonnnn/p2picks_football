@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends } from "@features/social/hooks";
 import { SearchBar } from "@shared/widgets/SearchBar/SearchBar";
-import { FriendsList } from "@components/Social/FriendsList/FriendsList";
+import { UserList, type UserItem, type UserActionProps } from "@components/Social/UserList/UserList";
+import { XIcon } from "@shared/widgets/icons/XIcon";
 import "./FriendsManager.css";
 import { useDialog } from "@shared/hooks/useDialog";
 import { HttpError } from "@data/clients/restClient";
@@ -13,6 +14,22 @@ const FRIEND_PENDING_MESSAGE = "A friend request is already pending with this us
 
 const isRateLimited = (error: unknown): error is HttpError => error instanceof HttpError && error.status === 429;
 
+interface RemoveFriendActionProps extends UserActionProps {
+  onRemove: (user: UserItem) => void;
+}
+
+const RemoveFriendAction: React.FC<RemoveFriendActionProps> = ({ user, disabled, onRemove }) => (
+  <button
+    type="button"
+    className="user-action-button remove"
+    onClick={() => onRemove(user)}
+    disabled={disabled}
+    aria-label={`Remove ${user.username}`}
+  >
+    <XIcon />
+  </button>
+);
+
 export const FriendsManager: React.FC = () => {
   const { user } = useAuth();
   const { profile } = useAuthProfile();
@@ -21,13 +38,43 @@ export const FriendsManager: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [busy, setBusy] = useState(false);
   const { showAlert, showConfirm, dialogNode } = useDialog();
-  const filteredFriends = useMemo(
-    () => friends.filter((f) => f.username.toLowerCase().includes(searchTerm.toLowerCase())),
+
+  const filteredFriends: UserItem[] = useMemo(
+    () => friends
+      .filter((f) => f.username.toLowerCase().includes(searchTerm.toLowerCase()))
+      .map((f) => ({ id: f.user_id, username: f.username })),
     [friends, searchTerm]
   );
+
+  const handleRemoveFriend = useCallback(async (friend: UserItem) => {
+    if (!profile?.user_id) return;
+    const confirmed = await showConfirm({
+      title: "Remove Friend",
+      message: `Are you sure you want to remove ${friend.username} as a friend?`,
+      confirmLabel: "Remove",
+    });
+    if (!confirmed) return;
+    setBusy(true);
+    try {
+      await remove(friend.id);
+      await showAlert({ title: "Remove Friend", message: `${friend.username} removed from friends.` });
+    } catch {
+      await showAlert({ title: "Remove Friend", message: "An unexpected error occurred while removing friend." });
+    } finally {
+      setBusy(false);
+    }
+  }, [profile?.user_id, remove, showConfirm, showAlert]);
+
+  const ActionComponent = useCallback(
+    (props: UserActionProps) => <RemoveFriendAction {...props} onRemove={handleRemoveFriend} />,
+    [handleRemoveFriend]
+  );
+
   if (!user || !profile) return null;
   if (!profile.username) return null;
+
   const isFriendUsernameValid = friendUsernameToAdd.trim().length > 0;
+
   const handleAddFriend: React.FormEventHandler = async (e) => {
     e.preventDefault();
     if (!profile.user_id || !friendUsernameToAdd.trim()) return;
@@ -65,24 +112,7 @@ export const FriendsManager: React.FC = () => {
       setBusy(false);
     }
   };
-  const handleRemoveFriend = async (friend: { user_id: string; username: string }) => {
-    if (!profile.user_id) return;
-    const confirmed = await showConfirm({
-      title: "Remove Friend",
-      message: `Are you sure you want to remove ${friend.username} as a friend?`,
-      confirmLabel: "Remove",
-    });
-    if (!confirmed) return;
-    setBusy(true);
-    try {
-      await remove(friend.user_id);
-      await showAlert({ title: "Remove Friend", message: `${friend.username} removed from friends.` });
-    } catch {
-      await showAlert({ title: "Remove Friend", message: "An unexpected error occurred while removing friend." });
-    } finally {
-      setBusy(false);
-    }
-  };
+
   return (
     <>
       <section className="profile-section">
@@ -117,29 +147,15 @@ export const FriendsManager: React.FC = () => {
             className="account-search"
           />
         </div>
-        {loading ? (
-          <FriendsList
-            friends={[]}
-            emptyMessage="Loading friends..."
-            mode="select"
-            variant="remove"
-            disabled={busy}
-          />
-        ) : (
-          <FriendsList
-            friends={filteredFriends}
-            emptyMessage="No friends yet. Add some friends using their username!"
-            mode="select"
-            variant="remove"
-            onAction={(userId: string) => {
-              const friend = filteredFriends.find(f => f.user_id === userId);
-              if (friend) {
-                void handleRemoveFriend(friend);
-              }
-            }}
-            disabled={busy}
-          />
-        )}
+        <UserList
+          users={filteredFriends}
+          ActionComponent={ActionComponent}
+          onRowClick={handleRemoveFriend}
+          loading={loading}
+          loadingMessage="Loading friends..."
+          emptyMessage="No friends yet. Add some friends using their username!"
+          disabled={busy}
+        />
       </section>
       {dialogNode}
     </>

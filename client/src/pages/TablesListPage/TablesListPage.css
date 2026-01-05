@@ -16,6 +16,14 @@
   overflow-y: auto;
 }
 
+.create-table-btn {
+
+}
+
+.cancel-create-table-btn {
+
+}
+
 .tables-list-page .page-header {
   display: flex;
   justify-content: space-between;
@@ -43,7 +51,6 @@
   gap: var(--spacing-md);
   width: 100%;
   margin: 0 auto;
-  box-sizing: border-box;
 }
 
 .table-card {
@@ -76,7 +83,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--neutral-500);
+  border-top: var(--card-border);
 }
 
 .table-header-left {
@@ -86,7 +93,7 @@
 
 .table-name {
   font-weight: 700;
-  color: var(--text-light);
+  color: var(--text-blue);
   margin-bottom: 2px;
   font-size: var(--font-size-xl);
   justify-content: left;
@@ -130,15 +137,12 @@
 .view-table-btn {
   color: var(--btn-primary-bg);
   border: none;
-  border-radius: var(--radius-sm);
   background-color: transparent;
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-sm);
   font-weight: 700;
   cursor: pointer;
   transition: all var(--transition);
-  display: flex;
-  align-items: center;
 }
 
 .view-table-btn:hover {

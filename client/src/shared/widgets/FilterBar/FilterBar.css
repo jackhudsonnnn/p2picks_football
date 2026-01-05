@@ -24,17 +24,14 @@
   min-width: clamp(140px, 35vw, 220px);
   max-width: 100%;
   cursor: pointer;
-  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
 .filter-trigger:hover {
   border-color: var(--neutral-500);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .filter-trigger.open {
   border-color: var(--primary);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
 }
 
 .filter-trigger__text {
@@ -64,7 +61,6 @@
   background: var(--bg-surface);
   border: 1px solid var(--neutral-700);
   border-radius: var(--radius-md);
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.24);
   padding: var(--spacing-sm);
   min-width: 240px;
   max-height: 320px;

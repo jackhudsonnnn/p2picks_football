@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import "./memberList.css";
 import type { TableMember } from "@features/table/types";
-import { ProfileIcon } from "@shared/widgets/icons/ProfileIcon/ProfileIcon";
+import { UserList, type UserItem, type UserActionProps } from "@components/Social/UserList/UserList";
 import { formatToHundredth, normalizeToHundredth } from "@shared/utils/number";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends } from "@features/social/hooks";
@@ -14,6 +14,37 @@ interface MemberListProps {
   members: MemberListMember[];
 }
 
+// Extended user item to include balance
+interface MemberUserItem extends UserItem {
+  balance: number;
+}
+
+interface MemberBalanceActionProps extends UserActionProps {
+  user: MemberUserItem;
+  onMemberClick: (member: MemberUserItem) => void;
+}
+
+const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disabled, onMemberClick }) => {
+  const balanceValue = normalizeToHundredth(user.balance);
+  const isNegative = balanceValue < 0;
+  const isZero = balanceValue === 0;
+  const balanceClass = isZero ? "zero" : isNegative ? "negative" : "positive";
+  const balanceLabel = formatToHundredth(balanceValue, { showPlus: true });
+
+  return (
+    <button
+      type="button"
+      className={`member-balance-action ${balanceClass}`}
+      onClick={() => onMemberClick(user)}
+      disabled={disabled}
+      aria-label={`Balance for ${user.username}: $${balanceLabel}. Click to send friend request.`}
+      title={`$${balanceLabel}`}
+    >
+      <span className="balance-badge">${balanceLabel}</span>
+    </button>
+  );
+};
+
 export const MemberList: React.FC<MemberListProps> = ({ members }) => {
   const { user } = useAuth();
   const { profile } = useAuthProfile();
@@ -23,14 +54,23 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
 
   const friendIds = useMemo(() => new Set(friends.map((f) => f.user_id)), [friends]);
 
-  const handleClick = async (member: TableMember) => {
+  const memberUsers: MemberUserItem[] = useMemo(
+    () => members.map((m) => ({
+      id: m.user_id,
+      username: m.username,
+      balance: m.balance,
+    })),
+    [members]
+  );
+
+  const handleMemberClick = useCallback(async (member: UserItem) => {
     if (!profile || !profile.user_id) return;
     if (busyId) return;
-    if (member.user_id === profile.user_id) {
+    if (member.id === profile.user_id) {
       await showAlert({ title: "Friend Request", message: "You cant add yourself as a friend!" });
       return;
     }
-    if (friendIds.has(member.user_id)) {
+    if (friendIds.has(member.id)) {
       await showAlert({ title: "Friend Request", message: `${member.username} is already your friend!` });
       return;
     }
@@ -43,7 +83,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
     });
     if (!confirmed) return;
 
-    setBusyId(member.user_id);
+    setBusyId(member.id);
     try {
       await add(member.username);
       await showAlert({ title: "Friend Request", message: `Friend request sent to ${member.username}.` });
@@ -56,53 +96,31 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
     } finally {
       setBusyId(null);
     }
-  };
+  }, [profile, busyId, friendIds, add, showAlert, showConfirm]);
+
+  const ActionComponent = useCallback(
+    (props: UserActionProps) => (
+      <MemberBalanceAction
+        {...props}
+        user={props.user as MemberUserItem}
+        onMemberClick={handleMemberClick}
+      />
+    ),
+    [handleMemberClick]
+  );
+
+  const isClickable = Boolean(user && profile);
 
   return (
     <section className="members-container" aria-label="Table members">
-      <div className="members-list">
-        {members.map((member, idx) => {
-          const balanceValue = normalizeToHundredth(member.balance);
-          const isNegative = balanceValue < 0;
-          const isZero = balanceValue === 0;
-          const balanceClass = isZero ? " zero" : isNegative ? " negative" : " positive";
-          const balanceLabel = formatToHundredth(balanceValue, { showPlus: true });
-          const clickable = Boolean(user && profile);
-          const isBusy = busyId === member.user_id;
-
-          return (
-            <div
-              key={member.user_id}
-              className={`member-row${idx % 2 === 1 ? " member-row-alt" : ""}${clickable ? " member-row-clickable" : ""}${
-                isBusy ? " member-row-busy" : ""
-              }`}
-              role={clickable ? "button" : undefined}
-              tabIndex={clickable ? 0 : -1}
-              onClick={clickable ? () => void handleClick(member) : undefined}
-              onKeyDown={
-                clickable
-                  ? (e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        void handleClick(member);
-                      }
-                    }
-                  : undefined
-              }
-            >
-              <div className="member-info">
-                <ProfileIcon className="member-avatar" name={member.username} ariaLabel={`Avatar for ${member.username}`} />
-                <span className="member-name" title={member.username}>
-                  <span className="member-username">{member.username}</span>
-                </span>
-              </div>
-              <span className={`member-balance${balanceClass}`} title={`$${balanceLabel}`}>
-                <span className="balance-badge">${balanceLabel}</span>
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      <UserList
+        users={memberUsers}
+        ActionComponent={isClickable ? ActionComponent : undefined}
+        onRowClick={isClickable ? handleMemberClick : undefined}
+        emptyMessage="No members in this table."
+        disabled={busyId !== null}
+        className="members-list-wrapper"
+      />
       {dialogNode}
     </section>
   );

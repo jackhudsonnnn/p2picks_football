@@ -5,20 +5,18 @@
   background-color: var(--bg-surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--neutral-700);
-  box-shadow: var(--shadow-sm);
   overflow: hidden;
   height: calc(82vh - 145px);
 }
 
 .messages-container {
+  background-color: var(--bg-surface-secondary);
   flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  padding: var(--spacing-md);
   gap: var(--spacing-md);
-  background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--neutral-700);
 }
 
 .message-input-container {
@@ -26,7 +24,7 @@
   padding: var(--spacing-md);
   gap: var(--spacing-sm);
   border-top: 1px solid var(--neutral-700);
-  background-color: var(--bg-surface-secondary);
+  background-color: var(--bg-surface);
 }
 
 .message-input {

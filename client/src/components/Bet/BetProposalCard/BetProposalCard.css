@@ -1,4 +1,8 @@
 .bet-proposal-card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-left: 4px solid var(--accent-victory);
+  border-radius: var(--card-radius);
   position: relative;
   align-self: center;
   display: grid;
@@ -8,10 +12,6 @@
     "footer footer";
   grid-template-columns: 1fr auto;
   gap: var(--spacing-sm);
-  background: var(--container-secondary-bg);
-  border: var(--container-border);
-  border-left: 4px solid var(--accent-victory);
-  border-radius: var(--container-radius);
   padding: var(--spacing-md);
   margin: var(--spacing-sm) auto var(--spacing-md);
   width: 85%;

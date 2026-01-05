@@ -24,7 +24,7 @@
 }
 
 .modal-panel {
-  background-color: var(--bg-darker);
+  background-color: var(--container-bg);
   border-radius: inherit;
   width: 100%;
   max-height: 100%;
@@ -73,9 +73,8 @@
 }
 
 .modal-body-inner {
-  background: var(--bg-surface);
-  padding: 32px 28px 24px 28px;
-  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.1), 0 1.5px 4px 0 rgba(0, 0, 0, 0.08);
+  background: var(--card-bg);
+  padding: var(--spacing-md);
   box-sizing: border-box;
   border-radius: 10px;
   width: 100%;
@@ -99,61 +98,5 @@
 .form-group label {
   display: block;
   margin-bottom: var(--spacing-sm);
-  color: var(--text-secondary);
-}
-
-.form-control {
-  width: 100%;
-  padding: var(--spacing-md);
-  background-color: var(--neutral-700);
-  border: 1px solid var(--neutral-600);
-  border-radius: var(--radius-sm);
-  color: var(--text-light);
-  font-size: var(--font-size-md);
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-.form-select {
-  width: 100%;
-  padding: var(--spacing-md);
-  background-color: var(--neutral-700);
-  border: 1px solid var(--neutral-600);
-  border-radius: var(--radius-sm);
-  color: var(--text-light);
-  font-size: var(--font-size-md);
-  appearance: none;
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 1em;
-}
-
-.btn {
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-dark);
-}
-
-.btn-secondary {
-  background-color: var(--neutral-700);
-  color: var(--text-light);
-}
-
-.btn-secondary:hover {
-  background-color: var(--neutral-600);
+  color: var(--text-blue);
 }

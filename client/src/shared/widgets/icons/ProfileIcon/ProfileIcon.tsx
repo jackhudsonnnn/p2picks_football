@@ -35,7 +35,7 @@ export const ProfileIcon: React.FC<ProfileIconProps> = ({
 
   return (
     <span
-      className={className}
+      className={`${className ? className + ' ' : ''}member-avatar`}
       style={dimensionStyles}
       title={title ?? name}
       aria-label={ariaLabel ?? `Avatar for ${name}`}

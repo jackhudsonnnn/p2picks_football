@@ -5,15 +5,15 @@
 }
 
 .load-more-button {
-  background: transparent;
-  color: var(--accent-energy);
-  border: 1px solid var(--accent-energy);
-  padding: 6px 14px;
-  border-radius: var(--radius-sm);
+  background-color: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  border-radius: var(--btn-primary-radius);
+  color: var(--btn-primary-button);
+  transition: all var(--transition);
+  padding: var(--spacing-sm);
   font-weight: 600;
   font-size: var(--font-size-xs);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
 }
 
 .load-more-button:hover {

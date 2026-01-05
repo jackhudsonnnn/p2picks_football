@@ -22,7 +22,7 @@
 .account-tab-button {
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-dark-blue);
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-md);
   cursor: pointer;
@@ -30,14 +30,8 @@
   white-space: nowrap;
 }
 
-.account-tab-button:hover,
-.account-tab-button:focus-visible {
-  color: var(--text-light);
-  outline: none;
-}
-
 .account-tab-button.active {
-  color: var(--text-light);
+  color: var(--text-blue);
 }
 
 @media (max-width: 385px) {

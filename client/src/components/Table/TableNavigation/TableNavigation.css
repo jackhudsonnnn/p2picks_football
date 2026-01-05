@@ -8,15 +8,6 @@
   gap: var(--spacing-xs);
 }
 
-.nav-host-tag {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  margin-left: var(--spacing-md);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  background-color: transparent;
-}
-
 .tab-section {
   display: flex;
   align-items: center;
@@ -33,7 +24,7 @@
 .table-tab-button {
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-dark-blue);
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-md);
   cursor: pointer;
@@ -43,20 +34,10 @@
 }
 
 .table-tab-button.active {
-  color: var(--text-light);
+  color: var(--text-blue);
 }
 
-.table-tab-button.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: transparent;
-}
-
-@media (max-width: 385px) { 
+@media (max-width: 385px) {
   .table-tab-button {
     font-size: var(--font-size-sm);
     font-weight: 600;  

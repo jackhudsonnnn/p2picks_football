@@ -1,40 +1,39 @@
 :root {
-  /* Core Colors - Sports-inspired color scheme */
-  --primary-100: hsl(206, 100%, 95%);
-  --primary-300: hsl(209, 100%, 69%);
-  --primary-500: hsl(207, 90%, 54%);  
-  --primary-700: hsl(212, 80%, 42%);
-  --primary-900: hsl(216, 85%, 34%);
-  --primary-1000: hsl(218, 90%, 28%);
-
+  /* Core Colors */
+  --primary-100: hsl(205, 100%, 96%);
+  --primary-300: hsl(207, 95%, 72%);
+  --primary-500: hsl(208, 88%, 58%);  
+  --primary-700: hsl(210, 82%, 46%);
+  --primary-900: hsl(214, 72%, 36%);
+  --primary-1000: hsl(218, 70%, 28%);
 
   /* Neutrals - Dark mode focused */
-  --neutral-100: hsl(210, 40%, 98%);
-  --neutral-200: hsl(214, 32%, 91%);
-  --neutral-300: hsl(213, 27%, 84%);
-  --neutral-400: hsl(215, 20%, 65%);
-  --neutral-500: hsl(215, 16%, 47%);
-  --neutral-600: hsl(215, 19%, 35%);
-  --neutral-700: hsl(215, 25%, 27%);
-  --neutral-800: hsl(217, 33%, 17%);
-  --neutral-850: hsl(218, 32%, 15%);
-  --neutral-900: hsl(222, 47%, 11%);
-  --neutral-1000: hsl(223, 45%, 9%);
+  --neutral-100: hsl(210, 36%, 97%);
+  --neutral-200: hsl(210, 32%, 92%);
+  --neutral-300: hsl(213, 26%, 82%);
+  --neutral-400: hsl(215, 18%, 64%);
+  --neutral-500: hsl(215, 14%, 46%);
+  --neutral-600: hsl(215, 16%, 35%);
+  --neutral-700: hsl(218, 19%, 27%);
+  --neutral-800: hsl(222, 24%, 21%);
+  --neutral-850: hsl(223, 26%, 18%);
+  --neutral-900: hsl(226, 33%, 13%);
+  --neutral-1000: hsl(236, 59%, 6%);
 
   /* Accent Colors - Sports themes */
-  --accent-hover: hsl(144, 100%, 33%); 
-  --accent-victory: hsl(145, 100%, 39%);
-  --accent-energy: hsl(42, 100%, 50%);
-  --accent-power: hsl(4, 90%, 58%);
-  --accent-focus: hsl(231, 99%, 62%);
+  --accent-hover: hsl(145, 72%, 38%); 
+  --accent-victory: hsl(146, 70%, 44%);
+  --accent-energy: hsl(38, 100%, 55%);
+  --accent-power: hsl(4, 85%, 58%);
+  --accent-focus: hsl(230, 90%, 65%);
   --accent-success: var(--accent-victory);
   --accent-danger: var(--accent-power);
-  --accent-energy-dark: hsl(41, 100%, 45%);
+  --accent-energy-dark: hsl(38, 95%, 50%);
 
   /* Transparent Variants */
-  --primary-transparent: hsla(207, 90%, 54%, 0.15);
-  --secondary-transparent: hsla(209, 100%, 69%, 0.15);
-  --dark-transparent: hsla(0, 0%, 0%, 0.65);
+  --primary-transparent: hsla(208, 88%, 58%, 0.18);
+  --secondary-transparent: hsla(207, 95%, 72%, 0.16);
+  --dark-transparent: hsla(0, 0%, 0%, 0.5);
   --transparent: hsla(0, 0%, 100%, 0);
 
   /* Semantic Colors */
@@ -44,10 +43,10 @@
   --info: var(--accent-focus);
 
   /* Status background tokens (use hsla variants for subtle backgrounds) */
-  --status-neutral-bg: hsla(215, 16%, 47%, 0.15);
-  --status-win-bg: hsla(145, 100%, 39%, 0.12);
-  --status-loss-bg: hsla(4, 90%, 58%, 0.12);
-  --status-wash-bg: hsla(215, 20%, 65%, 0.12);
+  --status-neutral-bg: hsla(215, 14%, 46%, 0.18);
+  --status-win-bg: hsla(146, 70%, 44%, 0.14);
+  --status-loss-bg: hsla(4, 85%, 58%, 0.14);
+  --status-wash-bg: hsla(215, 18%, 64%, 0.14);
 
   /* Typography */
   --font-family: monospace;
@@ -105,9 +104,11 @@
   --grey-800: var(--neutral-700);
 
   /* Text Colors */
-  --text-light: hsl(206, 100%, 95%);
-  --text-secondary: hsl(205, 20%, 78%);
-  --text-blue: var(--primary-500);
+  --text-light: hsl(210, 40%, 96%);
+  --text-dark: hsl(215, 18%, 35%);
+  --text-secondary: hsl(215, 18%, 75%);
+  --text-blue: var(--primary-300);
+  --text-dark-blue: var(--primary-700);
 
   /* Spacing Aliases */
   --spacing-xs: var(--space-xs);
@@ -118,32 +119,36 @@
   --spacing-xxl: 6rem;
 
   /* Button Styles */
-  --btn-primary-bg: var(--primary-700);
-  --btn-primary-hover-bg: var(--primary-500);
-  --btn-primary-disabled-bg: var(--neutral-600);
   --btn-primary-text: var(--text-light);
-  --btn-primary-border: 1px solid var(--primary-500);
-  --btn-primary-hover-border: 1px solid var(--primary-700);
-  --btn-primary-disabled-border: 1px solid var(--neutral-500);
+  --btn-primary-bg: var(--primary-700);
+  --btn-primary-radius: var(--radius-md);
+  --btn-primary-border: 1px ridge var(--primary-500);
+  --btn-primary-hover-bg: var(--primary-500);
+  --btn-primary-hover-border: 1px ridge var(--primary-700);
+  --btn-primary-disabled-bg: var(--neutral-600);
+  --btn-primary-disabled-border: 1px ridge var(--neutral-500);
 
-  --btn-secondary-bg: var(--neutral-700);
+  --btn-secondary-bg: var(--neutral-600);
+  --btn-secondary-border: 1px ridge var(--neutral-500);
   --btn-secondary-hover-bg: var(--neutral-500);
+  --btn-secondary-hover-border: 1px ridge var(--neutral-700);
   --btn-secondary-disabled-bg: var(--neutral-600);
-  --btn-secondary-text: var(--text-light);
-  --btn-secondary-border: 1px solid var(--neutral-500);
-  --btn-secondary-hover-border: 1px solid var(--neutral-700);
-  --btn-secondary-disabled-border: 1px solid var(--neutral-500);
+  --btn-secondary-disabled-border: 1px ridge var(--neutral-500);
+
+  /* Form Styles */
+  --form-bg: var(--btn-secondary-bg);
+  --form-border: var(--btn-secondary-border);
+  --form-radius: var(--btn-primary-radius);
+  --form-text: var(--btn-primary-text);
 
   /* Container Styles */
-  --container-bg: var(--neutral-850);
-  --container-border: 1px solid var(--neutral-700);
+  --container-bg: var(--neutral-900);
+  --container-border: 1px ridge var(--neutral-700);
   --container-radius: var(--radius-md);
 
-  --container-secondary-bg: var(--neutral-800);
-
   /* Card Styles */
-  --card-bg: var(--neutral-700);
-  --card-border: 1px solid var(--neutral-600);
+  --card-bg: var(--neutral-850);
+  --card-border: 1px ridge var(--neutral-800);
   --card-radius: var(--radius-md);
 }
 

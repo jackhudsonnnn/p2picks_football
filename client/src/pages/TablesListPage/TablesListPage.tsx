@@ -68,8 +68,8 @@ export const TablesListPage: React.FC = () => {
 
           <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Table" footer={
             <>
-              <button className="btn btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleCreateTable} disabled={loading}>Create</button>
+              <button className="cancel-create-table-btn" onClick={() => setIsCreateModalOpen(false)}>Cancel</button>
+              <button className="create-table-btn" onClick={handleCreateTable} disabled={loading}>Create</button>
             </>
           }>
             <div className="form-group">
