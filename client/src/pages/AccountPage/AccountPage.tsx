@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./AccountPage.css";
 import { AccountNavigation, type AccountTab } from "@components/Social/AccountNavigation/AccountNavigation";
-import { ProfileCard } from "@components/Social/ProfileCard/ProfileCard";
+import { Profile } from "@components/Social/Profile/Profile";
 import { FriendsManager } from "@components/Social/FriendsManager/FriendsManager";
 import { FriendRequests } from "@components/Social/FriendRequests/FriendRequests";
 import { useAuth } from "@features/auth";
@@ -39,7 +39,7 @@ export const AccountPage: React.FC = () => {
             className="account-tab-panel"
             hidden={activeTab !== "profile"}
           >
-            {activeTab === "profile" && <ProfileCard />}
+            {activeTab === "profile" && <Profile />}
           </div>
 
           <div

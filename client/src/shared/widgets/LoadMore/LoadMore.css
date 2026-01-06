@@ -17,8 +17,7 @@
 }
 
 .load-more-button:hover {
-  background: var(--accent-energy);
-  color: var(--neutral-900);
+  background: var(--btn-primary-hover-bg);
 }
 
 .load-more-button:disabled {

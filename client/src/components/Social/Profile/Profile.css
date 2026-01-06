@@ -2,8 +2,9 @@
     background-color: var(--container-bg);
     border: var(--container-border);
     border-radius: var(--container-radius);
+    max-width: (--border-max-width);
     padding: var(--spacing-xl);
-    height: calc(85vh - 130px);
+    height: calc(80vh - 130px);
     overflow: scroll;
 }
 
@@ -27,30 +28,21 @@
 
 .profile-input { 
     flex: 1; 
-    padding: 0.75rem; 
+    padding: var(--spacing-sm); 
     border-radius: var(--radius-md); 
-    border: 1px solid var(--neutral-600); 
+    border: var(--form-border); 
     background-color: var(--neutral-700); 
     color: var(--neutral-100); 
-    transition: border-color .3s ease, box-shadow .3s ease; 
+    transition: all var(--transition); 
     width: 100%; 
 }
 
-.profile-input::placeholder { 
-    color: var(--neutral-400); 
-}
-
 .profile-input:focus { 
-    border-color: var(--primary-500); 
-    outline: none; 
+    border: var(--form-active-border); 
 }
 
-.profile-input-invalid { 
-    border-color: var(--accent-power)!important; 
-}
-
-.profile-input-invalid:focus { 
-    border-color: var(--accent-power)!important; 
+.profile-input-invalid, .profile-input-invalid:focus { 
+    border: var(--form-invalid-border); 
 }
 
 .form-buttons { 
@@ -64,24 +56,24 @@
     color: var(--neutral-400);
 }
 
-.btn-primary { 
-    display: inline-block; 
-    padding: 0.75rem 1.5rem; 
-    border-radius: var(--radius-md); 
-    font-weight: 500; 
-    cursor: pointer; 
-    transition: all var(--transition); 
+.save-btn { 
     border: var(--btn-primary-border); 
     background-color: var(--btn-primary-bg); 
     color: var(--btn-primary-text); 
+    border-radius: var(--btn-primary-radius); 
+    display: inline-block; 
+    padding: var(--spacing-md-sm) var(--spacing-md); 
+    font-weight: 500; 
+    cursor: pointer; 
+    transition: all var(--transition); 
 }
 
-.btn-primary:hover { 
+.save-btn:hover { 
     background-color: var(--btn-primary-hover-bg); 
     border: var(--btn-primary-hover-border);
 }
 
-.btn-primary:disabled { 
+.save-btn:disabled { 
     cursor: not-allowed; 
     background-color: var(--btn-primary-disabled-bg);
     border: var(--btn-primary-disabled-border);

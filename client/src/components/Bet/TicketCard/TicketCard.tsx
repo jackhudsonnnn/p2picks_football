@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './TicketCard.css';
 import type { Ticket } from '@features/bets/types';
-import { extractModeConfig } from '@features/bets/mappers';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { Modal } from '@shared/widgets/Modal/Modal';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
-import { fetchModePreview, fetchBetLiveInfo, type ModePreviewPayload, type BetLiveInfo, pokeBet } from '@features/bets/service';
-import { HttpError } from '@data/clients/restClient';
 import { useDialog } from '@shared/hooks/useDialog';
+import { useModePreview } from '@features/bets/hooks/useModePreview';
+import { useBetLiveInfo } from '@features/bets/hooks/useBetLiveInfo';
+import { usePokeBet } from '@features/bets/hooks/usePokeBet';
+import { buildTicketTexts, computeTicketOutcome, getModeConfig, getModeKeyString } from '@features/bets/utils/ticketHelpers';
 import infoIcon from '@assets/information.png';
 import pokeIcon from '@assets/poke.png';
 
@@ -19,224 +20,68 @@ export interface TicketCardProps {
 }
 
 const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess, onEnterTable }) => {
-  const modeKey = ticket.modeKey ? String(ticket.modeKey) : '';
-  const modeConfig = useMemo(() => {
-    const raw = extractModeConfig(ticket.betRecord ?? undefined);
-    return raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  }, [ticket.betRecord]);
-  const modeConfigSignature = useMemo(() => JSON.stringify(modeConfig || {}), [modeConfig]);
-  const [preview, setPreview] = useState<ModePreviewPayload | null>(null);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [isPoking, setIsPoking] = useState(false);
+  const modeKey = useMemo(() => getModeKeyString(ticket), [ticket.modeKey]);
+  const modeConfig = useMemo(() => getModeConfig(ticket) || {}, [ticket.betRecord]);
+  const betId = useMemo(
+    () => (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null,
+    [ticket.betRecord?.bet_id, ticket.betId]
+  );
+  const { preview, error: previewError } = useModePreview({
+    modeKey,
+    modeConfig,
+    nflGameId: ticket.betRecord?.nfl_game_id ?? null,
+    betId,
+  });
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-  const [liveInfo, setLiveInfo] = useState<BetLiveInfo | null>(null);
-  const [liveInfoLoading, setLiveInfoLoading] = useState(false);
-  const [liveInfoError, setLiveInfoError] = useState<string | null>(null);
+  const { liveInfo, loading: liveInfoLoading, error: liveInfoError } = useBetLiveInfo({
+    betId,
+    enabled: isInfoModalOpen,
+  });
+  const { poke, isPoking, getErrorMessage } = usePokeBet();
   const { showAlert, showConfirm, dialogNode } = useDialog();
 
-  useEffect(() => {
-    if (!modeKey) {
-      setPreview(null);
-      setPreviewError(null);
-      return;
-    }
-
-    let cancelled = false;
-    setPreviewError(null);
-
-    fetchModePreview(
-      modeKey,
-      modeConfig,
-      ticket.betRecord?.nfl_game_id ?? null,
-      (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null
-    )
-      .then((data) => {
-        if (!cancelled) {
-          setPreview(data);
-        }
-      })
-      .catch((error: Error) => {
-        if (!cancelled) {
-          console.warn('[TicketCard] failed to load mode preview', error);
-          setPreview(null);
-          setPreviewError(error.message);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [modeKey, modeConfigSignature, ticket.betRecord?.nfl_game_id, ticket.betRecord?.bet_id, ticket.betId]);
-
-  useEffect(() => {
-    if (!isInfoModalOpen) {
-      return;
-    }
-
-    const betId = (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null;
-    if (!betId) {
-      setLiveInfoError('Unable to locate this bet');
-      return;
-    }
-
-    let cancelled = false;
-    setLiveInfoLoading(true);
-    setLiveInfoError(null);
-
-    fetchBetLiveInfo(betId)
-      .then((data) => {
-        if (!cancelled) {
-          setLiveInfo(data);
-          setLiveInfoLoading(false);
-        }
-      })
-      .catch((error: Error) => {
-        if (!cancelled) {
-          console.warn('[TicketCard] failed to load live info', error);
-          setLiveInfo(null);
-          setLiveInfoError(error.message || 'Failed to load live info');
-          setLiveInfoLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isInfoModalOpen, ticket.betRecord?.bet_id, ticket.betId]);
-
-  const summaryText = useMemo(() => {
-    if (preview?.summary && preview.summary.trim().length) {
-      return preview.summary;
-    }
-    if (ticket.betRecord?.description && ticket.betRecord.description.trim().length) {
-      return ticket.betRecord.description;
-    }
-    if (ticket.betDetails && ticket.betDetails.trim().length) {
-      return ticket.betDetails;
-    }
-    if (modeKey) {
-      return modeKey.replace(/_/g, ' ');
-    }
-    return 'Bet';
-  }, [preview?.summary, ticket.betRecord?.description, ticket.betDetails, modeKey]);
-
-  const descriptionText = useMemo(() => {
-    if (preview?.description && preview.description.trim().length) {
-      return preview.description;
-    }
-    if (preview?.secondary && preview.secondary.trim().length) {
-      return preview.secondary;
-    }
-    if (ticket.betRecord?.description && ticket.betRecord.description.trim().length) {
-      return ticket.betRecord.description;
-    }
-    if (ticket.betDetails && ticket.betDetails.trim().length) {
-      return ticket.betDetails;
-    }
-    return modeKey || 'Bet';
-  }, [preview?.description, preview?.secondary, ticket.betRecord?.description, ticket.betDetails, modeKey]);
-
-  const winningConditionText = useMemo(() => {
-    if (preview?.winningCondition && preview.winningCondition.trim().length) {
-      return preview.winningCondition;
-    }
-    if (previewError) {
-      return 'Mode preview unavailable';
-    }
-    return null;
-  }, [preview?.winningCondition, previewError]);
-
-  const optionList = useMemo(() => {
-    if (preview?.options && preview.options.length) {
-      return preview.options
-        .map((option) => (typeof option === 'string' ? option.trim() : ''))
-        .filter((option): option is string => Boolean(option && option.length));
-    }
-    return ['pass'];
-  }, [preview?.options]);
+  const { summaryText, descriptionText, winningConditionText, optionList } = useMemo(
+    () => buildTicketTexts(ticket, preview, previewError),
+    [ticket, preview, previewError]
+  );
   const { phase, timeLeft } = useBetPhase({
     closeTime: ticket.closeTime || undefined,
     rawStatus: ticket.state,
     suppressTicks: true,
   });
 
-  const normalizedTicketState = (ticket.state ?? '').toLowerCase();
-  const normalizedPhase = (phase ?? '').toLowerCase();
-  const isWashed = normalizedTicketState === 'washed' || normalizedPhase === 'washed';
-  const isResolved = !isWashed && (normalizedTicketState === 'resolved' || normalizedPhase === 'resolved');
-  const normalizedResult = (ticket.result ?? '').toLowerCase();
-  const normalizedWinningChoice =
-    ticket.winningChoice != null ? String(ticket.winningChoice).trim().toLowerCase() : null;
-  const normalizedGuess = ticket.myGuess != null ? String(ticket.myGuess).trim().toLowerCase() : null;
-  const hasGuess = Boolean(normalizedGuess && normalizedGuess.length > 0 && normalizedGuess !== 'pass');
-  const isCorrectGuess = Boolean(
-    isResolved && hasGuess && normalizedWinningChoice && normalizedGuess === normalizedWinningChoice
+  const outcomeInfo = useMemo(() => computeTicketOutcome(ticket, phase), [ticket, phase]);
+  const stateClass = `state-${(phase || '').toLowerCase()}`;
+  const cardClassName = useMemo(
+    () => ['ticket-card', stateClass, outcomeInfo.outcomeClass].filter(Boolean).join(' '),
+    [stateClass, outcomeInfo.outcomeClass]
   );
-  const isIncorrectGuess = Boolean(
-    isResolved && hasGuess && normalizedWinningChoice && normalizedGuess !== normalizedWinningChoice
+  const betContainerClassName = useMemo(
+    () => ['bet-container', outcomeInfo.resolutionClass].filter(Boolean).join(' '),
+    [outcomeInfo.resolutionClass]
   );
-  const stateClass = `state-${(phase).toLowerCase()}`;
-  const resolvedOutcome: 'win' | 'loss' | null = (() => {
-    if (!isResolved) return null;
-    if (normalizedResult === 'win') return 'win';
-    if (normalizedResult === 'loss') return 'loss';
-    if (isCorrectGuess) return 'win';
-    if (isIncorrectGuess) return 'loss';
-    return null;
-  })();
-  const outcomeClass = (() => {
-    if (isWashed || normalizedResult === 'washed') return 'outcome-washed';
-    if (resolvedOutcome === 'win') return 'outcome-win';
-    if (resolvedOutcome === 'loss') return 'outcome-loss';
-    return '';
-  })();
-  const resolutionClass = isCorrectGuess ? 'guess-correct' : isIncorrectGuess ? 'guess-incorrect' : '';
-  const cardClassName = ['ticket-card', stateClass, outcomeClass].filter(Boolean).join(' ');
-  const betContainerClassName = ['bet-container', resolutionClass].filter(Boolean).join(' ');
-  const canPoke = isResolved || isWashed;
-
-  const extractPokeErrorMessage = useCallback((error: unknown): string => {
-    if (error instanceof HttpError) {
-      const preview = error.bodyPreview;
-      if (preview) {
-        try {
-          const parsed = JSON.parse(preview);
-          if (parsed && typeof parsed.error === 'string' && parsed.error.trim().length) {
-            return parsed.error;
-          }
-        } catch {
-          // ignore JSON parse failures and fall back to message
-        }
-      }
-      return error.message || 'Failed to poke bet.';
-    }
-    if (error instanceof Error) {
-      return error.message || 'Failed to poke bet.';
-    }
-    return 'Failed to poke bet.';
-  }, []);
+  const canPoke = outcomeInfo.isResolved || outcomeInfo.isWashed;
 
   const handlePoke = useCallback(async () => {
     if (!canPoke || isPoking) {
       return;
     }
-    
-    const betId = (ticket.betRecord?.bet_id as string | undefined) ?? ticket.betId ?? null;
+
     if (!betId) {
       await showAlert({ title: 'Poke Bet', message: 'Unable to locate this bet.' });
       return;
     }
 
-    setIsPoking(true);
     try {
-      await pokeBet(betId);
-      await showAlert({ title: 'Poke Bet', message: 'Bet poked successfully. A fresh proposal has been posted to the table.' });
+      await poke(betId);
+      await showAlert({
+        title: 'Poke Bet',
+        message: 'Bet poked successfully. A fresh proposal has been posted to the table.',
+      });
     } catch (error) {
-      await showAlert({ title: 'Poke Bet', message: extractPokeErrorMessage(error) });
-    } finally {
-      setIsPoking(false);
+      await showAlert({ title: 'Poke Bet', message: getErrorMessage(error) });
     }
-  }, [canPoke, isPoking, ticket.betRecord?.bet_id, ticket.betId, extractPokeErrorMessage, showAlert]);
+  }, [canPoke, isPoking, betId, showAlert, poke, getErrorMessage]);
 
   const Header = () => (
     <div className="ticket-card-header">
@@ -250,7 +95,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
           phase={phase}
           timeLeft={timeLeft}
           closeTime={ticket.closeTime || undefined}
-          outcome={resolvedOutcome}
+          outcome={outcomeInfo.resolvedOutcome}
           className="ticket-status-repl"
         />
       </div>
@@ -263,12 +108,12 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
         <span className="game-context">{descriptionText}</span>
         <div className="ticket-description-actions">
           <button
-            className="info-btn"
+            className="info-icon-btn"
             type="button"
             onClick={() => setIsInfoModalOpen(true)}
             aria-label="More information"
           >
-            <img src={infoIcon} alt="Info" className="info-icon" />
+            <img src={infoIcon} alt="Info" className="icon" />
           </button>
           {canPoke ? (
             <button
@@ -279,7 +124,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
               aria-label="Poke bet"
               title={isPoking ? 'Poking…' : 'Poke bet'}
             >
-              <img src={pokeIcon} alt="Poke" className="poke-icon" />
+              <img src={pokeIcon} alt="Poke" className="icon" />
             </button>
           ) : null}
         </div>

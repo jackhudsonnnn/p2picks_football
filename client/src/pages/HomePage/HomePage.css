@@ -9,7 +9,6 @@
 }
 
 .hero-subtitle {
-  max-width: 600px;
   margin: 0 auto var(--spacing-sm);
   font-size: var(--font-size-md);
   color: var(--neutral-300);
@@ -22,16 +21,12 @@
   background-color: var(--container-bg);
   border: var(--container-border);
   border-radius: var(--container-radius);
-  margin: 0 var(--spacing-md);  
+  margin: 0 auto var(--spacing-md);
   padding: 0 var(--spacing-md);
   max-height: calc(80vh - 200px);
+  max-width: 1200px;
   overflow: hidden;
   position: relative;
-}
-
-.teaser-scroller {
-  position: relative;
-  overflow: hidden;
 }
 
 .teaser-track {

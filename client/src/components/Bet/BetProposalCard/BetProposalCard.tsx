@@ -131,11 +131,11 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
       <div className="bp-header">
         <div className="bp-header-left">
           <span className="bp-id">#{betIdShort}</span>
-          <span className="bp-wager">${formatToHundredth(message.betDetails.wager_amount)}</span>
+          <span className="bp-participants">{participants} viewed</span>
         </div>
         <div className="bp-header-right">
           <BetStatus phase={phase} timeLeft={timeLeft} />
-          <span className="bp-participants">{participants} viewed</span>
+          <span className="bp-wager">${formatToHundredth(message.betDetails.wager_amount)}</span>
         </div>
       </div>
 

@@ -20,29 +20,38 @@
 
 .add-friend-form .profile-input {
     height: 40px;
-    box-sizing: border-box;
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-md);
+    border-radius: var(--form-radius);
 }
 
-.add-friend-form .btn-primary {
+.add-btn {
+    border: var(--btn-primary-border); 
+    background-color: var(--btn-primary-bg); 
+    color: var(--btn-primary-text); 
+    border-radius: var(--btn-primary-radius); 
+    display: inline-block; 
+    padding: var(--spacing-md-sm) var(--spacing-md); 
+    font-weight: 500; 
+    cursor: pointer; 
+    transition: all var(--transition); 
+}
+
+.add-btn:hover { 
+    background-color: var(--btn-primary-hover-bg); 
+    border: var(--btn-primary-hover-border);
+}
+
+.add-btn:disabled { 
+    cursor: not-allowed; 
+    background-color: var(--btn-primary-disabled-bg);
+    border: var(--btn-primary-disabled-border);
+}
+
+.add-friend-form .add-btn {
     height: 40px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0 var(--spacing-md);
-}
-
-.user-action-button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--neutral-300);
-  transition: color 0.2s ease, transform 0.18s ease;
 }
 
 .friends-search-bar {

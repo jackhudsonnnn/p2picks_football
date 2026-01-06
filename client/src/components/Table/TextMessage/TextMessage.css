@@ -4,10 +4,10 @@
   width: fit-content;
   margin-bottom: var(--spacing-sm);
   border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
 }
 
 .message.own-message {
-  /* Not a button, but keeps message color consistent */
   background-color: var(--primary-1000);
   border: 1px solid var(--primary-900);
   color: var(--text-light);
@@ -29,7 +29,6 @@
   margin-right: auto;
   text-align: center;
   color: var(--text-secondary);
-  font-size: var(--font-size-xl);
   padding: var(--spacing-sm) var(--spacing-md);
   display: inline-block;
   white-space: pre-wrap;
@@ -59,13 +58,8 @@
   margin-left: var(--spacing-sm);
 }
 
-@media (max-width: 600px) {
-  .message-text, .message.system {
-    font-size: var(--font-size-md);
-  }
-  
-  .bet-actions.bet-actions-flex-end {
-    align-items: stretch;
-    min-width: 0;
+@media (max-width: 350px) {
+  .message {
+    font-size: var(--font-size-sm);
   }
 }

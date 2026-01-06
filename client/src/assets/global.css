@@ -66,6 +66,7 @@
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
+  --spacing-md-sm: 0.75rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
@@ -98,7 +99,7 @@
   --text-light: hsl(210, 40%, 96%);
   --text-dark: hsl(215, 18%, 35%);
   --text-secondary: hsl(215, 18%, 75%);
-  --text-blue: var(--primary-300);
+  --text-blue: var(--primary-200);
   --text-dark-blue: var(--primary-700);
 
   /* Button Styles */
@@ -110,6 +111,7 @@
   --btn-primary-hover-border: 1px ridge var(--primary-700);
   --btn-primary-disabled-bg: var(--neutral-600);
   --btn-primary-disabled-border: 1px ridge var(--neutral-500);
+  --btn-primary-disabled-text: var(--text-secondary);
 
   --btn-secondary-bg: var(--neutral-600);
   --btn-secondary-border: 1px ridge var(--neutral-500);
@@ -121,19 +123,28 @@
   /* Form Styles */
   --form-bg: var(--btn-secondary-bg);
   --form-border: var(--btn-secondary-border);
-  --form-active-border: var(--primary-500);
+  --form-active-border: var(--btn-primary-border);
+  --form-invalid-border: var(--accent-power);
   --form-radius: var(--btn-primary-radius);
   --form-text: var(--btn-primary-text);
+  --form-disabled-bg: var(--btn-primary-disabled-bg);
+  --form-disabled-border: var(--btn-primary-disabled-border);
+  --form-disabled-text: var(--btn-primary-disabled-text);
 
   /* Container Styles */
   --container-bg: var(--neutral-900);
   --container-border: 1px ridge var(--neutral-700);
   --container-radius: var(--radius-md);
+  --container-max-width: 1200px;
 
   /* Card Styles */
   --card-bg: var(--neutral-850);
   --card-border: 1px ridge var(--neutral-800);
   --card-radius: var(--radius-md);
+
+  /* Filters */
+  --filter-primary: invert(33%) sepia(94%) saturate(2372%) hue-rotate(197deg) brightness(91%) contrast(85%);
+  --filter-primary-hover: invert(53%) sepia(52%) saturate(4644%) hue-rotate(189deg) brightness(102%) contrast(96%);
 }
 
 /* Global Resets */

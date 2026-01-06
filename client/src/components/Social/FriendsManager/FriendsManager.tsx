@@ -146,7 +146,7 @@ export const FriendsManager: React.FC = () => {
           />
           <button
             type="submit"
-            className="btn-primary"
+            className="add-btn"
             disabled={!isFriendUsernameValid || busy || loading}
           >
             {busy ? "Adding..." : "Add"}

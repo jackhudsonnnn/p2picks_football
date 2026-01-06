@@ -134,4 +134,8 @@
   }
 }
 
-
+@media (max-height: 440px) {
+  .navbar {
+    height: 50px;
+  }
+}

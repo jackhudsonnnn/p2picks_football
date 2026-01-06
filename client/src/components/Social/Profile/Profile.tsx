@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useUsernameUpdater } from "@features/social/hooks";
-import "./ProfileCard.css";
+import "./Profile.css";
 import { useDialog } from "@shared/hooks/useDialog";
 
-export const ProfileCard: React.FC = () => {
+export const Profile: React.FC = () => {
   const { user } = useAuth();
   const { profile, loading, refresh } = useAuthProfile();
   const { update, loading: updating, error } = useUsernameUpdater(user?.id);
@@ -86,7 +86,7 @@ export const ProfileCard: React.FC = () => {
             <div className="form-buttons">
               <button
                 type="submit"
-                className="btn-primary save-btn"
+                className="save-btn"
                 disabled={updating || !isUsernameValid}
               >
                 {updating ? "Saving..." : "Save"}
@@ -101,4 +101,4 @@ export const ProfileCard: React.FC = () => {
   );
 };
 
-export default ProfileCard;
+export default Profile;

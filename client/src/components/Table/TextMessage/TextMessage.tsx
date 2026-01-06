@@ -12,8 +12,7 @@ interface TextMessageProps {
 export const TextMessage: React.FC<TextMessageProps> = ({ message, isOwnMessage, formatTimestamp }) => {
   if (message.type === "bet_proposal") {
     const betMsg = message as BetProposalMessage;
-    // Render only the system-style card (details come as separate chat message now)
-    return <BetProposalCard message={betMsg} />; // system style always centered
+    return <BetProposalCard message={betMsg} />;
   }
 
   return (
