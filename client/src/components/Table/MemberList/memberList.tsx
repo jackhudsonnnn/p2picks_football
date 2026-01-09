@@ -32,16 +32,14 @@ const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disable
   const balanceLabel = formatSignedCurrency(balanceValue);
 
   return (
-    <button
-      type="button"
+    <div
       className={`member-balance-action ${balanceClass}`}
       onClick={() => onMemberClick(user)}
-      disabled={disabled}
       aria-label={`Balance for ${user.username}: ${balanceLabel}. Click to send friend request.`}
       title={balanceLabel}
     >
       <span className="balance-badge">{balanceLabel}</span>
-    </button>
+    </div>
   );
 };
 

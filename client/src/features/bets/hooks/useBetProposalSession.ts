@@ -242,8 +242,11 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     } else if (stage === 'general') {
       if (session?.steps.length) {
         setModeStepIndex(session.steps.length - 1);
+        setStage('mode');
+      } else {
+        // If there were no mode-specific steps, the previous logical stage is start
+        setStage('start');
       }
-      setStage('mode');
     } else if (stage === 'summary') {
       setStage('general');
     }

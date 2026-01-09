@@ -90,7 +90,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     }
 
     if (!session.steps.length) {
-      return <div className="form-step centered-step">No additional configuration required for this mode.</div>;
+      return null;
     }
 
     const step = activeModeStep;
