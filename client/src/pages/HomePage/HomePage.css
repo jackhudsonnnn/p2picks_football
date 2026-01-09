@@ -21,10 +21,10 @@
   background-color: var(--container-bg);
   border: var(--container-border);
   border-radius: var(--container-radius);
-  margin: 0 auto var(--spacing-md);
+  margin: 0 var(--spacing-sm);
   padding: 0 var(--spacing-md);
   max-height: calc(80vh - 200px);
-  max-width: 1200px;
+  max-width: var(--container-max-width);
   overflow: hidden;
   position: relative;
 }

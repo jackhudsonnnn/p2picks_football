@@ -1,10 +1,9 @@
 .account-navigation {
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: var(--spacing-xs);
-  border-bottom: 1px solid var(--neutral-700);
-  padding-bottom: 1px;
+  border-bottom: var(--container-border);
+  padding-bottom: var(--spacing-xs);
   margin-bottom: var(--spacing-md);
 }
 
@@ -14,30 +13,23 @@
   justify-content: center;
 }
 
-.account-tab-buttons {
-  display: flex;
-  overflow: hidden;
-}
-
 .account-tab-button {
   background: transparent;
   border: none;
-  color: var(--text-dark-blue);
+  color: var(--btn-primary-bg);
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-md);
   cursor: pointer;
-  transition: color var(--transition);
-  white-space: nowrap;
+  transition: all var(--transition);
 }
 
-.account-tab-button.active {
-  color: var(--text-blue);
+.account-tab-button:hover, .account-tab-button:active {
+  color: var(--btn-primary-hover-bg);
 }
 
 @media (max-width: 385px) {
   .account-tab-button {
     font-size: var(--font-size-sm);
     font-weight: 600;  
-    padding: var(--spacing-sm);
   }
 }

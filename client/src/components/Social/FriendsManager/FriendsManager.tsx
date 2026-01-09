@@ -140,7 +140,7 @@ export const FriendsManager: React.FC = () => {
               setFriendUsernameToAdd(v.replace(/[^a-zA-Z0-9_]/g, ""))
             }
             placeholder="Add friend"
-            inputClassName="profile-input"
+            inputClassName="friends-input"
             ariaLabel="Friend username input"
             className="add-friend-search"
           />
@@ -159,7 +159,7 @@ export const FriendsManager: React.FC = () => {
               setSearchTerm(v.replace(/[^a-zA-Z0-9_]/g, ""))
             }
             placeholder="Search friends"
-            inputClassName="profile-input"
+            inputClassName="friends-input"
             ariaLabel="Search friends"
             className="account-search"
           />

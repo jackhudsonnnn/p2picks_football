@@ -37,7 +37,7 @@ export const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) 
           <div className="modal-header">
             <h2>{title}</h2>
             <button className="modal-close" onClick={onClose} aria-label="Close modal">
-              <XIcon />
+              <XIcon className='close-icon' fill="#000" />
             </button>
           </div>
           <div className="modal-body">

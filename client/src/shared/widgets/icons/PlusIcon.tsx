@@ -3,14 +3,15 @@ import React from "react";
 type Props = {
   className?: string;
   title?: string;
+  fill?: string;
 };
 
-export const PlusIcon: React.FC<Props> = ({ className, title }) => (
+export const PlusIcon: React.FC<Props> = ({ className, title, fill = "currentColor" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="currentColor"
+    stroke={fill}
     strokeWidth={2}
     strokeLinecap="round"
     strokeLinejoin="round"

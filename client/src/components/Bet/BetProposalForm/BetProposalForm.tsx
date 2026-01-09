@@ -41,7 +41,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
 
 
   const renderStartStage = () => (
-    <div className="form-step combined-step">
+    <div>
       <div className="form-group">
         <label className="form-label" htmlFor="nfl_game_id">
           NFL Game

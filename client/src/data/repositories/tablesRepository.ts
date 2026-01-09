@@ -2,7 +2,7 @@ import { supabase } from '@data/clients/supabaseClient';
 import { fetchJSON } from '@data/clients/restClient';
 import type { Tables } from '@data/types/database.types';
 import type { ChatMessage } from '@shared/types/chat';
-import { normalizeToHundredth } from '@shared/utils/number';
+import { normalizeToHundredth, formatSignedCurrency } from '@shared/utils/number';
 
 export type TableRow = Tables<'tables'>;
 type TableMemberRow = Tables<'table_members'>;
@@ -179,14 +179,7 @@ export interface TableFeedPage {
 }
 
 function formatPointsDisplay(value: number): string {
-  const normalized = normalizeToHundredth(value);
-  if (normalized === 0) {
-    return '0 points';
-  }
-  const abs = Math.abs(normalized);
-  const formatted = Number.isInteger(abs) ? abs.toFixed(0) : abs.toFixed(2);
-  const sign = normalized > 0 ? '+' : '-';
-  return `${sign}${formatted} points`;
+  return formatSignedCurrency(value);
 }
 
 function buildSettlementSummary(
@@ -207,26 +200,26 @@ function buildSettlementSummary(
   lines.push('');
 
   lines.push('Host:');
-  lines.push(`- ${host.username}: ${formatPointsDisplay(host.balance)}`);
+  lines.push(`${host.username}: ${formatPointsDisplay(host.balance)}`);
   lines.push('');
 
-  lines.push('Winners (To Receive from Host):');
+  lines.push('Winners');
   if (winners.length) {
     winners.forEach((member) => {
-      lines.push(`- ${member.username}: ${formatPointsDisplay(member.balance)}`);
+      lines.push(`${member.username}: ${formatPointsDisplay(member.balance)}`);
     });
   } else {
-    lines.push('- None');
+    lines.push('None');
   }
   lines.push('');
 
-  lines.push('Losers (To Pay Host):');
+  lines.push('Losers');
   if (losers.length) {
     losers.forEach((member) => {
-      lines.push(`- ${member.username}: ${formatPointsDisplay(member.balance)}`);
+      lines.push(`${member.username}: ${formatPointsDisplay(member.balance)}`);
     });
   } else {
-    lines.push('- None');
+    lines.push('None');
   }
 
   return lines.join('\n');

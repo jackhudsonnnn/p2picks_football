@@ -1,7 +1,6 @@
 .message {
-  max-width: 80%;
-  min-width: 0;
-  width: fit-content;
+  width: 80%;
+  max-width: 20rem;
   margin-bottom: var(--spacing-sm);
   border-radius: var(--radius-md);
   font-size: var(--font-size-md);

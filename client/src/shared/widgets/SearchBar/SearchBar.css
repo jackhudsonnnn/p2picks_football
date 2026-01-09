@@ -31,12 +31,12 @@
 }
 
 .search-input:focus {
-  border-color: var(--primary);
+  border-color: var(--primary-700);
   outline: none;
 }
 
 .search-submit {
-  background-color: var(--primary);
+  background-color: var(--primary-700);
   color: var(--text-light);
   border: none;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;

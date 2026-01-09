@@ -74,7 +74,7 @@ export const TablesListPage: React.FC = () => {
           }>
             <div className="form-group">
               <label htmlFor="tableName">Table Name</label>
-              <input type="text" id="tableName" className="form-control" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} placeholder="Enter name..." autoFocus />
+              <input type="text" id="tableName" className="table-name-form" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} placeholder="Enter name..." autoFocus />
             </div>
           </Modal>
 

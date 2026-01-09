@@ -14,16 +14,14 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
   margin: var(--spacing-sm) auto var(--spacing-md);
-  width: 85%;
+  width: 80%;
+  max-width: 20rem;
   font-size: var(--font-size-sm);
-}
-
-.bet-proposal-card.is-clickable {
-  cursor: pointer;
+  transition: all var(--transition);
 }
 
 .bet-proposal-card.is-clickable:hover {
-  background: var(--neutral-800);
+  cursor: pointer;
 }
 
 .bp-header {
@@ -37,14 +35,14 @@
 .bp-header-left {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-xs);
 }
 
 .bp-header-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: var(--spacing-xs);
 }
 
 .bp-footer {
@@ -52,14 +50,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid var(--neutral-700);
+  border-top: var(--card-border);
   padding-top: var(--spacing-sm);
   margin-top: var(--spacing-xs);
 }
 
 .bp-hint {
   font-size: var(--font-size-xs);
-  color: var(--accent-energy);
+  color: var(--btn-primary-bg);
 }
 
 .bp-hint.inactive {
@@ -89,13 +87,13 @@
   color: var(--accent-victory);
 }
 
-.bet-proposal-card .bp-participants {
+.bp-participants {
   font-size: var(--font-size-xs);
   color: var(--text-light);
 }
 
 .bet-proposal-card.state-active {
-  border-left-color: var(--primary-500);
+  border-left-color: var(--btn-primary-bg);
 }
 
 .bet-proposal-card.state-pending {

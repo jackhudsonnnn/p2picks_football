@@ -11,8 +11,8 @@ interface NavigationProps {
 
 export const TableNavigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isHost }) => (
   <nav className="table-navigation" aria-label="Table navigation">
-    <div className="tab-section">
-      <div className="table-tab-buttons" role="tablist">
+    <div className="table-tab-section">
+      <div role="tablist">
         <button
           type="button"
           className={`table-tab-button${activeTab === 'chat' ? ' active' : ''}`}

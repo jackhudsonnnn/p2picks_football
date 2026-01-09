@@ -36,7 +36,7 @@
   --primary-transparent: hsla(208, 88%, 58%, 0.18);
   --secondary-transparent: hsla(207, 95%, 72%, 0.16);
   --dark-transparent: hsla(0, 0%, 0%, 0.5);
-  --light-transparent: hsla(0, 0%, 100%, 0.049);
+  --light-transparent: hsla(0, 0%, 100%, 0.073);
   --transparent: hsla(0, 0%, 100%, 0);
 
   /* Semantic Colors */
@@ -84,15 +84,9 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transtion-slow: 600ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Primary Colors */
-  --primary: var(--primary-700);
-  --primary-light: var(--primary-500);
-  --primary-dark: var(--primary-900);
-
   /* Background Colors */
-  --bg-dark: var(--neutral-900);
-  --bg-darker: var(--neutral-1000);
-  --bg-surface: var(--neutral-850);
+  --bg-primary: var(--neutral-1000);
+  --bg-surface: var(--neutral-900);
   --bg-surface-secondary: var(--neutral-800);
 
   /* Text Colors */
@@ -121,8 +115,8 @@
   --btn-secondary-disabled-border: 1px ridge var(--neutral-500);
 
   /* Form Styles */
-  --form-bg: var(--btn-secondary-bg);
-  --form-border: var(--btn-secondary-border);
+  --form-bg: var(--btn-primary-bg);
+  --form-border: var(--btn-primary-border);
   --form-active-border: var(--btn-primary-border);
   --form-invalid-border: var(--accent-power);
   --form-radius: var(--btn-primary-radius);
@@ -131,8 +125,19 @@
   --form-disabled-border: var(--btn-primary-disabled-border);
   --form-disabled-text: var(--btn-primary-disabled-text);
 
+  /* Input Styles */
+  --input-bg: transparent;
+  --input-border: var(--form-border);
+  --input-active-border: var(--form-active-border);
+  --input-invalid-border: var(--form-invalid-border);
+  --input-radius: var(--form-radius);
+  --input-text: var(--form-text);
+  --input-disabled-bg: var(--form-disabled-bg);
+  --input-disabled-border: var(--form-disabled-border);
+  --input-disabled-text: var(--form-disabled-text);
+
   /* Container Styles */
-  --container-bg: var(--neutral-900);
+  --container-bg: var(--bg-surface);
   --container-border: 1px ridge var(--neutral-700);
   --container-radius: var(--radius-md);
   --container-max-width: 1200px;
@@ -170,9 +175,10 @@
 
 body {
   min-width: 320px;
-  background-color: var(--bg-darker);
+  background-color: var(--bg-primary);
   color: var(--text-light);
   line-height: 1.6;
+  
 }
 
 html, body {

@@ -8,22 +8,20 @@
 }
 
 .add-friend-form { 
-    display:flex; 
+    width: 100%;
+    display: flex; 
     gap: var(--spacing-sm); 
     margin-top: var(--spacing-md); 
-    align-items: stretch; 
 }
 
-.add-friend-form .add-friend-search { 
-    flex: 1; 
-}
-
-.add-friend-form .profile-input {
-    height: 40px;
+.friends-input {
+    flex: 1;
+    height: var(--font-size-5xl);
     border-radius: var(--form-radius);
 }
 
 .add-btn {
+    height: var(--font-size-5xl);
     border: var(--btn-primary-border); 
     background-color: var(--btn-primary-bg); 
     color: var(--btn-primary-text); 
@@ -44,14 +42,6 @@
     cursor: not-allowed; 
     background-color: var(--btn-primary-disabled-bg);
     border: var(--btn-primary-disabled-border);
-}
-
-.add-friend-form .add-btn {
-    height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 var(--spacing-md);
 }
 
 .friends-search-bar {

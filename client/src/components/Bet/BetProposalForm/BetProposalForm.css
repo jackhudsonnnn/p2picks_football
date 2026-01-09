@@ -1,24 +1,24 @@
 .bet-proposal-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 480px;
-  margin: 0 auto;
+  gap: var(--spacing-md);
   width: 100%;
 }
 
-.form-step {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-blue);
 }
 
 .form-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-light, #fff);
-  margin-bottom: 6px;
-  letter-spacing: 0.01em;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-light);
 }
 
 .form-select {
@@ -26,16 +26,27 @@
   border: var(--form-border);
   border-radius: var(--form-radius);
   color: var(--form-text);
-  padding: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  outline: none;
+  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm) var(--spacing-sm);
+  font-size: var(--font-size-md);
   width: 100%;
+  transition: all var(--transition);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("@assets/DropdownCaret.png");
+  background-repeat: no-repeat;
+  background-position: calc(100% - var(--spacing-sm)) center;
+  background-size: var(--font-size-sm);
+  line-height: 1.4;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.form-select:hover {
+  border-color: var(--form-active-border);
+  outline: none;
+}
+
+.form-select::-ms-expand {
+  display: none;
 }
 
 .centered-step {
@@ -43,22 +54,18 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
 }
 
 .form-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .form-navigation {
   display: flex;
   align-items: center;
   justify-content: space-between; 
-  gap: 12px;
   width: 100%;
-  padding: 0 6px; 
 }
 
 .nav-button {
@@ -69,8 +76,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  padding: var(--spacing-md);
   cursor: pointer;
   transition: all var(--transition);
 }
@@ -86,32 +92,29 @@
   cursor: not-allowed;
 }
 
-.nav-button:active {
-  transform: translateY(1px);
-}
-
 .nav-button svg {
-  width: 22px;
-  height: 22px;
+  width: var(--font-size-md);
+  height: var(--font-size-md);
 }
 
 .submit-button {
-  background: var(--accent-energy, #ffd600);
-  color: var(--neutral-900, #181c24);
-  font-weight: 700;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font-weight: 600;
+  border: var(--btn-primary-border);
+  border-radius: var(--btn-primary-radius);
+  padding: var(--spacing-md);
   cursor: pointer;
+  transition: all var(--transition);
+}
+
+.submit-button:hover {
+  background: var(--btn-primary-hover-bg);
+  border: var(--btn-primary-hover-border);
 }
 
 .submit-button:disabled {
-  opacity: 0.5;
+  background-color: var(--btn-primary-disabled-bg);
+  border: var(--btn-primary-disabled-border);
   cursor: not-allowed;
-}
-
-@media (max-width: 600px) {
-  .bet-proposal-form {
-    max-width: 100%;
-  }
 }

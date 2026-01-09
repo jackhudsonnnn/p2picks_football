@@ -103,7 +103,7 @@ export const FriendRequests: React.FC = () => {
           value={searchTerm}
           onChange={(v: string) => setSearchTerm(v.replace(/[^a-zA-Z0-9_]/g, ""))}
           placeholder="Search requests"
-          inputClassName="profile-input"
+          inputClassName="friend-requests-input"
           ariaLabel="Search friend requests"
           className="account-search"
         />

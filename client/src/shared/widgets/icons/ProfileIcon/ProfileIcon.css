@@ -1,16 +1,14 @@
 .member-avatar {
-  width: 32px;
-  height: 32px;
+  width: 2.25em;
+  height: 2.25em;
   background: linear-gradient(135deg, var(--neutral-300) 60%, var(--neutral-500) 100%);
   color: var(--text-dark);
   border-radius: 50%;
   font-weight: 700;
-  font-size: 1.08em;
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.07);
-  margin-right: 2px;
-  user-select: none;
-  letter-spacing: 0.01em;
+  margin-right: var(--spacing-xs);
+  border: 2px solid var(--text-dark);
 }

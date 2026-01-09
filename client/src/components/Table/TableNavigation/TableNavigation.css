@@ -1,40 +1,30 @@
 .table-navigation {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--neutral-700);
-  padding-bottom: 1px; 
   gap: var(--spacing-xs);
+  border-bottom: var(--container-border);
+  padding-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
 }
 
-.tab-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.table-tab-section {
   width: 100%;
-}
-
-.table-tab-buttons {
   display: flex;
   justify-content: center;
-  overflow: hidden;
 }
 
 .table-tab-button {
   background: transparent;
   border: none;
-  color: var(--text-dark-blue);
+  color: var(--btn-primary-bg);
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-md);
   cursor: pointer;
-  position: relative;
-  transition: color var(--transition);
-  white-space: nowrap;
+  transition: all var(--transition);
 }
 
-.table-tab-button.active {
-  color: var(--text-blue);
+.table-tab-button:hover, .table-tab-button.active {
+  color: var(--btn-primary-hover-bg);
 }
 
 @media (max-width: 385px) {

@@ -101,9 +101,7 @@ export const FilterBar = ({
         aria-expanded={isOpen}
       >
         <span className="filter-trigger__text">{summaryText}</span>
-        <span className="filter-trigger__icon" aria-hidden>
-          ▼
-        </span>
+        <span className="filter-trigger__icon" aria-hidden />
       </button>
       {isOpen && (
         <div className="filter-menu" role="listbox">

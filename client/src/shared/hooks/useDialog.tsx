@@ -1,5 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { Modal } from '@shared/widgets/Modal/Modal';
+import './useDialog.css';
 
 type DialogType = 'alert' | 'confirm';
 
@@ -69,11 +70,11 @@ export function useDialog() {
       footer={
         <div className="dialog-footer">
           {state.type === 'confirm' && (
-            <button type="button" className="btn btn-secondary" onClick={() => close(false)}>
+            <button type="button" className="btn-cancel" onClick={() => close(false)}>
               {state.cancelLabel ?? 'Cancel'}
             </button>
           )}
-          <button type="button" className="btn btn-primary" onClick={() => close(true)}>
+          <button type="button" className="btn-confirm" onClick={() => close(true)}>
             {state.confirmLabel ?? (state.type === 'confirm' ? 'Confirm' : 'OK')}
           </button>
         </div>

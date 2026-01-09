@@ -31,7 +31,7 @@
 }
 
 .filter-trigger.open {
-  border-color: var(--primary);
+  border-color: var(--primary-700);
 }
 
 .filter-trigger__text {
@@ -45,8 +45,14 @@
 .filter-trigger__icon {
   display: inline-flex;
   align-items: center;
-  font-size: 0.75rem;
-  transition: transform var(--transition);
+  justify-content: center;
+  background-image: url("@assets/DropdownCaret.png");
+  background-repeat: no-repeat;
+  background-size: var(--font-size-sm);
+  background-position: center;
+  width: var(--font-size-sm);
+  height: var(--font-size-sm);
+  transition: all var(--transition);
 }
 
 .filter-trigger.open .filter-trigger__icon {
@@ -62,8 +68,6 @@
   border: 1px solid var(--neutral-700);
   border-radius: var(--radius-md);
   padding: var(--spacing-sm);
-  min-width: 240px;
-  max-height: 320px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -71,6 +75,7 @@
 }
 
 .filter-menu__option {
+  background-color: var(--btn-primary-bg);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -81,9 +86,13 @@
 }
 
 .filter-menu__option:hover {
-  background: var(--bg-surface-secondary);
+  background-color: var(--btn-primary-hover-bg);
 }
 
 .filter-menu__option input[type="checkbox"] {
-  accent-color: var(--primary);
+  accent-color: transparent;
+}
+
+.filter-menu__option:hover input[type="checkbox"] {
+  accent-color: transparent;
 }

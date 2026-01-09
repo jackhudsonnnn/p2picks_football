@@ -24,7 +24,7 @@ export const AccountNavigation: React.FC<AccountNavigationProps> = ({
   return (
     <nav className="account-navigation" aria-label="Account navigation">
       <div className="account-tab-container-bg">
-        <div className="account-tab-buttons" role="tablist">
+        <div role="tablist">
           {TAB_ORDER.map((tabKey) => (
             <button
               key={tabKey}

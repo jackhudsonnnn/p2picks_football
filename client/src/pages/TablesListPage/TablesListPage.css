@@ -16,14 +16,6 @@
   overflow-y: auto;
 }
 
-.create-table-btn {
-
-}
-
-.cancel-create-table-btn {
-
-}
-
 .tables-list-page .page-header {
   display: flex;
   justify-content: space-between;
@@ -167,6 +159,65 @@
 .create-button:hover {
   background-color: var(--btn-primary-hover-bg);
   border: var(--btn-primary-hover-border);
+}
+
+.table-name-form {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--input-radius);
+  border: var(--input-border);
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  height: var(--font-size-5xl);
+  font-size: var(--font-size-md);
+  outline: none;
+  transition: all var(--transition);
+}
+
+.table-name-form:focus {
+  border: var(--input-active-border);
+}
+
+.cancel-create-table-btn,
+.create-table-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--btn-primary-radius);
+  border: var(--btn-primary-border);
+  color: var(--btn-primary-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 96px;
+}
+
+.cancel-create-table-btn {
+  background-color: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  margin-right: auto;
+}
+
+.cancel-create-table-btn:hover {
+  background-color: var(--btn-primary-hover-bg);
+  border: var(--btn-primary-hover-border);
+}
+
+.create-table-btn {
+  background-color: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  margin-left: auto;
+}
+
+.create-table-btn:hover {
+  background-color: var(--btn-primary-hover-bg);
+  border: var(--btn-primary-hover-border);
+}
+
+.cancel-create-table-btn:disabled,
+.create-table-btn:disabled {
+  background-color: var(--btn-primary-disabled-bg);
+  border: var(--btn-primary-disabled-border);
+  color: var(--btn-primary-disabled-text);
+  cursor: not-allowed;
 }
 
 .empty-state {

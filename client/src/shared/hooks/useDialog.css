@@ -1,0 +1,46 @@
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--spacing-sm);
+}
+
+.dialog-message {
+  margin: var(--spacing-sm) 0;
+}
+
+.btn-cancel,
+.btn-confirm {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--btn-primary-radius);
+  border: var(--btn-primary-border);
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 96px;
+}
+
+.btn-cancel:hover,
+.btn-confirm:hover {
+  background-color: var(--btn-primary-hover-bg);
+  border: var(--btn-primary-hover-border);
+}
+
+.btn-cancel:disabled,
+.btn-confirm:disabled {
+  background-color: var(--btn-primary-disabled-bg);
+  border: var(--btn-primary-disabled-border);
+  color: var(--btn-primary-disabled-text);
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  margin-right: auto;
+}
+
+.btn-confirm {
+  margin-left: auto;
+}

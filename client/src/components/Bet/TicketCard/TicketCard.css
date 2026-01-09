@@ -59,7 +59,7 @@
   align-items: center;
   margin-top: var(--spacing-sm);
   padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--neutral-700);
+  border-top: var(--card-border);
 }
 
 .ticket-card-footer-left {
@@ -165,16 +165,28 @@
   border: var(--form-border);
   color: var(--form-text);
   border-radius: var(--form-radius);
-  padding: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm) var(--spacing-sm);
   font-size: var(--font-size-md);
   font-weight: 600;
   width: 18vw;
   transition: all var(--transition);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("@assets/DropdownCaret.png");
+  background-repeat: no-repeat;
+  background-position: calc(100% - var(--spacing-sm)) center;
+  background-size: var(--font-size-sm);
+  line-height: 1.4;
 }
 
-.bet-dropdown:focus,
 .bet-dropdown:hover {
-  border-color: var(--form);
+  border-color: var(--form-active-border);
+  outline: none;
+}
+
+.bet-dropdown::-ms-expand {
+  display: none;
 }
 
 .bet-dropdown.is-overflowing span {
@@ -230,14 +242,17 @@
 }
 
 .ticket-card.state-active {
-  border-left-color: var(--primary-500);
+  border-left-color: var(--btn-primary-bg);
 }
+
 .ticket-card.state-pending {
   border-left-color: var(--accent-energy);
 }
+
 .ticket-card.state-resolved {
   border-left-color: var(--neutral-500);
 }
+
 .ticket-card.state-washed {
   border-left-color: var(--neutral-600);
 }
@@ -279,7 +294,6 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  flex-shrink: 0;
 }
 
 .info-icon-btn {
@@ -299,10 +313,9 @@
 }
 
 .poke-icon-btn {
-  background: #00000000;
+  background: transparent;
+  margin-left: var(--spacing-xs);
   border: none;
-  width: 32px;
-  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -312,24 +325,23 @@
 }
 
 .poke-icon-btn:hover {
-    filter: var(--filter-primary-hover);
+  filter: var(--filter-primary-hover);
 }
 
 .icon {
-  width: 20px;
-  height: 20px;
+  width: var(--font-size-xl);
+  height: var(--font-size-xl);
 }
 
 .live-info-winning-condition {
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--status-neutral-bg);
-  border-left: 3px solid var(--primary-400);
+  border-left: var(--spacing-xs) solid var(--btn-primary-bg);
   border-radius: var(--radius-md);
 }
 
 .live-info-winning-condition-text {
-  margin: 0;
   color: var(--text-light);
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -369,7 +381,7 @@
   display: flex;
   align-items: center;
   padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--neutral-700);
+  border-bottom: var(--container-border);
 }
 
 .live-info-field:last-child {
@@ -398,10 +410,6 @@
 }
 
 @media (max-width: 768px) {
-  .card-footer-left .bet-container {
-    width: 100%;
-  }
-
   .bet-dropdown,
   .bet-dropdown-readonly {
       width: 36vw;

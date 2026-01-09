@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import "./memberList.css";
 import type { TableMember } from "@features/table/types";
 import { UserList, type UserItem, type UserActionProps } from "@components/Social/UserList/UserList";
-import { formatToHundredth, normalizeToHundredth } from "@shared/utils/number";
+import { formatSignedCurrency, normalizeToHundredth } from "@shared/utils/number";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends } from "@features/social/hooks";
 import { useDialog } from "@shared/hooks/useDialog";
@@ -29,7 +29,7 @@ const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disable
   const isNegative = balanceValue < 0;
   const isZero = balanceValue === 0;
   const balanceClass = isZero ? "zero" : isNegative ? "negative" : "positive";
-  const balanceLabel = formatToHundredth(balanceValue, { showPlus: true });
+  const balanceLabel = formatSignedCurrency(balanceValue);
 
   return (
     <button
@@ -37,10 +37,10 @@ const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disable
       className={`member-balance-action ${balanceClass}`}
       onClick={() => onMemberClick(user)}
       disabled={disabled}
-      aria-label={`Balance for ${user.username}: $${balanceLabel}. Click to send friend request.`}
-      title={`$${balanceLabel}`}
+      aria-label={`Balance for ${user.username}: ${balanceLabel}. Click to send friend request.`}
+      title={balanceLabel}
     >
-      <span className="balance-badge">${balanceLabel}</span>
+      <span className="balance-badge">{balanceLabel}</span>
     </button>
   );
 };

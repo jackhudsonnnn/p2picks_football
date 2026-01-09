@@ -6,3 +6,9 @@
     height: calc(85vh - 130px);
     overflow: scroll;
 }
+
+.friend-requests-input {
+    flex: 1;
+    height: var(--font-size-5xl);
+    border-radius: var(--form-radius);
+}
