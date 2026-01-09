@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 import { getModeDefinition } from '../../modes/registry';
 import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../modes/shared/types';
-import { runModeValidator } from '../../modes/shared/utils';
 import { normalizeToHundredth } from '../../utils/number';
 import {
   buildModePreview,
@@ -261,12 +260,10 @@ function annotateSteps(
   session: ModeConfigSession,
   definition: ModeDefinitionDTO,
 ): ModeUserConfigStep[] {
+  const metaByKey = new Map(definition.configSteps.map((meta) => [meta.key, meta]));
   return steps.map((step) => {
-    const validationErrors = runModeValidator(step.validatorExpression, {
-      config: session.config,
-      bet: null,
-      mode: definition,
-    });
+    const meta = metaByKey.get(step.key);
+    const validationErrors = meta?.validate ? meta.validate({ config: session.config, bet: null }) : [];
     const selectedChoiceId = session.selections[step.key] ?? null;
     const completed = Boolean(selectedChoiceId) && validationErrors.length === 0;
     return {

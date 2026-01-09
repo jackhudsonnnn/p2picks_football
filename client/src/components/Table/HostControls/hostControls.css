@@ -5,16 +5,16 @@
   gap: var(--spacing-md);
   overflow: auto;
   background-color: var(--container-bg);
+  border: var(--container-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: var(--container-border);
 }
 
 .controls-header {
   display: flex;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--spacing-md);
-  border-bottom: 1px solid var(--neutral-700);
+  border-bottom: var(--container-border);
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -45,51 +45,6 @@
 .action-button:hover {
   background-color: var(--btn-primary-hover-bg);
   border: var(--btn-primary-hover-border);
-}
-
-.settlement-warning {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  color: var(--text-secondary);
-}
-
-.settlement-warning ul {
-  margin: 0;
-  padding-left: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.settlement-warning strong {
-  color: var(--text-light);
-}
-
-.settlement-summary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.settlement-summary__intro {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-.settlement-summary__ledger {
-  margin: 0;
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  background-color: var(--neutral-700);
-  white-space: pre-wrap;
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-}
-
-.settlement-error {
-  margin-top: var(--spacing-sm);
-  color: var(--error);
 }
 
 @media (max-width: 600px) {

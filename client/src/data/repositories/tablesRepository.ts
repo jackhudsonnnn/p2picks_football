@@ -199,7 +199,7 @@ function buildSettlementSummary(
   lines.push(`${new Date().toLocaleString()}`);
   lines.push('');
 
-  lines.push('Host:');
+  lines.push('Host');
   lines.push(`${host.username}: ${formatPointsDisplay(host.balance)}`);
   lines.push('');
 

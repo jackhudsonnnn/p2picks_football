@@ -3,7 +3,7 @@
     border: var(--container-border);
     border-radius: var(--container-radius);
     padding: var(--spacing-xl);
-    height: calc(85vh - 130px);
+    height: calc(80vh - 130px);
     overflow: scroll;
 }
 

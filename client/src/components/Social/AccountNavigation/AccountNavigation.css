@@ -23,7 +23,7 @@
   transition: all var(--transition);
 }
 
-.account-tab-button:hover, .account-tab-button:active {
+.account-tab-button:hover, .account-tab-button.active {
   color: var(--btn-primary-hover-bg);
 }
 

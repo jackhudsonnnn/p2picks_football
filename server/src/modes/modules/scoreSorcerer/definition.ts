@@ -33,7 +33,7 @@ export const scoreSorcererModule: ModeModule = {
   definition: {
     key: SCORE_SORCERER_MODE_KEY,
     label: SCORE_SORCERER_LABEL,
-    summaryTemplate: 'Score Sorcerer',
+  summaryTemplate: '`Score Sorcerer`',
     // matchupTemplate removed - uses shared default
     computeWinningCondition,
     computeOptions,

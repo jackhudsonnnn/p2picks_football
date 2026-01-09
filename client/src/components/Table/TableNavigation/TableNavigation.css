@@ -27,10 +27,14 @@
   color: var(--btn-primary-hover-bg);
 }
 
-@media (max-width: 385px) {
+@media (max-width: 415px) {
   .table-tab-button {
     font-size: var(--font-size-sm);
-    font-weight: 600;  
+  }
+}
+
+@media (max-width: 380px) {
+  .table-tab-button {
     padding: var(--spacing-sm);
   }
 }

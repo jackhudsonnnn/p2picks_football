@@ -24,41 +24,37 @@ import {
   TEST_DATA_DIR,
   ROSTERS_DIR,
 } from '../../utils/fileStorage';
-import { 
-  NFL_DATA_REFINED_INTERVAL_SECONDS, 
-  NFL_DATA_RAW_INTERVAL_SECONDS, 
-  NFL_DATA_RAW_JITTER_PERCENT, 
+import {
+  NFL_DATA_INTERVAL_SECONDS,
+  NFL_DATA_RAW_JITTER_PERCENT,
   NFL_DATA_TEST_MODE,
- } from '../../constants/environment';
+} from '../../constants/environment';
 
 const logger = createLogger('nflDataIngest');
 
 interface IngestConfig {
-  rawIntervalSeconds: number;
+  intervalSeconds: number;
   rawJitterPercent: number;
-  refinedIntervalSeconds: number;
   testMode: string;
 }
 
 const DEFAULT_CONFIG: IngestConfig = {
-  rawIntervalSeconds: NFL_DATA_RAW_INTERVAL_SECONDS,
+  intervalSeconds: NFL_DATA_INTERVAL_SECONDS,
   rawJitterPercent: NFL_DATA_RAW_JITTER_PERCENT,
-  refinedIntervalSeconds: NFL_DATA_REFINED_INTERVAL_SECONDS,
   testMode: NFL_DATA_TEST_MODE,
 };
 
 const CLEANUP_CUTOFF_MINUTES = 30;
 const POST_GAME_DELETE_MINUTES = 10;
 
-let rawTimer: NodeJS.Timeout | null = null;
-let refinedTimer: NodeJS.Timeout | null = null;
+let dataTimer: NodeJS.Timeout | null = null;
 let shuttingDown = false;
 
 /**
  * Start the NFL data ingest service.
  */
 export function startNflDataIngestService(): void {
-  if (rawTimer || refinedTimer) {
+  if (dataTimer) {
     return;
   }
 
@@ -66,12 +62,8 @@ export function startNflDataIngestService(): void {
     logger.error({ err }, 'Failed to prepare data directories');
   });
 
-  scheduleRawTick(true).catch((err) => {
-    logger.error({ err }, 'Failed to schedule initial raw tick');
-  });
-
-  scheduleRefinedTick().catch((err) => {
-    logger.error({ err }, 'Failed to schedule refined tick');
+  scheduleDataTick(true).catch((err) => {
+    logger.error({ err }, 'Failed to schedule initial data tick');
   });
 }
 
@@ -80,49 +72,31 @@ export function startNflDataIngestService(): void {
  */
 export async function stopNflDataIngestService(): Promise<void> {
   shuttingDown = true;
-  if (rawTimer) {
-    clearTimeout(rawTimer);
-    rawTimer = null;
-  }
-  if (refinedTimer) {
-    clearTimeout(refinedTimer);
-    refinedTimer = null;
+  if (dataTimer) {
+    clearTimeout(dataTimer);
+    dataTimer = null;
   }
 }
 
-async function scheduleRawTick(firstTick = false): Promise<void> {
+async function scheduleDataTick(firstTick = false): Promise<void> {
   if (shuttingDown) return;
 
   const delayMs = firstTick
     ? 0
-    : jitterDelay(DEFAULT_CONFIG.rawIntervalSeconds * 1000, DEFAULT_CONFIG.rawJitterPercent);
+    : jitterDelay(DEFAULT_CONFIG.intervalSeconds * 1000, DEFAULT_CONFIG.rawJitterPercent);
 
-  rawTimer = setTimeout(async () => {
+  dataTimer = setTimeout(async () => {
     try {
       await runRawFlow(firstTick);
+      await runRefineCycle();
     } catch (err) {
-      logger.error({ err }, 'Raw tick failed');
+      logger.error({ err }, 'Data tick failed');
     } finally {
-      scheduleRawTick(false).catch((error) => {
-        logger.error({ error }, 'Failed to reschedule raw tick');
+      scheduleDataTick(false).catch((error) => {
+        logger.error({ error }, 'Failed to reschedule data tick');
       });
     }
   }, delayMs);
-}
-
-async function scheduleRefinedTick(): Promise<void> {
-  if (shuttingDown) return;
-  refinedTimer = setTimeout(async () => {
-    try {
-      await runRefineCycle();
-    } catch (err) {
-      logger.error({ err }, 'Refine cycle failed');
-    } finally {
-      scheduleRefinedTick().catch((error) => {
-        logger.error({ error }, 'Failed to reschedule refined tick');
-      });
-    }
-  }, DEFAULT_CONFIG.refinedIntervalSeconds * 1000);
 }
 
 async function runRawTick(firstTick: boolean): Promise<void> {

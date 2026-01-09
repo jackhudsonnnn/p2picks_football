@@ -10,7 +10,6 @@ import {
   computeMatchupDescription,
   computeModeOptions,
   computeWinningCondition,
-  renderModeTemplate,
   runModeValidator,
 } from '../../modes/shared/utils';
 import type { BetProposal } from '../../supabaseClient';
@@ -69,11 +68,8 @@ export async function buildModePreview(
   await enrichConfigWithGameContext(config, bet);
   const ctx = buildModeContext(config, bet);
 
-  const summary = safeLabel(
-    renderModeTemplate(definition.summaryTemplate, { config, bet, mode: definition }),
-    definition.label,
-  );
-  const description = computeMatchupDescription(definition, ctx);
+  const summary = safeLabel(formatSummary(definition), definition.label);
+  const description = computeMatchupDescription(ctx);
   const winningCondition = computeWinningCondition(definition, ctx);
   const options = computeModeOptions(definition, ctx);
   const errors = runModeValidator(definition, ctx);
@@ -109,6 +105,15 @@ function safeLabel(candidate: string, fallback: string): string {
   return value && value.trim().length ? value : fallback;
 }
 
+function formatSummary(definition: ModeDefinitionDTO): string {
+  const raw = definition.summaryTemplate ?? '';
+  // Allow simple literal strings; strip surrounding backticks if present
+  const cleaned = raw.startsWith('`') && raw.endsWith('`') && raw.length >= 2
+    ? raw.slice(1, -1)
+    : raw;
+  return cleaned || definition.label;
+}
+
 function normalizeModeUserConfigSteps(
   definition: ModeDefinitionDTO | null,
   steps: ModeUserConfigStep[],
@@ -128,7 +133,6 @@ function normalizeModeUserConfigSteps(
     const description = step.description ?? meta?.description;
     const component = step.component || meta?.component;
     const props = step.props || meta?.props;
-    const validatorExpression = step.validatorExpression || meta?.validatorExpression;
     const normalizedChoices = (step.choices || []).map(normalizeChoice);
     return {
       key,
@@ -138,7 +142,6 @@ function normalizeModeUserConfigSteps(
       component,
       props,
       optional: step.optional ?? meta?.optional,
-      validatorExpression,
       choices: normalizedChoices,
     } satisfies ModeUserConfigStep;
   });
