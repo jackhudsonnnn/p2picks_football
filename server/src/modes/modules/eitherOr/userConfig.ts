@@ -73,9 +73,14 @@ export async function buildEitherOrUserConfig(input: {
   );
 
   // Player 2 step
+  const player1Id = input.existingConfig?.player1_id as string | undefined;
+  const playersForPlayer2 = player1Id
+    ? preparedPlayers.filter((p) => p.id !== player1Id)
+    : preparedPlayers;
+
   steps.push(
     buildPlayerStep({
-      players: preparedPlayers,
+      players: playersForPlayer2,
       playerKey: 'player2',
       statKey,
     }),
