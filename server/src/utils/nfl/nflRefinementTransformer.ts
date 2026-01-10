@@ -3,10 +3,10 @@
  * Transforms raw ESPN boxscore data into a normalized, usable format.
  */
 
-import { createLogger } from '../../utils/logger';
-import type { PlayerEntry } from './rosterService';
+import { createLogger } from '../logger';
+import type { PlayerEntry } from '../../services/nflData/nflRosterService';
 
-const logger = createLogger('refinementService');
+const logger = createLogger('nflRefinementTransformer');
 
 type PlayerStats = Record<string, unknown>;
 

@@ -5,7 +5,7 @@
 
 import path from 'path';
 import { createLogger } from '../../utils/logger';
-import { fetchRoster } from '../../utils/espnClient';
+import { fetchRoster } from '../../utils/nfl/espnClient';
 import {
   ROSTERS_DIR,
   writeJsonAtomic,

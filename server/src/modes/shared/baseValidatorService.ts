@@ -19,7 +19,7 @@ import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
 import { RedisJsonStore } from './redisJsonStore';
 import { getRedisClient } from './redisClient';
-import type { GameFeedEvent } from '../../services/nflData/gameFeedService';
+import type { GameFeedEvent } from '../../services/nflData/nflGameFeedService';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
 import { USE_RESOLUTION_QUEUE } from '../../constants/environment';
 
@@ -147,7 +147,6 @@ export abstract class BaseValidatorService<TConfig, TStore> {
 
   /**
    * Set the winning choice for a bet (direct DB call, no queue).
-   * @deprecated Use resolveWithWinner for new code.
    */
   protected async setWinningChoice(betId: string, winningChoice: string): Promise<boolean> {
     return betRepository.setWinningChoice(betId, winningChoice);

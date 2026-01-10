@@ -1,7 +1,7 @@
 import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { formatNumber } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import { normalizeStatus } from '../../shared/utils';
 import {
   TotalDisasterConfig,
   describeLine,

@@ -8,9 +8,9 @@
 
 import path from 'path';
 import { createLogger } from '../../utils/logger';
-import { getLiveEvents, fetchBoxscore } from '../../utils/espnClient';
-import { refineBoxscore } from './refinementService';
-import { loadRosterPlayers, updateRostersForGame } from './rosterService';
+import { getLiveEvents, fetchBoxscore } from '../../utils/nfl/espnClient';
+import { refineBoxscore } from '../../utils/nfl/nflRefinementTransformer';
+import { loadRosterPlayers, updateRostersForGame } from './nflRosterService';
 import {
   ensureDirectories,
   writeJsonAtomic,

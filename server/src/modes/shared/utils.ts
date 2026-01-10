@@ -2,6 +2,10 @@ import type { RefinedGameDoc, Team } from '../../services/nflData/nflRefinedData
 import type { ModeContext, ModeDefinitionDTO, ModeOverview } from './types';
 import type { BetProposal } from '../../supabaseClient';
 
+export function normalizeStatus(raw: string | null | undefined): string {
+  return raw ? String(raw).trim().toUpperCase() : '';
+}
+
 export function cloneDefinition(definition: ModeDefinitionDTO): ModeDefinitionDTO {
   return {
     ...definition,
@@ -14,9 +18,6 @@ export function cloneOverview(overview: ModeOverview): ModeOverview {
   return JSON.parse(JSON.stringify(overview));
 }
 
-/**
- * Build a ModeContext from config and optional bet.
- */
 export function buildModeContext(
   config: Record<string, unknown>,
   bet?: BetProposal | null,
@@ -24,24 +25,13 @@ export function buildModeContext(
   return { config, bet: bet ?? null };
 }
 
-/**
- * Default matchup description used by all modes.
- * Returns "{HomeTeam} vs {AwayTeam}" based on config values.
- */
 export function getMatchupDescription(ctx: ModeContext): string {
   const { config } = ctx;
-  const home = config.home_team_abbrev || config.home_team_name || config.home_team_id || 'Home Team';
-  const away = config.away_team_abbrev || config.away_team_name || config.away_team_id || 'Away Team';
+  const home = config.home_team_abbrev || config.home_team_name || 'Home Team';
+  const away = config.away_team_abbrev || config.away_team_name || 'Away Team';
   return `${home} vs ${away}`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Unified API (function-based)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Run mode config validation using validateConfig when provided.
- */
 export function runModeValidator(
   mode: ModeDefinitionDTO | null | undefined,
   ctx: ModeContext,
@@ -60,9 +50,6 @@ export function runModeValidator(
   return [];
 }
 
-/**
- * Compute available betting options for a mode via computeOptions or staticOptions.
- */
 export function computeModeOptions(
   mode: ModeDefinitionDTO | null | undefined,
   ctx: ModeContext,
@@ -78,7 +65,6 @@ export function computeModeOptions(
   
   const modeKey = mode.key || 'unknown';
   
-  // Check for static options first
   if (mode.staticOptions && mode.staticOptions.length > 0) {
     const options = ensurePassOption(dedupeOptions(mode.staticOptions));
     if (debug) {
@@ -87,7 +73,6 @@ export function computeModeOptions(
     return options;
   }
   
-  // Prefer function-based computeOptions
   if (mode.computeOptions) {
     try {
       const result = mode.computeOptions(ctx);
@@ -115,9 +100,6 @@ export function computeModeOptions(
   return ensurePassOption(['pass']);
 }
 
-/**
- * Compute winning condition description using computeWinningCondition if available.
- */
 export function computeWinningCondition(
   mode: ModeDefinitionDTO | null | undefined,
   ctx: ModeContext,
@@ -135,14 +117,9 @@ export function computeWinningCondition(
   return '';
 }
 
-/**
- * Compute matchup description.
- * Uses the shared getMatchupDescription helper (all modes use same format).
- */
 export function computeMatchupDescription(
   ctx: ModeContext,
 ): string {
-  // Always use the standard matchup format
   return getMatchupDescription(ctx);
 }
 

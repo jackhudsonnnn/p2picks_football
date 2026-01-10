@@ -66,8 +66,7 @@ export const totalDisasterModule: ModeModule = {
   definition: {
     key: 'total_disaster',
     label: 'Total Disaster',
-  summaryTemplate: '`Total Disaster`',
-    // matchupTemplate removed - uses shared default
+    summaryTemplate: 'Total Disaster',
     computeWinningCondition,
     computeOptions,
     validateConfig,

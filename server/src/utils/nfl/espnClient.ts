@@ -3,7 +3,7 @@
  * Handles all HTTP requests to ESPN's public API endpoints.
  */
 
-import { createLogger } from './logger';
+import { createLogger } from '../logger';
 
 const logger = createLogger('espnClient');
 

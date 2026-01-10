@@ -1,6 +1,6 @@
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '../../supabaseClient';
-import { subscribeToGameFeed, type GameFeedEvent } from '../../services/nflData/gameFeedService';
+import { subscribeToGameFeed, type GameFeedEvent } from '../../services/nflData/nflGameFeedService';
 
 export interface KernelHandlers {
   onGameEvent?: (event: GameFeedEvent) => Promise<void> | void;

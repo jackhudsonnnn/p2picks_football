@@ -95,8 +95,7 @@ export const kingOfTheHillModule: ModeModule = {
   definition: {
     key: 'king_of_the_hill',
     label: 'King Of The Hill',
-    summaryTemplate: '`King Of The Hill`',
-    // matchupTemplate removed - uses shared default
+    summaryTemplate: 'King Of The Hill',
     computeWinningCondition,
     computeOptions,
     validateConfig,

@@ -10,7 +10,7 @@ export const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 // redis
 export const REDIS_URL = process.env.REDIS_URL || '';
-export const RESOLUTION_QUEUE_CONCURRENCY = process.env.RESOLUTION_QUEUE_CONCURRENCY || 5;
+export const RESOLUTION_QUEUE_CONCURRENCY = process.env.RESOLUTION_QUEUE_CONCURRENCY || '5';
 export const USE_RESOLUTION_QUEUE = process.env.USE_RESOLUTION_QUEUE || 'true';
 
 // nfl data

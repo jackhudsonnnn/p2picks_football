@@ -26,7 +26,7 @@ export const chooseTheirFateModule: ModeModule = {
   definition: {
     key: 'choose_their_fate',
     label: 'Choose Their Fate',
-    summaryTemplate: '`Choose Their Fate`',
+    summaryTemplate: 'Choose Their Fate',
     computeWinningCondition,
     computeOptions,
     configSteps: [],

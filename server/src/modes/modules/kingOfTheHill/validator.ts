@@ -8,7 +8,6 @@ import {
   KingOfTheHillConfig,
   ProgressRecord,
   applyProgressUpdate,
-  buildProgressRecord,
   determineProgressOutcome,
   readPlayerStat,
   resolveStatKey,

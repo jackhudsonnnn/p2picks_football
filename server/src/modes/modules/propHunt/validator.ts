@@ -7,11 +7,9 @@ import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT } from './co
 import {
   PropHuntBaseline,
   PropHuntConfig,
-  evaluateLineCrossed,
   evaluatePropHunt,
   normalizePropHuntLine,
   normalizePropHuntProgressMode,
-  readStatValue,
 } from './evaluator';
 
 export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfig, PropHuntBaseline> {

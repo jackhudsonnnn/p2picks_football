@@ -81,8 +81,7 @@ export const spreadTheWealthModule: ModeModule = {
   definition: {
     key: 'spread_the_wealth',
     label: 'Spread The Wealth',
-  summaryTemplate: '`Spread The Wealth`',
-    // matchupTemplate removed - uses shared default
+    summaryTemplate: 'Spread The Wealth',
     computeWinningCondition,
     computeOptions,
     validateConfig,

@@ -89,8 +89,7 @@ export const propHuntModule: ModeModule = {
   definition: {
     key: 'prop_hunt',
     label: 'Prop Hunt',
-    summaryTemplate: '`Prop Hunt`',
-    // matchupTemplate removed - uses shared default
+    summaryTemplate: 'Prop Hunt',
     computeWinningCondition,
     computeOptions,
     validateConfig,
