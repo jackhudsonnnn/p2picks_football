@@ -2,7 +2,7 @@ import { BetProposal } from '../../../supabaseClient';
 import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import { normalizeStatus } from '../../shared/utils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT } from './constants';
 import {
   PropHuntBaseline,
@@ -141,7 +141,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
         this.logWarn('baseline unavailable for Starting Now; skipping bet', { bet_id: bet.bet_id });
         return;
       }
-      const evaluation = evaluatePropHunt(doc, config, line, progressMode, baseline ?? undefined);
+      const evaluation = await evaluatePropHunt(config, line, progressMode, baseline ?? undefined);
       if (!evaluation) {
         this.logWarn('evaluation unavailable; skipping bet', { bet_id: bet.bet_id });
         return;

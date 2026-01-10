@@ -1,5 +1,5 @@
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
-import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
+import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
+import { PlayerRef } from '../../shared/playerStatUtils';
 
 export interface EitherOrConfig {
   player1_id?: string | null;
@@ -62,30 +62,28 @@ function resolveStatKey(config: EitherOrConfig | null | undefined): string | nul
   return statKey;
 }
 
-function getPlayerValue(doc: RefinedGameDoc, ref: PlayerRef, statKey: string): number {
+async function getPlayerValue(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
   const spec = PLAYER_STAT_MAP[statKey];
   if (!spec) return 0;
-  return getPlayerStatValue(doc, ref, (player) => {
-    const categories = player?.stats || {};
-    const category = categories?.[spec.category];
-    return category ? category[spec.field] : undefined;
-  });
+  const key = resolvePlayerKey(ref.id, ref.name);
+  if (!key) return 0;
+  const value = await getPlayerStat(gameId, key, spec.category, spec.field);
+  return Number.isFinite(value) ? Number(value) : 0;
 }
 
-export function buildEitherOrBaseline(
-  doc: RefinedGameDoc,
+export async function buildEitherOrBaseline(
   config: EitherOrConfig,
   gameId: string,
   capturedAt: string = new Date().toISOString(),
-): EitherOrBaseline | null {
+): Promise<EitherOrBaseline | null> {
   const statKey = resolveStatKey(config);
-  if (!statKey) {
-    return null;
-  }
+  if (!statKey) return null;
   const player1Ref: PlayerRef = { id: config.player1_id, name: config.player1_name };
   const player2Ref: PlayerRef = { id: config.player2_id, name: config.player2_name };
-  const player1Value = getPlayerValue(doc, player1Ref, statKey);
-  const player2Value = getPlayerValue(doc, player2Ref, statKey);
+  const [player1Value, player2Value] = await Promise.all([
+    getPlayerValue(gameId, player1Ref, statKey),
+    getPlayerValue(gameId, player2Ref, statKey),
+  ]);
   return {
     statKey,
     capturedAt,
@@ -95,16 +93,17 @@ export function buildEitherOrBaseline(
   };
 }
 
-export function evaluateEitherOr(
-  doc: RefinedGameDoc,
+export async function evaluateEitherOr(
   config: EitherOrConfig,
   progressMode: 'starting_now' | 'cumulative',
   baseline?: EitherOrBaseline | null,
-): EitherOrEvaluationResult | null {
+): Promise<EitherOrEvaluationResult | null> {
   const statKey = baseline?.statKey ?? resolveStatKey(config);
-  if (!statKey) {
-    return null;
-  }
+  if (!statKey) return null;
+
+  const gameId = baseline?.gameId || config.nfl_game_id;
+  if (!gameId) return null;
+
   const player1Ref: PlayerRef = {
     id: baseline?.player1.ref.id ?? config.player1_id,
     name: baseline?.player1.ref.name ?? config.player1_name,
@@ -113,19 +112,21 @@ export function evaluateEitherOr(
     id: baseline?.player2.ref.id ?? config.player2_id,
     name: baseline?.player2.ref.name ?? config.player2_name,
   };
-  const player1Final = getPlayerValue(doc, player1Ref, statKey);
-  const player2Final = getPlayerValue(doc, player2Ref, statKey);
-  if (!Number.isFinite(player1Final) || !Number.isFinite(player2Final)) {
-    return null;
-  }
-  if (progressMode === 'starting_now' && !baseline) {
-    return null;
-  }
+
+  const [player1Final, player2Final] = await Promise.all([
+    getPlayerValue(gameId, player1Ref, statKey),
+    getPlayerValue(gameId, player2Ref, statKey),
+  ]);
+
+  if (!Number.isFinite(player1Final) || !Number.isFinite(player2Final)) return null;
+  if (progressMode === 'starting_now' && !baseline) return null;
+
   const baseline1 = baseline?.player1.value ?? 0;
   const baseline2 = baseline?.player2.value ?? 0;
   const metric1 = progressMode === 'starting_now' ? player1Final - baseline1 : player1Final;
   const metric2 = progressMode === 'starting_now' ? player2Final - baseline2 : player2Final;
   const outcome = metric1 === metric2 ? 'tie' : metric1 > metric2 ? 'player1' : 'player2';
+
   return {
     statKey,
     player1: {
@@ -144,4 +145,12 @@ export function evaluateEitherOr(
     },
     outcome,
   };
+}
+
+function resolvePlayerKey(playerId?: string | null, playerName?: string | null): string | null {
+  const id = playerId ? String(playerId).trim() : '';
+  if (id) return id;
+  const name = playerName ? String(playerName).trim() : '';
+  if (name) return `name:${name}`;
+  return null;
 }

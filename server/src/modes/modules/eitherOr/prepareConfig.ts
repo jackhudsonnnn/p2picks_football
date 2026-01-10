@@ -1,8 +1,8 @@
 import type { BetProposal } from '../../../supabaseClient';
 import {
-  getPlayer,
   getHomeTeam,
   getAwayTeam,
+  getPlayerStat,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
@@ -75,8 +75,8 @@ export async function prepareEitherOrConfig({
     await enrichWithTeamContext(cfg, gameId);
 
     const [baselinePlayer1, baselinePlayer2] = await Promise.all([
-      getPlayerStatValue(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
-      getPlayerStatValue(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
+      fetchPlayerStat(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
+      fetchPlayerStat(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
 
     if (debug) {
@@ -136,45 +136,21 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
   } as Record<string, unknown>;
 }
 
-async function getPlayerStatValue(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
+async function fetchPlayerStat(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
   const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
-  const player = await lookupPlayer(gameId, ref);
-  if (!player) {
-    if (debug) {
-      console.warn('[eitherOr][prepareConfig] player not found for baseline lookup', {
-        statKey,
-        playerId: ref.id ?? null,
-        playerName: ref.name ?? null,
-      });
-    }
-    return null;
-  }
-  const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
-  const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
-  if (!categoryStats) return null;
-  const raw = categoryStats[statKey];
+  const playerKey = resolvePlayerKey(ref.id, ref.name);
+  if (!playerKey) return null;
+  const value = await getPlayerStat(gameId, playerKey, category, statKey);
   if (debug) {
     console.log('[eitherOr][prepareConfig] raw stat value', {
       statKey,
       playerId: ref.id ?? null,
-      raw,
+      raw: value,
     });
   }
-  return normalizeStatValue(raw);
-}
-
-async function lookupPlayer(gameId: string, ref: PlayerRef) {
-  if (ref.id) {
-    const byId = await getPlayer(gameId, String(ref.id));
-    if (byId) return byId;
-  }
-  if (ref.name) {
-    const byName = await getPlayer(gameId, `name:${ref.name}`);
-    if (byName) return byName;
-  }
-  return null;
+  return normalizeStatValue(value);
 }
 
 function normalizeStatValue(raw: unknown): number | null {
@@ -186,6 +162,14 @@ function normalizeStatValue(raw: unknown): number | null {
     const num = Number(first);
     return Number.isFinite(num) ? num : null;
   }
+  return null;
+}
+
+function resolvePlayerKey(id?: string | null, name?: string | null): string | null {
+  const trimmedId = id ? String(id).trim() : '';
+  if (trimmedId) return trimmedId;
+  const trimmedName = name ? String(name).trim() : '';
+  if (trimmedName) return `name:${trimmedName}`;
   return null;
 }
 

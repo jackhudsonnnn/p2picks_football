@@ -18,7 +18,7 @@ export async function buildTotalDisasterUserConfig(input: BuildInput = {}): Prom
   const title = "Select Over/Under Line";
 
   const { doc, lineChoices } = await loadChoices(gameId);
-  const skipResolveStep = shouldSkipResolveStep(doc);
+  const skipResolveStep = await shouldSkipResolveStep(gameId);
   const minLineValue = computeMinLineValue(doc);
   const choices: ModeUserConfigChoice[] = buildLineChoices(lineChoices, skipResolveStep, minLineValue);
 

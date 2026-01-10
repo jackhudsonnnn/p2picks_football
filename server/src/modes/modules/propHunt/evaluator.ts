@@ -1,5 +1,6 @@
 import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
-import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
+import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
+import { PlayerRef } from '../../shared/playerStatUtils';
 
 export interface PropHuntConfig {
   player_id?: string | null;
@@ -76,37 +77,32 @@ export function normalizePropHuntLine(config: PropHuntConfig): number | null {
   return null;
 }
 
-export function evaluateLineCrossed(
-  doc: RefinedGameDoc | null,
+export async function evaluateLineCrossed(
   config: PropHuntConfig,
   line: number,
   progressMode: 'starting_now' | 'cumulative',
-): PendingLineCheck {
+): Promise<PendingLineCheck> {
   if (progressMode === 'starting_now') {
     return { crossed: false, currentValue: 0 };
   }
-  if (!doc) {
-    return { crossed: false, currentValue: null };
-  }
-  const statValue = readStatValue(doc, config);
+  const statValue = await readStatValueFromAccessors(config);
   if (statValue == null) {
     return { crossed: false, currentValue: null };
   }
   return { crossed: statValue >= line, currentValue: statValue };
 }
 
-export function evaluatePropHunt(
-  doc: RefinedGameDoc,
+export async function evaluatePropHunt(
   config: PropHuntConfig,
   line: number,
   progressMode: 'starting_now' | 'cumulative',
   baseline?: PropHuntBaseline | null,
-): PropHuntEvaluationResult | null {
+): Promise<PropHuntEvaluationResult | null> {
   const statKey = (config.stat || '').trim();
   if (!statKey || !PLAYER_STAT_MAP[statKey]) {
     return null;
   }
-  const finalValue = readStatValue(doc, config);
+  const finalValue = await readStatValueFromAccessors(config);
   if (finalValue == null) {
     return null;
   }
@@ -129,20 +125,25 @@ export function evaluatePropHunt(
   };
 }
 
-export function readStatValue(doc: RefinedGameDoc, config: PropHuntConfig): number | null {
+async function readStatValueFromAccessors(config: PropHuntConfig): Promise<number | null> {
   const statKey = (config.stat || '').trim();
   const spec = PLAYER_STAT_MAP[statKey];
-  if (!spec) {
-    return null;
-  }
-  const ref: PlayerRef = { id: config.player_id, name: config.player_name };
-  const value = getPlayerStatValue(doc, ref, (player) => {
-    const stats = player?.stats || {};
-    const category = stats?.[spec.category];
-    return category ? category[spec.field] : undefined;
-  });
-  if (!Number.isFinite(value)) {
-    return null;
-  }
-  return value;
+  if (!spec) return null;
+
+  const gameId = config.nfl_game_id ? String(config.nfl_game_id) : '';
+  if (!gameId) return null;
+
+  const playerKey = resolvePlayerKey(config.player_id, config.player_name);
+  if (!playerKey) return null;
+
+  const value = await getPlayerStat(gameId, playerKey, spec.category, spec.field);
+  return Number.isFinite(value) ? Number(value) : null;
+}
+
+function resolvePlayerKey(playerId?: string | null, playerName?: string | null): string | null {
+  const id = playerId ? String(playerId).trim() : '';
+  if (id) return id;
+  const name = playerName ? String(playerName).trim() : '';
+  if (name) return `name:${name}`;
+  return null;
 }

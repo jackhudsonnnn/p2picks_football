@@ -1,8 +1,8 @@
 import type { BetProposal } from '../../../supabaseClient';
 import {
-  getPlayer,
   getHomeTeam,
   getAwayTeam,
+  getPlayerStat,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import {
@@ -92,8 +92,8 @@ export async function prepareKingOfTheHillConfig({
     await enrichWithTeamContext(cfg, gameId);
 
     const [player1Value, player2Value] = await Promise.all([
-      getPlayerStatValue(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
-      getPlayerStatValue(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
+      fetchPlayerStat(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
+      fetchPlayerStat(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
 
     if (debug) {
@@ -146,27 +146,13 @@ function normalizeConfigPayload(config: KingOfTheHillConfig) {
   } as Record<string, unknown>;
 }
 
-async function getPlayerStatValue(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
+async function fetchPlayerStat(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
   const category = KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
-  const player = await lookupPlayer(gameId, ref);
-  if (!player) return null;
-  const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
-  const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
-  if (!categoryStats) return null;
-  return normalizeStatValue(categoryStats[statKey]);
-}
-
-async function lookupPlayer(gameId: string, ref: PlayerRef) {
-  if (ref.id) {
-    const byId = await getPlayer(gameId, String(ref.id));
-    if (byId) return byId;
-  }
-  if (ref.name) {
-    const byName = await getPlayer(gameId, `name:${ref.name}`);
-    if (byName) return byName;
-  }
-  return null;
+  const playerKey = resolvePlayerKey(ref.id, ref.name);
+  if (!playerKey) return null;
+  const value = await getPlayerStat(gameId, playerKey, category, statKey);
+  return normalizeStatValue(value);
 }
 
 function normalizeStatValue(raw: unknown): number | null {
@@ -178,6 +164,14 @@ function normalizeStatValue(raw: unknown): number | null {
     const num = Number(first);
     return Number.isFinite(num) ? num : null;
   }
+  return null;
+}
+
+function resolvePlayerKey(id?: string | null, name?: string | null): string | null {
+  const trimmedId = id ? String(id).trim() : '';
+  if (trimmedId) return trimmedId;
+  const trimmedName = name ? String(name).trim() : '';
+  if (trimmedName) return `name:${trimmedName}`;
   return null;
 }
 

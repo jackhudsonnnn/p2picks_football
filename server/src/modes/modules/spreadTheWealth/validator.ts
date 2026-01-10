@@ -1,7 +1,7 @@
 import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { formatNumber } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import { normalizeStatus } from '../../shared/utils';
 import { choiceLabel } from '../../shared/teamUtils';
 import {
   SpreadTheWealthConfig,

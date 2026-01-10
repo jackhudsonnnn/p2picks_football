@@ -1415,7 +1415,7 @@
               "completions/passingAttempts": "12/17",
               "passingYards": 194,
               "yardsPerPassAttempt": 11.4,
-              "passingTouchdowns": 2,
+              "passingTouchdowns": 3,
               "interceptions": 0,
               "sacks-sackYardsLost": "2-15",
               "adjQBR": 147.7,
@@ -4611,7 +4611,7 @@
       "abbreviation": "BUF",
       "displayName": "Buffalo Bills",
       "name": "Bills",
-      "score": 31,
+      "score": 33,
       "stats": {
         "passing": {
           "completions/passingAttempts": "22/32",
@@ -5934,7 +5934,7 @@
               "completions/passingAttempts": "22/32",
               "passingYards": 228,
               "yardsPerPassAttempt": 7.1,
-              "passingTouchdowns": 1,
+              "passingTouchdowns": 2,
               "interceptions": 0,
               "sacks-sackYardsLost": "0-0",
               "adjQBR": 99.5,

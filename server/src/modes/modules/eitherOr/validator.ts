@@ -1,7 +1,7 @@
 import { BetProposal } from '../../../supabaseClient';
 import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import { normalizeStatus } from '../../shared/utils';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from './constants';
 import { evaluateEitherOr, EitherOrBaseline, EitherOrConfig } from './evaluator';
@@ -87,7 +87,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
         return;
       }
 
-      const evaluation = evaluateEitherOr(doc, config, progressMode, baseline ?? undefined);
+  const evaluation = await evaluateEitherOr(config, progressMode, baseline ?? undefined);
       if (!evaluation) {
         this.logWarn('evaluation unavailable', { betId });
         return;

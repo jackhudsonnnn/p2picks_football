@@ -153,14 +153,6 @@
   },
   {
     "table_name": "bet_proposals",
-    "column_name": "nfl_game_id",
-    "data_type": "bigint",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> nfl_games(nfl_game_id)"
-  },
-  {
-    "table_name": "bet_proposals",
     "column_name": "mode_key",
     "data_type": "text",
     "is_nullable": "NO",
@@ -188,6 +180,14 @@
     "column_name": "winning_choice",
     "data_type": "text",
     "is_nullable": "YES",
+    "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "nfl_game_id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },
@@ -333,30 +333,6 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "timezone('utc'::text, now())",
-    "key_info": ""
-  },
-  {
-    "table_name": "nfl_games",
-    "column_name": "nfl_game_id",
-    "data_type": "bigint",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "nfl_games",
-    "column_name": "status",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": ""
-  },
-  {
-    "table_name": "nfl_games",
-    "column_name": "created_at",
-    "data_type": "timestamp with time zone",
-    "is_nullable": "NO",
-    "column_default": "now()",
     "key_info": ""
   },
   {

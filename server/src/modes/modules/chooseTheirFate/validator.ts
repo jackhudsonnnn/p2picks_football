@@ -1,12 +1,13 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import { normalizeStatus } from '../../shared/utils';
 import { normalizeTeamId } from '../../shared/teamUtils';
 import {
+  RefinedGameDoc,
   getAllTeams,
   getGameStatus,
   getPossessionTeamId,
+  getCategory,
   type Team,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import {
@@ -17,7 +18,6 @@ import {
   possessionTeamIdFromDoc,
 } from './evaluator';
 import { normalizeNumber } from '../../../utils/number';
-import { getCategory } from '../../../services/nflData/nflRefinedDataAccessors';
 
 export class ChooseTheirFateValidatorService extends BaseValidatorService<ChooseTheirFateConfig, ChooseFateBaseline> {
   constructor() {

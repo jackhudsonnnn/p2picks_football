@@ -13,7 +13,7 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
 import { fetchModeConfig } from '../../utils/modeConfig';
-import { RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
+import { RefinedGameDoc, getGameStatus } from '../../services/nflData/nflRefinedDataAccessors';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
@@ -22,6 +22,7 @@ import { getRedisClient } from './redisClient';
 import type { GameFeedEvent } from '../../services/nflData/nflGameFeedService';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
 import { USE_RESOLUTION_QUEUE } from '../../constants/environment';
+import { normalizeStatus } from './utils';
 
 export interface BaseValidatorConfig {
   /** Unique mode key (e.g., 'either_or', 'king_of_the_hill') */
@@ -143,6 +144,33 @@ export abstract class BaseValidatorService<TConfig, TStore> {
    */
   protected async listPendingBets(options?: { gameId?: string }): Promise<BetProposal[]> {
     return betRepository.listPendingBets(this.config.modeKey, options);
+  }
+
+  /**
+   * Wash a bet immediately if the associated game is already final when attempting to capture baseline/progress.
+   * Returns true if the bet was washed and no further baseline work should continue.
+   */
+  protected async washIfGameFinalAtBaseline(
+    betId: string,
+    gameId?: string | null,
+    extraPayload?: Record<string, unknown>,
+  ): Promise<boolean> {
+    if (!gameId) return false;
+    try {
+      const rawStatus = await getGameStatus(String(gameId));
+      const status = normalizeStatus(rawStatus);
+      if (status === 'STATUS_FINAL') {
+        await this.washBet(
+          betId,
+          { reason: 'game_final', status: rawStatus ?? status, game_id: gameId, ...(extraPayload ?? {}) },
+          'Game already final before the bet became pending.',
+        );
+        return true;
+      }
+    } catch (err) {
+      this.logError('baseline final-status check failed', { betId, gameId }, err);
+    }
+    return false;
   }
 
   /**
@@ -284,7 +312,11 @@ export abstract class BaseValidatorService<TConfig, TStore> {
 
       // Bet just became pending
       if (next.bet_status === 'pending' && prev.bet_status !== 'pending') {
-        await this.onBetBecamePending(next as BetProposal);
+        const gameId = (next as any)?.nfl_game_id ?? null;
+        const washed = await this.washIfGameFinalAtBaseline(next.bet_id, gameId, { trigger: 'pending_transition' });
+        if (!washed) {
+          await this.onBetBecamePending(next as BetProposal);
+        }
       }
 
       // Bet exited pending status or got a winning choice

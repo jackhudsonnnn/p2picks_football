@@ -33,7 +33,7 @@ export async function buildSpreadTheWealthUserConfig(input: BuildInput = {}): Pr
       }
     } catch (err) {
       if (debug) {
-  console.warn('[spreadTheWealth][userConfig] failed to load game context', {
+        console.warn('[spreadTheWealth][userConfig] failed to load game context', {
           gameId,
           error: err instanceof Error ? err.message : String(err),
         });
@@ -41,11 +41,11 @@ export async function buildSpreadTheWealthUserConfig(input: BuildInput = {}): Pr
     }
   }
 
-  const skipResolveStep = shouldSkipResolveStep(doc);
+  const skipResolveStep = await shouldSkipResolveStep(gameId);
   const choices: ModeUserConfigChoice[] = buildSpreadChoices(homeLabel, skipResolveStep);
 
   if (debug) {
-  console.log('[spreadTheWealth][userConfig] prepared choices', {
+    console.log('[spreadTheWealth][userConfig] prepared choices', {
       gameId,
       choiceCount: choices.length,
       skipResolveStep,

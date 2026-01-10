@@ -1,11 +1,14 @@
-import type { RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getGamePeriod } from '../../services/nflData/nflRefinedDataAccessors';
 
-export function shouldSkipResolveStep(doc: RefinedGameDoc | null | undefined): boolean {
-  if (!doc) return false;
-  const status = typeof doc.status === 'string' ? doc.status.trim().toUpperCase() : '';
-  if (status === 'STATUS_HALFTIME') return true;
-  if (typeof doc.period === 'number' && Number.isFinite(doc.period) && doc.period >= 3) return true;
-  return false;
+export async function shouldSkipResolveStep(gameId: string | null | undefined): Promise<boolean> {
+  if (!gameId) return false;
+  try {
+    const [status, period] = await Promise.all([getGameStatus(gameId), getGamePeriod(gameId)]);
+    return (status === 'STATUS_HALFTIME') || (typeof period === 'number' && Number.isFinite(period) && period >= 3);
+  } catch (err: any) {
+    console.warn('[resolveUtils] shouldSkipResolveStep error', { gameId, error: err instanceof Error ? err.message : String(err) });
+    return false;
+  }
 }
 
 export function normalizeResolveAt(

@@ -77,12 +77,13 @@ export async function loadGameContext(gameId: string | null | undefined): Promis
   try {
     const doc = await getGameDoc(gameId);
     if (!doc || !Array.isArray(doc.teams)) {
+      const skip = await shouldSkipResolveStep(gameId);
       return {
         doc,
         players: [],
         status: doc?.status ?? null,
         period: doc?.period ?? null,
-        skipResolveStep: shouldSkipResolveStep(doc),
+        skipResolveStep: skip,
         showProgressStep: false,
       };
     }
@@ -91,12 +92,13 @@ export async function loadGameContext(gameId: string | null | undefined): Promis
     const status = typeof doc.status === 'string' ? doc.status.trim().toUpperCase() : null;
     const showProgressStep = Boolean(status && status !== 'STATUS_SCHEDULED');
 
+    const skip = await shouldSkipResolveStep(gameId);
     return {
       doc,
       players: sortPlayersByPositionAndName(players),
       status,
       period: doc.period ?? null,
-      skipResolveStep: shouldSkipResolveStep(doc),
+      skipResolveStep: skip,
       showProgressStep,
     };
   } catch (err) {

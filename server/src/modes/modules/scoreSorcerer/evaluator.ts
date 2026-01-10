@@ -1,6 +1,6 @@
 import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeNumber } from '../../../utils/number';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import { normalizeStatus } from '../../shared/utils';
 import { choiceLabel } from '../../shared/teamUtils';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
 import { SCORE_SORCERER_NO_MORE_SCORES } from './constants';

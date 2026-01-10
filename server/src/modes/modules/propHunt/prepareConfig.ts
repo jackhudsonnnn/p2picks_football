@@ -1,8 +1,8 @@
 import type { BetProposal } from '../../../supabaseClient';
 import {
-  getPlayer,
   getHomeTeam,
   getAwayTeam,
+  getPlayerStat,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
@@ -62,7 +62,7 @@ export async function preparePropHuntConfig({
   try {
     await enrichWithTeamContext(next, gameId);
 
-    const currentStat = await getPlayerStatValue(gameId, next.stat, {
+    const currentStat = await fetchPlayerStat(gameId, next.stat, {
       id: next.player_id,
       name: next.player_name,
     });
@@ -179,28 +179,14 @@ function toNumber(raw: unknown): number | null {
 
 type PlayerRef = { id?: string | null; name?: string | null };
 
-async function getPlayerStatValue(gameId: string, statKey: string | null | undefined, ref: PlayerRef): Promise<number | null> {
+async function fetchPlayerStat(gameId: string, statKey: string | null | undefined, ref: PlayerRef): Promise<number | null> {
   if (!statKey) return null;
   const category = STAT_KEY_TO_CATEGORY[String(statKey)];
   if (!category) return null;
-  const player = await lookupPlayer(gameId, ref);
-  if (!player) return null;
-  const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
-  const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
-  if (!categoryStats) return null;
-  return normalizeStatValue(categoryStats[String(statKey)]);
-}
-
-async function lookupPlayer(gameId: string, ref: PlayerRef) {
-  if (ref.id) {
-    const byId = await getPlayer(gameId, String(ref.id));
-    if (byId) return byId;
-  }
-  if (ref.name) {
-    const byName = await getPlayer(gameId, `name:${ref.name}`);
-    if (byName) return byName;
-  }
-  return null;
+  const key = resolvePlayerKey(ref.id, ref.name);
+  if (!key) return null;
+  const value = await getPlayerStat(gameId, key, category, String(statKey));
+  return normalizeStatValue(value);
 }
 
 function normalizeStatValue(raw: unknown): number | null {
@@ -212,6 +198,14 @@ function normalizeStatValue(raw: unknown): number | null {
     const num = Number(first);
     return Number.isFinite(num) ? num : null;
   }
+  return null;
+}
+
+function resolvePlayerKey(id?: string | null, name?: string | null): string | null {
+  const trimmedId = id ? String(id).trim() : '';
+  if (trimmedId) return trimmedId;
+  const trimmedName = name ? String(name).trim() : '';
+  if (trimmedName) return `name:${trimmedName}`;
   return null;
 }
 

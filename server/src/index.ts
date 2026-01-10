@@ -3,7 +3,6 @@ import cors, { CorsOptions } from 'cors';
 import 'dotenv/config';
 import apiRouter from './routes/api';
 import { startModeValidators } from './services/bet/modeValidatorService';
-import { startNflGameStatusSync } from './services/nflData/nflGameStatusSyncService';
 import { startNflDataIngestService } from './services/nflData/nflDataIngestService';
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
 import { startResolutionQueue, stopResolutionQueue } from './modes/shared/resolutionQueue';
@@ -21,10 +20,8 @@ app.use(express.json());
 app.use('/api', requireAuth, apiRouter);
 
 app.listen(PORT, () => {
-  // Start resolution queue first (validators depend on it)
   startResolutionQueue();
   startModeValidators();
-  startNflGameStatusSync();
   startBetLifecycleService();
   startNflDataIngestService();
 });

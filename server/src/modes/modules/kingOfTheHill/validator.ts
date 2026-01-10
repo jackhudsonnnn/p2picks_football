@@ -1,7 +1,7 @@
 import { BetProposal } from '../../../supabaseClient';
 import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/gameDocProvider';
+import { normalizeStatus } from '../../shared/utils';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
 import { clampResolveValue, KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE } from './constants';
 import {
@@ -80,9 +80,10 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return;
       }
 
-      const progressMode = progress.progressMode || normalizeProgressMode(config.progress_mode);
-      const player1Current = readPlayerStat(doc, { id: config.player1_id, name: config.player1_name }, progress.statKey);
-      const player2Current = readPlayerStat(doc, { id: config.player2_id, name: config.player2_name }, progress.statKey);
+  const progressMode = progress.progressMode || normalizeProgressMode(config.progress_mode);
+  const gameId = progress.gameId || (config.nfl_game_id ? String(config.nfl_game_id) : '');
+  const player1Current = await readPlayerStat(gameId, { id: config.player1_id, name: config.player1_name }, progress.statKey);
+  const player2Current = await readPlayerStat(gameId, { id: config.player2_id, name: config.player2_name }, progress.statKey);
       const timestamp = this.normalizeTimestamp(updatedAt, (doc as any)?.generatedAt);
 
       const updatedProgress = applyProgressUpdate(

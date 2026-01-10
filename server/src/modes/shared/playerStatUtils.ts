@@ -36,13 +36,6 @@ export function normalizeStatValue(raw: unknown): number {
   return normalizeNumber(raw, 0);
 }
 
-export function getPlayerStatValue(doc: RefinedGameDoc, ref: PlayerRef, statAccessor: (player: any) => unknown): number {
-  const player = lookupPlayer(doc, ref);
-  if (!player) return 0;
-  const value = statAccessor(player) ?? statAccessor(player?.stats ?? {});
-  return normalizeStatValue(value);
-}
-
 export function normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
   const normalized = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
   return normalized === 'starting_now' ? 'starting_now' : 'cumulative';

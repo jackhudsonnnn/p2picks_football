@@ -1,5 +1,5 @@
-import { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
-import { PlayerRef, getPlayerStatValue } from '../../shared/playerStatUtils';
+import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
+import { PlayerRef } from '../../shared/playerStatUtils';
 
 export interface KingOfTheHillConfig {
   player1_id?: string | null;
@@ -68,14 +68,13 @@ export function resolveStatKey(config: KingOfTheHillConfig | null | undefined): 
   return statKey;
 }
 
-export function readPlayerStat(doc: RefinedGameDoc, ref: PlayerRef, statKey: string): number {
+export async function readPlayerStat(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
   const spec = PLAYER_STAT_MAP[statKey];
   if (!spec) return 0;
-  return getPlayerStatValue(doc, ref, (player) => {
-    const stats = player?.stats || {};
-    const category = stats?.[spec.category];
-    return category ? category[spec.field] : undefined;
-  });
+  const playerKey = resolvePlayerKey(ref.id, ref.name);
+  if (!playerKey) return 0;
+  const value = await getPlayerStat(gameId, playerKey, spec.category, spec.field);
+  return Number.isFinite(value) ? Number(value) : 0;
 }
 
 export function createPlayerProgress(id?: string | null, name?: string | null, baselineValue = 0): PlayerProgress {
@@ -92,19 +91,20 @@ export function createPlayerProgress(id?: string | null, name?: string | null, b
   };
 }
 
-export function buildProgressRecord(
-  doc: RefinedGameDoc,
+export async function buildProgressRecord(
   config: KingOfTheHillConfig,
   statKey: string,
   threshold: number,
   progressMode: 'starting_now' | 'cumulative',
   gameId: string,
   capturedAt: string = new Date().toISOString(),
-): ProgressRecord {
+): Promise<ProgressRecord> {
   const player1Ref: PlayerRef = { id: config.player1_id, name: config.player1_name };
   const player2Ref: PlayerRef = { id: config.player2_id, name: config.player2_name };
-  const player1Value = readPlayerStat(doc, player1Ref, statKey);
-  const player2Value = readPlayerStat(doc, player2Ref, statKey);
+  const [player1Value, player2Value] = await Promise.all([
+    readPlayerStat(gameId, player1Ref, statKey),
+    readPlayerStat(gameId, player2Ref, statKey),
+  ]);
   return {
     statKey,
     threshold,
@@ -114,6 +114,14 @@ export function buildProgressRecord(
     player1: createPlayerProgress(config.player1_id, config.player1_name, player1Value),
     player2: createPlayerProgress(config.player2_id, config.player2_name, player2Value),
   };
+}
+
+function resolvePlayerKey(playerId?: string | null, playerName?: string | null): string | null {
+  const id = playerId ? String(playerId).trim() : '';
+  if (id) return id;
+  const name = playerName ? String(playerName).trim() : '';
+  if (name) return `name:${name}`;
+  return null;
 }
 
 export function applyProgressUpdate(
