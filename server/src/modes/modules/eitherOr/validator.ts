@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getPlayerStat, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
@@ -22,19 +22,19 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
     await this.captureBaselineForBet(bet);
   }
 
-  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc): Promise<void> {
-    const status = normalizeStatus(doc.status);
+  protected async onGameUpdate(gameId: string): Promise<void> {
+    const status = normalizeStatus(await getGameStatus(gameId));
     const halftimeResolveAt =
       EITHER_OR_ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
 
     if (status === 'STATUS_HALFTIME') {
-      await this.processFinalGame(gameId, doc, halftimeResolveAt);
+      await this.processFinalGame(gameId, halftimeResolveAt);
       return;
     }
 
     if (status === 'STATUS_FINAL') {
-      await this.processFinalGame(gameId, doc, halftimeResolveAt);
-      await this.processFinalGame(gameId, doc, EITHER_OR_DEFAULT_RESOLVE_AT);
+      await this.processFinalGame(gameId, halftimeResolveAt);
+      await this.processFinalGame(gameId, EITHER_OR_DEFAULT_RESOLVE_AT);
     }
   }
 
@@ -52,18 +52,18 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
     }
   }
 
-  private async processFinalGame(gameId: string, doc: RefinedGameDoc, resolveAt: string): Promise<void> {
+  private async processFinalGame(gameId: string, resolveAt: string): Promise<void> {
     try {
       const bets = await this.listPendingBets({ gameId });
       for (const bet of bets) {
-        await this.resolveBet(bet.bet_id, doc, resolveAt);
+        await this.resolveBet(bet.bet_id, resolveAt);
       }
     } catch (err) {
       this.logError('process final game error', { gameId, resolveAt }, err);
     }
   }
 
-  private async resolveBet(betId: string, doc: RefinedGameDoc, resolveAt: string): Promise<void> {
+  private async resolveBet(betId: string, resolveAt: string): Promise<void> {
     try {
       const config = await this.getConfigForBet(betId);
       if (!config) {
@@ -158,7 +158,6 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
 
   private async captureBaselineForBet(
     bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
-    prefetchedDoc?: RefinedGameDoc | null,
   ): Promise<EitherOrBaseline | null> {
     const existing = await this.store.get(bet.bet_id);
     if (existing) return existing;

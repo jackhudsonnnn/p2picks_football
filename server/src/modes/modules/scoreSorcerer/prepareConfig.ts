@@ -1,6 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { getAwayTeam, getHomeTeam } from '../../../services/nflData/nflRefinedDataAccessors';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import type { ScoreSorcererConfig } from './evaluator';
 
 export async function prepareScoreSorcererConfig({
@@ -20,11 +20,7 @@ export async function prepareScoreSorcererConfig({
   if (!gameId) return nextConfig as Record<string, unknown>;
 
   try {
-    const doc = await getGameDoc(gameId);
-    if (!doc) return nextConfig as Record<string, unknown>;
-
-    const homeTeam = pickHomeTeam(doc);
-    const awayTeam = pickAwayTeam(doc, homeTeam);
+    const [homeTeam, awayTeam] = await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)]);
 
     if (!nextConfig.home_team_id) nextConfig.home_team_id = extractTeamId(homeTeam);
     if (!nextConfig.home_team_abbrev) nextConfig.home_team_abbrev = extractTeamAbbreviation(homeTeam);

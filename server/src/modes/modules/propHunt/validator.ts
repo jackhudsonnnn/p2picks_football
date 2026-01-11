@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getPlayerStat, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
@@ -28,19 +28,19 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
     await this.handlePendingTransition(bet);
   }
 
-  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc): Promise<void> {
-    const status = normalizeStatus(doc.status);
+  protected async onGameUpdate(gameId: string): Promise<void> {
+    const status = normalizeStatus(await getGameStatus(gameId));
     const halftimeOption =
       PROP_HUNT_ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
 
     if (status === 'STATUS_HALFTIME') {
-      await this.processGame(gameId, doc, halftimeOption);
+      await this.processGame(gameId, halftimeOption);
       return;
     }
 
     if (status === 'STATUS_FINAL') {
-      await this.processGame(gameId, doc, halftimeOption);
-      await this.processGame(gameId, doc, PROP_HUNT_DEFAULT_RESOLVE_AT);
+      await this.processGame(gameId, halftimeOption);
+      await this.processGame(gameId, PROP_HUNT_DEFAULT_RESOLVE_AT);
     }
   }
 
@@ -78,7 +78,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
       const progressMode = normalizePropHuntProgressMode(config.progress_mode);
       const gameId = config.nfl_game_id || bet.nfl_game_id || null;
       if (progressMode === 'starting_now') {
-        await this.captureBaselineForBet({ ...bet, nfl_game_id: gameId }, null, config);
+        await this.captureBaselineForBet({ ...bet, nfl_game_id: gameId }, config);
       }
 
       const currentValue = await readStatValueFromAccessors(config, gameId);
@@ -100,18 +100,18 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
     }
   }
 
-  private async processGame(gameId: string, doc: RefinedGameDoc, resolveAt: string): Promise<void> {
+  private async processGame(gameId: string, resolveAt: string): Promise<void> {
     try {
       const bets = await this.listPendingBets({ gameId });
       for (const bet of bets) {
-        await this.resolveBet(bet, doc, resolveAt);
+        await this.resolveBet(bet, resolveAt);
       }
     } catch (err) {
       this.logError('process game error', { gameId, resolveAt }, err);
     }
   }
 
-  private async resolveBet(bet: BetProposal, doc: RefinedGameDoc, resolveAt: string): Promise<void> {
+  private async resolveBet(bet: BetProposal, resolveAt: string): Promise<void> {
     try {
       const config = await this.getConfigForBet(bet.bet_id);
       if (!config) {
@@ -135,17 +135,20 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
         );
         return;
       }
+
       const progressMode = normalizePropHuntProgressMode(config.progress_mode);
-      const baseline = progressMode === 'starting_now' ? await this.ensureBaseline(bet, doc, config) : null;
+      const baseline = progressMode === 'starting_now' ? await this.ensureBaseline(bet, config) : null;
       if (progressMode === 'starting_now' && !baseline) {
         this.logWarn('baseline unavailable for Starting Now; skipping bet', { bet_id: bet.bet_id });
         return;
       }
-      const evaluation = await evaluatePropHunt(config, line, progressMode, baseline ?? undefined);
+
+      const evaluation = await evaluatePropHunt(config, progressMode, baseline ?? undefined);
       if (!evaluation) {
         this.logWarn('evaluation unavailable; skipping bet', { bet_id: bet.bet_id });
         return;
       }
+
       if (isApproximatelyEqual(evaluation.metricValue, line)) {
         await this.washBet(
           bet.bet_id,
@@ -163,6 +166,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
             ? `Net progress (${formatNumber(evaluation.metricValue)}) matched the line.`
             : `Final value (${formatNumber(evaluation.metricValue)}) matched the line.`,
         );
+
         return;
       }
       const winningChoice = evaluation.metricValue > line ? 'Over' : 'Under';
@@ -187,19 +191,17 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
 
   private async ensureBaseline(
     bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
-    doc: RefinedGameDoc,
     config: PropHuntConfig,
   ): Promise<PropHuntBaseline | null> {
     const existing = await this.store.get(bet.bet_id);
     if (existing) {
       return existing;
     }
-    return this.captureBaselineForBet(bet, doc, config);
+    return this.captureBaselineForBet(bet, config);
   }
 
   private async captureBaselineForBet(
     bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
-    prefetchedDoc?: RefinedGameDoc | null,
     existingConfig?: PropHuntConfig | null,
   ): Promise<PropHuntBaseline | null> {
     const cached = await this.store.get(bet.bet_id);
@@ -242,13 +244,6 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
       progress_mode: progressMode,
     });
     return baseline;
-  }
-
-  private async fetchGameDoc(
-    config: PropHuntConfig,
-    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
-  ): Promise<RefinedGameDoc | null> {
-    return null;
   }
 }
 

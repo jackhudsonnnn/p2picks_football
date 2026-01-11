@@ -1,36 +1,7 @@
-import type { RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
 import { normalizePlayerPosition } from './playerUtils';
 import { normalizeNumber } from '../../utils/number';
 
 export type PlayerRef = { id?: string | null; name?: string | null };
-
-function iteratePlayers(doc: RefinedGameDoc): any[] {
-  const roster: any[] = [];
-  for (const team of doc.teams || []) {
-    const players = (team as any)?.players;
-    if (Array.isArray(players)) {
-      roster.push(...players);
-    } else if (players && typeof players === 'object') {
-      roster.push(...Object.values(players as Record<string, unknown>));
-    }
-  }
-  return roster;
-}
-
-export function lookupPlayer(doc: RefinedGameDoc, ref: PlayerRef) {
-  const roster = iteratePlayers(doc);
-  const normalizedId = ref.id ? ref.id.trim() : '';
-  if (normalizedId) {
-    const byId = roster.find((player) => String(player?.athlete?.id ?? player?.athleteId ?? player?.id ?? '').trim() === normalizedId);
-    if (byId) return byId;
-  }
-  const normalizedName = ref.name ? ref.name.trim().toLowerCase() : '';
-  if (normalizedName) {
-    const byName = roster.find((player) => String(player?.athlete?.displayName ?? player?.displayName ?? player?.fullName ?? '').trim().toLowerCase() === normalizedName);
-    if (byName) return byName;
-  }
-  return null;
-}
 
 export function normalizeStatValue(raw: unknown): number {
   return normalizeNumber(raw, 0);

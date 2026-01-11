@@ -23,8 +23,6 @@ import {
 } from './constants';
 import { readPlayerStat, resolveStatKey, type KingOfTheHillConfig } from './evaluator';
 
-const DEBUG = process.env.DEBUG_KING_OF_THE_HILL === '1' || process.env.DEBUG_KING_OF_THE_HILL === 'true';
-
 export async function buildKingOfTheHillUserConfig(input: {
   nflGameId?: string | null;
   existingConfig?: Record<string, unknown>;
@@ -33,25 +31,14 @@ export async function buildKingOfTheHillUserConfig(input: {
   const context = await loadGameContext(gameId);
   const statKey = input.existingConfig?.stat as string | undefined;
   const selectedProgressMode = parseProgressModeSelection(input.existingConfig?.progress_mode);
-
-  // Filter players by position based on stat
   const filteredPlayers = filterPlayersByStatPosition(context.players, statKey);
   const preparedPlayers = prepareValidPlayers(filteredPlayers);
-
-  if (DEBUG) {
-    console.log('[kingOfTheHill][userConfig] building steps', {
-      gameId,
-      playerCount: context.players.length,
-      filteredPlayerCount: preparedPlayers.length,
-      statKey,
-      showProgressStep: context.showProgressStep,
-      selectedProgressMode,
-    });
-  }
-
   const defaultProgressPatch = getDefaultProgressPatch(context.showProgressStep);
-
   const steps: ModeUserConfigStep[] = [];
+
+  // Default progress mode when the progress step is hidden (e.g., STATUS_SCHEDULED)
+  const effectiveProgressMode: 'starting_now' | 'cumulative' =
+    selectedProgressMode ?? (context.showProgressStep ? 'starting_now' : 'starting_now');
 
   // Stat step
   steps.push(
@@ -98,17 +85,16 @@ export async function buildKingOfTheHillUserConfig(input: {
     if (progressStep) {
       steps.push(progressStep);
     }
-
-    // Resolve value step with filtering for cumulative mode
-    const resolveValueStep = await buildResolveValueStep({
-      doc: context.doc,
-      gameId,
-      statKey,
-      progressMode: selectedProgressMode,
-      existingConfig: input.existingConfig,
-    });
-    steps.push(resolveValueStep);
   }
+
+  // Resolve value step should always be available (scheduled or in-progress games)
+  const resolveValueStep = await buildResolveValueStep({
+    gameId,
+    statKey,
+    progressMode: context.showProgressStep ? selectedProgressMode : effectiveProgressMode,
+    existingConfig: input.existingConfig,
+  });
+  steps.push(resolveValueStep);
 
   return steps;
 }
@@ -128,7 +114,6 @@ interface ResolveValueContext {
 }
 
 async function buildResolveValueStep(input: {
-  doc: any;
   gameId: string | null;
   statKey?: string;
   progressMode: 'starting_now' | 'cumulative' | null;
@@ -170,7 +155,6 @@ async function buildResolveValueStep(input: {
 }
 
 async function computeResolveValueFilter(input: {
-  doc: any;
   gameId: string | null;
   statKey?: string;
   progressMode: 'starting_now' | 'cumulative' | null;

@@ -1,8 +1,8 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeStatus } from '../../shared/utils';
 import { choiceLabel } from '../../shared/teamUtils';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
+import { getHomeTeam, getAwayTeam, getScores, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
 import { SCORE_SORCERER_NO_MORE_SCORES } from './constants';
 
 export interface ScoreSorcererConfig {
@@ -38,13 +38,13 @@ export interface ScoreSorcererEvaluation {
   deltaAway: number;
 }
 
-export function buildScoreSorcererBaseline(
-  doc: RefinedGameDoc,
+export async function buildScoreSorcererBaseline(
   config: ScoreSorcererConfig,
   gameId: string,
   capturedAt: string,
-): ScoreSorcererBaseline {
-  const snapshot = readScoreSnapshot(doc, config);
+): Promise<ScoreSorcererBaseline | null> {
+  const snapshot = await readScoreSnapshot({ ...config, nfl_game_id: gameId });
+  if (!snapshot) return null;
   return {
     gameId,
     capturedAt,
@@ -59,12 +59,14 @@ export function buildScoreSorcererBaseline(
   };
 }
 
-export function evaluateScoreSorcerer(
-  doc: RefinedGameDoc | null | undefined,
+export async function evaluateScoreSorcerer(
+  gameId: string | null | undefined,
   baseline: ScoreSorcererBaseline | null | undefined,
-): ScoreSorcererEvaluation | null {
-  if (!doc || !baseline) return null;
-  const snapshot = readScoreSnapshot(doc, {
+): Promise<ScoreSorcererEvaluation | null> {
+  if (!gameId || !baseline) return null;
+
+  const snapshot = await readScoreSnapshot({
+    nfl_game_id: gameId,
     home_team_id: baseline.homeTeamId,
     away_team_id: baseline.awayTeamId,
     home_team_name: baseline.homeTeamName,
@@ -72,6 +74,7 @@ export function evaluateScoreSorcerer(
     home_team_abbrev: baseline.homeTeamAbbrev,
     away_team_abbrev: baseline.awayTeamAbbrev,
   });
+  if (!snapshot) return null;
 
   const deltaHome = Math.max(0, snapshot.homeScore - baseline.homeScore);
   const deltaAway = Math.max(0, snapshot.awayScore - baseline.awayScore);
@@ -86,8 +89,9 @@ export function evaluateScoreSorcerer(
     return { decision: 'simultaneous', homeScore: snapshot.homeScore, awayScore: snapshot.awayScore, deltaHome, deltaAway };
   }
 
-  const status = normalizeStatus((doc as any)?.status);
-  if (status.includes('FINAL') || status === 'STATUS_END_PERIOD' || status === 'STATUS_CANCELED') {
+  const status = normalizeStatus(await getGameStatus(gameId));
+
+  if (status === 'STATUS_FINAL') {
     return { decision: 'no_more_scores', homeScore: snapshot.homeScore, awayScore: snapshot.awayScore, deltaHome, deltaAway };
   }
 
@@ -106,14 +110,27 @@ export function noMoreScoresChoice(): string {
   return SCORE_SORCERER_NO_MORE_SCORES;
 }
 
-function readScoreSnapshot(doc: RefinedGameDoc, config: ScoreSorcererConfig) {
-  const homeTeam = pickHomeTeam(doc);
-  const awayTeam = pickAwayTeam(doc, homeTeam);
+async function readScoreSnapshot(config: ScoreSorcererConfig): Promise<
+  | (ScoreSorcererBaseline & { deltaHome?: number; deltaAway?: number })
+  | null
+> {
+  const gameId = config.nfl_game_id;
+  if (!gameId) return null;
 
-  const homeScore = normalizeNumber((homeTeam as any)?.score);
-  const awayScore = normalizeNumber((awayTeam as any)?.score);
+  const [homeTeam, awayTeam, scores] = await Promise.all([
+    getHomeTeam(gameId),
+    getAwayTeam(gameId),
+    getScores(gameId),
+  ]);
+
+  if (!homeTeam && !awayTeam) return null;
+
+  const homeScore = normalizeNumber(scores.home);
+  const awayScore = normalizeNumber(scores.away);
 
   return {
+    gameId,
+    capturedAt: '', // caller sets
     homeScore,
     awayScore,
     homeTeamId: extractTeamId(homeTeam) ?? config.home_team_id ?? null,

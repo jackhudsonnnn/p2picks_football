@@ -3,21 +3,17 @@ import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
 import { normalizeTeamId } from '../../shared/teamUtils';
 import {
-  RefinedGameDoc,
   getAllTeams,
   getGameStatus,
   getPossessionTeamId,
-  getCategory,
-  type Team,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import {
   ChooseFateBaseline,
   ChooseTheirFateConfig,
   collectTeamScores,
+  buildTeamScoresFromTeams,
   determineChooseFateOutcome,
-  possessionTeamIdFromDoc,
 } from './evaluator';
-import { normalizeNumber } from '../../../utils/number';
 
 export class ChooseTheirFateValidatorService extends BaseValidatorService<ChooseTheirFateConfig, ChooseFateBaseline> {
   constructor() {
@@ -36,10 +32,10 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
     await this.captureBaselineForBet(bet);
   }
 
-  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc): Promise<void> {
+  protected async onGameUpdate(gameId: string): Promise<void> {
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {
-      await this.evaluateBet(bet, doc);
+      await this.evaluateBet(bet, gameId);
     }
   }
 
@@ -57,14 +53,14 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
     }
   }
 
-  private async evaluateBet(bet: BetProposal, doc: RefinedGameDoc): Promise<void> {
+  private async evaluateBet(bet: BetProposal, game_id: string): Promise<void> {
     try {
-      const status = normalizeStatus(doc.status);
+      const status = await getGameStatus(game_id);
       if (this.shouldAutoWashForStatus(status)) {
         await this.washBet(
           bet.bet_id,
-          { reason: 'game_status', status: doc.status ?? null },
-          this.describeStatusWash(doc.status),
+          { reason: 'game_status', status: status },
+          this.describeStatusWash(status),
         );
         return;
       }
@@ -83,8 +79,8 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
         return;
       }
 
-      const currentScores = collectTeamScores(doc);
-      const possessionTeam = possessionTeamIdFromDoc(doc);
+  const currentScores = await collectTeamScores(game_id);
+  const possessionTeam = await getPossessionTeamId(game_id);
       const outcome = determineChooseFateOutcome(baseline, currentScores, possessionTeam);
       if (!outcome) return;
 
@@ -207,7 +203,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       gameId,
       possessionTeamId,
       capturedAt: new Date().toISOString(),
-      teams: collectTeamScoresFromTeams(teams),
+      teams: buildTeamScoresFromTeams(teams),
     };
 
     await this.store.set(bet.bet_id, baseline);
@@ -266,47 +262,4 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
 
 export const chooseTheirFateValidator = new ChooseTheirFateValidatorService();
 
-function collectTeamScoresFromTeams(teams: Team[]): ReturnType<typeof collectTeamScores> {
-  const scores: ReturnType<typeof collectTeamScores> = {};
-  teams.forEach((team, index) => {
-    const key = resolveTeamKey(team, index);
-    const stats = ((team as any)?.stats ?? {}) as Record<string, Record<string, unknown>>;
-    const scoring = getCategory(stats, 'scoring');
-    const punting = getCategory(stats, 'punting');
-    scores[key] = {
-      key,
-      teamId: normalizeTeamId((team as any)?.teamId),
-      abbreviation: normalizeTeamId((team as any)?.abbreviation),
-      homeAway: typeof (team as any)?.homeAway === 'string' ? (team as any)?.homeAway : null,
-      touchdowns: readStat(scoring, ['touchdowns', 'Touchdowns']),
-      fieldGoals: readStat(scoring, ['fieldGoals', 'FieldGoals', 'fgMade', 'made']),
-      safeties: readStat(scoring, ['safeties', 'Safeties']),
-      punts: readStat(punting, ['punts', 'Punts', 'attempts']),
-      hasPossession: Boolean((team as any)?.possession),
-    };
-  });
-  return scores;
-}
-
-function resolveTeamKey(team: unknown, fallbackIndex: number): string {
-  const normalizedId = normalizeTeamId((team as any)?.teamId);
-  if (normalizedId) return normalizedId;
-  const normalizedAbbr = normalizeTeamId((team as any)?.abbreviation);
-  if (normalizedAbbr) return normalizedAbbr;
-  return `team_${fallbackIndex}`;
-}
-
-function readStat(bucket: Record<string, unknown> | undefined, keys: string[]): number {
-  if (!bucket) return 0;
-  for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(bucket, key)) {
-      return normalizeNumber(bucket[key]);
-    }
-    const lower = key.toLowerCase();
-    const entry = Object.entries(bucket).find(([candidate]) => candidate.toLowerCase() === lower);
-    if (entry) {
-      return normalizeNumber(entry[1]);
-    }
-  }
-  return 0;
-}
+// helper functions removed; collectTeamScores now uses accessors in evaluator

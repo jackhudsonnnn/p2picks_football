@@ -1,4 +1,3 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
 import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { PlayerRef } from '../../shared/playerStatUtils';
 
@@ -94,7 +93,6 @@ export async function evaluateLineCrossed(
 
 export async function evaluatePropHunt(
   config: PropHuntConfig,
-  line: number,
   progressMode: 'starting_now' | 'cumulative',
   baseline?: PropHuntBaseline | null,
 ): Promise<PropHuntEvaluationResult | null> {

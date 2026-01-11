@@ -7,12 +7,12 @@ export async function validateChooseTheirFateProposal({
   nflGameId: string;
   config: Record<string, unknown>;
 }): Promise<{ valid: boolean; error?: string; details?: any; configUpdates?: Record<string, unknown> }> {
-  const gameIdForCheck = nflGameId.trim();
-  if (!gameIdForCheck) {
+  const gameId = nflGameId;
+  if (!gameId) {
     return { valid: false, error: 'Choose Their Fate requires an nfl_game_id' };
   }
 
-  const rawStatus = await getGameStatus(gameIdForCheck);
+  const rawStatus = await getGameStatus(gameId);
   const status = (rawStatus || '').trim().toUpperCase();
   const allowedStatuses = new Set(['STATUS_IN_PROGRESS', 'STATUS_END_PERIOD']);
   
@@ -20,16 +20,16 @@ export async function validateChooseTheirFateProposal({
     return {
       valid: false,
       error: 'Choose Their Fate bets can only be proposed while the game is in progress or between drives',
-      details: { game_id: gameIdForCheck, status: rawStatus ?? null },
+      details: { game_id: gameId, status: rawStatus ?? null },
     };
   }
 
-  const possessionTeamId = await getPossessionTeamId(gameIdForCheck);
+  const possessionTeamId = await getPossessionTeamId(gameId);
   if (!possessionTeamId) {
     return {
       valid: false,
       error: 'Choose Their Fate bets require an offense with possession',
-      details: { game_id: gameIdForCheck, status: rawStatus ?? null },
+      details: { game_id: gameId, status: rawStatus ?? null },
     };
   }
 

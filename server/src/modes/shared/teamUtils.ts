@@ -1,10 +1,3 @@
-import type { RefinedGameDoc, Team } from '../../services/nflData/nflRefinedDataAccessors';
-
-export function listTeams(doc: RefinedGameDoc | null | undefined): Team[] {
-  if (!doc || !Array.isArray(doc.teams)) return [];
-  return doc.teams as Team[];
-}
-
 export function normalizeTeamId(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const str = String(value).trim();

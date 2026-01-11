@@ -183,12 +183,12 @@ async function getCachedDoc(gameId: string): Promise<RefinedGameDoc | null> {
 /**
  * Get game status string (e.g., STATUS_IN_PROGRESS, STATUS_FINAL).
  */
-export async function getGameStatus(gameId: string): Promise<string | null> {
+export async function getGameStatus(gameId: string): Promise<string> {
   const doc = await getCachedDoc(gameId);
-  if (!doc) return null;
+  if (!doc) return "STATUS_UNKNOWN";
   const status = doc.status;
   if (typeof status === 'string' && status.trim().length) return status.trim();
-  return null;
+  return "STATUS_UNKNOWN";
 }
 
 /**
@@ -271,6 +271,22 @@ export async function getAllTeams(gameId: string): Promise<Team[]> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return [];
   return doc.teams;
+}
+
+/**
+ * Get home team name
+ */
+export async function getHomeTeamName(gameId: string): Promise<string> {
+  const homeTeam = await getHomeTeam(gameId);
+  return homeTeam?.displayName || "home";
+}
+
+/**
+ * Get away team name
+ */
+export async function getAwayTeamName(gameId: string): Promise<string> {
+  const awayTeam = await getAwayTeam(gameId);
+  return awayTeam?.displayName || "away";
 }
 
 /**

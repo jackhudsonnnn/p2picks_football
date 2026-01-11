@@ -1,5 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
-import { RefinedGameDoc, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
 import { normalizeProgressMode } from '../../shared/playerStatUtils';
@@ -33,14 +33,14 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
     await this.initializeProgressForBet(bet);
   }
 
-  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc, updatedAt?: string): Promise<void> {
+  protected async onGameUpdate(gameId: string): Promise<void> {
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {
       if (this.initializingBets.has(bet.bet_id)) {
         this.logDebug('progress.defer', { betId: bet.bet_id, reason: 'initializing' });
         continue;
       }
-      await this.evaluateBet(bet.bet_id, doc, updatedAt ?? (doc as any)?.generatedAt);
+      await this.evaluateBet(bet.bet_id, gameId);
     }
   }
 
@@ -58,7 +58,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
     }
   }
 
-  private async evaluateBet(betId: string, doc: RefinedGameDoc, updatedAt?: string): Promise<void> {
+  private async evaluateBet(betId: string, gameId: string, updatedAt?: string): Promise<void> {
     try {
       const config = await this.getConfigForBet(betId);
       if (!config) {
@@ -74,17 +74,17 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
 
       const progress =
         (await this.store.get(betId)) ||
-        (await this.initializeProgressForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id }, doc, updatedAt));
+        (await this.initializeProgressForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id }, updatedAt));
       if (!progress) {
         this.logWarn('progress unavailable; skipping bet', { betId });
         return;
       }
 
-  const progressMode = progress.progressMode || normalizeProgressMode(config.progress_mode);
-  const gameId = progress.gameId || (config.nfl_game_id ? String(config.nfl_game_id) : '');
-  const player1Current = await readPlayerStat(gameId, { id: config.player1_id, name: config.player1_name }, progress.statKey);
-  const player2Current = await readPlayerStat(gameId, { id: config.player2_id, name: config.player2_name }, progress.statKey);
-      const timestamp = this.normalizeTimestamp(updatedAt, (doc as any)?.generatedAt);
+      const progressMode = progress.progressMode || normalizeProgressMode(config.progress_mode);
+      const effectiveGameId = progress.gameId || (config.nfl_game_id ? String(config.nfl_game_id) : gameId);
+      const player1Current = await readPlayerStat(effectiveGameId, { id: config.player1_id, name: config.player1_name }, progress.statKey);
+      const player2Current = await readPlayerStat(effectiveGameId, { id: config.player2_id, name: config.player2_name }, progress.statKey);
+      const timestamp = this.normalizeTimestamp(updatedAt);
 
       const updatedProgress = applyProgressUpdate(
         progress,
@@ -132,7 +132,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return;
       }
 
-      const status = normalizeStatus(doc.status);
+      const status = normalizeStatus(await getGameStatus(effectiveGameId));
       if (status === 'STATUS_FINAL' && outcome === 'none') {
         await this.setNeitherResult(betId, updatedProgress);
       }
@@ -143,7 +143,6 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
 
   private async initializeProgressForBet(
     bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
-    prefetchedDoc?: RefinedGameDoc | null,
     eventTimestamp?: string,
   ): Promise<ProgressRecord | null> {
     const existing = await this.store.get(bet.bet_id);
@@ -176,7 +175,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return null;
       }
 
-      const capturedAt = this.normalizeTimestamp(eventTimestamp, (prefetchedDoc as any)?.generatedAt);
+      const capturedAt = this.normalizeTimestamp(eventTimestamp);
       const progress = await buildProgressRecordFromAccessors(
         gameId,
         config,

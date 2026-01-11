@@ -1,5 +1,4 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
-import { getCategory } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getAllTeams, getCategory } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeTeamId } from '../../shared/teamUtils';
 
@@ -41,12 +40,17 @@ export type ChooseFateOutcome =
 	| { outcome: 'Punt'; scoringTeamId: string; fromTeamId: string; toTeamId: string | null }
 	| { outcome: 'Turnover'; scoringTeamId: string; fromTeamId: string; toTeamId: string | null };
 
-export function collectTeamScores(doc: RefinedGameDoc | null | undefined): ChooseFateScoreMap {
-	if (!doc || !Array.isArray(doc.teams)) {
+export async function collectTeamScores(gameId: string): Promise<ChooseFateScoreMap> {
+	const teams = await getAllTeams(gameId);
+	if (!teams || teams.length === 0) {
 		return {};
 	}
+	return buildTeamScoresFromTeams(teams);
+}
+
+export function buildTeamScoresFromTeams(teams: any[]): ChooseFateScoreMap {
 	const scores: ChooseFateScoreMap = {};
-	doc.teams.forEach((team, index) => {
+	teams.forEach((team, index) => {
 		const key = resolveTeamKey(team, index);
 		const stats = ((team as any)?.stats ?? {}) as Record<string, Record<string, unknown>>;
 		const scoring = getCategory(stats, 'scoring');
@@ -56,10 +60,10 @@ export function collectTeamScores(doc: RefinedGameDoc | null | undefined): Choos
 			teamId: normalizeTeamId((team as any)?.teamId),
 			abbreviation: normalizeTeamId((team as any)?.abbreviation),
 			homeAway: typeof (team as any)?.homeAway === 'string' ? (team as any)?.homeAway : null,
-			touchdowns: readStat(scoring, 'touchdowns'),
-			fieldGoals: readStat(scoring, 'fieldGoals'),
-			safeties: readStat(scoring, 'safeties'),
-			punts: readStat(punting, 'punts'),
+			touchdowns: readStat(scoring, ['touchdowns', 'Touchdowns']),
+			fieldGoals: readStat(scoring, ['fieldGoals', 'FieldGoals', 'fgMade', 'made']),
+			safeties: readStat(scoring, ['safeties', 'Safeties']),
+			punts: readStat(punting, ['punts', 'Punts', 'attempts']),
 			hasPossession: Boolean((team as any)?.possession),
 		};
 	});
@@ -146,12 +150,7 @@ export function determineChooseFateOutcome(
 	return null;
 }
 
-export function possessionTeamIdFromDoc(doc: RefinedGameDoc | null | undefined): string | null {
-	if (!doc || !Array.isArray(doc.teams)) return null;
-	const holder = doc.teams.find((team) => Boolean((team as any)?.possession));
-	if (!holder) return null;
-	return normalizeTeamId((holder as any)?.teamId) ?? normalizeTeamId((holder as any)?.abbreviation);
-}
+// possession lookups now use accessors (getPossessionTeamId); legacy helper removed
 
 type OpponentSnapshot = {
 	key: string;
@@ -169,15 +168,18 @@ function resolveTeamKey(team: unknown, fallbackIndex: number): string {
 	return `team_${fallbackIndex}`;
 }
 
-function readStat(bucket: Record<string, unknown> | undefined, key: string): number {
+function readStat(bucket: Record<string, unknown> | undefined, keys: string | string[]): number {
 	if (!bucket) return 0;
-	if (Object.prototype.hasOwnProperty.call(bucket, key)) {
-		return normalizeNumber(bucket[key]);
-	}
-	const lower = key.toLowerCase();
-	const entry = Object.entries(bucket).find(([candidate]) => candidate.toLowerCase() === lower);
-	if (entry) {
-		return normalizeNumber(entry[1]);
+	const list = Array.isArray(keys) ? keys : [keys];
+	for (const key of list) {
+		if (Object.prototype.hasOwnProperty.call(bucket, key)) {
+			return normalizeNumber(bucket[key]);
+		}
+		const lower = key.toLowerCase();
+		const entry = Object.entries(bucket).find(([candidate]) => candidate.toLowerCase() === lower);
+		if (entry) {
+			return normalizeNumber(entry[1]);
+		}
 	}
 	return 0;
 }

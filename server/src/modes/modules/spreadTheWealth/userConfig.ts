@@ -1,12 +1,8 @@
-import { getGameDoc, type RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getHomeTeamName } from '../../../services/nflData/nflRefinedDataAccessors';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
-import { extractTeamName, pickHomeTeam } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
-
-const MIN_MAGNITUDE = 0;
-const MAX_MAGNITUDE = 99.5;
-const STEP = 0.5;
+import { MAX_MAGNITUDE, MIN_MAGNITUDE, STEP } from './constants';
 
 interface BuildInput {
   nflGameId?: string | null;
@@ -14,45 +10,11 @@ interface BuildInput {
 }
 
 export async function buildSpreadTheWealthUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
-  const debug = process.env.DEBUG_SPREAD_THE_WEALTH === '1' || process.env.DEBUG_SPREAD_THE_WEALTH === 'true';
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const title = 'Select Point Spread';
-
-  let homeLabel = 'Home Team';
-  let doc: RefinedGameDoc | null = null;
-
-  if (gameId) {
-    try {
-      doc = await getGameDoc(gameId);
-      if (doc) {
-        const home = pickHomeTeam(doc);
-        const homeName = extractTeamName(home);
-        if (homeName) {
-          homeLabel = homeName;
-        }
-      }
-    } catch (err) {
-      if (debug) {
-        console.warn('[spreadTheWealth][userConfig] failed to load game context', {
-          gameId,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-  }
-
+  const homeLabel = await getHomeTeamName(gameId);
   const skipResolveStep = await shouldSkipResolveStep(gameId);
   const choices: ModeUserConfigChoice[] = buildSpreadChoices(homeLabel, skipResolveStep);
-
-  if (debug) {
-    console.log('[spreadTheWealth][userConfig] prepared choices', {
-      gameId,
-      choiceCount: choices.length,
-      skipResolveStep,
-      status: doc?.status ?? null,
-      period: doc?.period ?? null,
-    });
-  }
 
   const steps: ModeUserConfigStep[] = [
     {

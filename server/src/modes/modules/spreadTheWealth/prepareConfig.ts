@@ -1,11 +1,9 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getAwayTeam, getHomeTeam } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName, pickAwayTeam, pickHomeTeam } from '../../shared/utils';
+import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
-
-const SPREAD_MIN = -99.5;
-const SPREAD_MAX = 99.5;
+import { SPREAD_MAX, SPREAD_MIN } from './constants';
 
 interface SpreadTheWealthConfig {
   nfl_game_id?: string | null;
@@ -58,11 +56,7 @@ export async function prepareSpreadTheWealthConfig({
   }
 
   try {
-    const doc = await getGameDoc(gameId);
-    if (!doc) return nextConfig as Record<string, unknown>;
-
-    const homeTeam = pickHomeTeam(doc);
-    const awayTeam = pickAwayTeam(doc, homeTeam);
+    const [homeTeam, awayTeam] = await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)]);
 
     if (!nextConfig.home_team_id) {
       nextConfig.home_team_id = extractTeamId(homeTeam);

@@ -1,11 +1,8 @@
-import { getGameDoc, type RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getHomeScore, getAwayScore } from '../../../services/nflData/nflRefinedDataAccessors';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
-
-const LINE_MIN = 0.5;
-const LINE_MAX = 199.5;
-const LINE_STEP = 1;
+import { LINE_MIN, LINE_MAX, LINE_STEP } from './constants';
 
 interface BuildInput {
   nflGameId?: string | null;
@@ -13,25 +10,13 @@ interface BuildInput {
 }
 
 export async function buildTotalDisasterUserConfig(input: BuildInput = {}): Promise<ModeUserConfigStep[]> {
-  const debug = process.env.DEBUG_TOTAL_DISASTER === '1' || process.env.DEBUG_TOTAL_DISASTER === 'true';
   const gameId = input.nflGameId ? String(input.nflGameId) : '';
   const title = "Select Over/Under Line";
 
-  const { doc, lineChoices } = await loadChoices(gameId);
+  const lineChoices = buildBaseLineChoices();
   const skipResolveStep = await shouldSkipResolveStep(gameId);
-  const minLineValue = computeMinLineValue(doc);
+  const minLineValue = await computeMinLineValue(gameId);
   const choices: ModeUserConfigChoice[] = buildLineChoices(lineChoices, skipResolveStep, minLineValue);
-
-  if (debug) {
-    console.log('[totalDisaster][userConfig] prepared choices', {
-      gameId,
-      choiceCount: choices.length,
-      skipResolveStep,
-      status: doc?.status ?? null,
-      period: doc?.period ?? null,
-      minLineValue,
-    });
-  }
 
   const steps: ModeUserConfigStep[] = [
     {
@@ -52,18 +37,6 @@ export async function buildTotalDisasterUserConfig(input: BuildInput = {}): Prom
   }
 
   return steps;
-}
-
-async function loadChoices(gameId: string): Promise<{ doc: RefinedGameDoc | null; lineChoices: ModeUserConfigChoice[] }> {
-  if (!gameId) {
-    return { doc: null, lineChoices: buildBaseLineChoices() };
-  }
-  try {
-    const doc = await getGameDoc(gameId);
-    return { doc, lineChoices: buildBaseLineChoices() };
-  } catch (err) {
-    return { doc: null, lineChoices: buildBaseLineChoices() };
-  }
 }
 
 function buildLineChoices(
@@ -121,16 +94,18 @@ function buildResolveChoices(): ModeUserConfigChoice[] {
   }));
 }
 
-function computeMinLineValue(doc: RefinedGameDoc | null): number | null {
-  if (!doc || !Array.isArray(doc.teams)) return null;
-  const total = doc.teams.reduce((sum, team) => {
-    const score = Number((team as any)?.score ?? 0);
-    return sum + (Number.isFinite(score) ? score : 0);
-  }, 0);
-  if (!Number.isFinite(total)) return null;
-  const baseline = Math.max(0, total);
-  const candidate = Math.min(LINE_MAX, baseline + 0.5);
-  return Number(candidate.toFixed(1));
+async function computeMinLineValue(gameId: string): Promise<number | null> {
+  if (!gameId) return null;
+  try {
+    const [home, away] = await Promise.all([getHomeScore(gameId), getAwayScore(gameId)]);
+    const total = (Number.isFinite(Number(home)) ? Number(home) : 0) + (Number.isFinite(Number(away)) ? Number(away) : 0);
+    if (!Number.isFinite(total)) return null;
+    const baseline = Math.max(0, total);
+    const candidate = Math.min(LINE_MAX, baseline + 0.5);
+    return Number(candidate.toFixed(1));
+  } catch (err) {
+    return null;
+  }
 }
 
 function normalizeLineValue(choice: ModeUserConfigChoice): number | null {

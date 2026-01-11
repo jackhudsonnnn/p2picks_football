@@ -1,6 +1,5 @@
 import { BetProposal } from '../../../supabaseClient';
 import {
-  RefinedGameDoc,
   getHomeScore,
   getAwayScore,
   getHomeTeam,
@@ -41,13 +40,13 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
   }
 
   protected async onBetBecamePending(bet: BetProposal): Promise<void> {
-    await this.captureBaseline(bet, null);
+    await this.captureBaseline(bet);
   }
 
-  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc, updatedAt?: string | undefined): Promise<void> {
+  protected async onGameUpdate(gameId: string): Promise<void> {
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {
-      await this.evaluateBet(bet, doc, updatedAt);
+      await this.evaluateBet(bet, gameId);
     }
   }
 
@@ -56,14 +55,13 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
     for (const bet of pending) {
       const baseline = await this.store.get(bet.bet_id);
       if (!baseline) {
-        await this.captureBaseline(bet, null);
+        await this.captureBaseline(bet);
       }
     }
   }
 
   private async captureBaseline(
     bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
-    prefetched: RefinedGameDoc | null,
   ): Promise<ScoreSorcererBaseline | null> {
     const existing = await this.store.get(bet.bet_id);
     if (existing) return existing;
@@ -82,7 +80,7 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
 
     const baseline = await buildScoreSorcererBaselineFromAccessors(gameId, config, new Date().toISOString());
     if (!baseline) {
-      await this.washBet(bet.bet_id, { reason: 'missing_game_doc', gameId }, 'Could not capture baseline because game data was unavailable.');
+      await this.washBet(bet.bet_id, { reason: 'missing_game_data', gameId }, 'Could not capture baseline because game data was unavailable.');
       return null;
     }
     await this.store.set(bet.bet_id, baseline);
@@ -91,20 +89,26 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
     return baseline;
   }
 
-  private async evaluateBet(bet: BetProposal, doc: RefinedGameDoc, updatedAt?: string | undefined): Promise<void> {
+  private async evaluateBet(
+    bet: BetProposal,
+    gameId: string,
+    updatedAt?: string | undefined,
+  ): Promise<void> {
     const config = await this.getConfigForBet(bet.bet_id);
     if (!config) {
       this.logWarn('missing config on evaluate', { betId: bet.bet_id });
       return;
     }
 
+    const gameIdToUse = config.nfl_game_id || bet.nfl_game_id || gameId;
+
     let baseline = await this.store.get(bet.bet_id);
     if (!baseline) {
-      baseline = await this.captureBaseline(bet, doc);
+      baseline = await this.captureBaseline(bet);
     }
-    if (!baseline) return;
+    if (!baseline || !gameIdToUse) return;
 
-    const evaluation = evaluateScoreSorcerer(doc, baseline);
+    const evaluation = await evaluateScoreSorcerer(gameIdToUse, baseline);
     if (!evaluation) return;
 
     if (evaluation.decision === 'simultaneous') {
@@ -142,7 +146,7 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
         delta_away: evaluation.deltaAway,
         home_choice: homeChoice,
         away_choice: awayChoice,
-        captured_at: this.normalizeTimestamp(updatedAt, doc.generatedAt),
+        captured_at: this.normalizeTimestamp(updatedAt),
       },
     });
   }

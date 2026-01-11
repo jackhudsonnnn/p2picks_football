@@ -47,9 +47,7 @@ export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promi
     };
   }
 
-  const [homeTeam, awayTeam, homeScoreRaw, awayScoreRaw] = await Promise.all([
-    getHomeTeam(gameId),
-    getAwayTeam(gameId),
+  const [homeScoreRaw, awayScoreRaw] = await Promise.all([
     getHomeScore(gameId),
     getAwayScore(gameId),
   ]);

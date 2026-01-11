@@ -61,7 +61,6 @@ export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise
     progressMode = progress.progressMode;
   }
 
-  // If we have live game doc and stat key, update current values
   if (gameId && statKey) {
     const p1Ref = { id: typedConfig.player1_id, name: typedConfig.player1_name };
     const p2Ref = { id: typedConfig.player2_id, name: typedConfig.player2_name };

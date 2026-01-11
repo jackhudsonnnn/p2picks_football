@@ -1,4 +1,4 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
 import { formatNumber } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
@@ -26,11 +26,13 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
     // no baseline/state to capture
   }
 
-  protected async onGameUpdate(gameId: string, doc: RefinedGameDoc): Promise<void> {
-    if (normalizeStatus(doc.status) !== 'STATUS_FINAL') return;
+  protected async onGameUpdate(gameId: string): Promise<void> {
+    const status = normalizeStatus(await getGameStatus(gameId));
+
+    if (status !== 'STATUS_FINAL') return;
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {
-      await this.resolveBet(bet.bet_id, doc);
+      await this.resolveBet(bet.bet_id);
     }
   }
 
@@ -38,7 +40,7 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
     // nothing to sync
   }
 
-  private async resolveBet(betId: string, doc: RefinedGameDoc): Promise<void> {
+  private async resolveBet(betId: string): Promise<void> {
     try {
       const config = await this.getConfigForBet(betId);
       if (!config) {
@@ -56,7 +58,7 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
         return;
       }
 
-      const evaluation = await evaluateTotalDisaster(String(config.nfl_game_id || doc.eventId), line);
+      const evaluation = await evaluateTotalDisaster(String(config.nfl_game_id), line);
       if (evaluation.decision === 'push') {
         await this.washBet(
           betId,

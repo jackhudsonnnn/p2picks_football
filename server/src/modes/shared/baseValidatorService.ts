@@ -13,7 +13,7 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
 import { fetchModeConfig } from '../../utils/modeConfig';
-import { RefinedGameDoc, getGameStatus } from '../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus } from '../../services/nflData/nflRefinedDataAccessors';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
@@ -78,7 +78,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       onPendingDelete: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => 
         this.handleBetProposalDelete(payload),
       onGameEvent: (event: GameFeedEvent) => 
-        this.handleGameEvent(event.gameId, event.doc, event.updatedAt),
+        this.handleGameEvent(event.gameId),
       onReady: () => this.onKernelReady(),
     };
 
@@ -113,7 +113,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
    * Called when a game update is received.
    * Subclasses should evaluate pending bets and potentially resolve them.
    */
-  protected abstract onGameUpdate(gameId: string, doc: RefinedGameDoc, updatedAt?: string): Promise<void>;
+  protected abstract onGameUpdate(gameId: string): Promise<void>;
 
   /**
    * Called when the kernel is ready (all subscriptions established).
@@ -288,12 +288,9 @@ export abstract class BaseValidatorService<TConfig, TStore> {
   /**
    * Normalize a timestamp to ISO format.
    */
-  protected normalizeTimestamp(eventTimestamp?: string, docTimestamp?: string): string {
+  protected normalizeTimestamp(eventTimestamp?: string): string {
     if (eventTimestamp && Number.isFinite(Date.parse(eventTimestamp))) {
       return new Date(eventTimestamp).toISOString();
-    }
-    if (docTimestamp && Number.isFinite(Date.parse(docTimestamp))) {
-      return new Date(docTimestamp).toISOString();
     }
     return new Date().toISOString();
   }
@@ -344,11 +341,9 @@ export abstract class BaseValidatorService<TConfig, TStore> {
 
   private async handleGameEvent(
     gameId: string,
-    doc: RefinedGameDoc,
-    updatedAt?: string
   ): Promise<void> {
     try {
-      await this.onGameUpdate(gameId, doc, updatedAt);
+      await this.onGameUpdate(gameId);
     } catch (err) {
       this.logError('game event handler error', { gameId }, err);
     }
