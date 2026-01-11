@@ -45,6 +45,7 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
         this.logWarn('missing config; skipping bet', { betId });
         return;
       }
+
       const line = normalizeLine(config);
       if (line == null) {
         await this.washBet(
@@ -54,7 +55,8 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
         );
         return;
       }
-      const evaluation = evaluateTotalDisaster(doc, line);
+
+      const evaluation = await evaluateTotalDisaster(String(config.nfl_game_id || doc.eventId), line);
       if (evaluation.decision === 'push') {
         await this.washBet(
           betId,

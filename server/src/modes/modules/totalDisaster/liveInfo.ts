@@ -1,8 +1,7 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { formatMatchup } from '../../shared/teamUtils';
 import { normalizeLine, describeLine, type TotalDisasterConfig } from './evaluator';
 import { normalizeNumber, formatNumber } from '../../../utils/number';
-import { getScores, getHomeTeam, getAwayTeam, extractTeamAbbreviation, extractTeamName } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getScores, getHomeTeam, getAwayTeam, extractTeamAbbreviation, extractTeamName, getMatchup } from '../../../services/nflData/nflRefinedDataAccessors';
 
 export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { config, nflGameId } = input;
@@ -48,11 +47,10 @@ export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise
 
   const homeName = typedConfig.home_team_name ?? resolveTeamLabel(homeTeam) ?? 'Home';
   const awayName = typedConfig.away_team_name ?? resolveTeamLabel(awayTeam) ?? 'Away';
-
-  const matchup = formatMatchup({ homeName, awayName });
+  const matchupLabel = await getMatchup(gameId || '');
 
   const fields = [
-    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
+    { label: 'Matchup', value: matchupLabel },
     { label: homeName, value: homeScore },
     { label: awayName, value: awayScore },
     { label: 'Total Points', value: totalPoints },

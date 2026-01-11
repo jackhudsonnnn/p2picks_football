@@ -1,7 +1,6 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
-import { formatMatchup } from '../../shared/teamUtils';
 import {
   extractTeamAbbreviation,
   extractTeamId,
@@ -9,6 +8,7 @@ import {
   getAwayTeam,
   getHomeTeam,
   getPossessionTeamId,
+  getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import { type ChooseFateBaseline, type ChooseTheirFateConfig } from './evaluator';
 
@@ -66,32 +66,15 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
 
   const resolvedHomeName = resolveTeamLabel(homeTeam, homeName);
   const resolvedAwayName = resolveTeamLabel(awayTeam, awayName);
-
-  const matchup = formatMatchup({ homeName: resolvedHomeName, awayName: resolvedAwayName });
-
+  const matchupLabel = await getMatchup(gameId || '');
   const fields: { label: string; value: string | number }[] = [];
 
-  if (matchup) {
-    fields.push({ label: 'Matchup', value: matchup });
-  }
+  fields.push({ label: 'Matchup', value: matchupLabel });
 
   // Show drive/possession info
   if (possessionTeam) {
     fields.push({ label: 'Drive Team', value: possessionTeam });
   }
-
-  // Show baseline stats for the drive team if available
-  // if (baseline && possessionTeam) {
-  //   const driveTeamBaseline = Object.values(baseline.teams).find(
-  //     t => t.teamId === baseline.possessionTeamId || t.abbreviation === baseline.possessionTeamId
-  //   );
-  //   if (driveTeamBaseline) {
-  //     fields.push({ label: 'TDs', value: driveTeamBaseline.touchdowns });
-  //     fields.push({ label: 'FGs', value: driveTeamBaseline.fieldGoals });
-  //     fields.push({ label: 'Safeties', value: driveTeamBaseline.safeties });
-  //     fields.push({ label: 'Punts', value: driveTeamBaseline.punts });
-  //   }
-  // }
 
   // Add unavailable reason if no data
   if (!baseline && !homeTeam && !awayTeam && !livePossessionTeamId) {

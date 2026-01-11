@@ -207,6 +207,27 @@ export async function getGamePeriod(gameId: string): Promise<number | null> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Get teams
+ */
+export async function listTeams(gameId: string): Promise<Team[]> {
+  const doc = await getCachedDoc(gameId);
+  if (!doc || !Array.isArray(doc.teams)) return [];
+  return doc.teams as Team[];
+}
+
+/**
+ * Get the matchup
+ * Example: "BUF vs BAL"
+ */
+export async function getMatchup(gameId: string): Promise<string> {
+  const homeTeam = await getHomeTeam(gameId);
+  const awayTeam = await getAwayTeam(gameId);
+  const homeLabel = homeTeam?.abbreviation || homeTeam?.displayName || "home";
+  const awayLabel = awayTeam?.abbreviation || awayTeam?.displayName || "away";
+  return `${homeLabel} vs ${awayLabel}`;
+}
+
+/**
  * Find a team by ID or abbreviation.
  */
 export async function getTeam(gameId: string, teamId: string): Promise<Team | null> {

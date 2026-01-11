@@ -1,6 +1,7 @@
 import type { RefinedGameDoc, Team } from '../../services/nflData/nflRefinedDataAccessors';
 import type { ModeContext, ModeDefinitionDTO, ModeOverview } from './types';
 import type { BetProposal } from '../../supabaseClient';
+import { listTeams } from './teamUtils';
 
 export function normalizeStatus(raw: string | null | undefined): string {
   return raw ? String(raw).trim().toUpperCase() : '';
@@ -141,11 +142,6 @@ function dedupeOptions(options: string[]): string[] {
     result.push(value);
   });
   return result;
-}
-
-export function listTeams(doc: RefinedGameDoc | null | undefined): Team[] {
-  if (!doc || !Array.isArray(doc.teams)) return [];
-  return doc.teams as Team[];
 }
 
 export function pickHomeTeam(doc: RefinedGameDoc | null | undefined): Team | null {

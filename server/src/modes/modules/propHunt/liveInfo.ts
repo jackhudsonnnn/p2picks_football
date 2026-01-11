@@ -2,7 +2,6 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
-import { formatMatchup } from '../../shared/teamUtils';
 import { STAT_KEY_LABELS } from './constants';
 import {
   type PropHuntConfig,
@@ -16,6 +15,7 @@ import {
   getAwayTeam,
   getHomeTeam,
   getPlayerStat,
+  getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 
 // Shared baseline store - must use same prefix as validator
@@ -77,14 +77,12 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
     progress = currentValue - baselineValue;
   }
 
-  const matchup = formatMatchup({
-    homeName: resolveTeamLabel(homeTeam),
-    awayName: resolveTeamLabel(awayTeam),
-  });
-
+  const matchup = await getMatchup(gameId || '');
+  const trackingLabel = isStartingNow ? 'Starting Now' : 'Cumulative';
+  
   const fields: { label: string; value: string | number }[] = [
-    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
-    { label: 'Tracking', value: isStartingNow ? 'Starting Now' : 'Cumulative' },
+    { label: 'Matchup', value: matchup },
+    { label: 'Tracking', value: trackingLabel },
     { label: 'Stat', value: statLabel },
     { label: 'Line', value: lineDisplay },
   ];
@@ -156,7 +154,3 @@ const STAT_ACCESSOR_MAP: Record<string, { category: string; field: string }> = {
   puntsInside20: { category: 'punting', field: 'puntsInside20' },
   longPunt: { category: 'punting', field: 'longPunt' },
 };
-
-function resolveTeamLabel(team: unknown): string | null {
-  return extractTeamAbbreviation(team as any) ?? extractTeamName(team as any) ?? null;
-}

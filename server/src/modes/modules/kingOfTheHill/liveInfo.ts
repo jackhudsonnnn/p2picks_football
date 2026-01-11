@@ -2,20 +2,14 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
-import { formatMatchup } from '../../shared/teamUtils';
+import { getMatchup, getAwayTeam, getHomeTeam } from '../../../services/nflData/nflRefinedDataAccessors';
 import { KING_OF_THE_HILL_STAT_KEY_LABELS } from './constants';
 import {
   type KingOfTheHillConfig,
   type ProgressRecord,
   resolveStatKey,
 } from './evaluator';
-import {
-  extractTeamAbbreviation,
-  extractTeamName,
-  getAwayTeam,
-  getHomeTeam,
-  getPlayerStat,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+import { extractTeamAbbreviation, extractTeamName, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 
 // Shared progress store - must use same prefix as validator
 const redis = getRedisClient();
@@ -75,19 +69,16 @@ export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise
     player2Current = await readPlayerStatFromAccessors(gameId, p2Ref.id || p2Ref.name, statKey);
   }
 
-  // Calculate delta (progress) for starting_now mode
   const isStartingNow = progressMode === 'starting_now';
-
-  const matchup = formatMatchup({
-    homeName: resolveTeamLabel(homeTeam),
-    awayName: resolveTeamLabel(awayTeam),
-  });
+  const matchupLabel = await getMatchup(gameId || '');
+  const trackingLabel = isStartingNow ? 'Starting Now' : 'Cumulative';
+  const targetLabel = Number.isFinite(target) ? formatNumber(target) : 'N/A';
 
   const fields: { label: string; value: string | number }[] = [
-    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
-    { label: 'Tracking', value: isStartingNow ? 'Starting Now' : 'Cumulative' },
+    { label: 'Matchup', value: matchupLabel },
+    { label: 'Tracking', value: trackingLabel },
     { label: 'Stat', value: statLabel },
-    { label: 'Target', value: Number.isFinite(target) ? formatNumber(target) : 'N/A' },
+    { label: 'Target', value: targetLabel },
   ];
 
   if (isStartingNow) {
@@ -162,8 +153,4 @@ async function readPlayerStatFromAccessors(
   const looksId = /^\d+$/.test(raw) || raw.includes('-');
   const finalKey = raw.includes(':') ? raw : looksId ? raw : `name:${raw}`;
   return getPlayerStat(gameId, finalKey, spec.category, spec.field);
-}
-
-function resolveTeamLabel(team: unknown): string | null {
-  return extractTeamAbbreviation(team as any) ?? extractTeamName(team as any) ?? null;
 }

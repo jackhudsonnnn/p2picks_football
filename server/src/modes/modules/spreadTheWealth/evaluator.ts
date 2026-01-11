@@ -1,6 +1,6 @@
-import type { RefinedGameDoc } from '../../../services/nflData/nflRefinedDataAccessors';
+import { listTeams } from '../../../services/nflData/nflRefinedDataAccessors';
 import { formatNumber, isApproximatelyEqual, normalizeNumber } from '../../../utils/number';
-import { listTeams, normalizeTeamId } from '../../shared/teamUtils';
+import { normalizeTeamId } from '../../shared/teamUtils';
 
 export interface SpreadTheWealthConfig {
   spread?: string | null;
@@ -44,8 +44,10 @@ export function describeSpread(config: SpreadTheWealthConfig): string | null {
   return null;
 }
 
-export function resolveTeams(doc: RefinedGameDoc, config: SpreadTheWealthConfig): { homeTeam: any; awayTeam: any } {
-  const teams = listTeams(doc) as any[];
+export async function resolveTeams(
+  config: SpreadTheWealthConfig,
+): Promise<{ homeTeam: any; awayTeam: any }> {
+  const teams = config?.nfl_game_id ? await listTeams(config.nfl_game_id) : [];
   let home = lookupTeam(teams, config.home_team_id, config.home_team_name, 'home');
   let away = lookupTeam(teams, config.away_team_id, config.away_team_name, 'away');
   if (!home && teams.length > 0) home = teams[0];
@@ -55,12 +57,11 @@ export function resolveTeams(doc: RefinedGameDoc, config: SpreadTheWealthConfig)
   return { homeTeam: home, awayTeam: away };
 }
 
-export function evaluateSpreadTheWealth(
-  doc: RefinedGameDoc,
+export async function evaluateSpreadTheWealth(
   config: SpreadTheWealthConfig,
   spread: number,
-): SpreadTheWealthEvaluationResult {
-  const { homeTeam, awayTeam } = resolveTeams(doc, config);
+): Promise<SpreadTheWealthEvaluationResult> {
+  const { homeTeam, awayTeam } = await resolveTeams(config);
   const homeScore = normalizeNumber((homeTeam as any)?.score);
   const awayScore = normalizeNumber((awayTeam as any)?.score);
   const adjustedHomeScore = homeScore + spread;

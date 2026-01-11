@@ -2,7 +2,6 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
-import { formatMatchup } from '../../shared/teamUtils';
 import { normalizeProgressMode, type PlayerRef } from '../../shared/playerStatUtils';
 import { STAT_KEY_LABELS } from './constants';
 import {
@@ -15,6 +14,7 @@ import {
   getAwayTeam,
   getHomeTeam,
   getPlayerStat,
+  getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 
 // Shared baseline store - must use same prefix as validator
@@ -97,12 +97,9 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
     player2Progress = player2Current - player2Baseline;
   }
 
-  const resolvedHome = resolveTeamLabel(homeTeam, null);
-  const resolvedAway = resolveTeamLabel(awayTeam, null);
-  const matchup = formatMatchup({ homeName: resolvedHome, awayName: resolvedAway });
-
+  const matchupLabel = await getMatchup(gameId || '');
   const fields: { label: string; value: string | number }[] = [
-    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
+    { label: 'Matchup', value: matchupLabel },
     { label: 'Tracking', value: isStartingNow ? 'Starting Now' : 'Cumulative' },
     { label: 'Stat', value: statLabel },
   ];
@@ -152,11 +149,3 @@ async function readPlayerStatFromAccessors(gameId: string, ref: PlayerRef, statK
   return getPlayerStat(gameId, idOrName, spec.category, spec.field);
 }
 
-function resolveTeamLabel(team: unknown, fallback: string | null): string | null {
-  return (
-    extractTeamAbbreviation(team as any) ??
-    extractTeamName(team as any) ??
-    fallback ??
-    null
-  );
-}

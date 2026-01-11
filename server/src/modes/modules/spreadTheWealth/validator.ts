@@ -55,7 +55,7 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
         );
         return;
       }
-      const evaluation = evaluateSpreadTheWealth(doc, config, spread);
+      const evaluation = await evaluateSpreadTheWealth(config, spread);
 
       const allowsTie = Number.isInteger(spread);
 

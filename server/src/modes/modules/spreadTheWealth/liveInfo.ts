@@ -1,14 +1,12 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { formatMatchup } from '../../shared/teamUtils';
 import { formatNumber, normalizeNumber } from '../../../utils/number';
 import { type SpreadTheWealthConfig, normalizeSpread, describeSpread } from './evaluator';
 import {
-  extractTeamAbbreviation,
-  extractTeamName,
   getAwayTeam,
   getHomeScore,
   getAwayScore,
   getHomeTeam,
+  getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 
 export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
@@ -59,14 +57,9 @@ export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promi
   const homeScore = normalizeNumber(homeScoreRaw);
   const awayScore = normalizeNumber(awayScoreRaw);
   const adjustedHomeScore = homeScore + spread;
-
-  const matchup = formatMatchup({
-    homeName: resolveTeamLabel(homeTeam, homeName),
-    awayName: resolveTeamLabel(awayTeam, awayName),
-  });
-
+  const matchupLabel = await getMatchup(gameId || '');
   const fields = [
-    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
+    { label: 'Matchup', value: matchupLabel },
     { label: `${homeName} (Adjusted)`, value: formatNumber(adjustedHomeScore) },
     { label: awayName, value: awayScore },
   ];
@@ -75,8 +68,4 @@ export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promi
     ...baseResult,
     fields,
   };
-}
-
-function resolveTeamLabel(team: unknown, fallback: string | null): string | null {
-  return extractTeamAbbreviation(team as any) ?? extractTeamName(team as any) ?? fallback ?? null;
 }

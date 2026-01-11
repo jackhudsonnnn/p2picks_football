@@ -1,7 +1,6 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
-import { formatMatchup } from '../../shared/teamUtils';
 import { formatNumber } from '../../../utils/number';
 import {
   extractTeamAbbreviation,
@@ -11,11 +10,11 @@ import {
   getAwayTeam,
   getHomeScore,
   getHomeTeam,
+  getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import {
   SCORE_SORCERER_LABEL,
   SCORE_SORCERER_MODE_KEY,
-  SCORE_SORCERER_NO_MORE_SCORES,
   SCORE_SORCERER_STORE_PREFIX,
 } from './constants';
 import {
@@ -52,11 +51,9 @@ export async function getScoreSorcererLiveInfo(input: GetLiveInfoInput): Promise
 
   const homeLabel = homeChoiceLabel({ ...typedConfig, home_team_name: snapshot.homeTeamName });
   const awayLabel = awayChoiceLabel({ ...typedConfig, away_team_name: snapshot.awayTeamName });
-
-  const matchup = formatMatchup({ homeName: snapshot.homeTeamName, awayName: snapshot.awayTeamName });
-
+  const matchupLabel = await getMatchup(gameId);
   const fields = [
-    ...(matchup ? [{ label: 'Matchup', value: matchup }] : []),
+    { label: 'Matchup', value: matchupLabel },
     { label: homeLabel, value: formatScore(snapshot.homeScore, baseline?.homeScore) },
     { label: awayLabel, value: formatScore(snapshot.awayScore, baseline?.awayScore) },
   ];
