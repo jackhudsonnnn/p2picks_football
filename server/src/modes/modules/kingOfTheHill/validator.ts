@@ -2,7 +2,6 @@ import { BetProposal } from '../../../supabaseClient';
 import { getGameStatus, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
-import { normalizeProgressMode } from '../../shared/playerStatUtils';
 import { clampResolveValue, KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE } from './constants';
 import {
   KingOfTheHillConfig,
@@ -336,6 +335,11 @@ function createPlayerProgressLocal(id?: string | null, name?: string | null, bas
     deltaAtReach: null,
     metricAtReach: null,
   };
+}
+
+function normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
+  const normalized = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
+  return normalized === 'starting_now' ? 'starting_now' : 'cumulative';
 }
 
 function resolvePlayerKey(id?: string | null, name?: string | null): string | null {

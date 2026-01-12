@@ -2,20 +2,19 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
-import { normalizeProgressMode, type PlayerRef } from '../../shared/playerStatUtils';
 import { STAT_KEY_LABELS } from './constants';
 import {
   type EitherOrConfig,
   type EitherOrBaseline,
 } from './evaluator';
 import {
-  extractTeamAbbreviation,
-  extractTeamName,
   getAwayTeam,
   getHomeTeam,
   getPlayerStat,
   getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
+
+type PlayerRef = { id?: string | null; name?: string | null };
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();
@@ -149,3 +148,7 @@ async function readPlayerStatFromAccessors(gameId: string, ref: PlayerRef, statK
   return getPlayerStat(gameId, idOrName, spec.category, spec.field);
 }
 
+function normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
+  const normalized = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
+  return normalized === 'starting_now' ? 'starting_now' : 'cumulative';
+}

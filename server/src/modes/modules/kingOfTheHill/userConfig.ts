@@ -12,16 +12,18 @@ import {
   getDefaultProgressPatch,
   filterPlayersByStatPosition,
 } from '../../shared/userConfigBuilder';
-import { prepareValidPlayers } from '../../shared/playerUtils';
-import type { PlayerRef } from '../../shared/playerStatUtils';
 import {
   KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
   KING_OF_THE_HILL_STAT_KEY_LABELS,
   KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
   getStatResolveRange,
   getAllowedResolveValuesForStat,
+  VALID_PLAYER_POSITIONS,
+  VALID_POSITION_SET,
 } from './constants';
 import { readPlayerStat, resolveStatKey, type KingOfTheHillConfig } from './evaluator';
+
+type PlayerRef = { id?: string | null; name?: string | null };
 
 export async function buildKingOfTheHillUserConfig(input: {
   nflGameId?: string | null;
@@ -268,4 +270,59 @@ function parseProgressModeSelection(value: unknown): 'starting_now' | 'cumulativ
     return normalized;
   }
   return null;
+}
+
+
+type ValidPlayerPosition = (typeof VALID_PLAYER_POSITIONS)[number];
+
+type PlayerLike = {
+  position?: string | null;
+  name?: string | null;
+};
+
+function normalizePlayerPosition(position?: string | null): string {
+  return (position ?? '').trim().toUpperCase();
+}
+
+function isValidPlayerPosition(position?: string | null): position is ValidPlayerPosition {
+  const normalized = normalizePlayerPosition(position);
+  return Boolean(normalized) && VALID_POSITION_SET.has(normalized);
+}
+
+function filterPlayersByValidPosition<T extends PlayerLike>(players: readonly T[]): T[] {
+  return players.filter((player) => isValidPlayerPosition(player.position));
+}
+
+function sortPlayersByPositionAndName<T extends PlayerLike>(players: readonly T[]): T[] {
+  const toComparable = (value: string | null | undefined) => (value ?? '').trim().toUpperCase();
+
+  return [...players].sort((a, b) => {
+    const posA = normalizePlayerPosition(a.position);
+    const posB = normalizePlayerPosition(b.position);
+
+    const hasValidA = VALID_POSITION_SET.has(posA);
+    const hasValidB = VALID_POSITION_SET.has(posB);
+
+    if (hasValidA && hasValidB) {
+      const cmp = posA.localeCompare(posB);
+      if (cmp !== 0) return cmp;
+    } else if (hasValidA !== hasValidB) {
+      return hasValidA ? -1 : 1;
+    } else if (posA || posB) {
+      const cmp = posA.localeCompare(posB);
+      if (cmp !== 0) return cmp;
+    }
+
+    const nameA = toComparable(a.name);
+    const nameB = toComparable(b.name);
+    if (nameA && nameB) return nameA.localeCompare(nameB);
+    if (nameA) return -1;
+    if (nameB) return 1;
+    return 0;
+  });
+}
+
+export function prepareValidPlayers<T extends PlayerLike>(players: readonly T[]): T[] {
+  const filtered = filterPlayersByValidPosition(players);
+  return sortPlayersByPositionAndName(filtered);
 }

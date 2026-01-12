@@ -2,8 +2,7 @@ import { BetProposal } from '../../../supabaseClient';
 import { getPlayerStat, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
-import { normalizeProgressMode } from '../../shared/playerStatUtils';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from './constants';
+import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, PLAYER_STAT_MAP } from './constants';
 import { evaluateEitherOr, EitherOrBaseline, EitherOrConfig } from './evaluator';
 
 export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfig, EitherOrBaseline> {
@@ -254,17 +253,7 @@ function resolveStatKey(config: EitherOrConfig | null | undefined): string | nul
   return statKey;
 }
 
-const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
-  passingYards: { category: 'passing', field: 'passingYards' },
-  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
-  rushingYards: { category: 'rushing', field: 'rushingYards' },
-  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
-  longRushing: { category: 'rushing', field: 'longRushing' },
-  receptions: { category: 'receiving', field: 'receptions' },
-  receivingYards: { category: 'receiving', field: 'receivingYards' },
-  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
-  longReception: { category: 'receiving', field: 'longReception' },
-  totalTackles: { category: 'defensive', field: 'totalTackles' },
-  sacks: { category: 'defensive', field: 'sacks' },
-  passesDefended: { category: 'defensive', field: 'passesDefended' },
-};
+function normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
+  const normalized = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
+  return normalized === 'starting_now' ? 'starting_now' : 'cumulative';
+}
