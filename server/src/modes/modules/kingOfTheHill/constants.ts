@@ -1,20 +1,5 @@
 import { STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS, STAT_KEY_RANGES, DEFAULT_STAT_RANGE } from '../../shared/statConstants';
 
-export const VALID_PLAYER_POSITIONS = [
-  'CB',
-  'DE',
-  'DT',
-  'S',
-  'FB',
-  'LB',
-  'QB',
-  'RB',
-  'WR',
-  'TE',
-] as const;
-
-export const VALID_POSITION_SET = new Set<string>(VALID_PLAYER_POSITIONS);
-
 export const KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY = STAT_KEY_TO_CATEGORY;
 export const KING_OF_THE_HILL_STAT_KEY_LABELS = STAT_KEY_LABELS;
 
