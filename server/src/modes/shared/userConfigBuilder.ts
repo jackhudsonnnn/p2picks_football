@@ -3,7 +3,7 @@
  * Extracts common patterns from eitherOr, kingOfTheHill, propHunt, etc.
  */
 
-import { getGameDoc, type RefinedGameDoc } from '../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getGamePeriod, getAllPlayerRecords } from '../../services/nflData/nflRefinedDataAccessors';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from './playerUtils';
 import { shouldSkipResolveStep } from './resolveUtils';
 import { getValidPositionsForStat } from './statMappings';
@@ -13,13 +13,7 @@ import type { ModeUserConfigChoice, ModeUserConfigStep, PlayerRecord } from './t
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface UserConfigBuildInput {
-  nflGameId?: string | null;
-  existingConfig?: Record<string, unknown>;
-}
-
-export interface GameContext {
-  doc: RefinedGameDoc | null;
+interface GameContext {
   players: PlayerRecord[];
   status: string | null;
   period: number | null;
@@ -27,7 +21,7 @@ export interface GameContext {
   showProgressStep: boolean;
 }
 
-export interface StatChoiceOptions {
+interface StatChoiceOptions {
   statKeyToCategory: Record<string, string>;
   statKeyLabels: Record<string, string>;
   defaultResolveAt?: string;
@@ -37,17 +31,17 @@ export interface StatChoiceOptions {
   clearStepsOnChange?: string[];
 }
 
-export interface PlayerChoiceOptions {
+interface PlayerChoiceOptions {
   players: PlayerRecord[];
   playerKey: 'player' | 'player1' | 'player2';
   statKey?: string | null;
 }
 
-export interface ResolveAtOptions {
+interface ResolveAtOptions {
   allowedValues: string[];
 }
 
-export interface ProgressModeOptions {
+interface ProgressModeOptions {
   showProgressStep: boolean;
   startingNowDescription?: string;
   cumulativeDescription?: string;
@@ -60,12 +54,11 @@ export interface ProgressModeOptions {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Load game context including doc and player list.
+ * Load game context.
  */
 export async function loadGameContext(gameId: string | null | undefined): Promise<GameContext> {
   if (!gameId) {
     return {
-      doc: null,
       players: [],
       status: null,
       period: null,
@@ -74,81 +67,19 @@ export async function loadGameContext(gameId: string | null | undefined): Promis
     };
   }
 
-  try {
-    const doc = await getGameDoc(gameId);
-    if (!doc || !Array.isArray(doc.teams)) {
-      const skip = await shouldSkipResolveStep(gameId);
-      return {
-        doc,
-        players: [],
-        status: doc?.status ?? null,
-        period: doc?.period ?? null,
-        skipResolveStep: skip,
-        showProgressStep: false,
-      };
-    }
+  const players = await getAllPlayerRecords(gameId);
+  const status = await getGameStatus(gameId);
+  const period = await getGamePeriod(gameId);
+  const showProgressStep = Boolean(status && status !== 'STATUS_SCHEDULED');
+  const skip = await shouldSkipResolveStep(gameId);
 
-    const players = extractPlayersFromDoc(doc);
-    const status = typeof doc.status === 'string' ? doc.status.trim().toUpperCase() : null;
-    const showProgressStep = Boolean(status && status !== 'STATUS_SCHEDULED');
-
-    const skip = await shouldSkipResolveStep(gameId);
-    return {
-      doc,
-      players: sortPlayersByPositionAndName(players),
-      status,
-      period: doc.period ?? null,
-      skipResolveStep: skip,
-      showProgressStep,
-    };
-  } catch (err) {
-    console.warn('[userConfigBuilder] failed to load game context', {
-      gameId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return {
-      doc: null,
-      players: [],
-      status: null,
-      period: null,
-      skipResolveStep: false,
-      showProgressStep: false,
-    };
-  }
-}
-
-function extractPlayersFromDoc(doc: RefinedGameDoc): PlayerRecord[] {
-  const records: PlayerRecord[] = [];
-  const seen = new Set<string>();
-
-  for (const team of doc.teams as any[]) {
-    if (!team) continue;
-    const teamName = team.abbreviation || team.name || '';
-    const rawPlayers = team.players;
-    if (!rawPlayers) continue;
-
-    const pushRecord = (player: any) => {
-      if (!player) return;
-      const id: string | undefined = player.athleteId || player.id || undefined;
-      if (!id) return;
-      if (seen.has(id)) return;
-      seen.add(id);
-      records.push({
-        id: String(id),
-        name: String(player.fullName || player.name || id),
-        team: String(teamName || ''),
-        position: player.position || player.pos || null,
-      });
-    };
-
-    if (Array.isArray(rawPlayers)) {
-      rawPlayers.forEach(pushRecord);
-    } else if (typeof rawPlayers === 'object') {
-      Object.values(rawPlayers).forEach(pushRecord);
-    }
-  }
-
-  return records;
+  return {
+    players: sortPlayersByPositionAndName(players),
+    status,
+    period,
+    skipResolveStep: skip,
+    showProgressStep,
+  };
 }
 
 export function buildStatStep(options: StatChoiceOptions): ModeUserConfigStep {
@@ -289,7 +220,7 @@ export function buildProgressModeStep(options: ProgressModeOptions): ModeUserCon
 /**
  * Format a player for display in the UI.
  */
-export function formatPlayerLabel(player: PlayerRecord): string {
+function formatPlayerLabel(player: PlayerRecord): string {
   const pieces = [player.name];
   if (player.team) pieces.push(player.team);
   if (player.position) pieces.push(player.position);
@@ -299,7 +230,7 @@ export function formatPlayerLabel(player: PlayerRecord): string {
 /**
  * Convert camelCase/snake_case stat keys to readable labels.
  */
-export function humanizeStatKey(key: string): string {
+function humanizeStatKey(key: string): string {
   const withSpaces = key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/[_-]+/g, ' ')
@@ -311,16 +242,6 @@ export function humanizeStatKey(key: string): string {
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
-}
-
-/**
- * Create a map of players by ID for quick lookup.
- */
-export function playersById(players: PlayerRecord[]): Record<string, PlayerRecord> {
-  return players.reduce<Record<string, PlayerRecord>>((map, player) => {
-    map[player.id] = player;
-    return map;
-  }, {});
 }
 
 /**

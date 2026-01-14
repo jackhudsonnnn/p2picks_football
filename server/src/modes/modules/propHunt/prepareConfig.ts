@@ -3,10 +3,13 @@ import {
   getHomeTeam,
   getAwayTeam,
   getPlayerStat,
+  extractTeamId,
+  extractTeamName,
+  extractTeamAbbreviation,
 } from '../../../services/nflData/nflRefinedDataAccessors';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
+import { type PlayerRef } from '../../shared/playerUtils';
 
 interface PropHuntConfig {
   nfl_game_id?: string | null;
@@ -176,8 +179,6 @@ function toNumber(raw: unknown): number | null {
   }
   return null;
 }
-
-type PlayerRef = { id?: string | null; name?: string | null };
 
 async function fetchPlayerStat(gameId: string, statKey: string | null | undefined, ref: PlayerRef): Promise<number | null> {
   if (!statKey) return null;

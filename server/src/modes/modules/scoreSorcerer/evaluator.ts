@@ -1,8 +1,7 @@
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeStatus } from '../../shared/utils';
 import { choiceLabel } from '../../shared/teamUtils';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
-import { getHomeTeam, getAwayTeam, getScores, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getHomeTeam, getAwayTeam, getScores, extractTeamId, getGameStatus, extractTeamName, extractTeamAbbreviation } from '../../../services/nflData/nflRefinedDataAccessors';
 import { SCORE_SORCERER_NO_MORE_SCORES } from './constants';
 
 export interface ScoreSorcererConfig {

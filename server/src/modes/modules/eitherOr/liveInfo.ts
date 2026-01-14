@@ -2,7 +2,7 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
-import { STAT_KEY_LABELS } from './constants';
+import { STAT_KEY_LABELS } from '../../shared/statConstants';
 import {
   type EitherOrConfig,
   type EitherOrBaseline,
@@ -13,8 +13,7 @@ import {
   getPlayerStat,
   getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
-
-type PlayerRef = { id?: string | null; name?: string | null };
+import { type PlayerRef } from '../../shared/playerUtils';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();

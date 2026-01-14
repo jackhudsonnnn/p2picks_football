@@ -15,13 +15,11 @@ import {
 } from '../../shared/userConfigBuilder';
 import { prepareValidPlayers } from '../../shared/playerUtils';
 import {
-  EITHER_OR_ALLOWED_RESOLVE_AT,
-  EITHER_OR_DEFAULT_RESOLVE_AT,
+  ALLOWED_RESOLVE_AT,
+  DEFAULT_RESOLVE_AT,
   STAT_KEY_TO_CATEGORY,
   STAT_KEY_LABELS,
-} from './constants';
-
-const DEBUG = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
+} from '../../shared/statConstants';
 
 export async function buildEitherOrUserConfig(input: {
   nflGameId?: string | null;
@@ -35,17 +33,6 @@ export async function buildEitherOrUserConfig(input: {
   const filteredPlayers = filterPlayersByStatPosition(context.players, statKey);
   const preparedPlayers = prepareValidPlayers(filteredPlayers);
 
-  if (DEBUG) {
-    console.log('[eitherOr][userConfig] building steps', {
-      gameId,
-      playerCount: context.players.length,
-      filteredPlayerCount: preparedPlayers.length,
-      statKey,
-      skipResolveStep: context.skipResolveStep,
-      showProgressStep: context.showProgressStep,
-    });
-  }
-
   const defaultProgressPatch = getDefaultProgressPatch(context.showProgressStep);
 
   const steps: ModeUserConfigStep[] = [];
@@ -55,7 +42,7 @@ export async function buildEitherOrUserConfig(input: {
     buildStatStep({
       statKeyToCategory: STAT_KEY_TO_CATEGORY,
       statKeyLabels: STAT_KEY_LABELS,
-      defaultResolveAt: EITHER_OR_DEFAULT_RESOLVE_AT,
+      defaultResolveAt: DEFAULT_RESOLVE_AT,
       skipResolveStep: context.skipResolveStep,
       defaultProgressPatch,
       clearsOnChange: ['player1_id', 'player1_name', 'player2_id', 'player2_name', 'player_id', 'player_name'],
@@ -88,7 +75,7 @@ export async function buildEitherOrUserConfig(input: {
 
   // Resolve at step (if not skipped)
   if (!context.skipResolveStep) {
-    steps.push(buildResolveAtStep({ allowedValues: EITHER_OR_ALLOWED_RESOLVE_AT }));
+    steps.push(buildResolveAtStep({ allowedValues: ALLOWED_RESOLVE_AT }));
   }
 
   // Progress mode step (if game is in progress)

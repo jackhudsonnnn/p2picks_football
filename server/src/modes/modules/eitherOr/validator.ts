@@ -2,7 +2,8 @@ import { BetProposal } from '../../../supabaseClient';
 import { getPlayerStat, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, PLAYER_STAT_MAP } from './constants';
+import { PLAYER_STAT_MAP } from './constants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { evaluateEitherOr, EitherOrBaseline, EitherOrConfig } from './evaluator';
 
 export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfig, EitherOrBaseline> {
@@ -24,7 +25,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
   protected async onGameUpdate(gameId: string): Promise<void> {
     const status = normalizeStatus(await getGameStatus(gameId));
     const halftimeResolveAt =
-      EITHER_OR_ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
+      ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
 
     if (status === 'STATUS_HALFTIME') {
       await this.processFinalGame(gameId, halftimeResolveAt);
@@ -33,7 +34,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
 
     if (status === 'STATUS_FINAL') {
       await this.processFinalGame(gameId, halftimeResolveAt);
-      await this.processFinalGame(gameId, EITHER_OR_DEFAULT_RESOLVE_AT);
+      await this.processFinalGame(gameId, DEFAULT_RESOLVE_AT);
     }
   }
 
@@ -70,7 +71,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
         return;
       }
 
-      const configResolveAt = String(config.resolve_at ?? EITHER_OR_DEFAULT_RESOLVE_AT).trim().toLowerCase();
+      const configResolveAt = String(config.resolve_at ?? DEFAULT_RESOLVE_AT).trim().toLowerCase();
       if (configResolveAt !== resolveAt.trim().toLowerCase()) {
         return;
       }

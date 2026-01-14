@@ -1,5 +1,5 @@
 import type { ModeContext, ModeModule } from '../../shared/types';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { prepareTotalDisasterConfig } from './prepareConfig';
 import { totalDisasterValidator } from './validator';
 import { buildTotalDisasterUserConfig } from './userConfig';
@@ -89,8 +89,8 @@ export const totalDisasterModule: ModeModule = {
         component: 'shared.resolveAt',
         label: 'Resolve At',
         props: {
-          allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
-          defaultResolveAt: EITHER_OR_DEFAULT_RESOLVE_AT,
+          allowedResolveAt: ALLOWED_RESOLVE_AT,
+          defaultResolveAt: DEFAULT_RESOLVE_AT,
         },
         validate: validateResolveAt,
       },
@@ -102,8 +102,8 @@ export const totalDisasterModule: ModeModule = {
         step: 1,
         unit: 'points',
       },
-      allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
-      defaultResolveAt: EITHER_OR_DEFAULT_RESOLVE_AT,
+      allowedResolveAt: ALLOWED_RESOLVE_AT,
+      defaultResolveAt: DEFAULT_RESOLVE_AT,
     },
   },
   overview: totalDisasterOverview,

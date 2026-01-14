@@ -1,21 +1,8 @@
-import type { Team } from '../../services/nflData/nflRefinedDataAccessors';
-import type { ModeContext, ModeDefinitionDTO, ModeOverview } from './types';
+import type { ModeContext, ModeDefinitionDTO } from './types';
 import type { BetProposal } from '../../supabaseClient';
 
 export function normalizeStatus(raw: string | null | undefined): string {
   return raw ? String(raw).trim().toUpperCase() : '';
-}
-
-export function cloneDefinition(definition: ModeDefinitionDTO): ModeDefinitionDTO {
-  return {
-    ...definition,
-    configSteps: definition.configSteps.map((step) => ({ ...step })),
-    metadata: definition.metadata ? { ...definition.metadata } : undefined,
-  };
-}
-
-export function cloneOverview(overview: ModeOverview): ModeOverview {
-  return JSON.parse(JSON.stringify(overview));
 }
 
 export function buildModeContext(
@@ -23,13 +10,6 @@ export function buildModeContext(
   bet?: BetProposal | null,
 ): ModeContext {
   return { config, bet: bet ?? null };
-}
-
-export function getMatchupDescription(ctx: ModeContext): string {
-  const { config } = ctx;
-  const home = config.home_team_abbrev || config.home_team_name || 'Home Team';
-  const away = config.away_team_abbrev || config.away_team_name || 'Away Team';
-  return `${home} vs ${away}`;
 }
 
 export function runModeValidator(
@@ -117,12 +97,6 @@ export function computeWinningCondition(
   return '';
 }
 
-export function computeMatchupDescription(
-  ctx: ModeContext,
-): string {
-  return getMatchupDescription(ctx);
-}
-
 function ensurePassOption(options: string[]): string[] {
   if (!options.includes('pass')) {
     return ['pass', ...options];
@@ -141,28 +115,4 @@ function dedupeOptions(options: string[]): string[] {
     result.push(value);
   });
   return result;
-}
-
-export function extractTeamId(team: Team | null | undefined): string | null {
-  if (!team) return null;
-  const raw = (team as any)?.teamId ?? (team as any)?.abbreviation ?? (team as any)?.id;
-  if (raw === undefined || raw === null) return null;
-  const value = String(raw).trim();
-  return value.length ? value : null;
-}
-
-export function extractTeamName(team: Team | null | undefined): string | null {
-  if (!team) return null;
-  const raw = (team as any)?.name ?? (team as any)?.abbreviation ?? (team as any)?.teamId;
-  if (raw === undefined || raw === null) return null;
-  const value = String(raw).trim();
-  return value.length ? value : null;
-}
-
-export function extractTeamAbbreviation(team: Team | null | undefined): string | null {
-  if (!team) return null;
-  const raw = (team as any)?.abbreviation ?? (team as any)?.name ?? (team as any)?.teamId;
-  if (raw === undefined || raw === null) return null;
-  const value = String(raw).trim();
-  return value.length ? value : null;
 }

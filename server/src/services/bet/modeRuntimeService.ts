@@ -7,7 +7,6 @@ import type {
 } from '../../modes/shared/types';
 import {
   buildModeContext,
-  computeMatchupDescription,
   computeModeOptions,
   computeWinningCondition,
   runModeValidator,
@@ -20,6 +19,7 @@ import {
   getAwayTeam,
   extractTeamId,
   extractTeamName,
+  getMatchup,
 } from '../nflData/nflRefinedDataAccessors';
 
 export type ModeUserConfigInput = {
@@ -69,7 +69,7 @@ export async function buildModePreview(
   const ctx = buildModeContext(config, bet);
 
   const summary = safeLabel(formatSummary(definition), definition.label);
-  const description = computeMatchupDescription(ctx);
+  const description = await getMatchup(config.nfl_game_id ? String(config.nfl_game_id) : '');
   const winningCondition = computeWinningCondition(definition, ctx);
   const options = computeModeOptions(definition, ctx);
   const errors = runModeValidator(definition, ctx);

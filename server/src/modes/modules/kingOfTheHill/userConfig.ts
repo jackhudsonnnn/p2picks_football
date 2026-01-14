@@ -19,10 +19,8 @@ import {
   getStatResolveRange,
   getAllowedResolveValuesForStat,
 } from './constants';
-import { prepareValidPlayers } from '../../shared/playerUtils';
+import { prepareValidPlayers, type PlayerRef } from '../../shared/playerUtils';
 import { readPlayerStat, resolveStatKey, type KingOfTheHillConfig } from './evaluator';
-
-type PlayerRef = { id?: string | null; name?: string | null };
 
 export async function buildKingOfTheHillUserConfig(input: {
   nflGameId?: string | null;

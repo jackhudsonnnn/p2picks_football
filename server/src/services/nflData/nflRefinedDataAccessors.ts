@@ -39,6 +39,13 @@ export interface Player {
   stats: StatsByCategory;
 }
 
+export type PlayerRecord = {
+  id: string;
+  name: string;
+  team: string;
+  position?: string | null;
+};
+
 export interface Team {
   teamId: string;
   abbreviation: string;
@@ -476,6 +483,19 @@ export async function getAllPlayers(gameId: string): Promise<Player[]> {
     }
   }
   return result;
+}
+
+/**
+ * Get all player records (id, name, team, position) from doc.
+ */
+export async function getAllPlayerRecords(gameId: string): Promise<PlayerRecord[]> {
+  const players = await getAllPlayers(gameId);
+  return players.map((p) => ({
+    id: p.athleteId,
+    name: p.fullName,
+    team: (p as any).teamId || '',
+    position: p.position || null,
+  }));
 }
 
 /**

@@ -4,9 +4,11 @@ import {
   getPossessionTeam,
   getHomeTeam,
   getAwayTeam,
+  extractTeamId,
+  extractTeamAbbreviation,
+  extractTeamName,
   type Team,
 } from '../../../services/nflData/nflRefinedDataAccessors';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 
 async function resolvePossessionTeam(gameId: string, teamId?: string | null): Promise<Team | null> {
   if (teamId) {

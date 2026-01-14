@@ -44,5 +44,5 @@ export function getStatRange(statKey: string | null | undefined): { min: number;
   return STAT_KEY_RANGES[statKey] || DEFAULT_STAT_RANGE;
 }
 
-export const ALLOWED_RESOLVE_AT = ['Halftime', 'End of Game'] as const;
+export const ALLOWED_RESOLVE_AT = ['Halftime', 'End of Game'];
 export const DEFAULT_RESOLVE_AT = 'End of Game';

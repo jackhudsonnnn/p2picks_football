@@ -1,6 +1,5 @@
 import type { BetProposal } from '../supabaseClient';
 import type { GetLiveInfoInput, ModeDefinitionDTO, ModeLiveInfo, ModeModule, ModeOverview } from './shared/types';
-import { cloneDefinition, cloneOverview } from './shared/utils';
 import { MODE_MODULES } from './modules';
 
 const MODE_MODULE_REGISTRY = buildRegistry(MODE_MODULES);
@@ -55,6 +54,18 @@ export async function getModeLiveInfo(modeKey: string, input: GetLiveInfoInput):
     return null;
   }
   return module.getLiveInfo(input);
+}
+
+export function cloneDefinition(definition: ModeDefinitionDTO): ModeDefinitionDTO {
+  return {
+    ...definition,
+    configSteps: definition.configSteps.map((step) => ({ ...step })),
+    metadata: definition.metadata ? { ...definition.metadata } : undefined,
+  };
+}
+
+export function cloneOverview(overview: ModeOverview): ModeOverview {
+  return JSON.parse(JSON.stringify(overview));
 }
 
 function buildRegistry(modules: ModeModule[]): Map<string, ModeModule> {

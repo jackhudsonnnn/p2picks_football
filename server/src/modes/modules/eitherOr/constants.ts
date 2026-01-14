@@ -1,15 +1,3 @@
-import {
-  STAT_KEY_TO_CATEGORY as SHARED_STAT_KEY_TO_CATEGORY,
-  STAT_KEY_LABELS as SHARED_STAT_KEY_LABELS,
-  ALLOWED_RESOLVE_AT as SHARED_ALLOWED_RESOLVE_AT,
-  DEFAULT_RESOLVE_AT as SHARED_DEFAULT_RESOLVE_AT,
-} from '../../shared/statConstants';
-
-export const STAT_KEY_TO_CATEGORY = SHARED_STAT_KEY_TO_CATEGORY;
-export const STAT_KEY_LABELS = SHARED_STAT_KEY_LABELS;
-export const EITHER_OR_ALLOWED_RESOLVE_AT: string[] = [...SHARED_ALLOWED_RESOLVE_AT];
-export const EITHER_OR_DEFAULT_RESOLVE_AT = SHARED_DEFAULT_RESOLVE_AT;
-
 export const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
   passingYards: { category: 'passing', field: 'passingYards' },
   passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },

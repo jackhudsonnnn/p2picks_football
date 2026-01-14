@@ -1,5 +1,5 @@
 import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
-import { PlayerRef } from '../../shared/playerStatUtils';
+import { type PlayerRef } from '../../shared/playerUtils';
 
 export interface EitherOrConfig {
   player1_id?: string | null;

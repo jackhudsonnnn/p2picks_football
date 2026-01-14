@@ -1,8 +1,7 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getAwayTeam, getHomeTeam } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getAwayTeam, getHomeTeam, extractTeamId, extractTeamName, extractTeamAbbreviation } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { SPREAD_MAX, SPREAD_MIN } from './constants';
 
 interface SpreadTheWealthConfig {
@@ -34,8 +33,8 @@ export async function prepareSpreadTheWealthConfig({
 
   nextConfig.resolve_at = normalizeResolveAt(
     nextConfig.resolve_at,
-    EITHER_OR_ALLOWED_RESOLVE_AT,
-    EITHER_OR_DEFAULT_RESOLVE_AT,
+    ALLOWED_RESOLVE_AT,
+    DEFAULT_RESOLVE_AT,
   );
 
   const normalizedSpread = normalizeSpread(nextConfig.spread_value ?? nextConfig.spread);

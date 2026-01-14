@@ -1,6 +1,5 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getAwayTeam, getHomeTeam } from '../../../services/nflData/nflRefinedDataAccessors';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
+import { getAwayTeam, getHomeTeam, extractTeamId, extractTeamName, extractTeamAbbreviation } from '../../../services/nflData/nflRefinedDataAccessors';
 import type { ScoreSorcererConfig } from './evaluator';
 
 export async function prepareScoreSorcererConfig({

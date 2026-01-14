@@ -3,8 +3,10 @@ import {
   getHomeTeam,
   getAwayTeam,
   getPlayerStat,
+  extractTeamId,
+  extractTeamName,
+  extractTeamAbbreviation,
 } from '../../../services/nflData/nflRefinedDataAccessors';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
 import {
   KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
   KING_OF_THE_HILL_MAX_RESOLVE_VALUE,
@@ -14,8 +16,7 @@ import {
   clampResolveValue,
   isValidResolveValue,
 } from './constants';
-
-type PlayerRef = { id?: string | null; name?: string | null };
+import { type PlayerRef } from '../../shared/playerUtils';
 
 type KingOfTheHillConfig = Record<string, unknown> & {
   nfl_game_id?: string | null;

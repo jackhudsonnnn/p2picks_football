@@ -1,8 +1,7 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getAwayTeam, getHomeTeam } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getAwayTeam, getHomeTeam, extractTeamId, extractTeamName, extractTeamAbbreviation } from '../../../services/nflData/nflRefinedDataAccessors';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { LINE_MAX, LINE_MIN } from './constants';
 
 interface TotalDisasterConfig {
@@ -34,8 +33,8 @@ export async function prepareTotalDisasterConfig({
 
   nextConfig.resolve_at = normalizeResolveAt(
     nextConfig.resolve_at,
-    EITHER_OR_ALLOWED_RESOLVE_AT,
-    EITHER_OR_DEFAULT_RESOLVE_AT,
+    ALLOWED_RESOLVE_AT,
+    DEFAULT_RESOLVE_AT,
   );
 
   const normalizedLine = normalizeLine(nextConfig.line_value ?? nextConfig.line);

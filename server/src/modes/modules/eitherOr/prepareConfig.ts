@@ -3,9 +3,12 @@ import {
   getHomeTeam,
   getAwayTeam,
   getPlayerStat,
+  extractTeamId,
+  extractTeamName,
+  extractTeamAbbreviation,
 } from '../../../services/nflData/nflRefinedDataAccessors';
-import { extractTeamAbbreviation, extractTeamId, extractTeamName } from '../../shared/utils';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../shared/statConstants';
+import { type PlayerRef } from '../../shared/playerUtils';
 
 export async function prepareEitherOrConfig({
   bet,
@@ -42,8 +45,8 @@ export async function prepareEitherOrConfig({
     cfg.nfl_game_id = bet.nfl_game_id ?? null;
   }
 
-  if (!cfg.resolve_at || !EITHER_OR_ALLOWED_RESOLVE_AT.includes(String(cfg.resolve_at))) {
-    cfg.resolve_at = EITHER_OR_DEFAULT_RESOLVE_AT;
+  if (!cfg.resolve_at || !ALLOWED_RESOLVE_AT.includes(String(cfg.resolve_at))) {
+    cfg.resolve_at = DEFAULT_RESOLVE_AT;
   }
 
   if (debug) {
@@ -108,8 +111,6 @@ export async function prepareEitherOrConfig({
     };
   }
 }
-
-type PlayerRef = { id?: string | null; name?: string | null };
 
 function normalizeConfigPayload(config: Record<string, unknown>) {
   return {
@@ -210,7 +211,7 @@ async function enrichWithTeamContext(
 export function buildEitherOrMetadata() {
   return {
     statKeyToCategory: STAT_KEY_TO_CATEGORY,
-    allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
+    allowedResolveAt: ALLOWED_RESOLVE_AT,
     statKeyLabels: STAT_KEY_LABELS,
   } as Record<string, unknown>;
 }

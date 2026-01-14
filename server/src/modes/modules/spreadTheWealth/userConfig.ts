@@ -1,7 +1,7 @@
 import { getHomeTeamName } from '../../../services/nflData/nflRefinedDataAccessors';
 import type { ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { MAX_MAGNITUDE, MIN_MAGNITUDE, STEP } from './constants';
 
 interface BuildInput {
@@ -67,7 +67,7 @@ function buildChoice(value: number, homeLabel: string, skipResolveStep: boolean)
       spread,
       spread_value: value,
       spread_label: spread,
-      ...(skipResolveStep ? { resolve_at: EITHER_OR_DEFAULT_RESOLVE_AT } : {}),
+      ...(skipResolveStep ? { resolve_at: DEFAULT_RESOLVE_AT } : {}),
     },
   };
 }
@@ -78,7 +78,7 @@ function formatSpread(value: number): string {
 }
 
 function buildResolveChoices(): ModeUserConfigChoice[] {
-  return EITHER_OR_ALLOWED_RESOLVE_AT.map((value) => ({
+  return ALLOWED_RESOLVE_AT.map((value) => ({
     id: value,
     value,
     label: value,

@@ -1,5 +1,5 @@
 import type { ModeContext, ModeModule } from '../../shared/types';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, EITHER_OR_DEFAULT_RESOLVE_AT } from '../eitherOr/constants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { prepareSpreadTheWealthConfig } from './prepareConfig';
 import { spreadTheWealthValidator } from './validator';
 import { buildSpreadTheWealthUserConfig } from './userConfig';
@@ -97,8 +97,8 @@ export const spreadTheWealthModule: ModeModule = {
         component: 'shared.resolveAt',
         label: 'Resolve At',
         props: {
-          allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
-          defaultResolveAt: EITHER_OR_DEFAULT_RESOLVE_AT,
+          allowedResolveAt: ALLOWED_RESOLVE_AT,
+          defaultResolveAt: DEFAULT_RESOLVE_AT,
         },
         validate: validateResolveAt,
       },
@@ -110,8 +110,8 @@ export const spreadTheWealthModule: ModeModule = {
         step: 0.5,
         unit: 'points',
       },
-      allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
-      defaultResolveAt: EITHER_OR_DEFAULT_RESOLVE_AT,
+      allowedResolveAt: ALLOWED_RESOLVE_AT,
+      defaultResolveAt: DEFAULT_RESOLVE_AT,
     },
   },
   overview: spreadTheWealthOverview,

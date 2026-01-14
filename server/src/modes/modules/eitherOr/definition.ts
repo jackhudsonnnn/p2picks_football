@@ -1,5 +1,5 @@
 import type { ModeContext, ModeModule } from '../../shared/types';
-import { EITHER_OR_ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from './constants';
+import { ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../shared/statConstants';
 import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
 import { buildEitherOrUserConfig } from './userConfig';
@@ -111,7 +111,7 @@ export const eitherOrModule: ModeModule = {
         component: 'eitherOr.resolve',
         label: 'Resolve At',
         props: {
-          allowedResolveAt: EITHER_OR_ALLOWED_RESOLVE_AT,
+          allowedResolveAt: ALLOWED_RESOLVE_AT,
         },
         validate: validateResolveAt,
       },

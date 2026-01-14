@@ -20,6 +20,8 @@ export type PlayerLike = {
   name?: string | null;
 };
 
+export type PlayerRef = { id?: string | null; name?: string | null };
+
 export function normalizePlayerPosition(position?: string | null): string {
   return (position ?? '').trim().toUpperCase();
 }
