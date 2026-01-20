@@ -4,6 +4,13 @@ import { prepareChooseTheirFateConfig } from './prepareConfig';
 import { chooseTheirFateOverview } from './overview';
 import { validateChooseTheirFateProposal } from './validateProposal';
 import { getChooseTheirFateLiveInfo } from './liveInfo';
+import {
+  CHOOSE_THEIR_FATE_BASELINE_EVENT,
+  CHOOSE_THEIR_FATE_LABEL,
+  CHOOSE_THEIR_FATE_MODE_KEY,
+  CHOOSE_THEIR_FATE_RESULT_EVENT,
+} from './constants';
+import { buildChooseTheirFateUserConfig } from './userConfig';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type-safe mode functions
@@ -24,16 +31,20 @@ function computeOptions(): string[] {
 
 export const chooseTheirFateModule: ModeModule = {
   definition: {
-    key: 'choose_their_fate',
-    label: 'Choose Their Fate',
-    summaryTemplate: 'Choose Their Fate',
+    key: CHOOSE_THEIR_FATE_MODE_KEY,
+    label: CHOOSE_THEIR_FATE_LABEL,
     computeWinningCondition,
     computeOptions,
     configSteps: [],
+    metadata: {
+      baselineEvent: CHOOSE_THEIR_FATE_BASELINE_EVENT,
+      resultEvent: CHOOSE_THEIR_FATE_RESULT_EVENT,
+    },
   },
   overview: chooseTheirFateOverview,
   prepareConfig: prepareChooseTheirFateConfig,
   validator: chooseTheirFateValidator,
   validateProposal: validateChooseTheirFateProposal,
+  buildUserConfig: buildChooseTheirFateUserConfig,
   getLiveInfo: getChooseTheirFateLiveInfo,
 };

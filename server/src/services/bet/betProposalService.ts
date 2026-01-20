@@ -164,7 +164,7 @@ export async function createBetProposal(
     proposer_user_id: input.proposerUserId,
     nfl_game_id: nflGameId,
     mode_key: modeKey,
-    description: preview.description || preview.summary || 'Bet',
+    description: preview.description || 'Bet',
     wager_amount: wagerAmount,
     time_limit_seconds: timeLimitSeconds,
     bet_status: 'active',
@@ -261,7 +261,7 @@ export async function pokeBet(
   // Prepare new bet data
   const wagerAmount = normalizeWagerAmount(normalizeToHundredth(sourceBet.wager_amount));
   const timeLimitSeconds = normalizeTimeLimitSeconds(sourceBet.time_limit_seconds);
-  const description = preview.description || preview.summary || sourceBet.description || 'Bet';
+  const description = preview.description || sourceBet.description || 'Bet';
 
   // Insert new bet
   const { data: newBet, error: insertError } = await supabase

@@ -1,21 +1,33 @@
 import type { BetProposal } from '../../../supabaseClient';
 import {
   getTeam,
-  getPossessionTeam,
   getHomeTeam,
   getAwayTeam,
+  getPossessionTeamId,
+  getPossessionTeamName,
   extractTeamId,
   extractTeamAbbreviation,
   extractTeamName,
-  type Team,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 
-async function resolvePossessionTeam(gameId: string, teamId?: string | null): Promise<Team | null> {
+async function resolvePossessionTeam(gameId: string, teamId?: string | null): Promise<{ id: string | null; name: string | null }> {
   if (teamId) {
     const team = await getTeam(gameId, String(teamId));
-    if (team) return team;
+    if (team) {
+      return {
+        id: extractTeamId(team),
+        name: extractTeamName(team),
+      };
+    }
   }
-  return getPossessionTeam(gameId);
+
+  // Fallback to live possession info
+  const [id, name] = await Promise.all([
+    getPossessionTeamId(gameId),
+    getPossessionTeamName(gameId),
+  ]);
+
+  return { id: id ?? null, name: name ?? null };
 }
 
 export async function prepareChooseTheirFateConfig({
@@ -29,10 +41,10 @@ export async function prepareChooseTheirFateConfig({
     nfl_game_id?: string | null;
     home_team_id?: string | null;
     home_team_name?: string | null;
-  home_team_abbrev?: string | null;
+	home_team_abbrev?: string | null;
     away_team_id?: string | null;
     away_team_name?: string | null;
-  away_team_abbrev?: string | null;
+	away_team_abbrev?: string | null;
     possession_team_id?: string | null;
     possession_team_name?: string | null;
   };
@@ -72,10 +84,10 @@ export async function prepareChooseTheirFateConfig({
     const possessionTeam = await resolvePossessionTeam(gameId, nextConfig.possession_team_id ?? null);
     if (possessionTeam) {
       if (!nextConfig.possession_team_id) {
-        nextConfig.possession_team_id = extractTeamId(possessionTeam);
+        nextConfig.possession_team_id = possessionTeam.id;
       }
       if (!nextConfig.possession_team_name) {
-        nextConfig.possession_team_name = extractTeamName(possessionTeam);
+        nextConfig.possession_team_name = possessionTeam.name ?? possessionTeam.id ?? null;
       }
     }
   } catch (err) {

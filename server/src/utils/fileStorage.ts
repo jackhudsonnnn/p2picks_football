@@ -5,9 +5,6 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { createLogger } from './logger';
-
-const logger = createLogger('fileStorage');
 
 const DATA_ROOT = path.resolve(__dirname, '..', 'data');
 
@@ -34,7 +31,6 @@ export async function writeJsonAtomic(
   data: unknown,
   dir: string,
   file: string,
-  infoLog = false
 ): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
   const filePath = path.join(dir, file);
@@ -42,11 +38,6 @@ export async function writeJsonAtomic(
   const content = JSON.stringify(data, null, 2);
   await fs.writeFile(tmpPath, content, 'utf8');
   await fs.rename(tmpPath, filePath);
-  if (infoLog) {
-    logger.info({ file: path.relative(RAW_DIR, filePath) }, 'Saved JSON');
-  } else {
-    logger.debug({ file: path.relative(RAW_DIR, filePath) }, 'Saved JSON');
-  }
 }
 
 /**
@@ -57,7 +48,6 @@ export async function readJson(filePath: string): Promise<unknown | null> {
     const content = await fs.readFile(filePath, 'utf8');
     return JSON.parse(content);
   } catch (err) {
-    logger.debug({ err, filePath }, 'Failed reading JSON');
     return null;
   }
 }
@@ -102,7 +92,6 @@ export async function deleteFile(filePath: string): Promise<boolean> {
     await fs.unlink(filePath);
     return true;
   } catch (err) {
-    logger.debug({ err, filePath }, 'Failed to delete file');
     return false;
   }
 }

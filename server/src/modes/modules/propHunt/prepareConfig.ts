@@ -43,7 +43,6 @@ export async function preparePropHuntConfig({
   bet: BetProposal;
   config: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const debug = isDebug();
   const next = { ...config } as PropHuntConfig;
   next.bet_id = next.bet_id ?? bet.bet_id ?? null;
 
@@ -70,34 +69,9 @@ export async function preparePropHuntConfig({
       name: next.player_name,
     });
 
-    if (debug) {
-      console.log('[propHunt][prepareConfig] normalized config', {
-        betId: bet.bet_id,
-        stat: next.stat,
-        currentStat,
-      });
-    }
-
     next.current_stat_value = currentStat ?? null;
-
-    if (currentStat != null && next.line_value != null && next.line_value <= currentStat) {
-      if (debug) {
-        console.warn('[propHunt][prepareConfig] line not above current stat', {
-          betId: bet.bet_id,
-          line_value: next.line_value,
-          currentStat,
-        });
-      }
-    }
-
     return normalizeConfigPayload(next);
   } catch (err) {
-    if (debug) {
-      console.warn('[propHunt][prepareConfig] context load failed', {
-        betId: bet.bet_id,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
     return normalizeConfigPayload(next);
   }
 }
@@ -232,10 +206,6 @@ async function enrichWithTeamContext(config: PropHuntConfig, gameId: string): Pr
   if (!config.away_team_abbrev) {
     config.away_team_abbrev = extractTeamAbbreviation(awayTeam);
   }
-}
-
-function isDebug(): boolean {
-  return process.env.DEBUG_PROP_HUNT === '1' || process.env.DEBUG_PROP_HUNT === 'true';
 }
 
 function normalizeProgressMode(value: unknown): 'starting_now' | 'cumulative' {

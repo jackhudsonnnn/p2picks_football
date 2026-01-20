@@ -10,7 +10,7 @@ export type PlayerRecord = {
   position?: string | null;
 };
 
-export type ModeUserConfigInputType = 'select' | 'radio';
+export type ModeUserConfigInputType = 'select'; // expand as needed
 
 /**
  * Context passed to mode definition functions for computing options, validation, etc.
@@ -34,9 +34,8 @@ export type ModeConfigStepDefinition = {
 export type ModeDefinitionDTO = {
   key: string;
   label: string;
-  summaryTemplate?: string;
-  computeWinningCondition?: (ctx: ModeContext) => string;
-  computeOptions?: (ctx: ModeContext) => string[];
+  computeWinningCondition: (ctx: ModeContext) => string;
+  computeOptions: (ctx: ModeContext) => string[];
   staticOptions?: string[];
   configSteps: ModeConfigStepDefinition[];
   validateConfig?: (ctx: ModeContext) => string[];

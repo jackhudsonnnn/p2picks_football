@@ -48,7 +48,6 @@ export async function prepareKingOfTheHillConfig({
   bet: BetProposal;
   config: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const debug = process.env.DEBUG_KING_OF_THE_HILL === '1' || process.env.DEBUG_KING_OF_THE_HILL === 'true';
   const cfg = { ...config } as KingOfTheHillConfig;
 
   if (!cfg.nfl_game_id) {
@@ -66,26 +65,11 @@ export async function prepareKingOfTheHillConfig({
 
   cfg.progress_mode = normalizeProgressMode(cfg.progress_mode);
 
-  if (debug) {
-    console.log('[kingOfTheHill][prepareConfig] normalized base config', {
-      betId: bet.bet_id,
-      config: cfg,
-    });
-  }
-
   const statKey = cfg.stat ? String(cfg.stat) : '';
   const category = KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY[statKey];
   const gameId = cfg.nfl_game_id ? String(cfg.nfl_game_id) : '';
 
   if (!statKey || !category || !gameId) {
-    if (debug) {
-      console.warn('[kingOfTheHill][prepareConfig] missing stat/category/gameId', {
-        betId: bet.bet_id,
-        statKey,
-        category,
-        gameId,
-      });
-    }
     return normalizeConfigPayload(cfg);
   }
 
@@ -96,16 +80,6 @@ export async function prepareKingOfTheHillConfig({
       fetchPlayerStat(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
       fetchPlayerStat(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
-
-    if (debug) {
-      console.log('[kingOfTheHill][prepareConfig] captured initial values', {
-        betId: bet.bet_id,
-        statKey,
-        player1Value,
-        player2Value,
-        resolveValue,
-      });
-    }
 
     return {
       ...normalizeConfigPayload(cfg),

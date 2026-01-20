@@ -6,6 +6,7 @@ import {
   getAllTeams,
   getGameStatus,
   getPossessionTeamId,
+  getPossessionTeamName,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import {
   ChooseFateBaseline,
@@ -14,17 +15,26 @@ import {
   buildTeamScoresFromTeams,
   determineChooseFateOutcome,
 } from './evaluator';
+import {
+  CHOOSE_THEIR_FATE_BASELINE_EVENT,
+  CHOOSE_THEIR_FATE_CHANNEL,
+  CHOOSE_THEIR_FATE_LABEL,
+  CHOOSE_THEIR_FATE_MODE_KEY,
+  CHOOSE_THEIR_FATE_RESULT_EVENT,
+  CHOOSE_THEIR_FATE_STORE_PREFIX,
+  CHOOSE_THEIR_FATE_STORE_TTL_SECONDS,
+} from './constants';
 
 export class ChooseTheirFateValidatorService extends BaseValidatorService<ChooseTheirFateConfig, ChooseFateBaseline> {
   constructor() {
     super({
-      modeKey: 'choose_their_fate',
-      channelName: 'choose-their-fate-pending',
-      storeKeyPrefix: 'choosefate:baseline',
-      modeLabel: 'Choose Their Fate',
-      resultEvent: 'choose_their_fate_result',
-      baselineEvent: 'choose_their_fate_baseline',
-      storeTtlSeconds: 60 * 60 * 6,
+      modeKey: CHOOSE_THEIR_FATE_MODE_KEY,
+      channelName: CHOOSE_THEIR_FATE_CHANNEL,
+      storeKeyPrefix: CHOOSE_THEIR_FATE_STORE_PREFIX,
+      modeLabel: CHOOSE_THEIR_FATE_LABEL,
+      resultEvent: CHOOSE_THEIR_FATE_RESULT_EVENT,
+      baselineEvent: CHOOSE_THEIR_FATE_BASELINE_EVENT,
+      storeTtlSeconds: CHOOSE_THEIR_FATE_STORE_TTL_SECONDS,
     });
   }
 
@@ -169,7 +179,10 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
     }
 
     const configuredPossessionTeamId = normalizeTeamId(config.possession_team_id ?? null);
-    const currentPossessionTeamId = normalizeTeamId(await getPossessionTeamId(gameId));
+    const [currentPossessionTeamId, currentPossessionTeamName] = await Promise.all([
+      getPossessionTeamId(gameId).then(normalizeTeamId),
+      getPossessionTeamName(gameId),
+    ]);
     if (!currentPossessionTeamId) {
       await this.washBet(
         bet.bet_id,
@@ -211,6 +224,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       event: 'baseline',
       captured_at: baseline.capturedAt,
       possession_team_id: baseline.possessionTeamId,
+      possession_team_name: currentPossessionTeamName ?? null,
       teams: baseline.teams,
     });
 

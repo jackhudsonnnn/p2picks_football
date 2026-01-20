@@ -1,5 +1,5 @@
-import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { type PlayerRef } from '../../shared/playerUtils';
+import { readPlayerStatValue, resolveStatKey as baseResolveStatKey } from '../../shared/statEvaluatorHelpers';
 
 export interface PropHuntConfig {
   player_id?: string | null;
@@ -96,10 +96,8 @@ export async function evaluatePropHunt(
   progressMode: 'starting_now' | 'cumulative',
   baseline?: PropHuntBaseline | null,
 ): Promise<PropHuntEvaluationResult | null> {
-  const statKey = (config.stat || '').trim();
-  if (!statKey || !PLAYER_STAT_MAP[statKey]) {
-    return null;
-  }
+  const statKey = baseResolveStatKey(config.stat, PLAYER_STAT_MAP);
+  if (!statKey) return null;
   const finalValue = await readStatValueFromAccessors(config);
   if (finalValue == null) {
     return null;
@@ -124,24 +122,17 @@ export async function evaluatePropHunt(
 }
 
 async function readStatValueFromAccessors(config: PropHuntConfig): Promise<number | null> {
-  const statKey = (config.stat || '').trim();
-  const spec = PLAYER_STAT_MAP[statKey];
-  if (!spec) return null;
+  const statKey = baseResolveStatKey(config.stat, PLAYER_STAT_MAP);
+  if (!statKey) return null;
 
   const gameId = config.nfl_game_id ? String(config.nfl_game_id) : '';
   if (!gameId) return null;
 
-  const playerKey = resolvePlayerKey(config.player_id, config.player_name);
-  if (!playerKey) return null;
-
-  const value = await getPlayerStat(gameId, playerKey, spec.category, spec.field);
-  return Number.isFinite(value) ? Number(value) : null;
-}
-
-function resolvePlayerKey(playerId?: string | null, playerName?: string | null): string | null {
-  const id = playerId ? String(playerId).trim() : '';
-  if (id) return id;
-  const name = playerName ? String(playerName).trim() : '';
-  if (name) return `name:${name}`;
-  return null;
+  const value = await readPlayerStatValue(
+    gameId,
+    { id: config.player_id, name: config.player_name },
+    statKey,
+    PLAYER_STAT_MAP,
+  );
+  return value;
 }

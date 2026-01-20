@@ -33,13 +33,8 @@ export function runModeValidator(
 export function computeModeOptions(
   mode: ModeDefinitionDTO | null | undefined,
   ctx: ModeContext,
-): string[] {
-  const debug = process.env.DEBUG_MODE_OPTIONS === '1' || process.env.DEBUG_MODE_OPTIONS === 'true';
-  
+): string[] {  
   if (!mode) {
-    if (debug) {
-      console.log('[modeOptions] no mode definition provided, defaulting to pass option');
-    }
     return ['pass'];
   }
   
@@ -47,26 +42,17 @@ export function computeModeOptions(
   
   if (mode.staticOptions && mode.staticOptions.length > 0) {
     const options = ensurePassOption(dedupeOptions(mode.staticOptions));
-    if (debug) {
-      console.log('[modeOptions] using static options', { modeKey, options });
-    }
     return options;
   }
   
   if (mode.computeOptions) {
     try {
       const result = mode.computeOptions(ctx);
-      if (debug) {
-        console.log('[modeOptions] computeOptions called', { modeKey, result });
-      }
       if (Array.isArray(result)) {
         const options = result
           .map((item) => String(item))
           .filter((item) => item.trim().length > 0);
         const finalOptions = ensurePassOption(dedupeOptions(options));
-        if (debug) {
-          console.log('[modeOptions] computeOptions produced options', { modeKey, finalOptions });
-        }
         return finalOptions;
       }
     } catch (err) {
@@ -74,9 +60,6 @@ export function computeModeOptions(
     }
   }
   
-  if (debug) {
-    console.log('[modeOptions] falling back to default pass option', { modeKey });
-  }
   return ensurePassOption(['pass']);
 }
 

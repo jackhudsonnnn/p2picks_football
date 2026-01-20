@@ -28,7 +28,6 @@ export type ModeUserConfigInput = {
 };
 
 export interface ModePreviewResult {
-  summary: string;
   description: string;
   options: string[];
   winningCondition?: string;
@@ -68,14 +67,12 @@ export async function buildModePreview(
   await enrichConfigWithGameContext(config, bet);
   const ctx = buildModeContext(config, bet);
 
-  const summary = safeLabel(formatSummary(definition), definition.label);
   const description = await getMatchup(config.nfl_game_id ? String(config.nfl_game_id) : '');
   const winningCondition = computeWinningCondition(definition, ctx);
   const options = computeModeOptions(definition, ctx);
   const errors = runModeValidator(definition, ctx);
 
   return {
-    summary,
     description,
     winningCondition: winningCondition && winningCondition.trim().length ? winningCondition : undefined,
     options,
@@ -98,20 +95,6 @@ function requireModeDefinition(modeKey: string): ModeDefinitionDTO {
     throw new Error(`mode ${modeKey} not found`);
   }
   return definition;
-}
-
-function safeLabel(candidate: string, fallback: string): string {
-  const value = candidate && candidate.trim().length ? candidate : fallback;
-  return value && value.trim().length ? value : fallback;
-}
-
-function formatSummary(definition: ModeDefinitionDTO): string {
-  const raw = definition.summaryTemplate ?? '';
-  // Allow simple literal strings; strip surrounding backticks if present
-  const cleaned = raw.startsWith('`') && raw.endsWith('`') && raw.length >= 2
-    ? raw.slice(1, -1)
-    : raw;
-  return cleaned || definition.label;
 }
 
 function normalizeModeUserConfigSteps(

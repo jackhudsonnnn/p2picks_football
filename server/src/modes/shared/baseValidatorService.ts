@@ -41,8 +41,6 @@ export interface BaseValidatorConfig {
   storeTtlSeconds?: number;
   /** Whether to dedupe game feed events */
   dedupeGameFeed?: boolean;
-  /** Enable debug logging via environment variable check */
-  debugEnvVar?: string;
   /** Use queue for resolution operations (default: true in production) */
   useResolutionQueue?: boolean;
 }
@@ -51,14 +49,10 @@ export abstract class BaseValidatorService<TConfig, TStore> {
   protected readonly kernel: ModeRuntimeKernel;
   protected readonly store: RedisJsonStore<TStore>;
   protected readonly config: BaseValidatorConfig;
-  protected readonly debugEnabled: boolean;
   protected readonly useQueue: boolean;
 
   constructor(config: BaseValidatorConfig) {
     this.config = config;
-    this.debugEnabled = config.debugEnvVar
-      ? process.env[config.debugEnvVar] === '1' || process.env[config.debugEnvVar] === 'true'
-      : false;
     // Default to using queue unless explicitly disabled
     this.useQueue = config.useResolutionQueue ?? (USE_RESOLUTION_QUEUE !== '0');
 
@@ -194,7 +188,6 @@ export abstract class BaseValidatorService<TConfig, TStore> {
     if (this.useQueue) {
       await enqueueSetWinningChoice(betId, winningChoice, history);
       await this.store.delete(betId);
-      this.logDebug('resolution_queued', { betId, winningChoice });
       return true; // Assume success; failures will be retried by queue
     }
     
@@ -238,7 +231,6 @@ export abstract class BaseValidatorService<TConfig, TStore> {
         modeLabel: this.config.modeLabel,
       });
       await this.store.delete(betId);
-      this.logDebug('wash_queued', { betId });
       return;
     }
     
@@ -251,14 +243,6 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       modeLabel: this.config.modeLabel,
     });
     await this.store.delete(betId);
-  }
-
-  /**
-   * Log a debug message (only if debug is enabled for this mode).
-   */
-  protected logDebug(event: string, payload: Record<string, unknown>): void {
-    if (!this.debugEnabled) return;
-    console.log(`[${this.config.modeKey}][${event}]`, payload);
   }
 
   /**

@@ -1,5 +1,5 @@
-import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { type PlayerRef } from '../../shared/playerUtils';
+import { readPlayerStatValue, resolvePlayerKey, resolveStatKey as baseResolveStatKey } from '../../shared/statEvaluatorHelpers';
 
 export interface EitherOrConfig {
   player1_id?: string | null;
@@ -55,20 +55,12 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
 };
 
 function resolveStatKey(config: EitherOrConfig | null | undefined): string | null {
-  const statKey = (config?.stat || '').trim();
-  if (!statKey || !PLAYER_STAT_MAP[statKey]) {
-    return null;
-  }
-  return statKey;
+  return baseResolveStatKey(config?.stat, PLAYER_STAT_MAP);
 }
 
 async function getPlayerValue(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
-  const spec = PLAYER_STAT_MAP[statKey];
-  if (!spec) return 0;
-  const key = resolvePlayerKey(ref.id, ref.name);
-  if (!key) return 0;
-  const value = await getPlayerStat(gameId, key, spec.category, spec.field);
-  return Number.isFinite(value) ? Number(value) : 0;
+  const value = await readPlayerStatValue(gameId, ref, statKey, PLAYER_STAT_MAP);
+  return value ?? 0;
 }
 
 export async function buildEitherOrBaseline(
@@ -145,12 +137,4 @@ export async function evaluateEitherOr(
     },
     outcome,
   };
-}
-
-function resolvePlayerKey(playerId?: string | null, playerName?: string | null): string | null {
-  const id = playerId ? String(playerId).trim() : '';
-  if (id) return id;
-  const name = playerName ? String(playerName).trim() : '';
-  if (name) return `name:${name}`;
-  return null;
 }

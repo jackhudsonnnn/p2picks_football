@@ -1,4 +1,4 @@
-import { getGameStatus, getPossessionTeamId } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getPossessionTeamId, getPossessionTeamName } from '../../../services/nflData/nflRefinedDataAccessors';
 
 export async function validateChooseTheirFateProposal({
   nflGameId,
@@ -12,30 +12,34 @@ export async function validateChooseTheirFateProposal({
     return { valid: false, error: 'Choose Their Fate requires an nfl_game_id' };
   }
 
-  const rawStatus = await getGameStatus(gameId);
-  const status = (rawStatus || '').trim().toUpperCase();
-  const allowedStatuses = new Set(['STATUS_IN_PROGRESS', 'STATUS_END_PERIOD']);
-  
-  if (!allowedStatuses.has(status)) {
+  const status = await getGameStatus(gameId);  
+  if (status !== 'STATUS_IN_PROGRESS' && status !== 'STATUS_END_PERIOD') {
     return {
       valid: false,
       error: 'Choose Their Fate bets can only be proposed while the game is in progress or between drives',
-      details: { game_id: gameId, status: rawStatus ?? null },
+      details: { game_id: gameId, status: status },
     };
   }
 
-  const possessionTeamId = await getPossessionTeamId(gameId);
-  if (!possessionTeamId) {
+  const [possessionTeamId, possessionTeamName] = await Promise.all([
+    getPossessionTeamId(gameId),
+    getPossessionTeamName(gameId),
+  ]);
+
+  if (!possessionTeamId && !possessionTeamName) {
     return {
       valid: false,
       error: 'Choose Their Fate bets require an offense with possession',
-      details: { game_id: gameId, status: rawStatus ?? null },
+      details: { game_id: gameId, status: status },
     };
   }
 
   const configUpdates: Record<string, unknown> = {};
   if (!config.possession_team_id) {
     configUpdates.possession_team_id = possessionTeamId;
+  }
+  if (!config.possession_team_name && possessionTeamName) {
+    configUpdates.possession_team_name = possessionTeamName;
   }
 
   return { valid: true, configUpdates };

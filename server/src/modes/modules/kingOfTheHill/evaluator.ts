@@ -1,5 +1,5 @@
-import { getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 import { type PlayerRef } from '../../shared/playerUtils';
+import { readPlayerStatValue, resolvePlayerKey, resolveStatKey as baseResolveStatKey } from '../../shared/statEvaluatorHelpers';
 
 export interface KingOfTheHillConfig {
   player1_id?: string | null;
@@ -61,20 +61,12 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
 };
 
 export function resolveStatKey(config: KingOfTheHillConfig | null | undefined): string | null {
-  const statKey = (config?.stat || '').trim();
-  if (!statKey || !PLAYER_STAT_MAP[statKey]) {
-    return null;
-  }
-  return statKey;
+  return baseResolveStatKey(config?.stat, PLAYER_STAT_MAP);
 }
 
 export async function readPlayerStat(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
-  const spec = PLAYER_STAT_MAP[statKey];
-  if (!spec) return 0;
-  const playerKey = resolvePlayerKey(ref.id, ref.name);
-  if (!playerKey) return 0;
-  const value = await getPlayerStat(gameId, playerKey, spec.category, spec.field);
-  return Number.isFinite(value) ? Number(value) : 0;
+  const value = await readPlayerStatValue(gameId, ref, statKey, PLAYER_STAT_MAP);
+  return value ?? 0;
 }
 
 export function createPlayerProgress(id?: string | null, name?: string | null, baselineValue = 0): PlayerProgress {
@@ -114,14 +106,6 @@ export async function buildProgressRecord(
     player1: createPlayerProgress(config.player1_id, config.player1_name, player1Value),
     player2: createPlayerProgress(config.player2_id, config.player2_name, player2Value),
   };
-}
-
-function resolvePlayerKey(playerId?: string | null, playerName?: string | null): string | null {
-  const id = playerId ? String(playerId).trim() : '';
-  if (id) return id;
-  const name = playerName ? String(playerName).trim() : '';
-  if (name) return `name:${name}`;
-  return null;
 }
 
 export function applyProgressUpdate(

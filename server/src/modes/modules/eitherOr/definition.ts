@@ -78,7 +78,6 @@ export const eitherOrModule: ModeModule = {
   definition: {
     key: 'either_or',
     label: 'Either Or',
-    summaryTemplate: 'Either Or',
     computeWinningCondition,
     computeOptions,
     validateConfig,

@@ -89,7 +89,6 @@ export const propHuntModule: ModeModule = {
   definition: {
     key: 'prop_hunt',
     label: 'Prop Hunt',
-    summaryTemplate: 'Prop Hunt',
     computeWinningCondition,
     computeOptions,
     validateConfig,

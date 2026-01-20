@@ -135,14 +135,14 @@ class GameFeedService extends EventEmitter {
       generatedAt: (doc as any)?.generatedAt ?? null,
       teams: Array.isArray(doc.teams)
         ? doc.teams.map((team: any) => ({
-            teamId: team?.teamId ?? null,
-            abbreviation: team?.abbreviation ?? null,
-            score: team?.score ?? null,
-            stats: team?.stats ?? null,
-            possession: team?.possession ?? null,
-            lastUpdated: team?.lastUpdated ?? null,
-            players: summarizePlayers(team?.players),
-          }))
+          teamId: team?.teamId ?? null,
+          abbreviation: team?.abbreviation ?? null,
+          score: team?.score ?? null,
+          stats: team?.stats ?? null,
+          possession: team?.possession ?? null,
+          lastUpdated: team?.lastUpdated ?? null,
+          players: summarizePlayers(team?.players),
+        }))
         : [],
     };
     return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex');

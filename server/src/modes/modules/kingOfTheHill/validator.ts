@@ -24,7 +24,6 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
       modeLabel: 'King Of The Hill',
       resultEvent: 'king_of_the_hill_result',
       baselineEvent: 'king_of_the_hill_snapshot',
-      debugEnvVar: 'DEBUG_KING_OF_THE_HILL',
     });
   }
 
@@ -36,7 +35,6 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {
       if (this.initializingBets.has(bet.bet_id)) {
-        this.logDebug('progress.defer', { betId: bet.bet_id, reason: 'initializing' });
         continue;
       }
       await this.evaluateBet(bet.bet_id, gameId);
@@ -94,24 +92,13 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         timestamp,
       );
 
-      this.logDebug('progress.update', {
-        betId,
-        gameId: updatedProgress.gameId,
-        progressMode,
-        threshold,
-        player1: this.describePlayer(updatedProgress.player1, player1Current, progressMode),
-        player2: this.describePlayer(updatedProgress.player2, player2Current, progressMode),
-      });
-
       await this.store.set(betId, updatedProgress);
       const outcome = determineProgressOutcome(updatedProgress);
       if (outcome === 'player1') {
-        this.logDebug('progress.outcome', { betId, outcome: 'player1', statKey: updatedProgress.statKey, threshold });
         await this.setWinner(betId, config.player1_name || updatedProgress.player1.name || 'Player 1', updatedProgress);
         return;
       }
       if (outcome === 'player2') {
-        this.logDebug('progress.outcome', { betId, outcome: 'player2', statKey: updatedProgress.statKey, threshold });
         await this.setWinner(betId, config.player2_name || updatedProgress.player2.name || 'Player 2', updatedProgress);
         return;
       }
@@ -189,17 +176,6 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
       }
       const player1Value = progress.player1.lastValue;
       const player2Value = progress.player2.lastValue;
-
-      this.logDebug('progress.baseline_capture', {
-        betId: bet.bet_id,
-        gameId,
-        progressMode,
-        statKey,
-        threshold,
-        player1_baseline: player1Value,
-        player2_baseline: player2Value,
-        capturedAt,
-      });
 
       if (progressMode === 'cumulative' && (player1Value >= threshold || player2Value >= threshold)) {
         await this.washBet(

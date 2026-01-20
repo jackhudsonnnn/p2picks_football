@@ -35,7 +35,6 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
       modeLabel: SCORE_SORCERER_LABEL,
       resultEvent: SCORE_SORCERER_RESULT_EVENT,
       baselineEvent: SCORE_SORCERER_BASELINE_EVENT,
-      debugEnvVar: 'DEBUG_SCORE_SORCERER',
     });
   }
 
@@ -85,7 +84,6 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
     }
     await this.store.set(bet.bet_id, baseline);
     await this.recordHistory(bet.bet_id, SCORE_SORCERER_BASELINE_EVENT, { ...baseline });
-    this.logDebug('baseline_captured', { betId: bet.bet_id, baseline });
     return baseline;
   }
 

@@ -320,7 +320,7 @@ export async function getOpponentTeam(gameId: string, teamId: string): Promise<T
 /**
  * Get team currently in possession.
  */
-export async function getPossessionTeam(gameId: string): Promise<Team | null> {
+async function getPossessionTeam(gameId: string): Promise<Team | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return null;
   return doc.teams.find((t) => (t as any).possession === true) ?? null;
@@ -332,7 +332,16 @@ export async function getPossessionTeam(gameId: string): Promise<Team | null> {
 export async function getPossessionTeamId(gameId: string): Promise<string | null> {
   const team = await getPossessionTeam(gameId);
   if (!team) return null;
-  return (team as any).teamId ?? (team as any).abbreviation ?? null;
+  return (team as any).teamId ?? null;
+}
+
+/**
+ * Get possession team name.
+ */
+export async function getPossessionTeamName(gameId: string): Promise<string | null> {
+  const team = await getPossessionTeam(gameId);
+  if (!team) return null;
+  return (team as any).displayName ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

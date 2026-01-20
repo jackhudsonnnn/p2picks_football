@@ -124,7 +124,7 @@ async function runRawTick(firstTick: boolean): Promise<void> {
         logger.warn({ eventId }, 'Skipping game: boxscore unavailable');
         continue;
       }
-      await writeJsonAtomic(box, RAW_DIR, `${eventId}.json`, true);
+      await writeJsonAtomic(box, RAW_DIR, `${eventId}.json`);
       await updateRostersForGame(box as Record<string, unknown>, refreshedThisTick);
     } catch (err) {
       logger.warn({ err }, 'Failed processing event');
@@ -198,7 +198,7 @@ async function copyTestDataRaw(firstTick: boolean): Promise<void> {
     const src = path.join(testRawDir, file);
     const data = await readJson(src);
     if (!data) continue;
-    await writeJsonAtomic(data, RAW_DIR, file, true);
+    await writeJsonAtomic(data, RAW_DIR, file);
   }
 
   await copyTestRosters(firstTick);
@@ -219,7 +219,7 @@ async function copyTestRosters(firstTick: boolean): Promise<void> {
     const src = path.join(testRostersDir, file);
     const data = await readJson(src);
     if (!data) continue;
-    await writeJsonAtomic(data, ROSTERS_DIR, file, true);
+    await writeJsonAtomic(data, ROSTERS_DIR, file);
   }
 }
 
@@ -241,7 +241,7 @@ async function copyTestDataRefined(firstTick: boolean): Promise<void> {
     const src = path.join(testRefinedDir, file);
     const data = await readJson(src);
     if (!data) continue;
-    await writeJsonAtomic(data, REFINED_DIR, file, true);
+    await writeJsonAtomic(data, REFINED_DIR, file);
   }
 }
 

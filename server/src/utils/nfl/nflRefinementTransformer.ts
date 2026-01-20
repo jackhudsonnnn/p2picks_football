@@ -142,7 +142,6 @@ export function refineBoxscore(
 ): RefinedGame | null {
   const box = getBoxscoreRoot(raw);
   if (!box) {
-    logger.debug({ eventId }, 'No boxscore root');
     return null;
   }
 

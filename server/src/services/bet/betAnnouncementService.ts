@@ -50,7 +50,7 @@ export function formatBetAnnouncement(input: BetAnnouncementInput): string {
   const wagerLabel = formatWager(bet.wager_amount);
   const timeLimitLabel = formatTimeLimit(bet.time_limit_seconds);
   const modeLabel = resolveModeLabel(bet.mode_key);
-  const description = sanitizeLine(bet.description) || 'Bet';
+  const description = sanitizeLine(bet.description);
   const winningCondition = sanitizeLine(preview.winningCondition ?? '') || DEFAULT_WINNING_CONDITION;
 
   return [

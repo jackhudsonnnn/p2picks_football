@@ -3,6 +3,7 @@ import { scoreSorcererOverview } from './overview';
 import { prepareScoreSorcererConfig } from './prepareConfig';
 import { scoreSorcererValidator } from './validator';
 import { getScoreSorcererLiveInfo } from './liveInfo';
+import { buildScoreSorcererUserConfig } from './userConfig';
 import {
   SCORE_SORCERER_BASELINE_EVENT,
   SCORE_SORCERER_LABEL,
@@ -33,7 +34,6 @@ export const scoreSorcererModule: ModeModule = {
   definition: {
     key: SCORE_SORCERER_MODE_KEY,
     label: SCORE_SORCERER_LABEL,
-    summaryTemplate: 'Score Sorcerer',
     computeWinningCondition,
     computeOptions,
     configSteps: [],
@@ -45,5 +45,6 @@ export const scoreSorcererModule: ModeModule = {
   overview: scoreSorcererOverview,
   prepareConfig: prepareScoreSorcererConfig,
   validator: scoreSorcererValidator,
+  buildUserConfig: buildScoreSorcererUserConfig,
   getLiveInfo: getScoreSorcererLiveInfo,
 };

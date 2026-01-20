@@ -77,7 +77,7 @@ export async function updateRostersForGame(
       const data = await fetchRoster(teamId);
       if (!data) continue;
 
-      await writeJsonAtomic(data, ROSTERS_DIR, `${teamId}.json`, false);
+      await writeJsonAtomic(data, ROSTERS_DIR, `${teamId}.json`);
       refreshed.add(teamId);
       lastRosterRefresh.set(teamId, Date.now());
       logger.info({ teamId }, 'Roster updated');

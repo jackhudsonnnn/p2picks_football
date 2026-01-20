@@ -17,7 +17,6 @@ export async function prepareEitherOrConfig({
   bet: BetProposal;
   config: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const cfg = { ...config } as Record<string, unknown> & {
     nfl_game_id?: string | null;
     player1_id?: string | null;
@@ -49,13 +48,6 @@ export async function prepareEitherOrConfig({
     cfg.resolve_at = DEFAULT_RESOLVE_AT;
   }
 
-  if (debug) {
-    console.log('[eitherOr][prepareConfig] normalized base config', {
-      betId: bet.bet_id,
-      config: cfg,
-    });
-  }
-
   cfg.progress_mode = normalizeProgressMode(cfg.progress_mode);
 
   const statKey = cfg.stat ? String(cfg.stat) : '';
@@ -63,14 +55,6 @@ export async function prepareEitherOrConfig({
   const gameId = cfg.nfl_game_id ? String(cfg.nfl_game_id) : '';
 
   if (!statKey || !category || !gameId) {
-    if (debug) {
-      console.warn('[eitherOr][prepareConfig] missing stat/category/gameId for baseline capture', {
-        betId: bet.bet_id,
-        statKey,
-        category,
-        gameId,
-      });
-    }
     return normalizeConfigPayload(cfg);
   }
 
@@ -81,15 +65,6 @@ export async function prepareEitherOrConfig({
       fetchPlayerStat(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
       fetchPlayerStat(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
-
-    if (debug) {
-      console.log('[eitherOr][prepareConfig] captured baselines', {
-        betId: bet.bet_id,
-        statKey,
-        baselinePlayer1,
-        baselinePlayer2,
-      });
-    }
 
     return {
       ...normalizeConfigPayload(cfg),
@@ -138,19 +113,13 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
 }
 
 async function fetchPlayerStat(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
-  const debug = process.env.DEBUG_EITHER_OR === '1' || process.env.DEBUG_EITHER_OR === 'true';
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
+
   const playerKey = resolvePlayerKey(ref.id, ref.name);
   if (!playerKey) return null;
+
   const value = await getPlayerStat(gameId, playerKey, category, statKey);
-  if (debug) {
-    console.log('[eitherOr][prepareConfig] raw stat value', {
-      statKey,
-      playerId: ref.id ?? null,
-      raw: value,
-    });
-  }
   return normalizeStatValue(value);
 }
 
@@ -158,11 +127,13 @@ function normalizeStatValue(raw: unknown): number | null {
   if (typeof raw === 'number') {
     return Number.isFinite(raw) ? raw : null;
   }
+
   if (typeof raw === 'string') {
     const first = raw.split('/')[0];
     const num = Number(first);
     return Number.isFinite(num) ? num : null;
   }
+  
   return null;
 }
 

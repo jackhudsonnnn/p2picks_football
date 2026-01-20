@@ -8,6 +8,7 @@ import {
   getAwayTeam,
   getHomeTeam,
   getPossessionTeamId,
+  getPossessionTeamName,
   getMatchup,
 } from '../../../services/nflData/nflRefinedDataAccessors';
 import { type ChooseFateBaseline, type ChooseTheirFateConfig } from './evaluator';
@@ -36,15 +37,20 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
   // Get live game data
   const gameId = nflGameId ?? typedConfig.nfl_game_id ?? baseline?.gameId ?? null;
 
-  const [homeTeam, awayTeam, livePossessionTeamId] = gameId
+  const [homeTeam, awayTeam, livePossessionTeamId, livePossessionTeamName] = gameId
     ? await Promise.all([
         getHomeTeam(gameId),
         getAwayTeam(gameId),
         getPossessionTeamId(gameId),
+        getPossessionTeamName(gameId),
       ])
-    : [null, null, null];
+    : [null, null, null, null];
 
-  let possessionTeam = typedConfig.possession_team_name ?? typedConfig.possession_team_id ?? null;
+  let possessionTeam =
+    livePossessionTeamName ??
+    typedConfig.possession_team_name ??
+    typedConfig.possession_team_id ??
+    null;
   
   if (baseline?.possessionTeamId) {
     // Try to resolve the possession team name from baseline

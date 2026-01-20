@@ -150,8 +150,6 @@ export function determineChooseFateOutcome(
 	return null;
 }
 
-// possession lookups now use accessors (getPossessionTeamId); legacy helper removed
-
 type OpponentSnapshot = {
 	key: string;
 	current: ChooseFateTeamScores;
