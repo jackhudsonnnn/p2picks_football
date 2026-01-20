@@ -4,7 +4,8 @@ import { fetchModePreview, type ModePreviewPayload } from '../service';
 export type UseModePreviewArgs = {
   modeKey?: string | null;
   modeConfig?: Record<string, unknown> | null;
-  nflGameId?: string | null;
+  leagueGameId?: string | null;
+  league?: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
   betId?: string | null;
 };
 
@@ -14,7 +15,7 @@ export type UseModePreviewState = {
   loading: boolean;
 };
 
-export function useModePreview({ modeKey, modeConfig, nflGameId, betId }: UseModePreviewArgs): UseModePreviewState {
+export function useModePreview({ modeKey, modeConfig, leagueGameId, league = 'U2Pick', betId }: UseModePreviewArgs): UseModePreviewState {
   const [preview, setPreview] = useState<ModePreviewPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ export function useModePreview({ modeKey, modeConfig, nflGameId, betId }: UseMod
     setLoading(true);
     setError(null);
 
-    fetchModePreview(modeKey, modeConfig || {}, nflGameId ?? null, betId ?? null)
+    fetchModePreview(modeKey, modeConfig || {}, leagueGameId ?? null, betId ?? null, league)
       .then((data) => {
         if (!cancelled) {
           setPreview(data);
@@ -52,7 +53,7 @@ export function useModePreview({ modeKey, modeConfig, nflGameId, betId }: UseMod
     return () => {
       cancelled = true;
     };
-  }, [modeKey, configSignature, nflGameId, betId]);
+  }, [modeKey, configSignature, leagueGameId, league, betId]);
 
   return { preview, error, loading };
 }

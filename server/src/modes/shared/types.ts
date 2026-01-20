@@ -104,11 +104,15 @@ export interface ModeLiveInfo {
   /** Optional message if live info is unavailable */
   unavailableReason?: string;
 }
+import type { League } from '../../types/league';
 
 export interface GetLiveInfoInput {
   betId: string;
   config: Record<string, unknown>;
-  nflGameId: string | null;
+  leagueGameId: string | null;
+  league: League;
+  /** Legacy alias for NFL-only flows */
+  nflGameId?: string | null;
 }
 
 export interface ModeModule {

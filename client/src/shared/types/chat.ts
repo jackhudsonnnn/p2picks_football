@@ -17,14 +17,15 @@ export interface ChatMessage {
     winning_choice?: string | null;
     resolution_time?: string | null;
     mode_key?: string;
-    nfl_game_id?: string;
+    league_game_id?: string;
+    league?: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
     winning_condition_text?: string | null;
   };
 }
 
 // Bet proposal message format for ChatArea (narrowing variant where betDetails is required)
-export interface BetProposalMessage extends ChatMessage {
+export type BetProposalMessage = ChatMessage & {
   type: 'bet_proposal';
   betProposalId: string;
   betDetails: NonNullable<ChatMessage['betDetails']>;
-}
+};

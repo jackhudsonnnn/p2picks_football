@@ -16,6 +16,7 @@ import {
   fetchModePreview as fetchModePreviewRepo,
 } from '@data/repositories/modesRepository';
 import type { ModePreviewPayload } from '@shared/types/modes';
+import type { League } from './types';
 import { fetchJSON } from '@data/clients/restClient';
 
 export type { BetProposalRequestPayload };
@@ -68,10 +69,11 @@ export async function fetchModeOverviews(force = false) {
 export async function fetchModePreview(
   modeKey: string,
   config: Record<string, unknown>,
-  nflGameId?: string | null,
+  leagueGameId?: string | null,
   betId?: string | null,
+  league: League = 'U2Pick',
 ) {
-  return fetchModePreviewRepo(modeKey, config, nflGameId, betId);
+  return fetchModePreviewRepo(modeKey, config, leagueGameId, betId, league);
 }
 
 export async function fetchBetLiveInfo(betId: string): Promise<BetLiveInfo> {
@@ -126,7 +128,8 @@ export type BetGeneralConfigSchema = {
 export type BetConfigSession = {
   session_id: string;
   mode_key: string;
-  nfl_game_id: string;
+  league_game_id: string;
+  league: League;
   status: BetConfigSessionStatus;
   steps: BetModeUserConfigStep[];
   next_step: BetModeUserConfigStep | null;
@@ -148,11 +151,11 @@ export async function fetchBetProposalBootstrap(signal?: AbortSignal): Promise<B
   return fetchJSON('/api/bet-proposals/bootstrap', { signal });
 }
 
-export async function createBetConfigSession(modeKey: string, nflGameId: string): Promise<BetConfigSession> {
+export async function createBetConfigSession(modeKey: string, leagueGameId: string, league: League = 'U2Pick'): Promise<BetConfigSession> {
   return fetchJSON('/api/bet-proposals/sessions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode_key: modeKey, nfl_game_id: nflGameId }),
+    body: JSON.stringify({ mode_key: modeKey, league_game_id: leagueGameId, league }),
   });
 }
 

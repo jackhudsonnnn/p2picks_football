@@ -33,9 +33,13 @@ const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disable
 
   return (
     <div
-      className={`member-balance-action ${balanceClass}`}
-      onClick={() => onMemberClick(user)}
+      className={`member-balance-action ${balanceClass} ${disabled ? 'disabled' : ''}`}
+      onClick={() => {
+        if (disabled) return;
+        onMemberClick(user);
+      }}
       aria-label={`Balance for ${user.username}: ${balanceLabel}. Click to send friend request.`}
+      aria-disabled={disabled}
       title={balanceLabel}
     >
       <span className="balance-badge">{balanceLabel}</span>

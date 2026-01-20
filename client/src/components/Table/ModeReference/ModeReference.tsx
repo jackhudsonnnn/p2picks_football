@@ -45,6 +45,11 @@ export const ModeReference: React.FC<ModeReferenceProps> = ({ overviews, loading
       {showError && (
         <div className="mode-reference__status" role="alert">
           <p>{"Something went wrong, please try again later."}</p>
+          {onRetry && (
+            <button type="button" className="mode-reference__retry" onClick={onRetry}>
+              Try again
+            </button>
+          )}
         </div>
       )}
       {!showSkeleton && !showError && overviews.length === 0 && (

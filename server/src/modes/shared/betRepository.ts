@@ -18,7 +18,7 @@ export class BetRepository {
       .eq('mode_key', modeKey)
       .eq('bet_status', 'pending');
     if (filters?.gameId) {
-      query = query.eq('nfl_game_id', filters.gameId);
+      query = query.eq('league_game_id', filters.gameId);
     }
     const { data, error } = await query;
     if (error) {

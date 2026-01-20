@@ -23,6 +23,8 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     activeModeStep,
     gameId,
     setGameId,
+  league,
+  setLeague,
     modeKey,
     setModeKey,
     stage,
@@ -43,17 +45,36 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
   const renderStartStage = () => (
     <div>
       <div className="form-group">
-        <label className="form-label" htmlFor="nfl_game_id">
-          NFL Game
+        <label className="form-label" htmlFor="league">
+          League
         </label>
         <select
-          id="nfl_game_id"
+          id="league"
+          className="form-select"
+          value={league}
+          onChange={(event) => setLeague(event.target.value as any)}
+          disabled={bootstrapLoading || sessionLoading}
+        >
+          {['NFL', 'NBA', 'MLB', 'NHL', 'NCAAF', 'U2Pick'].map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label" htmlFor="league_game_id">
+          Game
+        </label>
+        <select
+          id="league_game_id"
           className="form-select"
           value={gameId}
           onChange={(event) => setGameId(event.target.value)}
           disabled={bootstrapLoading || sessionLoading}
         >
-          <option value="">Select NFL Game</option>
+          <option value="">Select Game</option>
           {games.map((game) => (
             <option key={game.id} value={game.id}>
               {game.label}
@@ -86,7 +107,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
 
   const renderModeStage = () => {
     if (!session) {
-      return <div className="form-step centered-step">Select an NFL game and mode to begin.</div>;
+      return <div className="form-step centered-step">Select a game and mode to begin.</div>;
     }
 
     if (!session.steps.length) {

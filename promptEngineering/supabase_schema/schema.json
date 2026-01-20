@@ -45,7 +45,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(table_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
   },
   {
     "table_name": "bet_participations",
@@ -61,7 +61,7 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)"
   },
   {
     "table_name": "bet_participations",
@@ -145,14 +145,6 @@
   },
   {
     "table_name": "bet_proposals",
-    "column_name": "settled_as_part_of_table_reset",
-    "data_type": "boolean",
-    "is_nullable": "YES",
-    "column_default": "false",
-    "key_info": ""
-  },
-  {
-    "table_name": "bet_proposals",
     "column_name": "mode_key",
     "data_type": "text",
     "is_nullable": "NO",
@@ -185,10 +177,18 @@
   },
   {
     "table_name": "bet_proposals",
-    "column_name": "nfl_game_id",
+    "column_name": "league_game_id",
     "data_type": "bigint",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "league",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "NO",
+    "column_default": "'U2Pick'::league",
     "key_info": ""
   },
   {

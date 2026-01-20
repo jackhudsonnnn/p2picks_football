@@ -2,13 +2,15 @@
 
 export type BetModeKey = string & { _brand?: 'BetModeKey' };
 export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
+export type League = 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
 
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
 export interface BetRecord {
   bet_id: string;
   table_id: string;
   proposer_user_id: string;
-  nfl_game_id?: string | null;
+  league_game_id?: string | null;
+  league?: League | null;
   mode_key?: BetModeKey | null;
   description?: string | null;
   wager_amount?: number | null;

@@ -108,7 +108,8 @@ export async function listTickets(req: Request, res: Response): Promise<void> {
         bet_proposals:bet_id (
           bet_id,
           table_id,
-          nfl_game_id,
+          league,
+          league_game_id,
           mode_key,
           description,
           wager_amount,

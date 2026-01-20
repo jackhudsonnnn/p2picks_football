@@ -18,6 +18,7 @@ import {
   TIME_LIMIT_STEP,
   DEFAULT_TIME_LIMIT,
 } from '../../constants/betting';
+import { normalizeLeague, type League } from '../../types/league';
 
 export type ModeConfigSessionStatus = 'mode_config' | 'general' | 'summary';
 
@@ -72,7 +73,8 @@ export const GENERAL_CONFIG_SCHEMA: GeneralConfigSchema = {
 interface ModeConfigSession {
   id: string;
   modeKey: string;
-  nflGameId: string;
+  leagueGameId: string;
+  league: League;
   config: Record<string, unknown>;
   selections: Record<string, string | null>;
   status: ModeConfigSessionStatus;
@@ -86,7 +88,8 @@ interface ModeConfigSession {
 export interface ModeConfigSessionDTO {
   session_id: string;
   mode_key: string;
-  nfl_game_id: string;
+  league_game_id: string;
+  league: League;
   status: ModeConfigSessionStatus;
   steps: ModeUserConfigStep[];
   next_step: ModeUserConfigStep | null;
@@ -98,7 +101,8 @@ export interface ModeConfigSessionDTO {
 export interface ConsumedModeConfigSession {
   id: string;
   modeKey: string;
-  nflGameId: string;
+  leagueGameId: string;
+  league: League;
   config: Record<string, unknown>;
   general: GeneralConfigValues;
   preview: ModePreviewResult;
@@ -125,15 +129,22 @@ export function normalizeTimeLimitSeconds(value: number): number {
 
 export async function createModeConfigSession(params: {
   modeKey: string;
-  nflGameId: string;
+  leagueGameId: string;
+  league?: League;
 }): Promise<ModeConfigSessionDTO> {
   pruneSessions();
   const id = randomUUID();
+  const league = normalizeLeague(params.league ?? 'NFL');
   const session: ModeConfigSession = {
     id,
     modeKey: params.modeKey,
-    nflGameId: params.nflGameId,
-    config: { nfl_game_id: params.nflGameId },
+    leagueGameId: params.leagueGameId,
+    league,
+    config: {
+      league,
+      league_game_id: params.leagueGameId,
+      ...(league === 'NFL' ? { nfl_game_id: params.leagueGameId } : {}),
+    },
     selections: {},
     status: 'mode_config',
     general: {
@@ -213,7 +224,8 @@ export function consumeModeConfigSession(sessionId: string): ConsumedModeConfigS
   return {
     id: session.id,
     modeKey: session.modeKey,
-    nflGameId: session.nflGameId,
+    leagueGameId: session.leagueGameId,
+    league: session.league,
     config: { ...session.config },
     general: { ...session.general },
     preview: session.preview,
@@ -225,7 +237,8 @@ async function hydrateSessionDTO(session: ModeConfigSession): Promise<ModeConfig
   return {
     session_id: session.id,
     mode_key: session.modeKey,
-    nfl_game_id: session.nflGameId,
+    league_game_id: session.leagueGameId,
+    league: session.league,
     status: session.status,
     steps: view.steps,
     next_step: view.nextStep,
@@ -239,7 +252,7 @@ async function computeSteps(session: ModeConfigSession): Promise<{ steps: ModeUs
   pruneSessions();
   const definition = requireModeDefinition(session.modeKey);
   const rawSteps = await getModeUserConfigSteps(session.modeKey, {
-    nflGameId: session.nflGameId,
+    nflGameId: session.league === 'NFL' ? session.leagueGameId : undefined,
     config: session.config,
   });
   reconcileSelections(session, rawSteps);

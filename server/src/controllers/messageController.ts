@@ -297,7 +297,8 @@ export async function listMessages(req: Request, res: Response): Promise<void> {
           bet_id,
           table_id,
           proposer_user_id,
-          nfl_game_id,
+          league,
+          league_game_id,
           mode_key,
           description,
           wager_amount,
@@ -403,7 +404,8 @@ export async function listMessages(req: Request, res: Response): Promise<void> {
                   winning_choice: bet.winning_choice,
                   resolution_time: bet.resolution_time,
                   mode_key: bet.mode_key,
-                  nfl_game_id: bet.nfl_game_id,
+                  league_game_id: bet.league_game_id,
+                  league: bet.league,
                 }
               : undefined,
           };

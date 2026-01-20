@@ -51,17 +51,22 @@ export async function fetchModeConfigs(betIds: string[]): Promise<Record<string,
 export async function fetchModePreview(
   modeKey: string,
   config: Record<string, unknown>,
-  nflGameId?: string | null,
+  leagueGameId?: string | null,
   betId?: string | null,
+  league: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick' = 'U2Pick',
 ): Promise<ModePreviewPayload | null> {
   if (!modeKey) return null;
 
   const payloadConfig = { ...(config || {}) } as Record<string, unknown>;
   const gameId =
-    nflGameId || (typeof payloadConfig.nfl_game_id === 'string' ? (payloadConfig.nfl_game_id as string) : undefined);
+    leagueGameId ||
+    (typeof payloadConfig.league_game_id === 'string' ? (payloadConfig.league_game_id as string) : undefined);
 
-  if (gameId && !payloadConfig.nfl_game_id) {
-    payloadConfig.nfl_game_id = gameId;
+  if (gameId && !payloadConfig.league_game_id) {
+    payloadConfig.league_game_id = gameId;
+  }
+  if (!payloadConfig.league) {
+    payloadConfig.league = league;
   }
 
   const cacheKey = `${modeKey}:${JSON.stringify(payloadConfig)}:${betId ?? ''}`;
@@ -69,9 +74,9 @@ export async function fetchModePreview(
     return previewCache.get(cacheKey)!;
   }
 
-  const body: Record<string, unknown> = { config: payloadConfig };
+  const body: Record<string, unknown> = { config: payloadConfig, league };
   if (gameId) {
-    body.nfl_game_id = gameId;
+    body.league_game_id = gameId;
   }
   if (betId) {
     body.bet_id = betId;

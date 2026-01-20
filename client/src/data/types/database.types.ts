@@ -48,8 +48,8 @@ export interface Database {
           {
             foreignKeyName: "bet_participations_table_id_fkey";
             columns: ["table_id"];
-            referencedRelation: "tables";
-            referencedColumns: ["table_id"];
+            referencedRelation: "bet_proposals";
+            referencedColumns: ["bet_id"];
           },
           {
             foreignKeyName: "bet_participations_user_id_fkey";
@@ -65,12 +65,12 @@ export interface Database {
           "bet_status": string;
           "close_time": string;
           "description": string;
+          "league": "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
+          "league_game_id": string | null;
           "mode_key": string;
-          "nfl_game_id": string;
           "proposal_time": string;
           "proposer_user_id": string;
           "resolution_time": string | null;
-          "settled_as_part_of_table_reset": boolean | null;
           "table_id": string;
           "time_limit_seconds": number;
           "wager_amount": string;
@@ -81,12 +81,12 @@ export interface Database {
           "bet_status"?: string;
           "close_time": string;
           "description": string;
+          "league"?: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
+          "league_game_id"?: string | null;
           "mode_key": string;
-          "nfl_game_id": string;
           "proposal_time"?: string;
           "proposer_user_id": string;
           "resolution_time"?: string | null;
-          "settled_as_part_of_table_reset"?: boolean | null;
           "table_id": string;
           "time_limit_seconds": number;
           "wager_amount": string;
@@ -97,24 +97,18 @@ export interface Database {
           "bet_status"?: string;
           "close_time"?: string;
           "description"?: string;
+          "league"?: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
+          "league_game_id"?: string | null;
           "mode_key"?: string;
-          "nfl_game_id"?: string;
           "proposal_time"?: string;
           "proposer_user_id"?: string;
           "resolution_time"?: string | null;
-          "settled_as_part_of_table_reset"?: boolean | null;
           "table_id"?: string;
           "time_limit_seconds"?: number;
           "wager_amount"?: string;
           "winning_choice"?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: "bet_proposals_nfl_game_id_fkey";
-            columns: ["nfl_game_id"];
-            referencedRelation: "nfl_games";
-            referencedColumns: ["nfl_game_id"];
-          },
           {
             foreignKeyName: "bet_proposals_proposer_user_id_fkey";
             columns: ["proposer_user_id"];
@@ -126,6 +120,46 @@ export interface Database {
             columns: ["table_id"];
             referencedRelation: "tables";
             referencedColumns: ["table_id"];
+          },
+        ];
+      };
+      "friend_requests": {
+        Row: {
+          "created_at": string;
+          "receiver_user_id": string;
+          "request_id": string;
+          "responded_at": string | null;
+          "sender_user_id": string;
+          "status": string;
+        };
+        Insert: {
+          "created_at"?: string;
+          "receiver_user_id": string;
+          "request_id"?: string;
+          "responded_at"?: string | null;
+          "sender_user_id": string;
+          "status"?: string;
+        };
+        Update: {
+          "created_at"?: string;
+          "receiver_user_id"?: string;
+          "request_id"?: string;
+          "responded_at"?: string | null;
+          "sender_user_id"?: string;
+          "status"?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "friend_requests_receiver_user_id_fkey";
+            columns: ["receiver_user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["user_id"];
+          },
+          {
+            foreignKeyName: "friend_requests_sender_user_id_fkey";
+            columns: ["sender_user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["user_id"];
           },
         ];
       };
@@ -204,24 +238,6 @@ export interface Database {
             referencedColumns: ["text_message_id"];
           },
         ];
-      };
-      "nfl_games": {
-        Row: {
-          "created_at": string;
-          "nfl_game_id": string;
-          "status": string;
-        };
-        Insert: {
-          "created_at"?: string;
-          "nfl_game_id": string;
-          "status": string;
-        };
-        Update: {
-          "created_at"?: string;
-          "nfl_game_id"?: string;
-          "status"?: string;
-        };
-        Relationships: [];
       };
       "resolution_history": {
         Row: {
@@ -414,7 +430,9 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Enums: {
+      league: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
+    };
     CompositeTypes: Record<string, never>;
   };
 }

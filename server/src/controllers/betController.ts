@@ -15,6 +15,7 @@ import {
 import { fetchModeConfig } from '../utils/modeConfig';
 import { getRedisClient } from '../modes/shared/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
+import { normalizeLeague, type League } from '../types/league';
 
 // Lazy-initialize the rate limiter (shared with messages)
 let sharedRateLimiter: ReturnType<typeof createMessageRateLimiter> | null = null;
@@ -93,14 +94,21 @@ export async function createBetProposal(req: Request, res: Response) {
   }
 
   try {
+    const league = normalizeLeague(typeof body.league === 'string' ? body.league : 'NFL');
+    const leagueGameIdRaw = typeof body.league_game_id === 'string'
+      ? body.league_game_id
+      : typeof body.nfl_game_id === 'string'
+        ? body.nfl_game_id
+        : '';
+    const leagueGameId = leagueGameIdRaw.trim() || null;
+
     const result = await createBetProposalService(
       {
         tableId,
         proposerUserId,
         modeKey: typeof body.mode_key === 'string' ? body.mode_key : undefined,
-        nflGameId: typeof body.nfl_game_id === 'string' && body.nfl_game_id.trim().length
-          ? body.nfl_game_id.trim()
-          : null,
+        leagueGameId,
+        league,
         configSessionId: typeof body.config_session_id === 'string'
           ? body.config_session_id.trim()
           : undefined,
@@ -222,12 +230,12 @@ export async function getBetLiveInfo(req: Request, res: Response) {
   }
 
   try {
-    // Fetch bet to get mode_key and nfl_game_id
+  // Fetch bet to get mode_key and game context
     const { getSupabaseAdmin } = await import('../supabaseClient');
     const supabaseAdmin = getSupabaseAdmin();
     const { data: betRow, error: betError } = await supabaseAdmin
       .from('bet_proposals')
-      .select('bet_id, table_id, mode_key, nfl_game_id')
+      .select('bet_id, table_id, mode_key, league_game_id, league')
       .eq('bet_id', betId)
       .maybeSingle();
 
@@ -259,10 +267,16 @@ export async function getBetLiveInfo(req: Request, res: Response) {
     const config = modeConfig?.data ?? {};
 
     // Get live info from the mode
+    const leagueGameId = (betRow.league_game_id as string | null) ?? null;
+    const league = (betRow.league as any) ?? 'NFL';
+
     const liveInfo = await getModeLiveInfo(modeKey, {
       betId,
       config,
-      nflGameId: betRow.nfl_game_id as string | null,
+      leagueGameId,
+      league,
+      // Maintain legacy nflGameId alias for existing mode handlers
+      nflGameId: league === 'NFL' ? leagueGameId : null,
     });
 
     if (!liveInfo) {

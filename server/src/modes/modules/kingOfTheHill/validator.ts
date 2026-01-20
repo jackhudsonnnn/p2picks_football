@@ -70,8 +70,8 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
       }
 
       const progress =
-        (await this.store.get(betId)) ||
-        (await this.initializeProgressForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id }, updatedAt));
+  (await this.store.get(betId)) ||
+  (await this.initializeProgressForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id ?? undefined }, updatedAt));
       if (!progress) {
         this.logWarn('progress unavailable; skipping bet', { betId });
         return;

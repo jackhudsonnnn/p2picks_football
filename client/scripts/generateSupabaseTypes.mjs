@@ -35,6 +35,20 @@ const typeMapping = {
   jsonb: 'Json',
 };
 
+// Known enum definitions (extend as needed)
+const enumValues = {
+  league: ['NFL', 'NBA', 'MLB', 'NHL', 'NCAAF', 'U2Pick'],
+};
+
+function getEnumTypeName(column) {
+  const dataType = String(column.data_type || '').toLowerCase();
+  if (dataType !== 'user-defined') return null;
+  // Try to infer enum name from default (::enumname)
+  const defaultText = String(column.column_default || '');
+  const match = defaultText.match(/::"?([a-zA-Z0-9_]+)"?/);
+  return match ? match[1] : null;
+}
+
 function toTsType(dbType) {
   const normalized = String(dbType).toLowerCase();
   if (normalized in typeMapping) {
@@ -100,8 +114,17 @@ function buildTables(schemaRows) {
   return tables;
 }
 
-function formatRowType(column) {
-  const baseType = toTsType(column.data_type);
+function formatRowType(column, usedEnums) {
+  const enumName = getEnumTypeName(column);
+  let baseType;
+
+  if (enumName && enumValues[enumName]) {
+    usedEnums.add(enumName);
+    baseType = enumValues[enumName].map((v) => JSON.stringify(v)).join(' | ');
+  } else {
+    baseType = toTsType(column.data_type);
+  }
+
   if (column.is_nullable === 'YES') {
     return `${baseType} | null`;
   }
@@ -115,14 +138,15 @@ function hasDefault(column) {
   return defaultValue !== 'null';
 }
 
-function formatInsertProp(column) {
-  const valueType = formatRowType(column);
+function formatInsertProp(column, usedEnums) {
+  const valueType = formatRowType(column, usedEnums);
   const optional = column.is_nullable === 'YES' || hasDefault(column);
   return { optional, valueType };
 }
 
 function generateTypes(tables) {
   const lines = [];
+  const usedEnums = new Set();
   lines.push('// ------------------------------------------------------------');
   lines.push('// ⚠️  This file is auto-generated. Do not edit directly.');
   lines.push('// ------------------------------------------------------------');
@@ -151,13 +175,13 @@ function generateTypes(tables) {
 
     lines.push('        Row: {');
     for (const column of columns) {
-      lines.push(`          ${JSON.stringify(column.column_name)}: ${formatRowType(column)};`);
+      lines.push(`          ${JSON.stringify(column.column_name)}: ${formatRowType(column, usedEnums)};`);
     }
     lines.push('        };');
 
     lines.push('        Insert: {');
     for (const column of columns) {
-      const { optional, valueType } = formatInsertProp(column);
+      const { optional, valueType } = formatInsertProp(column, usedEnums);
       const optionalToken = optional ? '?' : '';
       lines.push(`          ${JSON.stringify(column.column_name)}${optionalToken}: ${valueType};`);
     }
@@ -165,7 +189,7 @@ function generateTypes(tables) {
 
     lines.push('        Update: {');
     for (const column of columns) {
-      lines.push(`          ${JSON.stringify(column.column_name)}?: ${formatRowType(column)};`);
+      lines.push(`          ${JSON.stringify(column.column_name)}?: ${formatRowType(column, usedEnums)};`);
     }
     lines.push('        };');
 
@@ -197,7 +221,19 @@ function generateTypes(tables) {
   lines.push('    };');
   lines.push('    Views: Record<string, never>;');
   lines.push('    Functions: Record<string, never>;');
-  lines.push('    Enums: Record<string, never>;');
+  if (usedEnums.size === 0) {
+    lines.push('    Enums: Record<string, never>;');
+  } else {
+    lines.push('    Enums: {');
+    Array.from(usedEnums)
+      .sort()
+      .forEach((enumName) => {
+        const variants = enumValues[enumName] || [];
+        const union = variants.map((v) => JSON.stringify(v)).join(' | ');
+        lines.push(`      ${enumName}: ${union};`);
+      });
+    lines.push('    };');
+  }
   lines.push('    CompositeTypes: Record<string, never>;');
   lines.push('  };');
   lines.push('}');

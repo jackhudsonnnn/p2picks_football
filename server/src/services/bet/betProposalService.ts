@@ -28,6 +28,7 @@ import {
   DEFAULT_WAGER,
   DEFAULT_TIME_LIMIT,
 } from '../../constants/betting';
+import { normalizeLeague, type League } from '../../types/league';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -37,7 +38,9 @@ export interface CreateBetProposalInput {
   tableId: string;
   proposerUserId: string;
   modeKey?: string;
-  nflGameId?: string | null;
+  nflGameId?: string | null; // legacy alias
+  leagueGameId?: string | null;
+  league?: League;
   configSessionId?: string;
   wagerAmount?: number;
   timeLimitSeconds?: number;
@@ -103,13 +106,15 @@ export async function createBetProposal(
   // Process session if provided
   let consumedSession: ConsumedModeConfigSession | null = null;
   let modeKey = input.modeKey ?? '';
-  let nflGameId = input.nflGameId ?? null;
+  let league: League = normalizeLeague(input.league, 'NFL');
+  let leagueGameId = input.leagueGameId ?? input.nflGameId ?? null;
 
   if (input.configSessionId) {
     try {
       consumedSession = consumeModeConfigSession(input.configSessionId);
       modeKey = consumedSession.modeKey;
-      nflGameId = consumedSession.nflGameId;
+      leagueGameId = consumedSession.leagueGameId;
+      league = consumedSession.league;
     } catch (err: any) {
       throw BetProposalError.badRequest(err?.message || 'invalid configuration session');
     }
@@ -136,15 +141,19 @@ export async function createBetProposal(
     timeLimitSeconds = consumedSession.general.time_limit_seconds;
   }
 
-  // Ensure nfl_game_id is in config
-  modeConfig = normalizeGameIdInConfig(modeConfig, nflGameId);
+  // Ensure game/league identifiers are carried in config for NFL modes
+  modeConfig.league = league;
+  modeConfig.league_game_id = leagueGameId ?? undefined;
+  if (league === 'NFL') {
+    modeConfig = normalizeGameIdInConfig(modeConfig, leagueGameId);
+  }
   const configGameId = extractGameIdFromConfig(modeConfig);
 
   // Validate game status
-  await validateGameStatus(configGameId, nflGameId);
+  await validateGameStatus(configGameId, leagueGameId, league);
 
   // Run mode-specific validation
-  await runModeSpecificValidation(modeKey, modeConfig, nflGameId);
+  await runModeSpecificValidation(modeKey, modeConfig, leagueGameId, league);
 
   // Validate mode config
   const validationErrors = validateModeConfig(modeKey, modeConfig);
@@ -162,7 +171,8 @@ export async function createBetProposal(
   const betPayload = {
     table_id: input.tableId,
     proposer_user_id: input.proposerUserId,
-    nfl_game_id: nflGameId,
+    league_game_id: leagueGameId,
+    league,
     mode_key: modeKey,
     description: preview.description || 'Bet',
     wager_amount: wagerAmount,
@@ -178,6 +188,7 @@ export async function createBetProposal(
 
   if (error) throw error;
   const typedBet = bet as BetProposal;
+  typedBet.nfl_game_id = league === 'NFL' ? leagueGameId ?? undefined : undefined;
 
   // Post-creation steps with cleanup on failure
   try {
@@ -270,7 +281,8 @@ export async function pokeBet(
       {
         table_id: sourceBet.table_id,
         proposer_user_id: input.proposerUserId,
-        nfl_game_id: sourceBet.nfl_game_id,
+        league_game_id: sourceBet.league_game_id,
+        league: sourceBet.league,
         mode_key: sourceBet.mode_key,
         description,
         wager_amount: wagerAmount,
@@ -283,6 +295,7 @@ export async function pokeBet(
 
   if (insertError) throw insertError;
   const insertedBet = newBet as BetProposal;
+  insertedBet.nfl_game_id = insertedBet.league === 'NFL' ? insertedBet.league_game_id ?? undefined : undefined;
 
   // Post-creation steps with cleanup
   try {
@@ -326,7 +339,7 @@ export async function pokeBet(
 
 function normalizeGameIdInConfig(
   config: Record<string, unknown>,
-  nflGameId: string | null,
+  leagueGameId: string | null,
 ): Record<string, unknown> {
   const result = { ...config };
 
@@ -339,8 +352,8 @@ function normalizeGameIdInConfig(
     }
   }
 
-  if (nflGameId && !extractGameIdFromConfig(result)) {
-    (result as any).nfl_game_id = nflGameId;
+  if (leagueGameId && !extractGameIdFromConfig(result)) {
+    (result as any).nfl_game_id = leagueGameId;
   }
 
   return result;
@@ -356,11 +369,13 @@ function extractGameIdFromConfig(config: Record<string, unknown>): string | null
 
 async function validateGameStatus(
   configGameId: string | null,
-  nflGameId: string | null,
+  leagueGameId: string | null,
+  league: League,
 ): Promise<void> {
+  if (league !== 'NFL') return;
   const gameIdsToCheck = new Set<string>();
   if (configGameId) gameIdsToCheck.add(configGameId);
-  if (nflGameId) gameIdsToCheck.add(nflGameId);
+  if (leagueGameId) gameIdsToCheck.add(leagueGameId);
 
   for (const gameId of gameIdsToCheck) {
     const status = await getGameStatus(gameId);
@@ -376,15 +391,17 @@ async function validateGameStatus(
 async function runModeSpecificValidation(
   modeKey: string,
   modeConfig: Record<string, unknown>,
-  nflGameId: string | null,
+  leagueGameId: string | null,
+  league: League,
 ): Promise<void> {
+  if (league !== 'NFL') return;
   const modeModule = getModeModule(modeKey);
   if (!modeModule?.validateProposal) return;
 
   const gameIdForCheck =
     typeof modeConfig.nfl_game_id === 'string' && modeConfig.nfl_game_id.trim().length
       ? modeConfig.nfl_game_id.trim()
-      : nflGameId;
+      : leagueGameId;
 
   if (!gameIdForCheck) return;
 
@@ -411,13 +428,13 @@ function buildPokeConfig(
 ): Record<string, unknown> {
   const modeConfig = { ...existingData };
 
-  if (sourceBet.nfl_game_id && typeof sourceBet.nfl_game_id === 'string') {
+  if (sourceBet.league === 'NFL' && sourceBet.league_game_id && typeof sourceBet.league_game_id === 'string') {
     const configGameId =
       typeof (modeConfig as any).nfl_game_id === 'string'
         ? (modeConfig as any).nfl_game_id.trim()
         : '';
     if (!configGameId.length) {
-      (modeConfig as any).nfl_game_id = sourceBet.nfl_game_id;
+      (modeConfig as any).nfl_game_id = sourceBet.league_game_id;
     }
   }
 

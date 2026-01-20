@@ -78,7 +78,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
       const progressMode = normalizePropHuntProgressMode(config.progress_mode);
       const gameId = config.nfl_game_id || bet.nfl_game_id || null;
       if (progressMode === 'starting_now') {
-        await this.captureBaselineForBet({ ...bet, nfl_game_id: gameId }, config);
+        await this.captureBaselineForBet({ ...bet, nfl_game_id: gameId ?? undefined }, config);
       }
 
       const currentValue = await readStatValueFromAccessors(config, gameId);

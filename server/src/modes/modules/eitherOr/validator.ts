@@ -80,7 +80,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
       const baseline =
         (await this.store.get(betId)) ||
         (progressMode === 'starting_now'
-          ? await this.captureBaselineForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id })
+          ? await this.captureBaselineForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id ?? undefined })
           : null);
       if (progressMode === 'starting_now' && !baseline) {
         this.logWarn('missing baseline for Starting Now', { betId });

@@ -9,10 +9,12 @@ import {
   type BetModePreview,
   type BetModeUserConfigStep,
 } from '../service';
+import type { League } from '../types';
 
 export type BetProposalFormValues = {
   config_session_id?: string;
-  nfl_game_id?: string;
+  league_game_id?: string;
+  league?: League;
   mode_key?: string;
   mode_config?: Record<string, unknown>;
   wager_amount?: number;
@@ -42,6 +44,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   const [generalSchema, setGeneralSchema] = useState<BetGeneralConfigSchema | null>(null);
 
   const [gameId, setGameId] = useState('');
+  const [league, setLeague] = useState<'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick'>('U2Pick');
   const [modeKey, setModeKey] = useState('');
 
   const [stage, setStage] = useState<ConfigSessionStage>('start');
@@ -151,10 +154,10 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
       resetSession();
       return;
     }
-    if (session.mode_key !== modeKey || session.nfl_game_id !== gameId) {
+    if (session.mode_key !== modeKey || session.league_game_id !== gameId || session.league !== league) {
       resetSession();
     }
-  }, [gameId, modeKey, session, resetSession]);
+  }, [gameId, league, modeKey, session, resetSession]);
 
   // Clamp step index
   useEffect(() => {
@@ -182,7 +185,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     setSessionError(null);
     setManualStageOverride(false);
     try {
-      const dto = await createBetConfigSession(modeKey, gameId);
+      const dto = await createBetConfigSession(modeKey, gameId, league);
       setSession(dto);
       setStage('mode');
     } catch (err) {
@@ -190,7 +193,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     } finally {
       setSessionLoading(false);
     }
-  }, [gameId, modeKey]);
+  }, [gameId, league, modeKey]);
 
   const handleChoiceChange = useCallback(
     async (stepKey: string, choiceId: string) => {
@@ -285,7 +288,8 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     if (session.preview.errors && session.preview.errors.length) return;
     onSubmit({
       config_session_id: session.session_id,
-      nfl_game_id: session.nfl_game_id,
+      league_game_id: session.league_game_id,
+      league: session.league,
       mode_key: session.mode_key,
       wager_amount: session.general.wager_amount,
       time_limit_seconds: session.general.time_limit_seconds,
@@ -304,7 +308,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
 
   const canProceed = useMemo(() => {
     if (stage === 'start') {
-      return Boolean(gameId && modeKey && !sessionLoading);
+      return Boolean(gameId && modeKey && league && !sessionLoading);
     }
     if (stage === 'mode') {
       if (!session || sessionUpdating) return false;
@@ -338,8 +342,10 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     hasModeSteps,
 
     // selection
-    gameId,
-    setGameId,
+  gameId,
+  setGameId,
+  league,
+  setLeague,
     modeKey,
     setModeKey,
 

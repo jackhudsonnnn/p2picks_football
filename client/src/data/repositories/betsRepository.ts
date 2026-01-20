@@ -4,7 +4,8 @@ import { fetchModeConfigs } from '@data/repositories/modesRepository';
 
 export interface BetProposalRequestPayload {
   config_session_id?: string;
-  nfl_game_id?: string;
+  league_game_id?: string;
+  league?: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
   mode_key?: string;
   mode_config?: Record<string, unknown>;
   wager_amount?: number;

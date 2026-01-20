@@ -40,17 +40,23 @@ export async function createSession(req: Request, res: Response) {
   try {
     const modeKeyRaw = typeof req.body?.mode_key === 'string' ? req.body.mode_key : '';
     const modeKey = modeKeyRaw.trim();
-    const nflGameIdRaw = typeof req.body?.nfl_game_id === 'string' ? req.body.nfl_game_id : '';
-    const nflGameId = nflGameIdRaw.trim();
+    const leagueGameIdRaw = typeof req.body?.league_game_id === 'string'
+      ? req.body.league_game_id
+      : typeof req.body?.nfl_game_id === 'string'
+        ? req.body.nfl_game_id
+        : '';
+    const leagueGameId = leagueGameIdRaw.trim();
+    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
+    const league = leagueRaw.trim().toUpperCase();
     if (!modeKey) {
       res.status(400).json({ error: 'mode_key required' });
       return;
     }
-    if (!nflGameId) {
-      res.status(400).json({ error: 'nfl_game_id required' });
+    if (!leagueGameId) {
+      res.status(400).json({ error: 'league_game_id required' });
       return;
     }
-    const session = await createModeConfigSession({ modeKey, nflGameId });
+    const session = await createModeConfigSession({ modeKey, leagueGameId, league: league as any });
     res.json(session);
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to create configuration session' });
@@ -125,8 +131,12 @@ export async function getUserConfigSteps(req: Request, res: Response) {
       rawConfig && typeof rawConfig === 'object'
         ? { ...(rawConfig as Record<string, unknown>) }
         : {};
-    const nflGameId = typeof req.body?.nfl_game_id === 'string' ? req.body?.nfl_game_id : undefined;
-    const steps = await getModeUserConfigSteps(modeKey, { nflGameId, config });
+    const leagueGameId = typeof req.body?.league_game_id === 'string'
+      ? req.body.league_game_id
+      : typeof req.body?.nfl_game_id === 'string'
+        ? req.body.nfl_game_id
+        : undefined;
+    const steps = await getModeUserConfigSteps(modeKey, { nflGameId: leagueGameId, config });
     res.json({ mode_key: modeKey, steps });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to build mode user config' });
@@ -145,10 +155,20 @@ export async function getModePreview(req: Request, res: Response) {
       rawConfig && typeof rawConfig === 'object'
         ? { ...(rawConfig as Record<string, unknown>) }
         : {};
-    const nflGameId = typeof req.body?.nfl_game_id === 'string' ? req.body?.nfl_game_id : undefined;
-    if (nflGameId && !config.nfl_game_id) {
-      config.nfl_game_id = nflGameId;
+    const leagueGameId = typeof req.body?.league_game_id === 'string'
+      ? req.body.league_game_id
+      : typeof req.body?.nfl_game_id === 'string'
+        ? req.body.nfl_game_id
+        : undefined;
+    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
+    const league = leagueRaw.trim().toUpperCase();
+    if (leagueGameId) {
+      config.league_game_id = leagueGameId;
+      if (league === 'NFL' && !config.nfl_game_id) {
+        config.nfl_game_id = leagueGameId;
+      }
     }
+    config.league = league;
 
     const betIdRaw = req.body?.bet_id;
     const betId = typeof betIdRaw === 'string' && betIdRaw.trim().length ? betIdRaw.trim() : undefined;
