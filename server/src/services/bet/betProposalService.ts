@@ -552,9 +552,10 @@ async function createU2PickBetProposal(
   }
 
   // Build description and preview from user inputs
-  const description = u2pickWinningCondition.trim();
+  const description = 'Custom Input';
+  const winningCondition = u2pickWinningCondition.trim();
   const optionsText = u2pickOptions.map((o, i) => `${i + 1}. ${o.trim()}`).join(' | ');
-  const previewText = `U2Pick: ${description} — Options: ${optionsText}`;
+  const previewText = `U2Pick: ${winningCondition} — Options: ${optionsText}`;
 
   // Normalize wager and time limit
   const normalizedWager = normalizeWagerAmount(wagerAmount ?? DEFAULT_WAGER);
@@ -586,15 +587,15 @@ async function createU2PickBetProposal(
 
   // U2Pick config to store
   const u2pickConfig: Record<string, unknown> = {
-    winning_condition: u2pickWinningCondition.trim(),
+    winning_condition: winningCondition,
     options: u2pickOptions.map((o) => o.trim()),
   };
 
   // Build preview result
   const preview: ModePreviewResult = {
-    description: description,
+    description,
     options: u2pickOptions.map((o) => o.trim()),
-    winningCondition: description,
+    winningCondition,
     errors: [],
   };
 
