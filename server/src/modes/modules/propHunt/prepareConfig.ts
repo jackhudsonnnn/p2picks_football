@@ -47,7 +47,7 @@ export async function preparePropHuntConfig({
   next.bet_id = next.bet_id ?? bet.bet_id ?? null;
 
   if (!next.nfl_game_id) {
-    next.nfl_game_id = bet.nfl_game_id ?? null;
+		next.nfl_game_id = bet.league_game_id ?? null;
   }
 
   next.resolve_at = normalizeResolveAt(next.resolve_at, PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT);

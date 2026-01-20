@@ -28,7 +28,7 @@ export async function prepareSpreadTheWealthConfig({
   const nextConfig = { ...config } as SpreadTheWealthConfig;
 
   if (!nextConfig.nfl_game_id) {
-    nextConfig.nfl_game_id = bet.nfl_game_id ?? null;
+		nextConfig.nfl_game_id = bet.league_game_id ?? null;
   }
 
   nextConfig.resolve_at = normalizeResolveAt(

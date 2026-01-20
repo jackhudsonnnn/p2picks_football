@@ -51,7 +51,7 @@ export async function prepareKingOfTheHillConfig({
   const cfg = { ...config } as KingOfTheHillConfig;
 
   if (!cfg.nfl_game_id) {
-    cfg.nfl_game_id = bet.nfl_game_id ?? null;
+	cfg.nfl_game_id = bet.league_game_id ?? null;
   }
 
   const resolveValue = clampResolveValue(cfg.resolve_value ?? cfg.resolve_value_label ?? KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE);

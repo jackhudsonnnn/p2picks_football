@@ -2,8 +2,8 @@ I have future plans of adding a "Sport Config" as a part of bet proposals. There
 
 The implementation should follow these steps:
 - supabase schema should change "nfl_game_id" to "league_game_id"; frontend and backend code should support this new change, also adding a "league" field which accepts an enum between "NFL", "NBA", "MLB", "NHL", "NCAAF", and "U2Pick".
-- frontend should remove any mention of "nfl", "NFL", "Nfl", etc
 - bet proposal should prepend a new step: "Choose League" with NFL, NBA, MLB, NHL, NCAAF, and U2Pick; all (besides NFL) should show a modal that explains the mode is yet to be implemented
+- server cleanup to modularize NFL code, ensuring other leagues can be implemented
 - Implement U2Picks: step 2 should be a text input field, where the user is to enter a 'Winning Condition' which is a description of what is being wagered; step 3 should be adding options, min of 2 and max of 6, with add buttons if they want more than 2; final steps 4 and 5 should be the usual final 2 steps (wager+time-limit and confimation/submit)
 - At this point, the bet will be stuck on pending since there's no validation in place. Add a resolve icon beside the the information button for any participant to resolve, listing each option, with the additional option to wash the bet. The bet should wash if nobody chose the correct option.
 

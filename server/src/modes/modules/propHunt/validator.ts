@@ -76,9 +76,9 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
         return;
       }
       const progressMode = normalizePropHuntProgressMode(config.progress_mode);
-      const gameId = config.nfl_game_id || bet.nfl_game_id || null;
+      const gameId = config.nfl_game_id || null;
       if (progressMode === 'starting_now') {
-        await this.captureBaselineForBet({ ...bet, nfl_game_id: gameId ?? undefined }, config);
+  await this.captureBaselineForBet({ ...bet, league_game_id: gameId ?? undefined }, config);
       }
 
       const currentValue = await readStatValueFromAccessors(config, gameId);
@@ -190,7 +190,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
   }
 
   private async ensureBaseline(
-    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
+    bet: Partial<BetProposal> & { bet_id: string; league_game_id?: string | null },
     config: PropHuntConfig,
   ): Promise<PropHuntBaseline | null> {
     const existing = await this.store.get(bet.bet_id);
@@ -201,7 +201,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
   }
 
   private async captureBaselineForBet(
-    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
+    bet: Partial<BetProposal> & { bet_id: string; league_game_id?: string | null },
     existingConfig?: PropHuntConfig | null,
   ): Promise<PropHuntBaseline | null> {
     const cached = await this.store.get(bet.bet_id);
@@ -222,7 +222,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
       this.logWarn('config missing stat key for baseline', { bet_id: bet.bet_id });
       return null;
     }
-    const gameId = config.nfl_game_id || bet.nfl_game_id || null;
+  const gameId = config.nfl_game_id || bet.league_game_id || null;
     if (!gameId) {
       this.logWarn('missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;

@@ -50,7 +50,7 @@ export async function prepareChooseTheirFateConfig({
   };
 
   if (!nextConfig.nfl_game_id) {
-    nextConfig.nfl_game_id = bet.nfl_game_id ?? null;
+    nextConfig.nfl_game_id = bet.league_game_id ?? null;
   }
 
   const gameId = nextConfig.nfl_game_id ? String(nextConfig.nfl_game_id) : '';

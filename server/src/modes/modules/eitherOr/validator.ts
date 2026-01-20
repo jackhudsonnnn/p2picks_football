@@ -80,7 +80,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
       const baseline =
         (await this.store.get(betId)) ||
         (progressMode === 'starting_now'
-          ? await this.captureBaselineForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id ?? undefined })
+          ? await this.captureBaselineForBet({ bet_id: betId, league_game_id: config.nfl_game_id ?? undefined })
           : null);
       if (progressMode === 'starting_now' && !baseline) {
         this.logWarn('missing baseline for Starting Now', { betId });
@@ -157,7 +157,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
   }
 
   private async captureBaselineForBet(
-    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
+  bet: Partial<BetProposal> & { bet_id: string; league_game_id?: string | null },
   ): Promise<EitherOrBaseline | null> {
     const existing = await this.store.get(bet.bet_id);
     if (existing) return existing;
@@ -168,7 +168,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
       return null;
     }
 
-    const gameId = config.nfl_game_id || bet.nfl_game_id;
+  const gameId = config.nfl_game_id || bet.league_game_id;
     if (!gameId) {
       this.logWarn('missing game id for baseline capture', { betId: bet.bet_id });
       return null;

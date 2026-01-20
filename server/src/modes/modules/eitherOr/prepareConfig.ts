@@ -41,7 +41,7 @@ export async function prepareEitherOrConfig({
   };
 
   if (!cfg.nfl_game_id) {
-    cfg.nfl_game_id = bet.nfl_game_id ?? null;
+    cfg.nfl_game_id = bet.league_game_id ?? null;
   }
 
   if (!cfg.resolve_at || !ALLOWED_RESOLVE_AT.includes(String(cfg.resolve_at))) {

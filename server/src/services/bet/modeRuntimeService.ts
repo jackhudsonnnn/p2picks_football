@@ -152,7 +152,7 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
   };
 
   const configGameId = typeof target.nfl_game_id === 'string' ? target.nfl_game_id.trim() : '';
-  const betGameId = bet?.nfl_game_id ?? '';
+  const betGameId = bet?.league_game_id ?? '';
   const gameId = configGameId.length ? configGameId : betGameId;
 
   if (!gameId) {

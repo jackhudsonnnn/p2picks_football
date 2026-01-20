@@ -117,6 +117,13 @@ export async function createBetProposal(req: Request, res: Response) {
         modeConfig: body.mode_config && typeof body.mode_config === 'object'
           ? body.mode_config
           : undefined,
+        // U2Pick-specific fields
+        u2pickWinningCondition: typeof body.u2pick_winning_condition === 'string'
+          ? body.u2pick_winning_condition
+          : undefined,
+        u2pickOptions: Array.isArray(body.u2pick_options)
+          ? body.u2pick_options.filter((o: unknown) => typeof o === 'string')
+          : undefined,
       },
       supabase,
     );

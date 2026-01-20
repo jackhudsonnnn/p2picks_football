@@ -54,7 +54,6 @@ export type BetProposal = {
 	table_id: string;
 	league_game_id: string;
 	league: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
-	nfl_game_id?: string; // legacy alias for NFL-only flows until fully migrated
 	mode_key: string;
 	bet_status: 'active' | 'pending' | 'resolved' | 'washed';
 	description: string;

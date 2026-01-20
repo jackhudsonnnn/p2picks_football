@@ -293,7 +293,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
 
       // Bet just became pending
       if (next.bet_status === 'pending' && prev.bet_status !== 'pending') {
-        const gameId = (next as any)?.nfl_game_id ?? null;
+  const gameId = (next as any)?.league_game_id ?? null;
         const washed = await this.washIfGameFinalAtBaseline(next.bet_id, gameId, { trigger: 'pending_transition' });
         if (!washed) {
           await this.onBetBecamePending(next as BetProposal);

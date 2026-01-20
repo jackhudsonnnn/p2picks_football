@@ -45,6 +45,9 @@ export interface CreateBetProposalInput {
   wagerAmount?: number;
   timeLimitSeconds?: number;
   modeConfig?: Record<string, unknown>;
+  // U2Pick-specific
+  u2pickWinningCondition?: string;
+  u2pickOptions?: string[];
 }
 
 export interface CreateBetProposalResult {
@@ -96,6 +99,14 @@ export class BetProposalError extends Error {
 // Service Implementation
 // ─────────────────────────────────────────────────────────────────────────────
 
+// U2Pick validation constants
+const U2PICK_CONDITION_MIN = 4;
+const U2PICK_CONDITION_MAX = 70;
+const U2PICK_OPTION_MIN = 1;
+const U2PICK_OPTION_MAX = 40;
+const U2PICK_OPTIONS_MIN_COUNT = 2;
+const U2PICK_OPTIONS_MAX_COUNT = 6;
+
 /**
  * Creates a new bet proposal.
  */
@@ -103,10 +114,16 @@ export async function createBetProposal(
   input: CreateBetProposalInput,
   supabase: SupabaseClient,
 ): Promise<CreateBetProposalResult> {
+  let league: League = normalizeLeague(input.league, 'NFL');
+
+  // U2Pick has a completely different flow
+  if (league === 'U2Pick' || input.modeKey === 'u2pick') {
+    return createU2PickBetProposal(input, supabase);
+  }
+
   // Process session if provided
   let consumedSession: ConsumedModeConfigSession | null = null;
   let modeKey = input.modeKey ?? '';
-  let league: League = normalizeLeague(input.league, 'NFL');
   let leagueGameId = input.leagueGameId ?? input.nflGameId ?? null;
 
   if (input.configSessionId) {
@@ -188,7 +205,6 @@ export async function createBetProposal(
 
   if (error) throw error;
   const typedBet = bet as BetProposal;
-  typedBet.nfl_game_id = league === 'NFL' ? leagueGameId ?? undefined : undefined;
 
   // Post-creation steps with cleanup on failure
   try {
@@ -295,7 +311,6 @@ export async function pokeBet(
 
   if (insertError) throw insertError;
   const insertedBet = newBet as BetProposal;
-  insertedBet.nfl_game_id = insertedBet.league === 'NFL' ? insertedBet.league_game_id ?? undefined : undefined;
 
   // Post-creation steps with cleanup
   try {
@@ -511,4 +526,109 @@ async function storeModeConfigWithCleanup(
     await supabase.from('bet_proposals').delete().eq('bet_id', bet.bet_id);
     throw cfgError;
   }
+}
+
+/**
+ * Creates a U2Pick bet proposal - a custom user-defined bet with arbitrary options.
+ * U2Pick bets bypass the modes system entirely since they're fully user-defined.
+ */
+async function createU2PickBetProposal(
+  input: CreateBetProposalInput,
+  supabase: SupabaseClient,
+): Promise<CreateBetProposalResult> {
+  const { tableId, proposerUserId, wagerAmount, timeLimitSeconds, u2pickWinningCondition, u2pickOptions } = input;
+
+  // Validation
+  if (!u2pickWinningCondition || u2pickWinningCondition.trim().length < 4) {
+    throw new BetProposalError('U2Pick winning condition must be at least 4 characters', 400);
+  }
+  if (!u2pickOptions || u2pickOptions.length < 2 || u2pickOptions.length > 6) {
+    throw new BetProposalError('U2Pick requires between 2 and 6 options', 400);
+  }
+  for (const opt of u2pickOptions) {
+    if (!opt || opt.trim().length < 1 || opt.trim().length > 40) {
+      throw new BetProposalError('Each U2Pick option must be between 1 and 40 characters', 400);
+    }
+  }
+
+  // Build description and preview from user inputs
+  const description = u2pickWinningCondition.trim();
+  const optionsText = u2pickOptions.map((o, i) => `${i + 1}. ${o.trim()}`).join(' | ');
+  const previewText = `U2Pick: ${description} — Options: ${optionsText}`;
+
+  // Normalize wager and time limit
+  const normalizedWager = normalizeWagerAmount(wagerAmount ?? DEFAULT_WAGER);
+  const normalizedTimeLimit = normalizeTimeLimitSeconds(timeLimitSeconds ?? DEFAULT_TIME_LIMIT);
+
+  // Insert bet proposal (U2Pick bypasses mode/runtime system)
+  const { data: bet, error: betError } = await supabase
+    .from('bet_proposals')
+    .insert({
+      table_id: tableId,
+      proposer_user_id: proposerUserId,
+      league_game_id: -1, // numeric placeholder to satisfy NOT NULL (bigint)
+      league: 'U2Pick',
+      mode_key: 'u2pick',
+      description,
+      wager_amount: normalizedWager,
+      time_limit_seconds: normalizedTimeLimit,
+      bet_status: 'active',
+    })
+    .select('*')
+    .single();
+
+  if (betError || !bet) {
+    console.error('[betProposal] failed to insert U2Pick bet', betError);
+    throw new BetProposalError('Failed to create U2Pick bet proposal', 500, betError);
+  }
+
+  const typedBet = bet as BetProposal;
+
+  // U2Pick config to store
+  const u2pickConfig: Record<string, unknown> = {
+    winning_condition: u2pickWinningCondition.trim(),
+    options: u2pickOptions.map((o) => o.trim()),
+  };
+
+  // Build preview result
+  const preview: ModePreviewResult = {
+    description: description,
+    options: u2pickOptions.map((o) => o.trim()),
+    winningCondition: description,
+    errors: [],
+  };
+
+  // Create announcement
+  try {
+    await createBetProposalAnnouncement({ bet: typedBet, preview });
+  } catch (announcementError) {
+    console.error('[betProposal] failed to create U2Pick announcement', {
+      betId: typedBet.bet_id,
+      error: (announcementError as any)?.message ?? announcementError,
+    });
+    await supabase.from('bet_proposals').delete().eq('bet_id', typedBet.bet_id);
+    throw announcementError;
+  }
+
+  // Store U2Pick-specific config
+  try {
+    await storeModeConfig(typedBet.bet_id, 'u2pick', u2pickConfig);
+  } catch (cfgError) {
+    console.error('[betProposal] failed to store U2Pick config', {
+      betId: typedBet.bet_id,
+      error: (cfgError as any)?.message ?? cfgError,
+    });
+    // Cleanup bet on config failure
+    await supabase.from('bet_proposals').delete().eq('bet_id', typedBet.bet_id);
+    throw cfgError;
+  }
+
+  // Register lifecycle
+  registerBetLifecycle(typedBet.bet_id, typedBet.close_time);
+
+  return {
+    bet: typedBet,
+    preview,
+    modeConfig: u2pickConfig,
+  };
 }

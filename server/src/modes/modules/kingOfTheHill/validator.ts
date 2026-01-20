@@ -70,8 +70,8 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
       }
 
       const progress =
-  (await this.store.get(betId)) ||
-  (await this.initializeProgressForBet({ bet_id: betId, nfl_game_id: config.nfl_game_id ?? undefined }, updatedAt));
+    (await this.store.get(betId)) ||
+    (await this.initializeProgressForBet({ bet_id: betId, league_game_id: config.nfl_game_id ?? undefined }, updatedAt));
       if (!progress) {
         this.logWarn('progress unavailable; skipping bet', { betId });
         return;
@@ -128,7 +128,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
   }
 
   private async initializeProgressForBet(
-    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
+    bet: Partial<BetProposal> & { bet_id: string; league_game_id?: string | null },
     eventTimestamp?: string,
   ): Promise<ProgressRecord | null> {
     const existing = await this.store.get(bet.bet_id);
@@ -155,7 +155,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return null;
       }
 
-      const gameId = config.nfl_game_id || bet.nfl_game_id;
+    const gameId = config.nfl_game_id || bet.league_game_id;
       if (!gameId) {
         this.logWarn('missing game id for progress capture', { betId: bet.bet_id });
         return null;
@@ -254,8 +254,6 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
     const delta = Math.max(0, latestValue - baseline);
     const metric = progressMode === 'starting_now' ? delta : latestValue;
     return {
-      id: progress.id ?? null,
-      name: progress.name ?? null,
       baseline,
       latestValue,
       delta,

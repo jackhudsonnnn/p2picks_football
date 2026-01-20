@@ -10,6 +10,9 @@ export interface BetProposalRequestPayload {
   mode_config?: Record<string, unknown>;
   wager_amount?: number;
   time_limit_seconds?: number;
+  // U2Pick-specific fields
+  u2pick_winning_condition?: string;
+  u2pick_options?: string[];
 }
 
 export async function createBetProposal(

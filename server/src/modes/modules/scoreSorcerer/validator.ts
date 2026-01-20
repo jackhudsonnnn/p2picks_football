@@ -60,7 +60,7 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
   }
 
   private async captureBaseline(
-    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
+    bet: Partial<BetProposal> & { bet_id: string; league_game_id?: string | null },
   ): Promise<ScoreSorcererBaseline | null> {
     const existing = await this.store.get(bet.bet_id);
     if (existing) return existing;
@@ -71,7 +71,7 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
       return null;
     }
 
-    const gameId = config.nfl_game_id || bet.nfl_game_id;
+  const gameId = config.nfl_game_id || bet.league_game_id;
     if (!gameId) {
       await this.washBet(bet.bet_id, { reason: 'missing_game_id' }, 'Could not capture baseline because the game was not set.');
       return null;
@@ -98,7 +98,7 @@ class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererCo
       return;
     }
 
-    const gameIdToUse = config.nfl_game_id || bet.nfl_game_id || gameId;
+    const gameIdToUse = config.nfl_game_id || gameId;
 
     let baseline = await this.store.get(bet.bet_id);
     if (!baseline) {

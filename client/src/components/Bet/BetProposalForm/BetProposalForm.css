@@ -118,3 +118,98 @@
   border: var(--btn-primary-disabled-border);
   cursor: not-allowed;
 }
+
+/* U2Pick styles */
+.form-input {
+  background-color: var(--input-bg);
+  border: var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--input-text);
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-md);
+  width: 100%;
+  transition: all var(--transition);
+}
+
+.form-input:hover,
+.form-input:focus {
+  border-color: var(--input-active-border);
+  outline: none;
+}
+
+.form-input:disabled {
+  background-color: var(--input-disabled-bg);
+  border: var(--input-disabled-border);
+  color: var(--input-disabled-text);
+  cursor: not-allowed;
+}
+
+.form-helper-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+.u2pick-option-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.u2pick-option-row .form-input {
+  flex: 1;
+}
+
+.u2pick-option-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition);
+}
+
+.u2pick-option-remove:hover {
+  color: var(--error);
+}
+
+.u2pick-add-option {
+  background: transparent;
+  border: 1px dashed var(--form-border-color, #444);
+  border-radius: var(--form-radius);
+  color: var(--text-light);
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  transition: all var(--transition);
+  font-size: var(--font-size-sm);
+}
+
+.u2pick-add-option:hover {
+  border-color: var(--form-active-border);
+  color: var(--text-blue);
+}
+
+.u2pick-summary-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  justify-content: center;
+}
+
+.u2pick-summary-option {
+  background: var(--form-bg);
+  border: var(--form-border);
+  border-radius: var(--form-radius);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}

@@ -151,7 +151,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
   }
 
   private async captureBaselineForBet(
-    bet: Partial<BetProposal> & { bet_id: string; nfl_game_id?: string | null },
+    bet: Partial<BetProposal> & { bet_id: string; league_game_id?: string | null },
   ): Promise<ChooseFateBaseline | null> {
     const existing = await this.store.get(bet.bet_id);
     if (existing) return existing;
@@ -162,7 +162,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       return null;
     }
 
-    const gameId = config.nfl_game_id || bet.nfl_game_id;
+  const gameId = config.nfl_game_id || bet.league_game_id;
     if (!gameId) {
       this.logWarn('missing game id for baseline capture', { bet_id: bet.bet_id });
       return null;
