@@ -20,38 +20,6 @@ interface HostControlsProps {
   currentUserId: string;
 }
 
-interface AddMemberActionProps extends UserActionProps {
-  onAdd: (user: UserItem) => void;
-}
-
-const AddMemberAction: React.FC<AddMemberActionProps> = ({ user, disabled, onAdd }) => (
-  <button
-    type="button"
-    className="host-action-btn add"
-    onClick={() => onAdd(user)}
-    disabled={disabled}
-    aria-label={`Add ${user.username}`}
-  >
-    <CheckIcon />
-  </button>
-);
-
-interface RemoveMemberActionProps extends UserActionProps {
-  onRemove: (user: UserItem) => void;
-}
-
-const RemoveMemberAction: React.FC<RemoveMemberActionProps> = ({ user, disabled, onRemove }) => (
-  <button
-    type="button"
-    className="host-action-btn remove"
-    onClick={() => onRemove(user)}
-    disabled={disabled}
-    aria-label={`Remove ${user.username}`}
-  >
-    <XIcon />
-  </button>
-);
-
 export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, currentUserId }) => {
   const { friends, loading: friendsLoading, refresh: refreshFriends } = useFriends(currentUserId);
   const [showAdd, setShowAdd] = useState(false);
@@ -59,6 +27,9 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
   const [mutating, setMutating] = useState(false);
   const [settlementLoading, setSettlementLoading] = useState(false);
   const { showAlert, showConfirm, dialogNode } = useDialog();
+
+  const AddAction: React.FC<UserActionProps> = () => <CheckIcon />;
+  const RemoveAction: React.FC<UserActionProps> = () => <XIcon />;
 
   const eligibleFriends: UserItem[] = useMemo(
     () => friends
@@ -115,16 +86,6 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
       setMutating(false);
     }
   }, [tableId, showConfirm, showAlert, refreshFriends]);
-
-  const AddActionComponent = useCallback(
-    (props: UserActionProps) => <AddMemberAction {...props} onAdd={handleAddMember} />,
-    [handleAddMember]
-  );
-
-  const RemoveActionComponent = useCallback(
-    (props: UserActionProps) => <RemoveMemberAction {...props} onRemove={handleRemoveMember} />,
-    [handleRemoveMember]
-  );
 
   const parseSettlementError = (err: unknown): string => {
     if (!err) return 'Failed to settle the table. Please try again.';
@@ -188,7 +149,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
       <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add Members">
         <UserList
           users={eligibleFriends}
-          ActionComponent={AddActionComponent}
+          ActionComponent={AddAction}
           onRowClick={handleAddMember}
           loading={friendsLoading}
           loadingMessage="Loading friends..."
@@ -199,7 +160,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
       <Modal isOpen={showRemove} onClose={() => setShowRemove(false)} title="Remove Members">
         <UserList
           users={removableMembers}
-          ActionComponent={RemoveActionComponent}
+          ActionComponent={RemoveAction}
           onRowClick={handleRemoveMember}
           emptyMessage="No removable members."
           disabled={mutating}

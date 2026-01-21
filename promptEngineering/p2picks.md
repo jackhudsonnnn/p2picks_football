@@ -33,7 +33,7 @@ The platform uses a pooled betting structure where winners split the losers' con
     * *Example:* If a **50-point losers pot** is split among **3 winners**, each gets 16 points ($3 \times 16 = 48$). The remaining **2 point** are distributed amongst the three winners at random.
 * **Edge Cases:** A bet is considered a **"wash"** (i.e., nullified, as if it never happened) under the following conditions. In these cases, no points are won or lost.
 * The timer expires with zero participants
-* The timer expires and all participants chose 'pass'
+* The timer expires and all participants chose `pass`
 * The timer expires and all participants chose the same option
 * The bet is resolved and no one chose the winning option
 
@@ -44,7 +44,7 @@ Implementation notes (server-first):
 
 ---
 
-### Modes
+### NFL Modes
 
 #### Mode 1: Either Or
 This mode is a prop bet comparing the performance of two players.
@@ -127,6 +127,30 @@ Classic moneyline — pick who wins the game.
     * Bets only resolve after the game status is final. If final scores are unavailable or the game is canceled, the bet will be washed.
     * If both teams end with the same score, `Tie` is the winning option.
 
+
+---
+
+### NBA Modes
+To be planned...
+
+### MLB Modes
+To be planned...
+
+### NHL Modes
+To be planned...
+
+### NCAAF Modes
+To be planned...
+
+### U2Pick Modes
+
+#### Custom
+User-defined bet with no preset game tie-in.
+* **Proposer Configuration:** Winning Condition text explaining Options list
+    * Writes a **Win Condition** to describe what is being wagered on
+    * Writes an **Options List** for participants to choose from
+* **Participant Choices:** `pass`, `{option 1}`, `{option 2}`, ..., `{option n}`.
+* **Winning Condition:**  Any participant can resolve via the resolve icon; choose the winning option or wash. The bet washes if no one picked the winning option.
 
 ---
 
