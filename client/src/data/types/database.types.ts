@@ -62,11 +62,11 @@ export interface Database {
       "bet_proposals": {
         Row: {
           "bet_id": string;
-          "bet_status": string;
+          "bet_status": "active" | "pending" | "resolved" | "washed";
           "close_time": string;
           "description": string;
           "league": "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
-          "league_game_id": string | null;
+          "league_game_id": string;
           "mode_key": string;
           "proposal_time": string;
           "proposer_user_id": string;
@@ -78,11 +78,11 @@ export interface Database {
         };
         Insert: {
           "bet_id"?: string;
-          "bet_status"?: string;
+          "bet_status"?: "active" | "pending" | "resolved" | "washed";
           "close_time": string;
           "description": string;
           "league"?: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
-          "league_game_id"?: string | null;
+          "league_game_id": string;
           "mode_key": string;
           "proposal_time"?: string;
           "proposer_user_id": string;
@@ -94,11 +94,11 @@ export interface Database {
         };
         Update: {
           "bet_id"?: string;
-          "bet_status"?: string;
+          "bet_status"?: "active" | "pending" | "resolved" | "washed";
           "close_time"?: string;
           "description"?: string;
           "league"?: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
-          "league_game_id"?: string | null;
+          "league_game_id"?: string;
           "mode_key"?: string;
           "proposal_time"?: string;
           "proposer_user_id"?: string;
@@ -432,6 +432,7 @@ export interface Database {
     Functions: Record<string, never>;
     Enums: {
       league: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
+      status: "active" | "pending" | "resolved" | "washed";
     };
     CompositeTypes: Record<string, never>;
   };

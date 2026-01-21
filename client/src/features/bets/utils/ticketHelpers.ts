@@ -25,7 +25,7 @@ export function buildTicketTexts(
 
   const descriptionText = (() => {
     if (preview?.description && preview.description.trim().length) return preview.description;
-    return '--- vs ---';
+    return '--';
   })();
 
   const winningConditionText = (() => {

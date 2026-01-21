@@ -542,9 +542,11 @@ async function createU2PickBetProposal(
   if (!u2pickWinningCondition || u2pickWinningCondition.trim().length < 4) {
     throw new BetProposalError('U2Pick winning condition must be at least 4 characters', 400);
   }
+
   if (!u2pickOptions || u2pickOptions.length < 2 || u2pickOptions.length > 6) {
     throw new BetProposalError('U2Pick requires between 2 and 6 options', 400);
   }
+  
   for (const opt of u2pickOptions) {
     if (!opt || opt.trim().length < 1 || opt.trim().length > 40) {
       throw new BetProposalError('Each U2Pick option must be between 1 and 40 characters', 400);
@@ -554,8 +556,6 @@ async function createU2PickBetProposal(
   // Build description and preview from user inputs
   const description = 'Custom Input';
   const winningCondition = u2pickWinningCondition.trim();
-  const optionsText = u2pickOptions.map((o, i) => `${i + 1}. ${o.trim()}`).join(' | ');
-  const previewText = `U2Pick: ${winningCondition} — Options: ${optionsText}`;
 
   // Normalize wager and time limit
   const normalizedWager = normalizeWagerAmount(wagerAmount ?? DEFAULT_WAGER);
@@ -567,9 +567,9 @@ async function createU2PickBetProposal(
     .insert({
       table_id: tableId,
       proposer_user_id: proposerUserId,
-      league_game_id: -1, // numeric placeholder to satisfy NOT NULL (bigint)
+      league_game_id: -1, // numeric placeholder to satisfy NOT NULL (bigint) in supabase
       league: 'U2Pick',
-      mode_key: 'u2pick',
+      mode_key: 'table_talk',
       description,
       wager_amount: normalizedWager,
       time_limit_seconds: normalizedTimeLimit,

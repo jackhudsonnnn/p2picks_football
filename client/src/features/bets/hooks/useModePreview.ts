@@ -5,7 +5,7 @@ export type UseModePreviewArgs = {
   modeKey?: string | null;
   modeConfig?: Record<string, unknown> | null;
   leagueGameId?: string | null;
-  league?: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
+  league?: 'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF';
   betId?: string | null;
 };
 

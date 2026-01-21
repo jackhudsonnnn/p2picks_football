@@ -22,3 +22,4 @@ export const NFL_GAME_STATUS_POLL_MS = Math.max(30_000, Number(process.env.NFL_G
 export const NFL_DATA_TEST_MODE = ['raw', 'refined'].includes(String(process.env.NFL_DATA_TEST_MODE || 'off').trim().toLowerCase())
 	? String(process.env.NFL_DATA_TEST_MODE || 'off').trim().toLowerCase()
 	: 'off';
+

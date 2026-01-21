@@ -64,8 +64,8 @@ type ModeEntry = {
   supportedLeagues?: League[];
 };
 
-const ALLOWED_LEAGUES: League[] = ['NFL', 'NBA', 'MLB', 'NHL', 'NCAAF', 'U2Pick'];
-const ACTIVE_LEAGUES: League[] = ['NFL', 'U2Pick'];
+const ALLOWED_LEAGUES: League[] = ['U2Pick', 'NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'];
+const ACTIVE_LEAGUES: League[] = ['U2Pick', 'NFL'];
 
 const U2PICK_PLACEHOLDER_GAME = { id: 'u2pick-custom', label: 'Custom bet (no game required)' } as const;
 const U2PICK_PLACEHOLDER_MODE: ModeEntry = {
@@ -84,7 +84,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   const [generalSchema, setGeneralSchema] = useState<BetGeneralConfigSchema | null>(null);
 
   const [gameId, setGameId] = useState('');
-  const [league, setLeague] = useState<'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick'>('NFL');
+  const [league, setLeague] = useState<'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF'>('U2Pick');
   const [modeKey, setModeKey] = useState('');
 
   const [stage, setStage] = useState<ConfigSessionStage>('league');

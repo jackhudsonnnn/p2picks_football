@@ -38,6 +38,7 @@ const typeMapping = {
 // Known enum definitions (extend as needed)
 const enumValues = {
   league: ['NFL', 'NBA', 'MLB', 'NHL', 'NCAAF', 'U2Pick'],
+  status: ['active', 'pending', 'resolved', 'washed'],
 };
 
 function getEnumTypeName(column) {

@@ -73,7 +73,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           onChange={(event) => handleLeagueChange(event.target.value)}
           disabled={bootstrapLoading || sessionLoading}
         >
-          {['NFL', 'NBA', 'MLB', 'NHL', 'NCAAF', 'U2Pick'].map((value) => (
+          {['U2Pick', 'NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'].map((value) => (
             <option key={value} value={value}>
               {value}
             </option>

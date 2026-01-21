@@ -23,7 +23,6 @@ export interface ModeConfigRecord {
 export type ModePreviewPayload = {
   summary?: string;
   description?: string;
-  secondary?: string;
   winningCondition?: string;
   options?: string[];
   fields?: Array<{ label: string; value: string }>;

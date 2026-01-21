@@ -237,7 +237,6 @@ export async function getBetLiveInfo(req: Request, res: Response) {
   }
 
   try {
-  // Fetch bet to get mode_key and game context
     const { getSupabaseAdmin } = await import('../supabaseClient');
     const supabaseAdmin = getSupabaseAdmin();
     const { data: betRow, error: betError } = await supabaseAdmin

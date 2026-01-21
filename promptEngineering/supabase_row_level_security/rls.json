@@ -11,7 +11,7 @@
     "policy_name": "bet_participations_insert_scoped",
     "command": "INSERT",
     "using_expression": null,
-    "check_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::text) AND is_bet_open(bp.bet_id)))))"
+    "check_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::status) AND is_bet_open(bp.bet_id)))))"
   },
   {
     "table_name": "bet_participations",
@@ -46,7 +46,7 @@
     "policy_name": "bet_proposals_insert_scoped_active_only",
     "command": "INSERT",
     "using_expression": null,
-    "check_expression": "((proposer_user_id = auth.uid()) AND is_user_member_of_table(table_id, auth.uid()) AND (bet_status = 'active'::text) AND (winning_choice IS NULL) AND (resolution_time IS NULL))"
+    "check_expression": "((proposer_user_id = auth.uid()) AND is_user_member_of_table(table_id, auth.uid()) AND (bet_status = 'active'::status) AND (winning_choice IS NULL) AND (resolution_time IS NULL))"
   },
   {
     "table_name": "bet_proposals",

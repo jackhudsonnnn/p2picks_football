@@ -130,9 +130,9 @@
   {
     "table_name": "bet_proposals",
     "column_name": "bet_status",
-    "data_type": "text",
+    "data_type": "USER-DEFINED",
     "is_nullable": "NO",
-    "column_default": "'active'::text",
+    "column_default": "'active'::status",
     "key_info": ""
   },
   {
@@ -179,7 +179,7 @@
     "table_name": "bet_proposals",
     "column_name": "league_game_id",
     "data_type": "bigint",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
   },

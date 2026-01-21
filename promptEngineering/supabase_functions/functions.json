@@ -48,16 +48,16 @@
     "function_definition": "CREATE OR REPLACE FUNCTION public.enforce_immutable_bet_participation_fields()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  IF NEW.bet_id <> OLD.bet_id OR NEW.table_id <> OLD.table_id OR NEW.user_id <> OLD.user_id THEN\r\n    RAISE EXCEPTION 'bet_participations immutable fields (bet_id, table_id, user_id) cannot be modified';\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
   },
   {
-    "function_name": "is_bet_open",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.is_bet_open(p_bet_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE\nAS $function$\r\n  SELECT EXISTS (\r\n    SELECT 1\r\n    FROM public.bet_proposals bp\r\n    WHERE bp.bet_id = p_bet_id\r\n      AND bp.bet_status = 'active'::text\r\n      AND now() < bp.close_time\r\n  );\r\n$function$\n"
-  },
-  {
     "function_name": "handle_new_user",
     "function_definition": "CREATE OR REPLACE FUNCTION public.handle_new_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  insert into public.users (user_id, email)\r\n  values (new.id, new.email);\r\n  return new;\r\nend;\r\n$function$\n"
   },
   {
     "function_name": "is_table_member",
     "function_definition": "CREATE OR REPLACE FUNCTION public.is_table_member(p_table_id uuid, p_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN EXISTS (\r\n        SELECT 1\r\n        FROM table_members tm -- Assumes 'table_members' table exists as per your schema\r\n        WHERE tm.table_id = p_table_id AND tm.user_id = p_user_id\r\n    );\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "is_bet_open",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.is_bet_open(p_bet_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE\nAS $function$\n  select exists (\n    select 1\n    from public.bet_proposals bp\n    where bp.bet_id = p_bet_id\n      and bp.bet_status = 'active'\n      and now() < bp.close_time\n  );\n$function$\n"
   },
   {
     "function_name": "get_table_host_user_id",

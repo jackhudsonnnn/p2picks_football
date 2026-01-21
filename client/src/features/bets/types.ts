@@ -2,7 +2,7 @@
 
 export type BetModeKey = string & { _brand?: 'BetModeKey' };
 export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
-export type League = 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
+export type League = 'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF';
 
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
 export interface BetRecord {
