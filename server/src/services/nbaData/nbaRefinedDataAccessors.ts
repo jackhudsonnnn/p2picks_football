@@ -1,43 +1,27 @@
 /**
- * Centralized accessors for refined nfl data.
+ * Centralized accessors for refined NBA data.
  * 
- * This module acts as a data access layer for refined NFL game data.
+ * This module acts as a data access layer for refined NBA game data.
  * Instead of passing doc objects around, consumers call getters with a gameId.
- * Internally, documents are cached based on NFL_DATA_INTERVAL_SECONDS
+ * Internally, documents are cached based on NBA_DATA_INTERVAL_SECONDS
  * to avoid redundant file reads when multiple getters are called in sequence.
  */
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { NFL_DATA_INTERVAL_SECONDS } from '../../constants/environment'
+import { NBA_DATA_INTERVAL_SECONDS } from '../../constants/environment';
+import type {
+  RefinedNbaGame,
+  RefinedTeam,
+  RefinedPlayer,
+  PlayerStats,
+  TeamStats,
+} from '../../utils/nba/nbaRefinementTransformer';
 
-const REFINED_DIR = path.join('src', 'data', 'nfl_data', 'nfl_refined_live_stats');
+// Re-export types for consumers
+export type { RefinedNbaGame, RefinedTeam, RefinedPlayer, PlayerStats, TeamStats };
 
-export type StatCategory =
-  | 'passing'
-  | 'rushing'
-  | 'receiving'
-  | 'fumbles'
-  | 'defensive'
-  | 'interceptions'
-  | 'kickReturns'
-  | 'puntReturns'
-  | 'kicking'
-  | 'punting'
-  | 'scoring';
-
-export interface StatsByCategory {
-  [category: string]: Record<string, unknown>;
-}
-
-export interface Player {
-  athleteId: string;
-  fullName: string;
-  position: string;
-  jersey: string;
-  headshot: string;
-  stats: StatsByCategory;
-}
+const REFINED_DIR = path.join('src', 'data', 'nba_data', 'nba_refined_live_stats');
 
 export type PlayerRecord = {
   id: string;
@@ -45,28 +29,6 @@ export type PlayerRecord = {
   team: string;
   position?: string | null;
 };
-
-export interface Team {
-  teamId: string;
-  abbreviation: string;
-  displayName: string;
-  score: number;
-  stats: StatsByCategory;
-  players: Player[];
-  homeAway?: string;
-  displayOrder?: number;
-  possession?: boolean;
-}
-
-export interface RefinedGameDoc {
-  eventId: string;
-  generatedAt: string;
-  source?: string;
-  status?: string; // STATUS_IN_PROGRESS, STATUS_FINAL, STATUS_HALFTIME, STATUS_SCHEDULED, STATUS_END_PERIOD
-  period?: number | null;
-  teams: Team[];
-  note?: string;
-}
 
 export async function readJson<T = unknown>(filePath: string): Promise<T> {
   const data = await fs.readFile(filePath, 'utf8');
@@ -111,34 +73,20 @@ export async function getAvailableGames(): Promise<Record<string, string>> {
   }
 }
 
-export function getCategory(
-  statsByCategory: Record<string, Record<string, unknown>>,
-  category: string,
-): Record<string, unknown> | undefined {
-  if (!statsByCategory) return undefined;
-  const direct = (statsByCategory as any)[category];
-  if (direct) return direct;
-  const lower = category.toLowerCase();
-  for (const [k, v] of Object.entries(statsByCategory)) {
-    if (k.toLowerCase() === lower) return v as Record<string, unknown>;
-  }
-  return undefined;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Cache Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CachedDoc {
-  doc: RefinedGameDoc;
+  doc: RefinedNbaGame;
   loadedAt: number;
 }
 
 const cache = new Map<string, CachedDoc>();
 
-/** Cache TTL in ms - data only changes every NFL_DATA_INTERVAL_SECONDS */
+/** Cache TTL in ms - data only changes every NBA_DATA_INTERVAL_SECONDS */
 function getCacheTtlMs(): number {
-  const seconds = Number(NFL_DATA_INTERVAL_SECONDS) || 20;
+  const seconds = Number(NBA_DATA_INTERVAL_SECONDS) || 20;
   // Use 90% of the interval to ensure we refresh before stale
   return Math.max(5000, seconds * 900);
 }
@@ -160,17 +108,17 @@ export function clearCache(): void {
 /**
  * Internal: Load doc from cache or disk.
  */
-async function getCachedDoc(gameId: string): Promise<RefinedGameDoc | null> {
+async function getCachedDoc(gameId: string): Promise<RefinedNbaGame | null> {
   const now = Date.now();
   const cached = cache.get(gameId);
-  
+
   if (cached && (now - cached.loadedAt) < getCacheTtlMs()) {
     return cached.doc;
   }
 
   try {
     const dir = path.isAbsolute(REFINED_DIR) ? REFINED_DIR : path.join(process.cwd(), REFINED_DIR);
-    const doc = await readJson<RefinedGameDoc>(path.join(dir, `${gameId}.json`));
+    const doc = await readJson<RefinedNbaGame>(path.join(dir, `${gameId}.json`));
     if (doc) {
       cache.set(gameId, { doc, loadedAt: now });
     } else {
@@ -184,7 +132,7 @@ async function getCachedDoc(gameId: string): Promise<RefinedGameDoc | null> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Status / Period
+// Status / Period / Clock
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -192,10 +140,19 @@ async function getCachedDoc(gameId: string): Promise<RefinedGameDoc | null> {
  */
 export async function getGameStatus(gameId: string): Promise<string> {
   const doc = await getCachedDoc(gameId);
-  if (!doc) return "STATUS_UNKNOWN";
+  if (!doc) return 'STATUS_UNKNOWN';
   const status = doc.status;
   if (typeof status === 'string' && status.trim().length) return status.trim();
-  return "STATUS_UNKNOWN";
+  return 'STATUS_UNKNOWN';
+}
+
+/**
+ * Get game status text (e.g., "Q4 6:19", "Final").
+ */
+export async function getGameStatusText(gameId: string): Promise<string> {
+  const doc = await getCachedDoc(gameId);
+  if (!doc) return '';
+  return doc.statusText || '';
 }
 
 /**
@@ -209,6 +166,15 @@ export async function getGamePeriod(gameId: string): Promise<number | null> {
   return null;
 }
 
+/**
+ * Get game clock (e.g., "PT06M19.00S").
+ */
+export async function getGameClock(gameId: string): Promise<string> {
+  const doc = await getCachedDoc(gameId);
+  if (!doc) return '';
+  return doc.gameClock || '';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Teams
 // ─────────────────────────────────────────────────────────────────────────────
@@ -216,65 +182,59 @@ export async function getGamePeriod(gameId: string): Promise<number | null> {
 /**
  * Get teams
  */
-export async function listTeams(gameId: string): Promise<Team[]> {
+export async function listTeams(gameId: string): Promise<RefinedTeam[]> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return [];
-  return doc.teams as Team[];
+  return doc.teams;
 }
 
 /**
  * Get the matchup
- * Example: "BUF vs BAL"
+ * Example: "MIL vs OKC"
  */
 export async function getMatchup(gameId: string): Promise<string> {
   const homeTeam = await getHomeTeam(gameId);
   const awayTeam = await getAwayTeam(gameId);
-  const homeLabel = homeTeam?.abbreviation || homeTeam?.displayName || "home";
-  const awayLabel = awayTeam?.abbreviation || awayTeam?.displayName || "away";
+  const homeLabel = homeTeam?.abbreviation || homeTeam?.displayName || 'home';
+  const awayLabel = awayTeam?.abbreviation || awayTeam?.displayName || 'away';
   return `${homeLabel} vs ${awayLabel}`;
 }
 
 /**
  * Find a team by ID or abbreviation.
  */
-export async function getTeam(gameId: string, teamId: string): Promise<Team | null> {
+export async function getTeam(gameId: string, teamId: string): Promise<RefinedTeam | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc) return null;
   return (
     doc.teams.find(
-      (t) => (t as any).teamId === teamId || (t as any).abbreviation === teamId,
+      (t) => t.teamId === teamId || t.abbreviation === teamId,
     ) || null
   );
 }
 
 /**
- * Get home team (homeAway === 'home' or displayOrder === 1).
+ * Get home team (homeAway === 'home').
  */
-export async function getHomeTeam(gameId: string): Promise<Team | null> {
+export async function getHomeTeam(gameId: string): Promise<RefinedTeam | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return null;
-  const byHomeAway = doc.teams.find((t) => (t as any).homeAway === 'home');
-  if (byHomeAway) return byHomeAway;
-  const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-  return sorted[1] ?? null;
+  return doc.teams.find((t) => t.homeAway === 'home') ?? null;
 }
 
 /**
- * Get away team (homeAway === 'away' or displayOrder === 0).
+ * Get away team (homeAway === 'away').
  */
-export async function getAwayTeam(gameId: string): Promise<Team | null> {
+export async function getAwayTeam(gameId: string): Promise<RefinedTeam | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return null;
-  const byHomeAway = doc.teams.find((t) => (t as any).homeAway === 'away');
-  if (byHomeAway) return byHomeAway;
-  const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-  return sorted[0] ?? null;
+  return doc.teams.find((t) => t.homeAway === 'away') ?? null;
 }
 
 /**
  * Get all teams from doc.
  */
-export async function getAllTeams(gameId: string): Promise<Team[]> {
+export async function getAllTeams(gameId: string): Promise<RefinedTeam[]> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return [];
   return doc.teams;
@@ -285,7 +245,7 @@ export async function getAllTeams(gameId: string): Promise<Team[]> {
  */
 export async function getHomeTeamName(gameId: string): Promise<string> {
   const homeTeam = await getHomeTeam(gameId);
-  return homeTeam?.displayName || "home";
+  return homeTeam?.displayName || 'home';
 }
 
 /**
@@ -293,7 +253,7 @@ export async function getHomeTeamName(gameId: string): Promise<string> {
  */
 export async function getAwayTeamName(gameId: string): Promise<string> {
   const awayTeam = await getAwayTeam(gameId);
-  return awayTeam?.displayName || "away";
+  return awayTeam?.displayName || 'away';
 }
 
 /**
@@ -303,7 +263,7 @@ export async function getGameTeams(gameId: string): Promise<Array<Record<string,
   const teams = await getAllTeams(gameId);
   return teams.map((t) => ({
     teamId: extractTeamId(t) || '',
-    abbreviation: (t as any).abbreviation || '',
+    abbreviation: t.abbreviation || '',
     name: extractTeamName(t) || '',
   }));
 }
@@ -311,37 +271,10 @@ export async function getGameTeams(gameId: string): Promise<Array<Record<string,
 /**
  * Get opponent team for a given team ID.
  */
-export async function getOpponentTeam(gameId: string, teamId: string): Promise<Team | null> {
+export async function getOpponentTeam(gameId: string, teamId: string): Promise<RefinedTeam | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return null;
-  return doc.teams.find((t) => (t as any).teamId !== teamId && (t as any).abbreviation !== teamId) ?? null;
-}
-
-/**
- * Get team currently in possession.
- */
-async function getPossessionTeam(gameId: string): Promise<Team | null> {
-  const doc = await getCachedDoc(gameId);
-  if (!doc || !Array.isArray(doc.teams)) return null;
-  return doc.teams.find((t) => (t as any).possession === true) ?? null;
-}
-
-/**
- * Get possession team ID.
- */
-export async function getPossessionTeamId(gameId: string): Promise<string | null> {
-  const team = await getPossessionTeam(gameId);
-  if (!team) return null;
-  return (team as any).teamId ?? null;
-}
-
-/**
- * Get possession team name.
- */
-export async function getPossessionTeamName(gameId: string): Promise<string | null> {
-  const team = await getPossessionTeam(gameId);
-  if (!team) return null;
-  return (team as any).displayName ?? null;
+  return doc.teams.find((t) => t.teamId !== teamId && t.abbreviation !== teamId) ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -352,44 +285,12 @@ export async function getPossessionTeamName(gameId: string): Promise<string | nu
  * Get team score by team ID.
  */
 export async function getTeamScore(gameId: string, teamId: string): Promise<number> {
-  const team: any = await getTeam(gameId, teamId);
+  const team = await getTeam(gameId, teamId);
   if (!team) {
     return -1;
   }
-
   return team.score || -1;
 }
-
-/**
- * Get team score stats (score, touchdowns, field goals, and safeties) by team ID.
- */
-export async function getTeamScoreStats(
-  gameId: string,
-  teamId: string,
-): Promise<{
-  score: number;
-  touchdowns: number;
-  fieldGoals: number;
-  safeties: number;
-}> {
-  const team: any = await getTeam(gameId, teamId);
-  if (!team) {
-    return { score: -1, touchdowns: -1, fieldGoals: -1, safeties: -1 };
-  }
-
-  let score: number = team.score || -1;
-
-  if (!team.scoring) {
-    return { score, touchdowns: -1, fieldGoals: -1, safeties: -1 };
-  }
-
-  let touchdowns: number = team.scoring.touchdowns || -1;
-  let fieldGoals: number = team.scoring.fieldGoals || -1;
-  let safeties: number = team.scoring.safeties || -1;
-
-  return { score, touchdowns, fieldGoals, safeties };
-}
-
 
 /**
  * Get home team score.
@@ -423,27 +324,32 @@ export async function getTotalScore(gameId: string): Promise<number> {
 export async function getScores(gameId: string): Promise<{ home: number; away: number; total: number }> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return { home: 0, away: 0, total: 0 };
-  
+
   let homeScore = 0;
   let awayScore = 0;
-  
+
   for (const team of doc.teams) {
     const score = typeof team.score === 'number' ? team.score : 0;
-    if ((team as any).homeAway === 'home') {
+    if (team.homeAway === 'home') {
       homeScore = score;
-    } else if ((team as any).homeAway === 'away') {
+    } else if (team.homeAway === 'away') {
       awayScore = score;
     }
   }
-  
-  // Fallback to displayOrder if homeAway not set
-  if (homeScore === 0 && awayScore === 0 && doc.teams.length >= 2) {
-    const sorted = [...doc.teams].sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0));
-    homeScore = typeof sorted[0]?.score === 'number' ? sorted[0].score : 0;
-    awayScore = typeof sorted[1]?.score === 'number' ? sorted[1].score : 0;
-  }
-  
+
   return { home: homeScore, away: awayScore, total: homeScore + awayScore };
+}
+
+/**
+ * Get period scores for a team.
+ */
+export async function getTeamPeriodScores(
+  gameId: string,
+  teamId: string
+): Promise<Array<{ period: number; score: number }>> {
+  const team = await getTeam(gameId, teamId);
+  if (!team) return [];
+  return team.periods || [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -453,24 +359,17 @@ export async function getScores(gameId: string): Promise<{ home: number; away: n
 /**
  * Find a player by ID or name across all teams.
  */
-export async function getPlayer(gameId: string, playerId: string): Promise<Player | null> {
+export async function getPlayer(gameId: string, playerId: string): Promise<RefinedPlayer | null> {
   const doc = await getCachedDoc(gameId);
   if (!doc) return null;
 
   for (const team of doc.teams || []) {
-    const players = (team as any).players as any;
+    const players = team.players;
     if (!players) continue;
-    if (!Array.isArray(players)) {
-      const direct = (players as Record<string, Player>)[playerId];
-      if (direct) return direct;
-      for (const candidate of Object.values(players as Record<string, Player>)) {
-        if (candidate.athleteId === playerId) return candidate;
-      }
-    } else {
-      for (const candidate of players as Player[]) {
-        if (candidate.athleteId === playerId) return candidate;
-        if (`name:${candidate.fullName}` === playerId) return candidate;
-      }
+    for (const player of players) {
+      if (player.athleteId === playerId) return player;
+      if (String(player.personId) === playerId) return player;
+      if (player.fullName === playerId) return player;
     }
   }
   return null;
@@ -479,16 +378,13 @@ export async function getPlayer(gameId: string, playerId: string): Promise<Playe
 /**
  * Get all players from doc (across all teams).
  */
-export async function getAllPlayers(gameId: string): Promise<Player[]> {
+export async function getAllPlayers(gameId: string): Promise<RefinedPlayer[]> {
   const doc = await getCachedDoc(gameId);
   if (!doc || !Array.isArray(doc.teams)) return [];
-  const result: Player[] = [];
+  const result: RefinedPlayer[] = [];
   for (const team of doc.teams) {
-    const players = (team as any).players;
-    if (Array.isArray(players)) {
-      result.push(...players);
-    } else if (players && typeof players === 'object') {
-      result.push(...Object.values(players) as Player[]);
+    if (Array.isArray(team.players)) {
+      result.push(...team.players);
     }
   }
   return result;
@@ -498,47 +394,118 @@ export async function getAllPlayers(gameId: string): Promise<Player[]> {
  * Get all player records (id, name, team, position) from doc.
  */
 export async function getAllPlayerRecords(gameId: string): Promise<PlayerRecord[]> {
-  const players = await getAllPlayers(gameId);
-  return players.map((p) => ({
-    id: p.athleteId,
-    name: p.fullName,
-    team: (p as any).teamId || '',
-    position: p.position || null,
-  }));
+  const doc = await getCachedDoc(gameId);
+  if (!doc || !Array.isArray(doc.teams)) return [];
+  
+  const records: PlayerRecord[] = [];
+  for (const team of doc.teams) {
+    if (Array.isArray(team.players)) {
+      for (const player of team.players) {
+        records.push({
+          id: player.athleteId,
+          name: player.fullName,
+          team: team.teamId,
+          position: player.position || null,
+        });
+      }
+    }
+  }
+  return records;
 }
 
 /**
  * Get players for a specific team.
  */
-export async function getTeamPlayers(gameId: string, teamId: string): Promise<Player[]> {
+export async function getTeamPlayers(gameId: string, teamId: string): Promise<RefinedPlayer[]> {
   const team = await getTeam(gameId, teamId);
   if (!team) return [];
-  const players = (team as any).players;
-  if (Array.isArray(players)) return players;
-  if (players && typeof players === 'object') return Object.values(players) as Player[];
-  return [];
+  return team.players || [];
 }
 
 /**
- * Get a player's stat value from a given category and key.
+ * Get starters for a specific team.
+ */
+export async function getTeamStarters(gameId: string, teamId: string): Promise<RefinedPlayer[]> {
+  const players = await getTeamPlayers(gameId, teamId);
+  return players.filter((p) => p.stats.starter);
+}
+
+/**
+ * Get bench players for a specific team.
+ */
+export async function getTeamBench(gameId: string, teamId: string): Promise<RefinedPlayer[]> {
+  const players = await getTeamPlayers(gameId, teamId);
+  return players.filter((p) => !p.stats.starter);
+}
+
+/**
+ * Get a player's stat value.
  */
 export async function getPlayerStat(
   gameId: string,
   playerId: string,
-  category: string,
-  statKey: string,
-): Promise<number> {
+  statKey: keyof PlayerStats,
+): Promise<number | string | boolean> {
   const player = await getPlayer(gameId, playerId);
   if (!player || !player.stats) return 0;
-  const catStats = getCategory(player.stats as Record<string, Record<string, unknown>>, category);
-  if (!catStats) return 0;
-  const value = catStats[statKey];
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const parsed = parseFloat(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return 0;
+  const value = player.stats[statKey];
+  return value ?? 0;
+}
+
+/**
+ * Get a player's points.
+ */
+export async function getPlayerPoints(gameId: string, playerId: string): Promise<number> {
+  const player = await getPlayer(gameId, playerId);
+  return player?.stats?.points ?? 0;
+}
+
+/**
+ * Get a player's rebounds.
+ */
+export async function getPlayerRebounds(gameId: string, playerId: string): Promise<number> {
+  const player = await getPlayer(gameId, playerId);
+  return player?.stats?.rebounds ?? 0;
+}
+
+/**
+ * Get a player's assists.
+ */
+export async function getPlayerAssists(gameId: string, playerId: string): Promise<number> {
+  const player = await getPlayer(gameId, playerId);
+  return player?.stats?.assists ?? 0;
+}
+
+/**
+ * Get a player's steals.
+ */
+export async function getPlayerSteals(gameId: string, playerId: string): Promise<number> {
+  const player = await getPlayer(gameId, playerId);
+  return player?.stats?.steals ?? 0;
+}
+
+/**
+ * Get a player's blocks.
+ */
+export async function getPlayerBlocks(gameId: string, playerId: string): Promise<number> {
+  const player = await getPlayer(gameId, playerId);
+  return player?.stats?.blocks ?? 0;
+}
+
+/**
+ * Get a player's turnovers.
+ */
+export async function getPlayerTurnovers(gameId: string, playerId: string): Promise<number> {
+  const player = await getPlayer(gameId, playerId);
+  return player?.stats?.turnovers ?? 0;
+}
+
+/**
+ * Get a player's three pointers made.
+ */
+export async function getPlayerThreePointersMade(gameId: string, playerId: string): Promise<number> {
+  const player = await getPlayer(gameId, playerId);
+  return player?.stats?.threePointersMade ?? 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -546,36 +513,26 @@ export async function getPlayerStat(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Get team stats category.
- */
-export async function getTeamStatCategory(
-  gameId: string,
-  teamId: string,
-  category: string,
-): Promise<Record<string, unknown> | null> {
-  const team = await getTeam(gameId, teamId);
-  if (!team || !team.stats) return null;
-  return getCategory(team.stats as Record<string, Record<string, unknown>>, category) ?? null;
-}
-
-/**
  * Get a specific team stat value.
  */
 export async function getTeamStat(
   gameId: string,
   teamId: string,
-  category: string,
-  statKey: string,
+  statKey: keyof TeamStats,
 ): Promise<number> {
-  const catStats = await getTeamStatCategory(gameId, teamId, category);
-  if (!catStats) return 0;
-  const value = catStats[statKey];
+  const team = await getTeam(gameId, teamId);
+  if (!team || !team.stats) return 0;
+  const value = team.stats[statKey];
   if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const parsed = parseFloat(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
   return 0;
+}
+
+/**
+ * Get team stats object.
+ */
+export async function getTeamStats(gameId: string, teamId: string): Promise<TeamStats | null> {
+  const team = await getTeam(gameId, teamId);
+  return team?.stats ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -583,27 +540,27 @@ export async function getTeamStat(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Get team ID (teamId or abbreviation) from Team object.
+ * Get team ID from Team object.
  */
-export function extractTeamId(team: Team | null | undefined): string | null {
+export function extractTeamId(team: RefinedTeam | null | undefined): string | null {
   if (!team) return null;
-  return (team as any).teamId ?? (team as any).abbreviation ?? null;
+  return team.teamId ?? team.abbreviation ?? null;
 }
 
 /**
  * Get team display name from Team object.
  */
-export function extractTeamName(team: Team | null | undefined): string | null {
+export function extractTeamName(team: RefinedTeam | null | undefined): string | null {
   if (!team) return null;
-  return (team as any).displayName ?? (team as any).name ?? (team as any).abbreviation ?? null;
+  return team.displayName ?? team.name ?? team.abbreviation ?? null;
 }
 
 /**
  * Get team abbreviation from Team object.
  */
-export function extractTeamAbbreviation(team: Team | null | undefined): string | null {
+export function extractTeamAbbreviation(team: RefinedTeam | null | undefined): string | null {
   if (!team) return null;
-  return (team as any).abbreviation ?? null;
+  return team.abbreviation ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -611,11 +568,9 @@ export function extractTeamAbbreviation(team: Team | null | undefined): string |
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Get the full RefinedGameDoc.
+ * Get the full RefinedNbaGame doc.
  * Prefer using specific getters when possible.
- * TODO: depreate
  */
-export async function getGameDoc(gameId: string): Promise<RefinedGameDoc | null> {
+export async function getGameDoc(gameId: string): Promise<RefinedNbaGame | null> {
   return getCachedDoc(gameId);
 }
-

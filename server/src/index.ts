@@ -4,6 +4,8 @@ import 'dotenv/config';
 import apiRouter from './routes/api';
 import { startModeValidators } from './services/bet/modeValidatorService';
 import { startNflDataIngestService } from './services/nflData/nflDataIngestService';
+import { startNbaDataIngestService } from './services/nbaData/nbaDataIngestService';
+import { startNbaGameFeedService } from './services/nbaData/nbaGameFeedService';
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
 import { startResolutionQueue, stopResolutionQueue } from './modes/shared/resolutionQueue';
 import { requireAuth } from './middleware/auth';
@@ -24,6 +26,8 @@ app.listen(PORT, () => {
   startModeValidators();
   startBetLifecycleService();
   startNflDataIngestService();
+  startNbaDataIngestService();
+  startNbaGameFeedService();
 });
 
 // Graceful shutdown

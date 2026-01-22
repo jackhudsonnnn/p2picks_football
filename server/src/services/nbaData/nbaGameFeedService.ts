@@ -1,7 +1,7 @@
 /**
- * Game Feed Service
+ * NBA Game Feed Service
  *
- * Watches refined NFL game JSON files and emits updates when they change.
+ * Watches refined NBA game JSON files and emits updates when they change.
  * Provides an in-memory cache and subscription mechanism for downstream
  * consumers to react to live game data without repeatedly reading from disk.
  */
@@ -10,11 +10,11 @@ import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { getGameDoc, type RefinedGameDoc } from './nflRefinedDataAccessors';
+import { getGameDoc, type RefinedNbaGame, type RefinedTeam } from './nbaRefinedDataAccessors';
 
 export type GameFeedEvent = {
   gameId: string;
-  doc: RefinedGameDoc;
+  doc: RefinedNbaGame;
   signature: string;
   updatedAt: string;
 };
@@ -23,14 +23,14 @@ export type GameFeedListener = (event: GameFeedEvent) => void;
 
 interface CachedDoc {
   signature: string;
-  doc: RefinedGameDoc;
+  doc: RefinedNbaGame;
   updatedAt: string;
 }
 
-const REFINED_DIR = path.join('src', 'data', 'nfl_data', 'nfl_refined_live_stats');
+const REFINED_DIR = path.join('src', 'data', 'nba_data', 'nba_refined_live_stats');
 const GAME_UPDATE_EVENT = 'game-update';
 
-class GameFeedService extends EventEmitter {
+class NbaGameFeedService extends EventEmitter {
   private watcher: chokidar.FSWatcher | null = null;
   private started = false;
   private cache = new Map<string, CachedDoc>();
@@ -52,13 +52,13 @@ class GameFeedService extends EventEmitter {
         void this.processFile(path.basename(file, '.json'));
       })
       .on('error', (err) => {
-        console.error('[gameFeed] watcher error', err);
+        console.error('[nbaGameFeed] watcher error', err);
       });
   }
 
   stop(): void {
     if (this.watcher) {
-      this.watcher.close().catch((err) => console.error('[gameFeed] close watcher error', err));
+      this.watcher.close().catch((err) => console.error('[nbaGameFeed] close watcher error', err));
       this.watcher = null;
     }
     this.started = false;
@@ -123,41 +123,37 @@ class GameFeedService extends EventEmitter {
         updatedAt: payload.updatedAt,
       } satisfies GameFeedEvent);
     } catch (err) {
-      console.error('[gameFeed] failed to process game file', { gameId }, err);
+      console.error('[nbaGameFeed] failed to process game file', { gameId }, err);
     }
   }
 
-  private computeSignature(doc: RefinedGameDoc): string {
+  private computeSignature(doc: RefinedNbaGame): string {
     const payload = {
-      status: (doc as any)?.status ?? null,
-      period: (doc as any)?.period ?? null,
-      note: (doc as any)?.note ?? null,
-      generatedAt: (doc as any)?.generatedAt ?? null,
+      status: doc.status ?? null,
+      period: doc.period ?? null,
+      gameClock: doc.gameClock ?? null,
+      generatedAt: doc.generatedAt ?? null,
       teams: Array.isArray(doc.teams)
-        ? doc.teams.map((team: any) => ({
-          teamId: team?.teamId ?? null,
-          abbreviation: team?.abbreviation ?? null,
-          score: team?.score ?? null,
-          stats: team?.stats ?? null,
-          possession: team?.possession ?? null,
-          lastUpdated: team?.lastUpdated ?? null,
-          players: summarizePlayers(team?.players),
-        }))
+        ? doc.teams.map((team: RefinedTeam) => ({
+            teamId: team.teamId ?? null,
+            abbreviation: team.abbreviation ?? null,
+            score: team.score ?? null,
+            stats: team.stats ?? null,
+            players: summarizePlayers(team.players),
+          }))
         : [],
     };
     return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex');
   }
 }
 
-function summarizePlayers(rawPlayers: unknown): Array<{ athleteId: string | null; stats: any }> {
-  const records: Array<{ athleteId: string | null; stats: any }> = [];
+function summarizePlayers(
+  rawPlayers: unknown
+): Array<{ athleteId: string | null; stats: unknown }> {
+  const records: Array<{ athleteId: string | null; stats: unknown }> = [];
   const pushRecord = (player: any) => {
     if (!player) return;
-    const athleteId =
-      player?.athlete?.id ??
-      player?.athleteId ??
-      player?.id ??
-      (typeof player?.fullName === 'string' ? player.fullName : null);
+    const athleteId = player?.athleteId ?? player?.personId ?? null;
     records.push({
       athleteId: athleteId != null ? String(athleteId) : null,
       stats: player?.stats ?? null,
@@ -173,26 +169,26 @@ function summarizePlayers(rawPlayers: unknown): Array<{ athleteId: string | null
   return records;
 }
 
-const service = new GameFeedService();
+const service = new NbaGameFeedService();
 
-export function startGameFeedService(): void {
+export function startNbaGameFeedService(): void {
   service.start();
 }
 
-export function stopGameFeedService(): void {
+export function stopNbaGameFeedService(): void {
   service.stop();
 }
 
-export function subscribeToGameFeed(listener: GameFeedListener, emitReplay = true): () => void {
+export function subscribeToNbaGameFeed(listener: GameFeedListener, emitReplay = true): () => void {
   return service.subscribe(listener, emitReplay);
 }
 
-export function getCachedGameDoc(gameId: string): RefinedGameDoc | null {
+export function getCachedNbaGameDoc(gameId: string): RefinedNbaGame | null {
   const cached = service.getCached(gameId);
   return cached ? cached.doc : null;
 }
 
-export function getCachedSignature(gameId: string): string | null {
+export function getCachedNbaSignature(gameId: string): string | null {
   const cached = service.getCached(gameId);
   return cached ? cached.signature : null;
 }

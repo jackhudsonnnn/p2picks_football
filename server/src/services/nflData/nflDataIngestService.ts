@@ -23,7 +23,7 @@ import {
   REFINED_DIR,
   TEST_DATA_DIR,
   ROSTERS_DIR,
-} from '../../utils/fileStorage';
+} from '../../utils/nfl/fileStorage';
 import {
   NFL_DATA_INTERVAL_SECONDS,
   NFL_DATA_RAW_JITTER_PERCENT,
@@ -187,7 +187,8 @@ async function copyTestDataRaw(firstTick: boolean): Promise<void> {
     await purgeInitialRaw();
   }
 
-  const testRawDir = path.join(TEST_DATA_DIR, 'raw', 'nfl_raw_live_stats');
+  // New test data layout: test_nfl_data/nfl_raw_live_stats
+  const testRawDir = path.join(TEST_DATA_DIR, 'nfl_raw_live_stats');
   const rawFiles = await safeListFiles(testRawDir);
 
   if (!rawFiles.length) {
@@ -207,7 +208,8 @@ async function copyTestDataRaw(firstTick: boolean): Promise<void> {
 async function copyTestRosters(firstTick: boolean): Promise<void> {
   if (!firstTick) return;
 
-  const testRostersDir = path.join(TEST_DATA_DIR, 'raw', 'nfl_rosters');
+  // New test data layout: test_nfl_data/nfl_rosters
+  const testRostersDir = path.join(TEST_DATA_DIR, 'nfl_rosters');
   const rosterFiles = await safeListFiles(testRostersDir);
 
   if (!rosterFiles.length) {
@@ -230,7 +232,8 @@ async function copyTestDataRefined(firstTick: boolean): Promise<void> {
     await purgeRefined();
   }
 
-  const testRefinedDir = path.join(TEST_DATA_DIR, 'refined', 'nfl_refined_live_stats');
+  // New test data layout: test_nfl_data/nfl_refined_live_stats
+  const testRefinedDir = path.join(TEST_DATA_DIR, 'nfl_refined_live_stats');
   const refinedFiles = await safeListFiles(testRefinedDir);
 
   if (!refinedFiles.length) {

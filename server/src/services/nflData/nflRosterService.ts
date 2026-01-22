@@ -12,7 +12,7 @@ import {
   readJson,
   safeListFiles,
   getFileMtime,
-} from '../../utils/fileStorage';
+} from '../../utils/nfl/fileStorage';
 import { NFL_ROSTER_REFRESH_SECONDS } from '../../constants/environment';
 
 const logger = createLogger('rosterService');

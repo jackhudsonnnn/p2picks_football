@@ -23,3 +23,10 @@ export const NFL_DATA_TEST_MODE = ['raw', 'refined'].includes(String(process.env
 	? String(process.env.NFL_DATA_TEST_MODE || 'off').trim().toLowerCase()
 	: 'off';
 
+// nba data
+export const NBA_DATA_INTERVAL_SECONDS = Math.max(12, Number(process.env.NBA_DATA_INTERVAL_SECONDS) || 20);
+export const NBA_DATA_RAW_JITTER_PERCENT = Math.max(5, Number(process.env.NBA_DATA_RAW_JITTER_PERCENT) || 10);
+export const NBA_DATA_TEST_MODE = ['raw', 'refined'].includes(String(process.env.NBA_DATA_TEST_MODE || 'off').trim().toLowerCase())
+	? String(process.env.NBA_DATA_TEST_MODE || 'off').trim().toLowerCase()
+	: 'off';
+

@@ -96,7 +96,7 @@
     "trigger_name": "trg_refund_bet_points_on_wash",
     "event": "UPDATE",
     "activation": "AFTER",
-    "condition": "((old.bet_status = 'pending'::status) AND (new.bet_status = 'washed'::status))",
+    "condition": "((old.bet_status = 'pending'::bet_lifecycle_status) AND (new.bet_status = 'washed'::bet_lifecycle_status))",
     "definition": "EXECUTE FUNCTION refund_bet_points_on_wash()"
   },
   {

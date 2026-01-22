@@ -38,13 +38,14 @@ const typeMapping = {
 // Known enum definitions (extend as needed)
 const enumValues = {
   league: ['NFL', 'NBA', 'MLB', 'NHL', 'NCAAF', 'U2Pick'],
-  status: ['active', 'pending', 'resolved', 'washed'],
+  bet_lifecycle_status: ['active', 'pending', 'resolved', 'washed'],
+  friend_request_status: ['pending', 'accepted', 'declined'],
 };
 
 function getEnumTypeName(column) {
   const dataType = String(column.data_type || '').toLowerCase();
   if (dataType !== 'user-defined') return null;
-  // Try to infer enum name from default (::enumname)
+  // Infer enum name from default (::enumname)
   const defaultText = String(column.column_default || '');
   const match = defaultText.match(/::"?([a-zA-Z0-9_]+)"?/);
   return match ? match[1] : null;

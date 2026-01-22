@@ -132,7 +132,7 @@
     "column_name": "bet_status",
     "data_type": "USER-DEFINED",
     "is_nullable": "NO",
-    "column_default": "'active'::status",
+    "column_default": "'active'::bet_lifecycle_status",
     "key_info": ""
   },
   {
