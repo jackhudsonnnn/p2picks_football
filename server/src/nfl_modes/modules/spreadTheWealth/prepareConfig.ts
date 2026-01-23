@@ -1,5 +1,6 @@
 import type { BetProposal } from '../../../supabaseClient';
-import { getAwayTeam, getHomeTeam, extractTeamId, extractTeamName, extractTeamAbbreviation } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getAwayTeam, getHomeTeam } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { SPREAD_MAX, SPREAD_MIN } from './constants';
@@ -54,26 +55,28 @@ export async function prepareSpreadTheWealthConfig({
     return nextConfig as Record<string, unknown>;
   }
 
+  const league: League = bet.league ?? 'NFL';
+
   try {
-    const [homeTeam, awayTeam] = await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)]);
+    const [homeTeam, awayTeam] = await Promise.all([getHomeTeam(league, gameId), getAwayTeam(league, gameId)]);
 
     if (!nextConfig.home_team_id) {
-      nextConfig.home_team_id = extractTeamId(homeTeam);
+      nextConfig.home_team_id = homeTeam?.teamId ?? null;
     }
     if (!nextConfig.home_team_abbrev) {
-      nextConfig.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+      nextConfig.home_team_abbrev = homeTeam?.abbreviation ?? null;
     }
     if (!nextConfig.home_team_name) {
-      nextConfig.home_team_name = extractTeamName(homeTeam);
+      nextConfig.home_team_name = homeTeam?.displayName ?? null;
     }
     if (!nextConfig.away_team_id) {
-      nextConfig.away_team_id = extractTeamId(awayTeam);
+      nextConfig.away_team_id = awayTeam?.teamId ?? null;
     }
     if (!nextConfig.away_team_abbrev) {
-      nextConfig.away_team_abbrev = extractTeamAbbreviation(awayTeam);
+      nextConfig.away_team_abbrev = awayTeam?.abbreviation ?? null;
     }
     if (!nextConfig.away_team_name) {
-      nextConfig.away_team_name = extractTeamName(awayTeam);
+      nextConfig.away_team_name = awayTeam?.displayName ?? null;
     }
   } catch (err) {
     // ignore errors to keep config preparation resilient

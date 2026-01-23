@@ -3,10 +3,8 @@ import {
   getHomeTeam,
   getAwayTeam,
   getPlayerStat,
-  extractTeamId,
-  extractTeamName,
-  extractTeamAbbreviation,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { normalizeResolveAt } from '../../shared/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
 import { type PlayerRef } from '../../shared/playerUtils';
@@ -45,6 +43,7 @@ export async function preparePropHuntConfig({
 }): Promise<Record<string, unknown>> {
   const next = { ...config } as PropHuntConfig;
   next.bet_id = next.bet_id ?? bet.bet_id ?? null;
+  const league: League = bet.league ?? 'NFL';
 
   if (!next.league_game_id) {
 		next.league_game_id = bet.league_game_id ?? null;
@@ -62,9 +61,9 @@ export async function preparePropHuntConfig({
   }
 
   try {
-    await enrichWithTeamContext(next, gameId);
+    await enrichWithTeamContext(next, league, gameId);
 
-    const currentStat = await fetchPlayerStat(gameId, next.stat, {
+    const currentStat = await fetchPlayerStat(league, gameId, next.stat, {
       id: next.player_id,
       name: next.player_name,
     });
@@ -154,13 +153,13 @@ function toNumber(raw: unknown): number | null {
   return null;
 }
 
-async function fetchPlayerStat(gameId: string, statKey: string | null | undefined, ref: PlayerRef): Promise<number | null> {
+async function fetchPlayerStat(league: League, gameId: string, statKey: string | null | undefined, ref: PlayerRef): Promise<number | null> {
   if (!statKey) return null;
   const category = STAT_KEY_TO_CATEGORY[String(statKey)];
   if (!category) return null;
   const key = resolvePlayerKey(ref.id, ref.name);
   if (!key) return null;
-  const value = await getPlayerStat(gameId, key, category, String(statKey));
+  const value = await getPlayerStat(league, gameId, key, category, String(statKey));
   return normalizeStatValue(value);
 }
 
@@ -184,27 +183,27 @@ function resolvePlayerKey(id?: string | null, name?: string | null): string | nu
   return null;
 }
 
-async function enrichWithTeamContext(config: PropHuntConfig, gameId: string): Promise<void> {
-  const homeTeam = await getHomeTeam(gameId);
-  const awayTeam = await getAwayTeam(gameId);
+async function enrichWithTeamContext(config: PropHuntConfig, league: League, gameId: string): Promise<void> {
+  const homeTeam = await getHomeTeam(league, gameId);
+  const awayTeam = await getAwayTeam(league, gameId);
 
   if (!config.home_team_id) {
-    config.home_team_id = extractTeamId(homeTeam);
+    config.home_team_id = homeTeam?.teamId ?? null;
   }
   if (!config.home_team_name) {
-    config.home_team_name = extractTeamName(homeTeam);
+    config.home_team_name = homeTeam?.displayName ?? null;
   }
   if (!config.home_team_abbrev) {
-    config.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+    config.home_team_abbrev = homeTeam?.abbreviation ?? null;
   }
   if (!config.away_team_id) {
-    config.away_team_id = extractTeamId(awayTeam);
+    config.away_team_id = awayTeam?.teamId ?? null;
   }
   if (!config.away_team_name) {
-    config.away_team_name = extractTeamName(awayTeam);
+    config.away_team_name = awayTeam?.displayName ?? null;
   }
   if (!config.away_team_abbrev) {
-    config.away_team_abbrev = extractTeamAbbreviation(awayTeam);
+    config.away_team_abbrev = awayTeam?.abbreviation ?? null;
   }
 }
 

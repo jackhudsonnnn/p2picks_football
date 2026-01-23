@@ -1,0 +1,125 @@
+{
+  "eventId": "0022500633",
+  "generatedAt": "2026-01-23T03:09:51.942Z",
+  "source": "nba.com",
+  "status": "STATUS_SCHEDULED",
+  "statusText": "pregame",
+  "period": 0,
+  "gameClock": "PT00M00.00S",
+  "arena": "Intuit Dome",
+  "attendance": 0,
+  "teams": [
+    {
+      "teamId": "1610612746",
+      "abbreviation": "LAC",
+      "displayName": "LA Clippers",
+      "name": "Clippers",
+      "city": "LA",
+      "score": 0,
+      "stats": {
+        "points": 0,
+        "rebounds": 0,
+        "reboundsOffensive": 0,
+        "reboundsDefensive": 0,
+        "assists": 0,
+        "steals": 0,
+        "blocks": 0,
+        "turnovers": 0,
+        "foulsPersonal": 0,
+        "foulsTechnical": 0,
+        "fieldGoalsMade": 0,
+        "fieldGoalsAttempted": 0,
+        "fieldGoalsPercentage": 0,
+        "threePointersMade": 0,
+        "threePointersAttempted": 0,
+        "threePointersPercentage": 0,
+        "freeThrowsMade": 0,
+        "freeThrowsAttempted": 0,
+        "freeThrowsPercentage": 0,
+        "fastBreakPoints": 0,
+        "pointsInThePaint": 0,
+        "pointsFromTurnovers": 0,
+        "benchPoints": 0,
+        "biggestLead": 0
+      },
+      "players": [],
+      "homeAway": "home",
+      "periods": [
+        {
+          "period": 1,
+          "score": 0
+        },
+        {
+          "period": 2,
+          "score": 0
+        },
+        {
+          "period": 3,
+          "score": 0
+        },
+        {
+          "period": 4,
+          "score": 0
+        }
+      ],
+      "timeoutsRemaining": 0,
+      "inBonus": false
+    },
+    {
+      "teamId": "1610612747",
+      "abbreviation": "LAL",
+      "displayName": "Los Angeles Lakers",
+      "name": "Lakers",
+      "city": "Los Angeles",
+      "score": 0,
+      "stats": {
+        "points": 0,
+        "rebounds": 0,
+        "reboundsOffensive": 0,
+        "reboundsDefensive": 0,
+        "assists": 0,
+        "steals": 0,
+        "blocks": 0,
+        "turnovers": 0,
+        "foulsPersonal": 0,
+        "foulsTechnical": 0,
+        "fieldGoalsMade": 0,
+        "fieldGoalsAttempted": 0,
+        "fieldGoalsPercentage": 0,
+        "threePointersMade": 0,
+        "threePointersAttempted": 0,
+        "threePointersPercentage": 0,
+        "freeThrowsMade": 0,
+        "freeThrowsAttempted": 0,
+        "freeThrowsPercentage": 0,
+        "fastBreakPoints": 0,
+        "pointsInThePaint": 0,
+        "pointsFromTurnovers": 0,
+        "benchPoints": 0,
+        "biggestLead": 0
+      },
+      "players": [],
+      "homeAway": "away",
+      "periods": [
+        {
+          "period": 1,
+          "score": 0
+        },
+        {
+          "period": 2,
+          "score": 0
+        },
+        {
+          "period": 3,
+          "score": 0
+        },
+        {
+          "period": 4,
+          "score": 0
+        }
+      ],
+      "timeoutsRemaining": 0,
+      "inBonus": false
+    }
+  ]
+}

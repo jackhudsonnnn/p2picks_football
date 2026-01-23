@@ -7,7 +7,8 @@ import {
   getGameStatus,
   getPossessionTeamId,
   getPossessionTeamName,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import {
   ChooseFateBaseline,
   ChooseTheirFateConfig,
@@ -24,6 +25,8 @@ import {
   CHOOSE_THEIR_FATE_STORE_PREFIX,
   CHOOSE_THEIR_FATE_STORE_TTL_SECONDS,
 } from './constants';
+
+const league: League = 'NFL';
 
 export class ChooseTheirFateValidatorService extends BaseValidatorService<ChooseTheirFateConfig, ChooseFateBaseline> {
   constructor() {
@@ -65,7 +68,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
 
   private async evaluateBet(bet: BetProposal, game_id: string): Promise<void> {
     try {
-      const status = await getGameStatus(game_id);
+      const status = await getGameStatus(league, game_id);
       if (this.shouldAutoWashForStatus(status)) {
         await this.washBet(
           bet.bet_id,
@@ -90,7 +93,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       }
 
   const currentScores = await collectTeamScores(game_id);
-  const possessionTeam = await getPossessionTeamId(game_id);
+  const possessionTeam = await getPossessionTeamId(league, game_id);
       const outcome = determineChooseFateOutcome(baseline, currentScores, possessionTeam);
       if (!outcome) return;
 
@@ -168,7 +171,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       return null;
     }
 
-    const status = normalizeStatus(await getGameStatus(gameId));
+    const status = normalizeStatus(await getGameStatus(league, gameId));
     if (this.shouldAutoWashForStatus(status)) {
       await this.washBet(
         bet.bet_id,
@@ -180,8 +183,8 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
 
     const configuredPossessionTeamId = normalizeTeamId(config.possession_team_id ?? null);
     const [currentPossessionTeamId, currentPossessionTeamName] = await Promise.all([
-      getPossessionTeamId(gameId).then(normalizeTeamId),
-      getPossessionTeamName(gameId),
+      getPossessionTeamId(league, gameId).then(normalizeTeamId),
+      getPossessionTeamName(league, gameId),
     ]);
     if (!currentPossessionTeamId) {
       await this.washBet(
@@ -205,7 +208,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       return null;
     }
 
-    const teams = await getAllTeams(gameId);
+    const teams = await getAllTeams(league, gameId);
     if (!teams.length) {
       this.logWarn('refined teams unavailable for baseline capture', { bet_id: bet.bet_id, gameId });
       return null;

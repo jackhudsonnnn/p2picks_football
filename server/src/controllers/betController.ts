@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from 'express';
-import { getAvailableGames } from '../services/nflData/nflRefinedDataAccessors';
+import { getAvailableGames } from '../services/leagueData';
 import { listModeDefinitions, getModeLiveInfo } from '../nfl_modes/registry';
 import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
@@ -297,13 +297,16 @@ export async function getBetLiveInfo(req: Request, res: Response) {
  * GET /api/bet-proposals/bootstrap
  * Get bootstrap data for bet proposal form.
  */
-export async function getBetProposalBootstrap(_req: Request, res: Response) {
+export async function getBetProposalBootstrap(req: Request, res: Response) {
   try {
-    const gameMap = await getAvailableGames();
+    // Get league from query param, default to NFL
+    const leagueParam = typeof req.query.league === 'string' ? req.query.league : 'NFL';
+    const league = normalizeLeague(leagueParam);
+    const gameMap = await getAvailableGames(league);
     const modeList = listModeDefinitions();
 
     const games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
-    res.json({ games, modes: modeList, general_config_schema: GENERAL_CONFIG_SCHEMA });
+    res.json({ games, modes: modeList, general_config_schema: GENERAL_CONFIG_SCHEMA, league });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to load bet proposal bootstrap data' });
   }

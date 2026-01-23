@@ -10,8 +10,11 @@ import {
   getPossessionTeamId,
   getPossessionTeamName,
   getMatchup,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { type ChooseFateBaseline, type ChooseTheirFateConfig } from './evaluator';
+
+const league: League = 'NFL';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();
@@ -39,10 +42,10 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
 
   const [homeTeam, awayTeam, livePossessionTeamId, livePossessionTeamName] = gameId
     ? await Promise.all([
-        getHomeTeam(gameId),
-        getAwayTeam(gameId),
-        getPossessionTeamId(gameId),
-        getPossessionTeamName(gameId),
+        getHomeTeam(league, gameId),
+        getAwayTeam(league, gameId),
+        getPossessionTeamId(league, gameId),
+        getPossessionTeamName(league, gameId),
       ])
     : [null, null, null, null];
 
@@ -72,7 +75,7 @@ export async function getChooseTheirFateLiveInfo(input: GetLiveInfoInput): Promi
 
   const resolvedHomeName = resolveTeamLabel(homeTeam, homeName);
   const resolvedAwayName = resolveTeamLabel(awayTeam, awayName);
-  const matchupLabel = await getMatchup(gameId || '');
+  const matchupLabel = await getMatchup(league, gameId || '');
   const fields: { label: string; value: string | number }[] = [];
 
   fields.push({ label: 'Matchup', value: matchupLabel });

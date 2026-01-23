@@ -1,5 +1,6 @@
 import { type PlayerRef } from '../../shared/playerUtils';
 import { readPlayerStatValue, resolvePlayerKey, resolveStatKey as baseResolveStatKey } from '../../shared/statEvaluatorHelpers';
+import type { League } from '../../../types/league';
 
 export interface EitherOrConfig {
   player1_id?: string | null;
@@ -9,6 +10,7 @@ export interface EitherOrConfig {
   stat?: string | null;
   stat_label?: string | null;
   league_game_id?: string | null;
+  league?: League | null;
   resolve_at?: string | null;
   progress_mode?: string | null;
 }
@@ -58,8 +60,8 @@ function resolveStatKey(config: EitherOrConfig | null | undefined): string | nul
   return baseResolveStatKey(config?.stat, PLAYER_STAT_MAP);
 }
 
-async function getPlayerValue(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
-  const value = await readPlayerStatValue(gameId, ref, statKey, PLAYER_STAT_MAP);
+async function getPlayerValue(league: League, gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
+  const value = await readPlayerStatValue(league, gameId, ref, statKey, PLAYER_STAT_MAP);
   return value ?? 0;
 }
 
@@ -70,11 +72,12 @@ export async function buildEitherOrBaseline(
 ): Promise<EitherOrBaseline | null> {
   const statKey = resolveStatKey(config);
   if (!statKey) return null;
+  const league = config.league ?? 'NFL';
   const player1Ref: PlayerRef = { id: config.player1_id, name: config.player1_name };
   const player2Ref: PlayerRef = { id: config.player2_id, name: config.player2_name };
   const [player1Value, player2Value] = await Promise.all([
-    getPlayerValue(gameId, player1Ref, statKey),
-    getPlayerValue(gameId, player2Ref, statKey),
+    getPlayerValue(league, gameId, player1Ref, statKey),
+    getPlayerValue(league, gameId, player2Ref, statKey),
   ]);
   return {
     statKey,
@@ -96,6 +99,7 @@ export async function evaluateEitherOr(
   const gameId = baseline?.gameId || config.league_game_id;
   if (!gameId) return null;
 
+  const league = config.league ?? 'NFL';
   const player1Ref: PlayerRef = {
     id: baseline?.player1.ref.id ?? config.player1_id,
     name: baseline?.player1.ref.name ?? config.player1_name,
@@ -106,8 +110,8 @@ export async function evaluateEitherOr(
   };
 
   const [player1Final, player2Final] = await Promise.all([
-    getPlayerValue(gameId, player1Ref, statKey),
-    getPlayerValue(gameId, player2Ref, statKey),
+    getPlayerValue(league, gameId, player1Ref, statKey),
+    getPlayerValue(league, gameId, player2Ref, statKey),
   ]);
 
   if (!Number.isFinite(player1Final) || !Number.isFinite(player2Final)) return null;

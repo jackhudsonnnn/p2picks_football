@@ -20,7 +20,7 @@ import {
   extractTeamId,
   extractTeamName,
   getMatchup,
-} from '../nflData/nflRefinedDataAccessors';
+} from '../leagueData';
 import { extractGameId, resolveGameId } from '../../utils/gameId';
 import type { League } from '../../types/league';
 
@@ -78,7 +78,8 @@ export async function buildModePreview(
   const ctx = buildModeContext(config, bet);
 
   const gameId = extractGameId(config) ?? '';
-  const description = await getMatchup(gameId);
+  const league = (config.league as League) || (bet?.league as League) || 'NFL';
+  const description = await getMatchup(league, gameId);
   const winningCondition = computeWinningCondition(definition, ctx);
   const options = computeModeOptions(definition, ctx);
   const errors = runModeValidator(definition, ctx);
@@ -156,6 +157,7 @@ function normalizeChoice(choice: ModeUserConfigChoice): ModeUserConfigChoice {
 async function enrichConfigWithGameContext(config: Record<string, unknown>, bet: BetProposal | null): Promise<void> {
   const target = config as Record<string, unknown> & {
     league_game_id?: unknown;
+    league?: unknown;
     home_team_id?: unknown;
     home_team_name?: unknown;
     away_team_id?: unknown;
@@ -166,6 +168,9 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
   const existingGameId = extractGameId(target);
   const betGameId = bet?.league_game_id ?? '';
   const gameId = existingGameId ?? betGameId;
+
+  // Get league from config or bet
+  const league = (target.league as League) || (bet?.league as League) || 'NFL';
 
   if (!gameId) {
     return;
@@ -186,8 +191,8 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
   }
 
   try {
-    const homeTeam = await getHomeTeam(gameId);
-    const awayTeam = await getAwayTeam(gameId);
+    const homeTeam = await getHomeTeam(league, gameId);
+    const awayTeam = await getAwayTeam(league, gameId);
 
     if (needsHomeId && !target.home_team_id) {
       target.home_team_id = extractTeamId(homeTeam);

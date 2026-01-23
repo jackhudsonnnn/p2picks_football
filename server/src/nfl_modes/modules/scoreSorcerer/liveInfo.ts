@@ -3,15 +3,17 @@ import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
 import {
-  extractTeamAbbreviation,
-  extractTeamId,
-  extractTeamName,
   getAwayScore,
   getAwayTeam,
   getHomeScore,
   getHomeTeam,
   getMatchup,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+  extractTeamId,
+  extractTeamName,
+  extractTeamAbbreviation,
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
+import type { LeagueTeam } from '../../../services/leagueData/types';
 import {
   SCORE_SORCERER_LABEL,
   SCORE_SORCERER_MODE_KEY,
@@ -23,6 +25,8 @@ import {
   homeChoiceLabel,
   awayChoiceLabel,
 } from './evaluator';
+
+const league: League = 'NFL';
 
 const redis = getRedisClient();
 const baselineStore = new RedisJsonStore<ScoreSorcererBaseline>(redis, SCORE_SORCERER_STORE_PREFIX, 60 * 60 * 12);
@@ -51,7 +55,7 @@ export async function getScoreSorcererLiveInfo(input: GetLiveInfoInput): Promise
 
   const homeLabel = homeChoiceLabel({ ...typedConfig, home_team_name: snapshot.homeTeamName });
   const awayLabel = awayChoiceLabel({ ...typedConfig, away_team_name: snapshot.awayTeamName });
-  const matchupLabel = await getMatchup(gameId);
+  const matchupLabel = await getMatchup(league, gameId);
   const fields = [
     { label: 'Matchup', value: matchupLabel },
     { label: homeLabel, value: formatScore(snapshot.homeScore, baseline?.homeScore) },
@@ -74,10 +78,10 @@ async function buildScoreSorcererSnapshotFromAccessors(
   config: ScoreSorcererConfig,
 ): Promise<ScoreSorcererBaseline | null> {
   const [homeTeam, awayTeam, homeScoreRaw, awayScoreRaw] = await Promise.all([
-    getHomeTeam(gameId),
-    getAwayTeam(gameId),
-    getHomeScore(gameId),
-    getAwayScore(gameId),
+    getHomeTeam(league, gameId),
+    getAwayTeam(league, gameId),
+    getHomeScore(league, gameId),
+    getAwayScore(league, gameId),
   ]);
 
   if (!homeTeam && !awayTeam) return null;

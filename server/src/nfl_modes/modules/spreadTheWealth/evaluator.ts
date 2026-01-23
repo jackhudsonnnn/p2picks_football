@@ -1,4 +1,5 @@
-import { listTeams } from '../../../services/nflData/nflRefinedDataAccessors';
+import { listTeams } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { formatNumber, isApproximatelyEqual, normalizeNumber } from '../../../utils/number';
 import { normalizeTeamId } from '../../shared/teamUtils';
 
@@ -46,8 +47,9 @@ export function describeSpread(config: SpreadTheWealthConfig): string | null {
 
 export async function resolveTeams(
   config: SpreadTheWealthConfig,
+  league: League = 'NFL',
 ): Promise<{ homeTeam: any; awayTeam: any }> {
-  const teams = config?.league_game_id ? await listTeams(config.league_game_id) : [];
+  const teams = config?.league_game_id ? await listTeams(league, config.league_game_id) : [];
   let home = lookupTeam(teams, config.home_team_id, config.home_team_name, 'home');
   let away = lookupTeam(teams, config.away_team_id, config.away_team_name, 'away');
   if (!home && teams.length > 0) home = teams[0];

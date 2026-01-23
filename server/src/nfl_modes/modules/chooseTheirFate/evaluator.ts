@@ -1,6 +1,9 @@
-import { getAllTeams, getCategory } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getAllTeams, getCategory } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeTeamId } from '../../shared/teamUtils';
+
+const league: League = 'NFL';
 
 export interface ChooseTheirFateConfig {
 	league_game_id?: string | null;
@@ -41,7 +44,7 @@ export type ChooseFateOutcome =
 	| { outcome: 'Turnover'; scoringTeamId: string; fromTeamId: string; toTeamId: string | null };
 
 export async function collectTeamScores(gameId: string): Promise<ChooseFateScoreMap> {
-	const teams = await getAllTeams(gameId);
+	const teams = await getAllTeams(league, gameId);
 	if (!teams || teams.length === 0) {
 		return {};
 	}

@@ -5,7 +5,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin, type BetProposal } from '../../supabaseClient';
-import { getGameStatus } from '../nflData/nflRefinedDataAccessors';
+import { getGameStatus } from '../leagueData';
 import { storeModeConfig, fetchModeConfig } from '../../utils/modeConfig';
 import {
   buildModePreview,
@@ -347,14 +347,12 @@ async function validateGameStatus(
   leagueGameId: string,
   league: League,
 ): Promise<void> {
-  // TODO: Add support for other leagues (NBA, MLB, etc.)
-  if (league !== 'NFL') return;
   const gameIdsToCheck = new Set<string>();
   if (configGameId) gameIdsToCheck.add(configGameId);
   if (leagueGameId) gameIdsToCheck.add(leagueGameId);
 
   for (const gameId of gameIdsToCheck) {
-    const status = await getGameStatus(gameId);
+    const status = await getGameStatus(league, gameId);
     if (status === 'STATUS_FINAL') {
       throw BetProposalError.badRequest(
         'Bets cannot be proposed for games that have already ended',

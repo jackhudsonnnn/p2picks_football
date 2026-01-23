@@ -1,4 +1,5 @@
-import { getTotalScore } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getTotalScore } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 
 export interface TotalDisasterConfig {
@@ -41,8 +42,8 @@ export function describeLine(config: TotalDisasterConfig): string | null {
   return null;
 }
 
-export async function evaluateTotalDisaster(gameId: string, line: number): Promise<TotalDisasterEvaluationResult> {
-  const totalPoints = await getTotalScore(gameId);
+export async function evaluateTotalDisaster(league: League, gameId: string, line: number): Promise<TotalDisasterEvaluationResult> {
+  const totalPoints = await getTotalScore(league, gameId);
   if (isApproximatelyEqual(totalPoints, line)) {
     return {
       totalPoints,

@@ -1,4 +1,5 @@
-import { getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { formatNumber } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
@@ -27,7 +28,8 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
   }
 
   protected async onGameUpdate(gameId: string): Promise<void> {
-    const status = normalizeStatus(await getGameStatus(gameId));
+    const league: League = 'NFL'; // Default for nfl_modes
+    const status = normalizeStatus(await getGameStatus(league, gameId));
 
     if (status !== 'STATUS_FINAL') return;
     const bets = await this.listPendingBets({ gameId });
@@ -58,7 +60,7 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
         return;
       }
 
-      const evaluation = await evaluateTotalDisaster(String(config.league_game_id), line);
+      const evaluation = await evaluateTotalDisaster('NFL', String(config.league_game_id), line);
       if (evaluation.decision === 'push') {
         await this.washBet(
           betId,

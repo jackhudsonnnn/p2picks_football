@@ -1,4 +1,4 @@
-import { getHomeTeamName } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getHomeTeamName } from '../../../services/leagueData';
 import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
@@ -7,9 +7,10 @@ import { resolveGameId } from '../../../utils/gameId';
 
 export async function buildSpreadTheWealthUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
   const gameId = resolveGameId(input) ?? '';
+  const league = input.league ?? 'NFL';
   const title = 'Select Point Spread';
-  const homeLabel = await getHomeTeamName(gameId);
-  const skipResolveStep = await shouldSkipResolveStep(gameId);
+  const homeLabel = await getHomeTeamName(league, gameId);
+  const skipResolveStep = await shouldSkipResolveStep(league, gameId);
   const choices: ModeUserConfigChoice[] = buildSpreadChoices(homeLabel, skipResolveStep);
 
   const steps: ModeUserConfigStep[] = [

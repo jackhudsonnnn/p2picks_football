@@ -13,7 +13,8 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { BetProposal } from '../../supabaseClient';
 import { fetchModeConfig } from '../../utils/modeConfig';
-import { getGameStatus } from '../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus } from '../../services/leagueData';
+import type { League } from '../../types/league';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
@@ -146,12 +147,13 @@ export abstract class BaseValidatorService<TConfig, TStore> {
    */
   protected async washIfGameFinalAtBaseline(
     betId: string,
+    league: League,
     gameId?: string | null,
     extraPayload?: Record<string, unknown>,
   ): Promise<boolean> {
     if (!gameId) return false;
     try {
-      const rawStatus = await getGameStatus(String(gameId));
+      const rawStatus = await getGameStatus(league, String(gameId));
       const status = normalizeStatus(rawStatus);
       if (status === 'STATUS_FINAL') {
         await this.washBet(
@@ -293,8 +295,9 @@ export abstract class BaseValidatorService<TConfig, TStore> {
 
       // Bet just became pending
       if (next.bet_status === 'pending' && prev.bet_status !== 'pending') {
-  const gameId = (next as any)?.league_game_id ?? null;
-        const washed = await this.washIfGameFinalAtBaseline(next.bet_id, gameId, { trigger: 'pending_transition' });
+        const gameId = (next as any)?.league_game_id ?? null;
+        const league = (next as any)?.league ?? 'NFL';
+        const washed = await this.washIfGameFinalAtBaseline(next.bet_id, league, gameId, { trigger: 'pending_transition' });
         if (!washed) {
           await this.onBetBecamePending(next as BetProposal);
         }

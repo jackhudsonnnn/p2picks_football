@@ -1,5 +1,6 @@
 import { BetProposal } from '../../../supabaseClient';
-import { getPlayerStat, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getPlayerStat, getGameStatus } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
 import { PLAYER_STAT_MAP } from './constants';
@@ -23,7 +24,8 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
   }
 
   protected async onGameUpdate(gameId: string): Promise<void> {
-    const status = normalizeStatus(await getGameStatus(gameId));
+    const league: League = 'NFL'; // Default for nfl_modes
+    const status = normalizeStatus(await getGameStatus(league, gameId));
     const halftimeResolveAt =
       ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
 
@@ -215,6 +217,7 @@ async function buildEitherOrBaselineFromAccessors(
   gameId: string,
   config: EitherOrConfig,
   capturedAt: string = new Date().toISOString(),
+  league: League = 'NFL',
 ): Promise<EitherOrBaseline | null> {
   const statKey = resolveStatKey(config);
   if (!statKey) return null;
@@ -227,8 +230,8 @@ async function buildEitherOrBaselineFromAccessors(
   if (!player1Key || !player2Key) return null;
 
   const [player1Value, player2Value] = await Promise.all([
-    getPlayerStat(gameId, player1Key, spec.category, spec.field),
-    getPlayerStat(gameId, player2Key, spec.category, spec.field),
+    getPlayerStat(league, gameId, player1Key, spec.category, spec.field),
+    getPlayerStat(league, gameId, player2Key, spec.category, spec.field),
   ]);
 
   return {

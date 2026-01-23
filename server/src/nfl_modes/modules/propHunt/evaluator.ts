@@ -1,5 +1,6 @@
 import { type PlayerRef } from '../../shared/playerUtils';
 import { readPlayerStatValue, resolveStatKey as baseResolveStatKey } from '../../shared/statEvaluatorHelpers';
+import type { League } from '../../../types/league';
 
 export interface PropHuntConfig {
   player_id?: string | null;
@@ -10,6 +11,7 @@ export interface PropHuntConfig {
   line_value?: number | null;
   line_label?: string | null;
   league_game_id?: string | null;
+  league?: League | null;
   resolve_at?: string | null;
   progress_mode?: string | null;
 }
@@ -128,7 +130,9 @@ async function readStatValueFromAccessors(config: PropHuntConfig): Promise<numbe
   const gameId = config.league_game_id ? String(config.league_game_id) : '';
   if (!gameId) return null;
 
+  const league = config.league ?? 'NFL';
   const value = await readPlayerStatValue(
+    league,
     gameId,
     { id: config.player_id, name: config.player_name },
     statKey,

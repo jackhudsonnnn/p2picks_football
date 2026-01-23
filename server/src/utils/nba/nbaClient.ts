@@ -66,18 +66,15 @@ export async function getScoreboard(): Promise<ScoreboardResponse | null> {
 }
 
 /**
- * Get list of live/active games (in progress or final within session).
+ * Get list of today's games (scheduled, in progress, or final).
  */
 export async function getLiveGames(): Promise<NbaGame[]> {
   const scoreboard = await getScoreboard();
   if (!scoreboard?.scoreboard?.games) {
     return [];
   }
-  // Return all games that are in progress (status 2) or completed (status 3)
-  // Status 1 = Scheduled (not started yet)
-  return scoreboard.scoreboard.games.filter(
-    (game) => game.gameStatus === 2 || game.gameStatus === 3
-  );
+  // Return all games: scheduled (1), in progress (2), and completed (3)
+  return scoreboard.scoreboard.games;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { BetProposal } from '../../../supabaseClient';
-import { getPlayerStat, getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getPlayerStat, getGameStatus } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { formatNumber, isApproximatelyEqual } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
@@ -29,7 +30,8 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
   }
 
   protected async onGameUpdate(gameId: string): Promise<void> {
-    const status = normalizeStatus(await getGameStatus(gameId));
+    const league: League = 'NFL'; // Default for nfl_modes
+    const status = normalizeStatus(await getGameStatus(league, gameId));
     const halftimeOption =
       PROP_HUNT_ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
 
@@ -249,14 +251,14 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
 
 export const propHuntValidator = new PropHuntValidatorService();
 
-async function readStatValueFromAccessors(config: PropHuntConfig, gameId?: string | null): Promise<number | null> {
+async function readStatValueFromAccessors(config: PropHuntConfig, gameId?: string | null, league: League = 'NFL'): Promise<number | null> {
   const statKey = (config.stat || '').trim();
   const spec = STAT_ACCESSOR_MAP[statKey];
   if (!spec) return null;
   const playerId = config.player_id || (config.player_name ? `name:${config.player_name.trim()}` : null);
   const resolvedGameId = gameId ?? config.league_game_id ?? null;
   if (!playerId || !resolvedGameId) return null;
-  const value = await getPlayerStat(resolvedGameId, playerId, spec.category, spec.field);
+  const value = await getPlayerStat(league, resolvedGameId, playerId, spec.category, spec.field);
   return Number.isFinite(value) ? value : null;
 }
 

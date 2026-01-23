@@ -10,20 +10,19 @@ import {
   normalizePropHuntProgressMode,
 } from './evaluator';
 import {
-  extractTeamAbbreviation,
-  extractTeamName,
   getAwayTeam,
   getHomeTeam,
   getPlayerStat,
   getMatchup,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();
 const baselineStore = new RedisJsonStore<PropHuntBaseline>(redis, 'propHunt:baseline', 60 * 60 * 12);
 
 export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
-  const { betId, config, leagueGameId } = input;
+  const { betId, config, leagueGameId, league } = input;
   const typedConfig = config as PropHuntConfig;
 
   const baseResult: ModeLiveInfo = {
@@ -53,7 +52,7 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
   // Get live game data for current value
   const gameId = leagueGameId ?? typedConfig.league_game_id ?? null;
   const [homeTeam, awayTeam] = gameId
-    ? await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)])
+    ? await Promise.all([getHomeTeam(league, gameId), getAwayTeam(league, gameId)])
     : [null, null];
 
   // Build baseline and current values
@@ -65,7 +64,7 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
   }
 
   if (gameId) {
-    const statValue = await readStatValueFromAccessors(gameId, typedConfig);
+    const statValue = await readStatValueFromAccessors(league, gameId, typedConfig);
     if (statValue !== null) {
       currentValue = statValue;
     }
@@ -77,7 +76,7 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
     progress = currentValue - baselineValue;
   }
 
-  const matchup = await getMatchup(gameId || '');
+  const matchup = await getMatchup(league, gameId || '');
   const trackingLabel = isStartingNow ? 'Starting Now' : 'Cumulative';
   
   const fields: { label: string; value: string | number }[] = [
@@ -123,13 +122,13 @@ export async function getPropHuntLiveInfo(input: GetLiveInfoInput): Promise<Mode
   };
 }
 
-async function readStatValueFromAccessors(gameId: string, config: PropHuntConfig): Promise<number | null> {
+async function readStatValueFromAccessors(league: League, gameId: string, config: PropHuntConfig): Promise<number | null> {
   const statKey = (config.stat || '').trim();
   const spec = STAT_ACCESSOR_MAP[statKey];
   if (!spec) return null;
   const playerId = config.player_id || (config.player_name ? `name:${config.player_name}` : null);
   if (!playerId) return null;
-  const value = await getPlayerStat(gameId, playerId, spec.category, spec.field);
+  const value = await getPlayerStat(league, gameId, playerId, spec.category, spec.field);
   return Number.isFinite(value) ? value : null;
 }
 

@@ -3,7 +3,7 @@
  * Uses shared UserConfigBuilder utilities.
  */
 
-import { getPlayer } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getPlayer } from '../../../services/leagueData';
 import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import {
   loadGameContext,
@@ -29,9 +29,10 @@ const DEBUG = process.env.DEBUG_PROP_HUNT === '1' || process.env.DEBUG_PROP_HUNT
 
 export async function buildPropHuntUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
   const gameId = resolveGameId(input as GameContextInput);
-  const context = await loadGameContext(gameId);
+  const league = input.league ?? 'NFL';
+  const context = await loadGameContext(league, gameId);
   const statKey = input.config?.stat as string | undefined;
-  const currentStat = gameId ? await getCurrentStatValue(gameId, input.config ?? {}) : null;
+  const currentStat = gameId ? await getCurrentStatValue(league, gameId, input.config ?? {}) : null;
   const progressModeForLines = context.showProgressStep
     ? normalizeProgressMode(input.config?.progress_mode)
     : 'starting_now';
@@ -193,7 +194,7 @@ function extractLine(config: Record<string, unknown>): string | null {
   return value.toFixed(1);
 }
 
-async function getCurrentStatValue(gameId: string, config: Record<string, unknown>): Promise<number | null> {
+async function getCurrentStatValue(league: import('../../../types/league').League, gameId: string, config: Record<string, unknown>): Promise<number | null> {
   const statKey = typeof config.stat === 'string' ? config.stat : '';
   if (!statKey || !STAT_KEY_TO_CATEGORY[statKey]) {
     return null;
@@ -202,17 +203,18 @@ async function getCurrentStatValue(gameId: string, config: Record<string, unknow
     id: typeof config.player_id === 'string' ? config.player_id : null,
     name: typeof config.player_name === 'string' ? config.player_name : null,
   };
-  return extractPlayerStat(gameId, statKey, ref);
+  return extractPlayerStat(league, gameId, statKey, ref);
 }
 
 async function extractPlayerStat(
+  league: import('../../../types/league').League,
   gameId: string,
   statKey: string,
   ref: { id?: string | null; name?: string | null },
 ): Promise<number | null> {
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
-  const player = await lookupPlayer(gameId, ref);
+  const player = await lookupPlayer(league, gameId, ref);
   if (!player) return null;
   const stats = ((player as any).stats || {}) as Record<string, Record<string, unknown>>;
   const categoryStats = stats ? (stats[category] as Record<string, unknown>) : undefined;
@@ -220,13 +222,13 @@ async function extractPlayerStat(
   return normalizeStatValue(categoryStats[statKey]);
 }
 
-async function lookupPlayer(gameId: string, ref: { id?: string | null; name?: string | null }) {
+async function lookupPlayer(league: import('../../../types/league').League, gameId: string, ref: { id?: string | null; name?: string | null }) {
   if (ref.id) {
-    const byId = await getPlayer(gameId, String(ref.id));
+    const byId = await getPlayer(league, gameId, String(ref.id));
     if (byId) return byId;
   }
   if (ref.name) {
-    const byName = await getPlayer(gameId, `name:${ref.name}`);
+    const byName = await getPlayer(league, gameId, `name:${ref.name}`);
     if (byName) return byName;
   }
   return null;

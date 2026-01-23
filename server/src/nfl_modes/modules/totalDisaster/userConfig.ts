@@ -1,17 +1,19 @@
-import { getHomeScore, getAwayScore } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getHomeScore, getAwayScore } from '../../../services/leagueData';
 import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
 import { shouldSkipResolveStep } from '../../shared/resolveUtils';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
 import { LINE_MIN, LINE_MAX, LINE_STEP } from './constants';
 import { resolveGameId, type GameContextInput } from '../../../utils/gameId';
+import type { League } from '../../../types/league';
 
 export async function buildTotalDisasterUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
   const gameId = resolveGameId(input as GameContextInput) ?? '';
+  const league = input.league ?? 'NFL';
   const title = "Select Over/Under Line";
 
   const lineChoices = buildBaseLineChoices();
-  const skipResolveStep = await shouldSkipResolveStep(gameId);
-  const minLineValue = await computeMinLineValue(gameId);
+  const skipResolveStep = await shouldSkipResolveStep(league, gameId);
+  const minLineValue = await computeMinLineValue(league, gameId);
   const choices: ModeUserConfigChoice[] = buildLineChoices(lineChoices, skipResolveStep, minLineValue);
 
   const steps: ModeUserConfigStep[] = [
@@ -90,10 +92,10 @@ function buildResolveChoices(): ModeUserConfigChoice[] {
   }));
 }
 
-async function computeMinLineValue(gameId: string): Promise<number | null> {
+async function computeMinLineValue(league: League, gameId: string): Promise<number | null> {
   if (!gameId) return null;
   try {
-    const [home, away] = await Promise.all([getHomeScore(gameId), getAwayScore(gameId)]);
+    const [home, away] = await Promise.all([getHomeScore(league, gameId), getAwayScore(league, gameId)]);
     const total = (Number.isFinite(Number(home)) ? Number(home) : 0) + (Number.isFinite(Number(away)) ? Number(away) : 0);
     if (!Number.isFinite(total)) return null;
     const baseline = Math.max(0, total);

@@ -1,5 +1,8 @@
-import { getGameStatus, getPossessionTeamId, getPossessionTeamName } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getPossessionTeamId, getPossessionTeamName } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import type { ValidateProposalInput, ValidateProposalResult } from '../../shared/types';
+
+const league: League = 'NFL';
 
 export async function validateChooseTheirFateProposal(
   input: ValidateProposalInput
@@ -9,7 +12,7 @@ export async function validateChooseTheirFateProposal(
     return { valid: false, error: 'Choose Their Fate requires a league_game_id' };
   }
 
-  const status = await getGameStatus(gameId);  
+  const status = await getGameStatus(league, gameId);  
   if (status !== 'STATUS_IN_PROGRESS' && status !== 'STATUS_END_PERIOD') {
     return {
       valid: false,
@@ -19,8 +22,8 @@ export async function validateChooseTheirFateProposal(
   }
 
   const [possessionTeamId, possessionTeamName] = await Promise.all([
-    getPossessionTeamId(gameId),
-    getPossessionTeamName(gameId),
+    getPossessionTeamId(league, gameId),
+    getPossessionTeamName(league, gameId),
   ]);
 
   if (!possessionTeamId && !possessionTeamName) {

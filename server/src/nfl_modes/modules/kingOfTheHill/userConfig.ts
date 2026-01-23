@@ -25,7 +25,8 @@ import { resolveGameId, type GameContextInput } from '../../../utils/gameId';
 
 export async function buildKingOfTheHillUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
   const gameId = resolveGameId(input as GameContextInput);
-  const context = await loadGameContext(gameId);
+  const league = input.league ?? 'NFL';
+  const context = await loadGameContext(league, gameId);
   const statKey = input.config?.stat as string | undefined;
   const selectedProgressMode = parseProgressModeSelection(input.config?.progress_mode);
   const filteredPlayers = filterPlayersByStatPosition(context.players, statKey);
@@ -86,6 +87,7 @@ export async function buildKingOfTheHillUserConfig(input: BuildUserConfigInput):
 
   // Resolve value step should always be available (scheduled or in-progress games)
   const resolveValueStep = await buildResolveValueStep({
+    league,
     gameId,
     statKey,
     progressMode: context.showProgressStep ? selectedProgressMode : effectiveProgressMode,
@@ -111,6 +113,7 @@ interface ResolveValueContext {
 }
 
 async function buildResolveValueStep(input: {
+  league: import('../../../types/league').League;
   gameId: string | null;
   statKey?: string;
   progressMode: 'starting_now' | 'cumulative' | null;
@@ -152,6 +155,7 @@ async function buildResolveValueStep(input: {
 }
 
 async function computeResolveValueFilter(input: {
+  league: import('../../../types/league').League;
   gameId: string | null;
   statKey?: string;
   progressMode: 'starting_now' | 'cumulative' | null;
@@ -189,8 +193,8 @@ async function computeResolveValueFilter(input: {
     name: readConfigString(input.existingConfig, 'player2_name'),
   };
 
-  const player1Value = await readPlayerStat(input.gameId, player1Ref, resolvedStatKey);
-  const player2Value = await readPlayerStat(input.gameId, player2Ref, resolvedStatKey);
+  const player1Value = await readPlayerStat(input.league, input.gameId, player1Ref, resolvedStatKey);
+  const player2Value = await readPlayerStat(input.league, input.gameId, player2Ref, resolvedStatKey);
   const highestValue = Math.max(player1Value, player2Value, 0);
   const minAllowed = Math.max(KING_OF_THE_HILL_MIN_RESOLVE_VALUE, Math.floor(highestValue) + 1);
   const filteredValues = baseValues.filter((value) => value >= minAllowed);

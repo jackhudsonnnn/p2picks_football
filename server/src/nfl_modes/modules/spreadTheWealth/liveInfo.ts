@@ -7,10 +7,11 @@ import {
   getAwayScore,
   getHomeTeam,
   getMatchup,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 
 export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
-  const { config, leagueGameId } = input;
+  const { config, leagueGameId, league } = input;
   const typedConfig = config as SpreadTheWealthConfig;
 
   const baseResult: ModeLiveInfo = {
@@ -48,14 +49,14 @@ export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promi
   }
 
   const [homeScoreRaw, awayScoreRaw] = await Promise.all([
-    getHomeScore(gameId),
-    getAwayScore(gameId),
+    getHomeScore(league, gameId),
+    getAwayScore(league, gameId),
   ]);
 
   const homeScore = normalizeNumber(homeScoreRaw);
   const awayScore = normalizeNumber(awayScoreRaw);
   const adjustedHomeScore = homeScore + spread;
-  const matchupLabel = await getMatchup(gameId || '');
+  const matchupLabel = await getMatchup(league, gameId || '');
   const fields = [
     { label: 'Matchup', value: matchupLabel },
     { label: `${homeName} (Adjusted)`, value: formatNumber(adjustedHomeScore) },

@@ -1,8 +1,19 @@
 import { normalizeNumber } from '../../../utils/number';
 import { normalizeStatus } from '../../shared/utils';
 import { choiceLabel } from '../../shared/teamUtils';
-import { getHomeTeam, getAwayTeam, getScores, extractTeamId, getGameStatus, extractTeamName, extractTeamAbbreviation } from '../../../services/nflData/nflRefinedDataAccessors';
+import {
+  getHomeTeam,
+  getAwayTeam,
+  getScores,
+  getGameStatus,
+  extractTeamId,
+  extractTeamName,
+  extractTeamAbbreviation,
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { SCORE_SORCERER_NO_MORE_SCORES } from './constants';
+
+const league: League = 'NFL';
 
 export interface ScoreSorcererConfig {
   league_game_id?: string | null;
@@ -88,7 +99,7 @@ export async function evaluateScoreSorcerer(
     return { decision: 'simultaneous', homeScore: snapshot.homeScore, awayScore: snapshot.awayScore, deltaHome, deltaAway };
   }
 
-  const status = normalizeStatus(await getGameStatus(gameId));
+  const status = normalizeStatus(await getGameStatus(league, gameId));
 
   if (status === 'STATUS_FINAL') {
     return { decision: 'no_more_scores', homeScore: snapshot.homeScore, awayScore: snapshot.awayScore, deltaHome, deltaAway };
@@ -117,9 +128,9 @@ async function readScoreSnapshot(config: ScoreSorcererConfig): Promise<
   if (!gameId) return null;
 
   const [homeTeam, awayTeam, scores] = await Promise.all([
-    getHomeTeam(gameId),
-    getAwayTeam(gameId),
-    getScores(gameId),
+    getHomeTeam(league, gameId),
+    getAwayTeam(league, gameId),
+    getScores(league, gameId),
   ]);
 
   if (!homeTeam && !awayTeam) return null;

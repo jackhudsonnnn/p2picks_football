@@ -1,4 +1,5 @@
-import { getPlayerStat } from '../../services/nflData/nflRefinedDataAccessors';
+import { getPlayerStat } from '../../services/leagueData';
+import type { League } from '../../types/league';
 import type { PlayerRef } from './playerUtils';
 
 export type PlayerStatSpec = { category: string; field: string };
@@ -20,6 +21,7 @@ export function resolveStatKey(stat?: string | null, statMap?: PlayerStatMap): s
 }
 
 export async function readPlayerStatValue(
+  league: League,
   gameId: string | null | undefined,
   ref: PlayerRef,
   statKey: string,
@@ -30,6 +32,6 @@ export async function readPlayerStatValue(
   const spec = statMap[statKey];
   if (!spec) return null;
 
-  const value = await getPlayerStat(String(gameId), key, spec.category, spec.field);
+  const value = await getPlayerStat(league, String(gameId), key, spec.category, spec.field);
   return Number.isFinite(value) ? Number(value) : null;
 }

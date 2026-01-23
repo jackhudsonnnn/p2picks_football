@@ -1,9 +1,16 @@
-import { getGameStatus, getGamePeriod } from '../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getGamePeriod } from '../../services/leagueData';
+import type { League } from '../../types/league';
 
-export async function shouldSkipResolveStep(gameId: string | null | undefined): Promise<boolean> {
+export async function shouldSkipResolveStep(
+  league: League,
+  gameId: string | null | undefined,
+): Promise<boolean> {
   if (!gameId) return false;
   try {
-    const [status, period] = await Promise.all([getGameStatus(gameId), getGamePeriod(gameId)]);
+    const [status, period] = await Promise.all([
+      getGameStatus(league, gameId),
+      getGamePeriod(league, gameId),
+    ]);
     return (status === 'STATUS_HALFTIME') || (typeof period === 'number' && Number.isFinite(period) && period >= 3);
   } catch (err: any) {
     console.warn('[resolveUtils] shouldSkipResolveStep error', { gameId, error: err instanceof Error ? err.message : String(err) });

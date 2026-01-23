@@ -1,5 +1,6 @@
 import { BetProposal } from '../../../supabaseClient';
-import { getGameStatus, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getPlayerStat } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
 import { clampResolveValue, KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE } from './constants';
@@ -79,8 +80,9 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
 
       const progressMode = progress.progressMode || normalizeProgressMode(config.progress_mode);
       const effectiveGameId = progress.gameId || (config.league_game_id ? String(config.league_game_id) : gameId);
-      const player1Current = await readPlayerStat(effectiveGameId, { id: config.player1_id, name: config.player1_name }, progress.statKey);
-      const player2Current = await readPlayerStat(effectiveGameId, { id: config.player2_id, name: config.player2_name }, progress.statKey);
+      const league = config.league ?? 'NFL';
+      const player1Current = await readPlayerStat(league, effectiveGameId, { id: config.player1_id, name: config.player1_name }, progress.statKey);
+      const player2Current = await readPlayerStat(league, effectiveGameId, { id: config.player2_id, name: config.player2_name }, progress.statKey);
       const timestamp = this.normalizeTimestamp(updatedAt);
 
       const updatedProgress = applyProgressUpdate(
@@ -118,7 +120,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return;
       }
 
-      const status = normalizeStatus(await getGameStatus(effectiveGameId));
+      const status = normalizeStatus(await getGameStatus(league, effectiveGameId));
       if (status === 'STATUS_FINAL' && outcome === 'none') {
         await this.setNeitherResult(betId, updatedProgress);
       }
@@ -161,8 +163,10 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return null;
       }
 
+      const league = config.league ?? 'NFL';
       const capturedAt = this.normalizeTimestamp(eventTimestamp);
       const progress = await buildProgressRecordFromAccessors(
+        league,
         gameId,
         config,
         statKey,
@@ -267,6 +271,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
 export const kingOfTheHillValidator = new KingOfTheHillValidatorService();
 
 async function buildProgressRecordFromAccessors(
+  league: League,
   gameId: string,
   config: KingOfTheHillConfig,
   statKey: string,
@@ -282,8 +287,8 @@ async function buildProgressRecordFromAccessors(
   if (!player1Key || !player2Key) return null;
 
   const [player1Value, player2Value] = await Promise.all([
-    getPlayerStat(gameId, player1Key, spec.category, spec.field),
-    getPlayerStat(gameId, player2Key, spec.category, spec.field),
+    getPlayerStat(league, gameId, player1Key, spec.category, spec.field),
+    getPlayerStat(league, gameId, player2Key, spec.category, spec.field),
   ]);
 
   return {

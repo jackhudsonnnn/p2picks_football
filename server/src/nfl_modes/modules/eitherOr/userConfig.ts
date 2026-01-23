@@ -25,7 +25,8 @@ import type { BuildUserConfigInput } from '../../shared/types';
 
 export async function buildEitherOrUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
   const gameId = resolveGameId(input as GameContextInput);
-  const context = await loadGameContext(gameId);
+  const league = input.league ?? 'NFL';
+  const context = await loadGameContext(league, gameId);
   const statKey = input.config?.stat as string | undefined;
 
   // Filter players by position based on stat

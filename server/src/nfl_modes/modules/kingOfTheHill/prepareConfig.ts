@@ -3,10 +3,8 @@ import {
   getHomeTeam,
   getAwayTeam,
   getPlayerStat,
-  extractTeamId,
-  extractTeamName,
-  extractTeamAbbreviation,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import {
   KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
   KING_OF_THE_HILL_MAX_RESOLVE_VALUE,
@@ -54,6 +52,7 @@ export async function prepareKingOfTheHillConfig({
 	cfg.league_game_id = bet.league_game_id ?? null;
   }
 
+  const league: League = bet.league ?? 'NFL';
   const resolveValue = clampResolveValue(cfg.resolve_value ?? cfg.resolve_value_label ?? KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE);
   cfg.resolve_value = resolveValue;
   cfg.resolve_value_label = cfg.resolve_value_label ?? String(resolveValue);
@@ -74,11 +73,11 @@ export async function prepareKingOfTheHillConfig({
   }
 
   try {
-    await enrichWithTeamContext(cfg, gameId);
+    await enrichWithTeamContext(cfg, league, gameId);
 
     const [player1Value, player2Value] = await Promise.all([
-      fetchPlayerStat(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
-      fetchPlayerStat(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
+      fetchPlayerStat(league, gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
+      fetchPlayerStat(league, gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
 
     return {
@@ -121,12 +120,12 @@ function normalizeConfigPayload(config: KingOfTheHillConfig) {
   } as Record<string, unknown>;
 }
 
-async function fetchPlayerStat(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
+async function fetchPlayerStat(league: League, gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
   const category = KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
   const playerKey = resolvePlayerKey(ref.id, ref.name);
   if (!playerKey) return null;
-  const value = await getPlayerStat(gameId, playerKey, category, statKey);
+  const value = await getPlayerStat(league, gameId, playerKey, category, statKey);
   return normalizeStatValue(value);
 }
 
@@ -159,28 +158,29 @@ async function enrichWithTeamContext(
     away_team_name?: string | null;
     away_team_abbrev?: string | null;
   },
+  league: League,
   gameId: string,
 ) {
-  const homeTeam = await getHomeTeam(gameId);
-  const awayTeam = await getAwayTeam(gameId);
+  const homeTeam = await getHomeTeam(league, gameId);
+  const awayTeam = await getAwayTeam(league, gameId);
 
   if (!cfg.home_team_id) {
-    cfg.home_team_id = extractTeamId(homeTeam);
+    cfg.home_team_id = homeTeam?.teamId ?? null;
   }
   if (!cfg.home_team_name) {
-    cfg.home_team_name = extractTeamName(homeTeam);
+    cfg.home_team_name = homeTeam?.displayName ?? null;
   }
   if (!cfg.home_team_abbrev) {
-    cfg.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+    cfg.home_team_abbrev = homeTeam?.abbreviation ?? null;
   }
   if (!cfg.away_team_id) {
-    cfg.away_team_id = extractTeamId(awayTeam);
+    cfg.away_team_id = awayTeam?.teamId ?? null;
   }
   if (!cfg.away_team_name) {
-    cfg.away_team_name = extractTeamName(awayTeam);
+    cfg.away_team_name = awayTeam?.displayName ?? null;
   }
   if (!cfg.away_team_abbrev) {
-    cfg.away_team_abbrev = extractTeamAbbreviation(awayTeam);
+    cfg.away_team_abbrev = awayTeam?.abbreviation ?? null;
   }
 }
 

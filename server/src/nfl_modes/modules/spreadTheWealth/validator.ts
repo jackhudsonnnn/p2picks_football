@@ -1,4 +1,5 @@
-import { getGameStatus } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { formatNumber } from '../../../utils/number';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import { normalizeStatus } from '../../shared/utils';
@@ -28,7 +29,8 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
   }
 
   protected async onGameUpdate(gameId: string): Promise<void> {
-    const status = normalizeStatus(await getGameStatus(gameId));
+    const league: League = 'NFL'; // Default for nfl_modes
+    const status = normalizeStatus(await getGameStatus(league, gameId));
     if (status !== 'STATUS_FINAL') return;
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {

@@ -4,10 +4,13 @@ import {
   getAwayScore,
   getHomeTeam,
   getAwayTeam,
-  extractTeamAbbreviation,
   extractTeamId,
   extractTeamName,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+  extractTeamAbbreviation,
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
+
+const league: League = 'NFL';
 import { BaseValidatorService } from '../../shared/baseValidatorService';
 import {
   SCORE_SORCERER_BASELINE_EVENT,
@@ -159,10 +162,10 @@ async function buildScoreSorcererBaselineFromAccessors(
   capturedAt: string,
 ): Promise<ScoreSorcererBaseline | null> {
   const [homeTeam, awayTeam, homeScoreRaw, awayScoreRaw] = await Promise.all([
-    getHomeTeam(gameId),
-    getAwayTeam(gameId),
-    getHomeScore(gameId),
-    getAwayScore(gameId),
+    getHomeTeam(league, gameId),
+    getAwayTeam(league, gameId),
+    getHomeScore(league, gameId),
+    getAwayScore(league, gameId),
   ]);
 
   if (!homeTeam && !awayTeam) return null;

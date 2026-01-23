@@ -12,7 +12,8 @@ import {
   getHomeTeam,
   getPlayerStat,
   getMatchup,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { type PlayerRef } from '../../shared/playerUtils';
 
 // Shared baseline store - must use same prefix as validator
@@ -36,7 +37,7 @@ const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
 };
 
 export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
-  const { betId, config, leagueGameId } = input;
+  const { betId, config, leagueGameId, league } = input;
   const typedConfig = config as EitherOrConfig;
 
   const baseResult: ModeLiveInfo = {
@@ -63,7 +64,7 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
   // Get live game data for current values
   const gameId = leagueGameId ?? typedConfig.league_game_id ?? baseline?.gameId ?? null;
   const [homeTeam, awayTeam] = gameId
-    ? await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)])
+    ? await Promise.all([getHomeTeam(league, gameId), getAwayTeam(league, gameId)])
     : [null, null];
 
   // Build baseline and current values
@@ -80,8 +81,8 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
   if (gameId && statKey) {
     const p1Ref: PlayerRef = { id: typedConfig.player1_id, name: typedConfig.player1_name };
     const p2Ref: PlayerRef = { id: typedConfig.player2_id, name: typedConfig.player2_name };
-    player1Current = await readPlayerStatFromAccessors(gameId, p1Ref, statKey);
-    player2Current = await readPlayerStatFromAccessors(gameId, p2Ref, statKey);
+    player1Current = await readPlayerStatFromAccessors(league, gameId, p1Ref, statKey);
+    player2Current = await readPlayerStatFromAccessors(league, gameId, p2Ref, statKey);
   }
 
   // Calculate progress for starting_now mode
@@ -95,7 +96,7 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
     player2Progress = player2Current - player2Baseline;
   }
 
-  const matchupLabel = await getMatchup(gameId || '');
+  const matchupLabel = await getMatchup(league, gameId || '');
   const fields: { label: string; value: string | number }[] = [
     { label: 'Matchup', value: matchupLabel },
     { label: 'Tracking', value: isStartingNow ? 'Starting Now' : 'Cumulative' },
@@ -139,12 +140,13 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
   };
 }
 
-async function readPlayerStatFromAccessors(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
+async function readPlayerStatFromAccessors(league: League, gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
   const spec = PLAYER_STAT_MAP[statKey];
   if (!spec) return 0;
   const idOrName = ref.id || (ref.name ? `name:${ref.name}` : null);
   if (!idOrName) return 0;
-  return getPlayerStat(gameId, idOrName, spec.category, spec.field);
+  const value = await getPlayerStat(league, gameId, idOrName, spec.category, spec.field);
+  return value ?? 0;
 }
 
 function normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {

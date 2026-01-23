@@ -2,21 +2,21 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
 import { RedisJsonStore } from '../../shared/redisJsonStore';
 import { getRedisClient } from '../../shared/redisClient';
 import { formatNumber } from '../../../utils/number';
-import { getMatchup, getAwayTeam, getHomeTeam } from '../../../services/nflData/nflRefinedDataAccessors';
+import { getMatchup, getAwayTeam, getHomeTeam, getPlayerStat } from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { KING_OF_THE_HILL_STAT_KEY_LABELS } from './constants';
 import {
   type KingOfTheHillConfig,
   type ProgressRecord,
   resolveStatKey,
 } from './evaluator';
-import { extractTeamAbbreviation, extractTeamName, getPlayerStat } from '../../../services/nflData/nflRefinedDataAccessors';
 
 // Shared progress store - must use same prefix as validator
 const redis = getRedisClient();
 const progressStore = new RedisJsonStore<ProgressRecord>(redis, 'kingOfTheHill:progress', 60 * 60 * 12);
 
 export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
-  const { betId, config, leagueGameId } = input;
+  const { betId, config, leagueGameId, league } = input;
   const typedConfig = config as KingOfTheHillConfig;
 
   const baseResult: ModeLiveInfo = {
@@ -43,7 +43,7 @@ export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise
   // Get live game data for current values
   const gameId = leagueGameId ?? typedConfig.league_game_id ?? progress?.gameId ?? null;
   const [homeTeam, awayTeam] = gameId
-    ? await Promise.all([getHomeTeam(gameId), getAwayTeam(gameId)])
+    ? await Promise.all([getHomeTeam(league, gameId), getAwayTeam(league, gameId)])
     : [null, null];
 
   // Build baseline and current values
@@ -64,12 +64,12 @@ export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise
   if (gameId && statKey) {
     const p1Ref = { id: typedConfig.player1_id, name: typedConfig.player1_name };
     const p2Ref = { id: typedConfig.player2_id, name: typedConfig.player2_name };
-    player1Current = await readPlayerStatFromAccessors(gameId, p1Ref.id || p1Ref.name, statKey);
-    player2Current = await readPlayerStatFromAccessors(gameId, p2Ref.id || p2Ref.name, statKey);
+    player1Current = await readPlayerStatFromAccessors(league, gameId, p1Ref.id || p1Ref.name, statKey);
+    player2Current = await readPlayerStatFromAccessors(league, gameId, p2Ref.id || p2Ref.name, statKey);
   }
 
   const isStartingNow = progressMode === 'starting_now';
-  const matchupLabel = await getMatchup(gameId || '');
+  const matchupLabel = await getMatchup(league, gameId || '');
   const trackingLabel = isStartingNow ? 'Starting Now' : 'Cumulative';
   const targetLabel = Number.isFinite(target) ? formatNumber(target) : 'N/A';
 
@@ -118,6 +118,7 @@ export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise
 }
 
 async function readPlayerStatFromAccessors(
+  league: League,
   gameId: string,
   playerIdOrName: string | null | undefined,
   statKey: string,
@@ -151,5 +152,6 @@ async function readPlayerStatFromAccessors(
   if (!raw) return 0;
   const looksId = /^\d+$/.test(raw) || raw.includes('-');
   const finalKey = raw.includes(':') ? raw : looksId ? raw : `name:${raw}`;
-  return getPlayerStat(gameId, finalKey, spec.category, spec.field);
+  const value = await getPlayerStat(league, gameId, finalKey, spec.category, spec.field);
+  return value ?? 0;
 }

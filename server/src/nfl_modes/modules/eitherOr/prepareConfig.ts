@@ -3,10 +3,8 @@ import {
   getHomeTeam,
   getAwayTeam,
   getPlayerStat,
-  extractTeamId,
-  extractTeamName,
-  extractTeamAbbreviation,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../shared/statConstants';
 import { type PlayerRef } from '../../shared/playerUtils';
 
@@ -44,6 +42,8 @@ export async function prepareEitherOrConfig({
     cfg.league_game_id = bet.league_game_id ?? null;
   }
 
+  const league: League = bet.league ?? 'NFL';
+
   if (!cfg.resolve_at || !ALLOWED_RESOLVE_AT.includes(String(cfg.resolve_at))) {
     cfg.resolve_at = DEFAULT_RESOLVE_AT;
   }
@@ -59,11 +59,11 @@ export async function prepareEitherOrConfig({
   }
 
   try {
-    await enrichWithTeamContext(cfg, gameId);
+    await enrichWithTeamContext(cfg, league, gameId);
 
     const [baselinePlayer1, baselinePlayer2] = await Promise.all([
-      fetchPlayerStat(gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
-      fetchPlayerStat(gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
+      fetchPlayerStat(league, gameId, statKey, { id: cfg.player1_id, name: cfg.player1_name }),
+      fetchPlayerStat(league, gameId, statKey, { id: cfg.player2_id, name: cfg.player2_name }),
     ]);
 
     return {
@@ -112,14 +112,14 @@ function normalizeConfigPayload(config: Record<string, unknown>) {
   } as Record<string, unknown>;
 }
 
-async function fetchPlayerStat(gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
+async function fetchPlayerStat(league: League, gameId: string, statKey: string, ref: PlayerRef): Promise<number | null> {
   const category = STAT_KEY_TO_CATEGORY[statKey];
   if (!category) return null;
 
   const playerKey = resolvePlayerKey(ref.id, ref.name);
   if (!playerKey) return null;
 
-  const value = await getPlayerStat(gameId, playerKey, category, statKey);
+  const value = await getPlayerStat(league, gameId, playerKey, category, statKey);
   return normalizeStatValue(value);
 }
 
@@ -154,28 +154,29 @@ async function enrichWithTeamContext(
     away_team_name?: string | null;
     away_team_abbrev?: string | null;
   },
+  league: League,
   gameId: string,
 ) {
-  const homeTeam = await getHomeTeam(gameId);
-  const awayTeam = await getAwayTeam(gameId);
+  const homeTeam = await getHomeTeam(league, gameId);
+  const awayTeam = await getAwayTeam(league, gameId);
 
   if (!cfg.home_team_id) {
-    cfg.home_team_id = extractTeamId(homeTeam);
+    cfg.home_team_id = homeTeam?.teamId ?? null;
   }
   if (!cfg.home_team_name) {
-    cfg.home_team_name = extractTeamName(homeTeam);
+    cfg.home_team_name = homeTeam?.displayName ?? null;
   }
   if (!cfg.home_team_abbrev) {
-    cfg.home_team_abbrev = extractTeamAbbreviation(homeTeam);
+    cfg.home_team_abbrev = homeTeam?.abbreviation ?? null;
   }
   if (!cfg.away_team_id) {
-    cfg.away_team_id = extractTeamId(awayTeam);
+    cfg.away_team_id = awayTeam?.teamId ?? null;
   }
   if (!cfg.away_team_name) {
-    cfg.away_team_name = extractTeamName(awayTeam);
+    cfg.away_team_name = awayTeam?.displayName ?? null;
   }
   if (!cfg.away_team_abbrev) {
-    cfg.away_team_abbrev = extractTeamAbbreviation(awayTeam);
+    cfg.away_team_abbrev = awayTeam?.abbreviation ?? null;
   }
 }
 

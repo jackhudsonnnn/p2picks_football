@@ -3,7 +3,8 @@
  * Extracts common patterns from eitherOr, kingOfTheHill, propHunt, etc.
  */
 
-import { getGameStatus, getGamePeriod, getAllPlayerRecords } from '../../services/nflData/nflRefinedDataAccessors';
+import { getGameStatus, getGamePeriod, getAllPlayerRecords } from '../../services/leagueData';
+import type { League } from '../../types/league';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from './playerUtils';
 import { shouldSkipResolveStep } from './resolveUtils';
 import { getValidPositionsForStat } from './statMappings';
@@ -56,7 +57,10 @@ interface ProgressModeOptions {
 /**
  * Load game context.
  */
-export async function loadGameContext(gameId: string | null | undefined): Promise<GameContext> {
+export async function loadGameContext(
+  league: League,
+  gameId: string | null | undefined,
+): Promise<GameContext> {
   if (!gameId) {
     return {
       players: [],
@@ -67,11 +71,11 @@ export async function loadGameContext(gameId: string | null | undefined): Promis
     };
   }
 
-  const players = await getAllPlayerRecords(gameId);
-  const status = await getGameStatus(gameId);
-  const period = await getGamePeriod(gameId);
+  const players = await getAllPlayerRecords(league, gameId);
+  const status = await getGameStatus(league, gameId);
+  const period = await getGamePeriod(league, gameId);
   const showProgressStep = Boolean(status && status !== 'STATUS_SCHEDULED');
-  const skip = await shouldSkipResolveStep(gameId);
+  const skip = await shouldSkipResolveStep(league, gameId);
 
   return {
     players: sortPlayersByPositionAndName(players),

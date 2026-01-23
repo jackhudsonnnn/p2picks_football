@@ -8,11 +8,14 @@ import {
   extractTeamId,
   extractTeamAbbreviation,
   extractTeamName,
-} from '../../../services/nflData/nflRefinedDataAccessors';
+} from '../../../services/leagueData';
+import type { League } from '../../../types/league';
+
+const league: League = 'NFL';
 
 async function resolvePossessionTeam(gameId: string, teamId?: string | null): Promise<{ id: string | null; name: string | null }> {
   if (teamId) {
-    const team = await getTeam(gameId, String(teamId));
+    const team = await getTeam(league, gameId, String(teamId));
     if (team) {
       return {
         id: extractTeamId(team),
@@ -23,8 +26,8 @@ async function resolvePossessionTeam(gameId: string, teamId?: string | null): Pr
 
   // Fallback to live possession info
   const [id, name] = await Promise.all([
-    getPossessionTeamId(gameId),
-    getPossessionTeamName(gameId),
+    getPossessionTeamId(league, gameId),
+    getPossessionTeamName(league, gameId),
   ]);
 
   return { id: id ?? null, name: name ?? null };
@@ -59,8 +62,8 @@ export async function prepareChooseTheirFateConfig({
   }
 
   try {
-    const homeTeam = await getHomeTeam(gameId);
-    const awayTeam = await getAwayTeam(gameId);
+    const homeTeam = await getHomeTeam(league, gameId);
+    const awayTeam = await getAwayTeam(league, gameId);
 
     if (!nextConfig.home_team_id) {
       nextConfig.home_team_id = extractTeamId(homeTeam);

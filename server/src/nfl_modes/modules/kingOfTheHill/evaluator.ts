@@ -1,5 +1,6 @@
 import { type PlayerRef } from '../../shared/playerUtils';
 import { readPlayerStatValue, resolvePlayerKey, resolveStatKey as baseResolveStatKey } from '../../shared/statEvaluatorHelpers';
+import type { League } from '../../../types/league';
 
 export interface KingOfTheHillConfig {
   player1_id?: string | null;
@@ -9,6 +10,7 @@ export interface KingOfTheHillConfig {
   stat?: string | null;
   stat_label?: string | null;
   league_game_id?: string | null;
+  league?: League | null;
   resolve_value?: number | null;
   resolve_value_label?: string | null;
   progress_mode?: string | null;
@@ -64,8 +66,8 @@ export function resolveStatKey(config: KingOfTheHillConfig | null | undefined): 
   return baseResolveStatKey(config?.stat, PLAYER_STAT_MAP);
 }
 
-export async function readPlayerStat(gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
-  const value = await readPlayerStatValue(gameId, ref, statKey, PLAYER_STAT_MAP);
+export async function readPlayerStat(league: League, gameId: string, ref: PlayerRef, statKey: string): Promise<number> {
+  const value = await readPlayerStatValue(league, gameId, ref, statKey, PLAYER_STAT_MAP);
   return value ?? 0;
 }
 
@@ -91,11 +93,12 @@ export async function buildProgressRecord(
   gameId: string,
   capturedAt: string = new Date().toISOString(),
 ): Promise<ProgressRecord> {
+  const league = config.league ?? 'NFL';
   const player1Ref: PlayerRef = { id: config.player1_id, name: config.player1_name };
   const player2Ref: PlayerRef = { id: config.player2_id, name: config.player2_name };
   const [player1Value, player2Value] = await Promise.all([
-    readPlayerStat(gameId, player1Ref, statKey),
-    readPlayerStat(gameId, player2Ref, statKey),
+    readPlayerStat(league, gameId, player1Ref, statKey),
+    readPlayerStat(league, gameId, player2Ref, statKey),
   ]);
   return {
     statKey,
