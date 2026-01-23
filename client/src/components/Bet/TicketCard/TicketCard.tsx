@@ -29,7 +29,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const { preview, error: previewError } = useModePreview({
     modeKey,
     modeConfig,
-    leagueGameId: ticket.betRecord?.league_game_id ?? null,
+    leagueGameId: ticket.betRecord?.league_game_id ?? "-1",
     league: ticket.betRecord?.league ?? 'U2Pick',
     betId,
   });

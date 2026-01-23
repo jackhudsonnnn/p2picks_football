@@ -299,37 +299,44 @@ export async function getBetLiveInfo(req: Request, res: Response) {
 }
 
 /**
- * GET /api/bet-proposals/bootstrap
+ * GET /api/bet-proposals/bootstrap/league/:league
  * Get bootstrap data for bet proposal form.
- * 
- * If league is provided, returns games for that league.
- * If no league is provided, returns all modes (for all leagues) and no games.
- * The client should call this again with a league once the user selects one.
  */
 export async function getBetProposalBootstrap(req: Request, res: Response) {
   try {
     // Ensure mode registry is initialized
     await ensureModeRegistryInitialized();
 
-    // Get optional league from query param
-    const leagueParam = typeof req.query.league === 'string' ? req.query.league : '';
-    const league = leagueParam ? normalizeLeague(leagueParam) : undefined;
-
-    // Get modes - if league specified, filter to that league; otherwise return all
-    const modeList = listModeDefinitions(league);
-
-    // Get games only if league is specified (games are league-specific)
-    let games: { id: string; label: string }[] = [];
-    if (league) {
-      const gameMap = await getAvailableGames(league);
-      games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
+    // Require league in route param
+    const leagueParam = typeof req.params.league === 'string' ? req.params.league.trim() : '';
+    if (!leagueParam) {
+      res.status(400).json({ error: 'league parameter is required' });
+      return;
     }
+
+    const league = normalizeLeague(leagueParam);
+
+    // Handle U2Pick league explicitly
+    if (league === 'U2Pick') {
+      res.json({
+        games: [],
+        modes: [],
+        general_config_schema: null,
+        league,
+      });
+      return;
+    }
+
+    // Modes and games are league-scoped
+    const modeList = listModeDefinitions(league);
+    const gameMap = await getAvailableGames(league);
+    const games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
 
     res.json({
       games,
       modes: modeList,
       general_config_schema: GENERAL_CONFIG_SCHEMA,
-      ...(league ? { league } : {}),
+      league,
     });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to load bet proposal bootstrap data' });

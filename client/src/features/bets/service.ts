@@ -152,13 +152,10 @@ export type BetProposalBootstrap = {
 };
 
 /**
- * Fetch bootstrap data for bet proposal form.
- * If league is provided, also fetches games for that league.
+ * Fetch bootstrap data for bet proposal form (league-scoped, required).
  */
-export async function fetchBetProposalBootstrap(signal?: AbortSignal, league?: League): Promise<BetProposalBootstrap> {
-  const url = league 
-    ? `/api/bet-proposals/bootstrap?league=${encodeURIComponent(league)}`
-    : '/api/bet-proposals/bootstrap';
+export async function fetchBetProposalBootstrap(league: League, signal?: AbortSignal): Promise<BetProposalBootstrap> {
+  const url = `/api/bet-proposals/bootstrap/league/${encodeURIComponent(league)}`;
   return fetchJSON(url, { signal });
 }
 
@@ -167,7 +164,7 @@ export async function fetchBetProposalBootstrap(signal?: AbortSignal, league?: L
  * This is a convenience wrapper around fetchBetProposalBootstrap.
  */
 export async function fetchGamesForLeague(league: League, signal?: AbortSignal): Promise<{ id: string; label: string }[]> {
-  const bootstrap = await fetchBetProposalBootstrap(signal, league);
+  const bootstrap = await fetchBetProposalBootstrap(league, signal);
   return bootstrap.games ?? [];
 }
 
@@ -182,7 +179,7 @@ export type ActiveLeaguesResponse = {
  */
 export async function fetchActiveLeagues(signal?: AbortSignal): Promise<League[]> {
   const response = await fetchJSON<ActiveLeaguesResponse>('/api/leagues/active', { signal });
-  return response?.leagues ?? [];
+  return response?.leagues ?? [ 'U2Pick' ];
 }
 
 export async function createBetConfigSession(modeKey: string, leagueGameId: string, league: League = 'U2Pick'): Promise<BetConfigSession> {

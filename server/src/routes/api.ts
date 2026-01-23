@@ -14,7 +14,8 @@ router.get('/health', (_req: Request, res: Response) => {
 });
 
 // Bet Proposals
-router.get('/bet-proposals/bootstrap', betController.getBetProposalBootstrap);
+router.get('/leagues/active', modeController.listActiveLeagues);
+router.get('/bet-proposals/bootstrap/league/:league', betController.getBetProposalBootstrap);
 router.post('/tables/:tableId/bets', betController.createBetProposal);
 router.post('/bets/:betId/poke', betController.pokeBet);
 router.get('/bets/:betId/live-info', betController.getBetLiveInfo);
@@ -29,7 +30,6 @@ router.post('/bet-proposals/sessions/:sessionId/choices', modeController.applySe
 router.post('/bet-proposals/sessions/:sessionId/general', modeController.updateSessionGeneral);
 
 // Modes - League-scoped endpoints
-router.get('/leagues/active', modeController.listActiveLeagues);
 router.get('/leagues/:league/modes', modeController.listModesForLeague);
 router.get('/leagues/:league/modes/overviews', modeController.listModeOverviewsForLeague);
 router.get('/leagues/:league/modes/:modeKey', modeController.getModeDefinitionForLeague);

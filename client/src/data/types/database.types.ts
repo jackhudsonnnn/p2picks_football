@@ -196,7 +196,7 @@ export interface Database {
           "bet_id"?: string | null;
           "created_at"?: string;
           "message_id"?: string;
-          "message_type": string;
+          "message_type"?: string;
           "posted_at"?: string;
           "system_message_id"?: string | null;
           "table_id": string;
@@ -431,8 +431,8 @@ export interface Database {
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
+      bet_lifecycle_status: "active" | "pending" | "resolved" | "washed";
       league: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
-      status: "active" | "pending" | "resolved" | "washed";
     };
     CompositeTypes: Record<string, never>;
   };

@@ -513,7 +513,7 @@ async function createU2PickBetProposal(
     .insert({
       table_id: tableId,
       proposer_user_id: proposerUserId,
-      league_game_id: -1, // numeric placeholder to satisfy NOT NULL (bigint) in supabase
+      league_game_id: "-1", // numeric placeholder to satisfy NOT NULL (bigint) in supabase
       league: 'U2Pick',
       mode_key: 'table_talk',
       description,

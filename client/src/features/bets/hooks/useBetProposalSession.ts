@@ -108,26 +108,61 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   const [u2pickCondition, setU2pickCondition] = useState('');
   const [u2pickOptions, setU2pickOptions] = useState<string[]>(['', '']);
 
+  // Always fetch active leagues on mount (and keep a cached copy) so the UI knows what is truly available
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const leagues = await fetchActiveLeagues(controller.signal);
+        if (cancelled) return;
+        if (Array.isArray(leagues) && leagues.length > 0) {
+          setActiveLeagues(leagues as League[]);
+        }
+      } catch (err) {
+        // Keep defaults on failure
+        if (!cancelled) {
+          console.warn('[useBetProposalSession] Failed to fetch active leagues', err);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
   // Bootstrap fetch
   useEffect(() => {
+    if (league === 'U2Pick') {
+      // Skip bootstrap fetch for U2Pick
+      setModes([]);
+      setGames([]);
+      setGeneralSchema(null);
+      setGeneralValues(DEFAULT_GENERAL_VALUES);
+      return;
+    }
+
     let cancelled = false;
     const controller = new AbortController();
     (async () => {
       try {
         setBootstrapLoading(true);
         setBootstrapError(null);
-        
-        // Fetch bootstrap data and active leagues in parallel
+
+        // Fetch bootstrap data (league required) and active leagues in parallel
         const [payload, leagues] = await Promise.all([
-          fetchBetProposalBootstrap(controller.signal),
+          fetchBetProposalBootstrap(league, controller.signal),
           fetchActiveLeagues(controller.signal).catch(() => DEFAULT_ACTIVE_LEAGUES),
         ]);
-        
+
         if (cancelled) return;
-        
+
         // Set active leagues from server
         setActiveLeagues(leagues.length > 0 ? leagues : DEFAULT_ACTIVE_LEAGUES);
-        
+
         // Parse mode entries with supportedLeagues metadata
         const modeEntries = Array.isArray(payload?.modes)
           ? payload.modes
@@ -150,8 +185,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
               })
               .filter((entry) => entry.key && entry.label)
           : [];
-        
-        // Note: Games are fetched per-league when user selects a league
+
         setModes(modeEntries);
         if (payload?.general_config_schema) {
           setGeneralSchema(payload.general_config_schema as BetGeneralConfigSchema);
@@ -173,7 +207,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
       cancelled = true;
       controller.abort();
     };
-  }, []);
+  }, [league]);
 
   // Stage synchronization with session status
   useEffect(() => {

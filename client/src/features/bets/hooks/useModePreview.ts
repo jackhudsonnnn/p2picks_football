@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchModePreview, type ModePreviewPayload } from '../service';
 
 export type UseModePreviewArgs = {
-  modeKey?: string | null;
+  modeKey: string;
   modeConfig?: Record<string, unknown> | null;
-  leagueGameId?: string | null;
-  league?: 'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF';
+  leagueGameId: string;
+  league: 'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF';
   betId?: string | null;
 };
 

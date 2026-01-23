@@ -178,7 +178,7 @@
   {
     "table_name": "bet_proposals",
     "column_name": "league_game_id",
-    "data_type": "bigint",
+    "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
     "key_info": ""
@@ -292,7 +292,7 @@
     "column_name": "message_type",
     "data_type": "USER-DEFINED",
     "is_nullable": "NO",
-    "column_default": null,
+    "column_default": "'chat'::message_type",
     "key_info": ""
   },
   {

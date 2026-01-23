@@ -423,10 +423,6 @@
 }
 
 @media (max-width: 335px) {
-  .ticket-finance {
-    font-size: var(--font-size-sm);
-  }
-
   .bet-details {
     font-size: var(--font-size-sm);
   }

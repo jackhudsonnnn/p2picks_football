@@ -7,7 +7,6 @@ import {
   getAwayTeam,
   getHomeScore,
   getHomeTeam,
-  getMatchup,
   extractTeamId,
   extractTeamName,
   extractTeamAbbreviation,
@@ -40,7 +39,7 @@ export async function getNbaScoreSorcererLiveInfo(input: GetLiveInfoInput): Prom
     fields: [],
   };
 
-  const baseline = await baselineStore.get(betId);
+  const baseline = await ensureBaseline(betId, typedConfig, leagueGameId);
   const gameId = leagueGameId ?? typedConfig.league_game_id ?? baseline?.gameId ?? null;
 
   if (!gameId) {
@@ -54,7 +53,7 @@ export async function getNbaScoreSorcererLiveInfo(input: GetLiveInfoInput): Prom
 
   const homeLabel = homeChoiceLabel({ ...typedConfig, home_team_name: snapshot.homeTeamName });
   const awayLabel = awayChoiceLabel({ ...typedConfig, away_team_name: snapshot.awayTeamName });
-  const matchupLabel = await getMatchup(league, gameId);
+  const matchupLabel = formatMatchup(snapshot);
   const fields = [
     { label: 'Matchup', value: matchupLabel },
     { label: homeLabel, value: formatScore(snapshot.homeScore, baseline?.homeScore) },
@@ -71,6 +70,12 @@ function formatScore(current: number, baseline?: number): string | number {
   return `${formatNumber(baseline)} → ${formatNumber(current)}`;
 }
 
+function formatMatchup(snapshot: NbaScoreSorcererBaseline): string {
+  const home = snapshot.homeTeamAbbrev || 'home';
+  const away = snapshot.awayTeamAbbrev || 'away';
+  return `${home} vs ${away}`;
+}
+
 async function buildNbaScoreSorcererSnapshotFromAccessors(
   gameId: string,
   config: NbaScoreSorcererConfig,
@@ -81,8 +86,6 @@ async function buildNbaScoreSorcererSnapshotFromAccessors(
     getHomeScore(league, gameId),
     getAwayScore(league, gameId),
   ]);
-
-  if (!homeTeam && !awayTeam) return null;
 
   return {
     gameId,
@@ -96,4 +99,22 @@ async function buildNbaScoreSorcererSnapshotFromAccessors(
     homeTeamAbbrev: extractTeamAbbreviation(homeTeam) ?? config.home_team_abbrev ?? null,
     awayTeamAbbrev: extractTeamAbbreviation(awayTeam) ?? config.away_team_abbrev ?? null,
   };
+}
+
+async function ensureBaseline(
+  betId: string,
+  config: NbaScoreSorcererConfig,
+  leagueGameId?: string | null,
+): Promise<NbaScoreSorcererBaseline | null> {
+  const existing = await baselineStore.get(betId);
+  if (existing) return existing;
+
+  const gameId = leagueGameId ?? config.league_game_id ?? null;
+  if (!gameId) return null;
+
+  const baseline = await buildNbaScoreSorcererSnapshotFromAccessors(gameId, config);
+  if (!baseline) return null;
+
+  await baselineStore.set(betId, baseline);
+  return baseline;
 }

@@ -13,7 +13,6 @@ import {
   extractTeamAbbreviation,
 } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import type { LeagueTeam } from '../../../../services/leagueData/types';
 import {
   SCORE_SORCERER_LABEL,
   SCORE_SORCERER_MODE_KEY,

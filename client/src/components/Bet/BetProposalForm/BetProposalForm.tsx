@@ -54,11 +54,13 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
   } = useBetProposalSession(onSubmit);
 
   const handleLeagueChange = (value: string) => {
-    setLeague(value as any);
-    // Show modal for leagues that aren't active yet
-    if (!activeLeagues.includes(value as any)) {
+    const isActive = activeLeagues.includes(value as any);
+    if (!isActive) {
+      // Block selection and show modal for inactive leagues
       setShowLeagueModal(true);
+      return;
     }
+    setLeague(value as any);
   };
 
   // All possible leagues for the dropdown
@@ -82,7 +84,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           {allLeagues.map((value) => {
             const isActive = activeLeagues.includes(value as any);
             return (
-              <option key={value} value={value}>
+              <option key={value} value={value} disabled={!isActive}>
                 {isActive ? value : `${value} (coming soon)`}
               </option>
             );
@@ -229,13 +231,14 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           disabled={bootstrapLoading || sessionLoading}
         >
           <option value="">Select Mode</option>
-          {modes
-            .filter((mode) => isModeAvailable(mode.key, league))
-            .map((mode) => (
-              <option key={mode.key} value={mode.key}>
-                {mode.label}
+          {modes.map((mode) => {
+            const available = isModeAvailable(mode.key, league);
+            return (
+              <option key={mode.key} value={mode.key} disabled={!available}>
+                {available ? mode.label : `${mode.label} (coming soon)`}
               </option>
-            ))}
+            );
+          })}
         </select>
         {modes.filter((mode) => isModeAvailable(mode.key, league)).length === 0 && (
           <div className="form-helper-text">No bet modes available for {league}.</div>
