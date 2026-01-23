@@ -217,14 +217,6 @@
   },
   {
     "table_name": "friend_requests",
-    "column_name": "status",
-    "data_type": "text",
-    "is_nullable": "NO",
-    "column_default": "'pending'::text",
-    "key_info": ""
-  },
-  {
-    "table_name": "friend_requests",
     "column_name": "created_at",
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
@@ -237,6 +229,14 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
+    "key_info": ""
+  },
+  {
+    "table_name": "friend_requests",
+    "column_name": "status",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "NO",
+    "column_default": "'pending'::friend_request_status",
     "key_info": ""
   },
   {

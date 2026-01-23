@@ -15,7 +15,7 @@ export interface FriendRelation {
   user_id2: string;
 }
 
-export type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled';
+export type FriendRequestStatus = 'pending' | 'accepted' | 'declined';
 
 export interface FriendRequest {
   request_id: string;

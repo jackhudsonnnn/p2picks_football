@@ -130,7 +130,7 @@ export interface Database {
           "request_id": string;
           "responded_at": string | null;
           "sender_user_id": string;
-          "status": string;
+          "status": "pending" | "accepted" | "declined";
         };
         Insert: {
           "created_at"?: string;
@@ -138,7 +138,7 @@ export interface Database {
           "request_id"?: string;
           "responded_at"?: string | null;
           "sender_user_id": string;
-          "status"?: string;
+          "status"?: "pending" | "accepted" | "declined";
         };
         Update: {
           "created_at"?: string;
@@ -146,7 +146,7 @@ export interface Database {
           "request_id"?: string;
           "responded_at"?: string | null;
           "sender_user_id"?: string;
-          "status"?: string;
+          "status"?: "pending" | "accepted" | "declined";
         };
         Relationships: [
           {
@@ -432,6 +432,7 @@ export interface Database {
     Functions: Record<string, never>;
     Enums: {
       bet_lifecycle_status: "active" | "pending" | "resolved" | "washed";
+      friend_request_status: "pending" | "accepted" | "declined";
       league: "NFL" | "NBA" | "MLB" | "NHL" | "NCAAF" | "U2Pick";
     };
     CompositeTypes: Record<string, never>;
