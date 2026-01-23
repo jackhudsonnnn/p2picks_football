@@ -1,40 +1,45 @@
-import { MODE_MODULES } from '../../nfl_modes/modules';
-import type { ModeValidator } from '../../nfl_modes/shared/types';
-import { startNflGameFeedService, stopNflGameFeedService } from '../nflData/nflGameFeedService';
+/**
+ * Mode Validator Service
+ *
+ * Manages the lifecycle of mode validators across all leagues.
+ * Uses the per-league kernel architecture for isolation and scalability.
+ *
+ * @deprecated Use startModeRuntime/stopModeRuntime from leagueData for new code.
+ * This module is a compatibility wrapper during migration.
+ */
 
-const activeValidators: ModeValidator[] = [];
-let started = false;
+import {
+  startModeRuntime,
+  stopModeRuntime,
+  isModeRuntimeInitialized,
+} from '../leagueData';
 
-export function startModeValidators(): void {
-  if (started) return;
-  started = true;
-  startNflGameFeedService();
-  for (const module of MODE_MODULES) {
-    if (!module.validator) continue;
-    try {
-      module.validator.start();
-      activeValidators.push(module.validator);
-    } catch (err) {
-      console.error('[modeValidatorService] failed to start validator', {
-        mode_key: module.definition.key,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      throw err instanceof Error ? err : new Error(String(err));
-    }
+let startPromise: Promise<void> | null = null;
+
+/**
+ * Start mode validators for all active leagues.
+ * Uses the new per-league kernel architecture.
+ */
+export async function startModeValidators(): Promise<void> {
+  if (isModeRuntimeInitialized()) return;
+  
+  // Ensure we don't start multiple times in parallel
+  if (startPromise) {
+    return startPromise;
+  }
+  
+  startPromise = startModeRuntime();
+  
+  try {
+    await startPromise;
+  } finally {
+    startPromise = null;
   }
 }
 
+/**
+ * Stop mode validators for all leagues.
+ */
 export function stopModeValidators(): void {
-  if (!started) return;
-  while (activeValidators.length) {
-    const validator = activeValidators.pop();
-    if (!validator) continue;
-    try {
-      validator.stop();
-    } catch (err) {
-      console.error('[modeValidatorService] failed to stop validator', (err as Error).message);
-    }
-  }
-  stopNflGameFeedService();
-  started = false;
+  stopModeRuntime();
 }

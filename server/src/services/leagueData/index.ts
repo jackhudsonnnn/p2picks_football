@@ -53,6 +53,25 @@ export {
   registerProvider,
 } from './registry';
 
+// Re-export feeds module
+export * from './feeds';
+
+// Re-export kernel module
+export {
+  LeagueKernel,
+  getKernel,
+  startLeagueKernel,
+  stopLeagueKernel,
+  startLeagueKernels,
+  stopAllKernels,
+  getRunningKernels,
+  isKernelRunning,
+  startModeRuntime,
+  stopModeRuntime,
+  getModeRuntimeStatus,
+  isModeRuntimeInitialized,
+} from './kernel';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Game Status & Info
 // ─────────────────────────────────────────────────────────────────────────────

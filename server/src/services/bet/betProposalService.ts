@@ -22,7 +22,7 @@ import {
 import { registerBetLifecycle } from './betLifecycleService';
 import { createBetProposalAnnouncement, type BetAnnouncementResult } from './betAnnouncementService';
 import { fetchActivePokeChildren, recordBetPokeLink } from './betPokeService';
-import { getModeModule } from '../../nfl_modes/registry';
+import { getMode, ensureInitialized as ensureModeRegistryInitialized } from '../../modes';
 import { normalizeToHundredth } from '../../utils/number';
 import { normalizeLeague, type League } from '../../types/league';
 import {
@@ -368,16 +368,15 @@ async function runModeSpecificValidation(
   leagueGameId: string,
   league: League,
 ): Promise<void> {
-  // TODO: Add support for other leagues (NBA, MLB, etc.)
-  if (league !== 'NFL') return;
-  const modeModule = getModeModule(modeKey);
-  if (!modeModule?.validateProposal) return;
+  await ensureModeRegistryInitialized();
+  const result = getMode(modeKey, league);
+  if (!result.found || !result.module?.validateProposal) return;
 
   const gameIdForCheck = extractGameId(modeConfig) ?? leagueGameId;
 
   if (!gameIdForCheck) return;
 
-  const validationResult = await modeModule.validateProposal({
+  const validationResult = await result.module.validateProposal({
     leagueGameId: gameIdForCheck,
     league,
     config: modeConfig,

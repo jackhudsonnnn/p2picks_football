@@ -28,12 +28,13 @@ router.get('/bet-proposals/sessions/:sessionId', modeController.getSession);
 router.post('/bet-proposals/sessions/:sessionId/choices', modeController.applySessionChoice);
 router.post('/bet-proposals/sessions/:sessionId/general', modeController.updateSessionGeneral);
 
-// Modes
-router.get('/bet-modes', modeController.listModes);
-router.get('/bet-modes/overviews', modeController.listModeOverviews);
-router.get('/bet-modes/:modeKey', modeController.getModeDefinition);
-router.post('/bet-modes/:modeKey/user-config', modeController.getUserConfigSteps);
-router.post('/bet-modes/:modeKey/preview', modeController.getModePreview);
+// Modes - League-scoped endpoints
+router.get('/leagues/active', modeController.listActiveLeagues);
+router.get('/leagues/:league/modes', modeController.listModesForLeague);
+router.get('/leagues/:league/modes/overviews', modeController.listModeOverviewsForLeague);
+router.get('/leagues/:league/modes/:modeKey', modeController.getModeDefinitionForLeague);
+router.post('/leagues/:league/modes/:modeKey/user-config', modeController.getUserConfigStepsForLeague);
+router.post('/leagues/:league/modes/:modeKey/preview', modeController.getModePreviewForLeague);
 
 // Mode Configs
 router.post('/bets/:betId/mode-config', modeController.updateBetModeConfig);

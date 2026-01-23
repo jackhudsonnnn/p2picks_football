@@ -62,8 +62,11 @@ export async function hasUserAcceptedBet(betId: string, userId: string): Promise
   return hasUserAcceptedBetRepo(betId, userId);
 }
 
-export async function fetchModeOverviews(force = false) {
-  return fetchModeOverviewsRepo(force);
+/**
+ * Fetch mode overviews for a specific league.
+ */
+export async function fetchModeOverviews(league: League, force = false) {
+  return fetchModeOverviewsRepo(league, force);
 }
 
 export async function fetchModePreview(
@@ -143,12 +146,43 @@ export type BetConfigSession = {
 
 export type BetProposalBootstrap = {
   games?: { id: string; label: string }[];
-  modes?: { key: string; label: string }[];
+  modes?: { key: string; label: string; supportedLeagues?: League[] }[];
   general_config_schema?: BetGeneralConfigSchema;
+  league?: League;
 };
 
-export async function fetchBetProposalBootstrap(signal?: AbortSignal): Promise<BetProposalBootstrap> {
-  return fetchJSON('/api/bet-proposals/bootstrap', { signal });
+/**
+ * Fetch bootstrap data for bet proposal form.
+ * If league is provided, also fetches games for that league.
+ */
+export async function fetchBetProposalBootstrap(signal?: AbortSignal, league?: League): Promise<BetProposalBootstrap> {
+  const url = league 
+    ? `/api/bet-proposals/bootstrap?league=${encodeURIComponent(league)}`
+    : '/api/bet-proposals/bootstrap';
+  return fetchJSON(url, { signal });
+}
+
+/**
+ * Fetch games for a specific league.
+ * This is a convenience wrapper around fetchBetProposalBootstrap.
+ */
+export async function fetchGamesForLeague(league: League, signal?: AbortSignal): Promise<{ id: string; label: string }[]> {
+  const bootstrap = await fetchBetProposalBootstrap(signal, league);
+  return bootstrap.games ?? [];
+}
+
+export type ActiveLeaguesResponse = {
+  leagues: League[];
+};
+
+/**
+ * Fetch active leagues from the server.
+ * Returns leagues that have at least one registered mode.
+ * U2Pick is always included (always "in season").
+ */
+export async function fetchActiveLeagues(signal?: AbortSignal): Promise<League[]> {
+  const response = await fetchJSON<ActiveLeaguesResponse>('/api/leagues/active', { signal });
+  return response?.leagues ?? [];
 }
 
 export async function createBetConfigSession(modeKey: string, leagueGameId: string, league: League = 'U2Pick'): Promise<BetConfigSession> {

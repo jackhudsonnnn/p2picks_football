@@ -1,16 +1,21 @@
-import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../../nfl_modes/registry';
+import {
+  getModeDefinition,
+  getMode,
+  prepareModeConfig as prepareModeConfigFromRegistry,
+  ensureInitialized,
+} from '../../modes';
 import type {
   ModeConfigStepDefinition,
   ModeDefinitionDTO,
   ModeUserConfigChoice,
   ModeUserConfigStep,
-} from '../../nfl_modes/shared/types';
+} from '../../modes/types';
 import {
   buildModeContext,
   computeModeOptions,
   computeWinningCondition,
   runModeValidator,
-} from '../../nfl_modes/shared/utils';
+} from '../../modes/nfl/shared/utils';
 import type { BetProposal } from '../../supabaseClient';
 import { getSupabaseAdmin } from '../../supabaseClient';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -27,8 +32,8 @@ import type { League } from '../../types/league';
 export type ModeUserConfigInput = {
   /** Canonical game ID (league-agnostic) */
   leagueGameId?: string | null;
-  /** League identifier */
-  league?: League;
+  /** League identifier (required for proper routing) */
+  league: League;
   config?: Record<string, unknown>;
 };
 
@@ -44,24 +49,31 @@ export async function prepareModeConfig(
   bet: BetProposal,
   config: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  return prepareModeConfigPayload(modeKey, bet, config);
+  await ensureInitialized();
+  const league = (config.league as League) || (bet.league as League);
+  if (!league) {
+    throw new Error('league is required for mode config preparation');
+  }
+  return prepareModeConfigFromRegistry(modeKey, bet, config, league);
 }
 
 export async function getModeUserConfigSteps(
   modeKey: string,
   input: ModeUserConfigInput,
 ): Promise<ModeUserConfigStep[]> {
-  const module = getModeModule(modeKey);
-  if (!module || !module.buildUserConfig) {
+  await ensureInitialized();
+  const { league } = input;
+  const result = getMode(modeKey, league);
+  if (!result.found || !result.module!.buildUserConfig) {
     return [];
   }
   const gameId = resolveGameId({
     leagueGameId: input.leagueGameId,
     config: input.config,
   });
-  const steps = await module.buildUserConfig({
+  const steps = await result.module!.buildUserConfig({
     leagueGameId: gameId,
-    league: input.league,
+    league,
     config: input.config ?? {},
   });
   const definition = getModeDefinition(modeKey) ?? null;
@@ -73,12 +85,16 @@ export async function buildModePreview(
   config: Record<string, unknown>,
   bet: BetProposal | null = null,
 ): Promise<ModePreviewResult> {
+  await ensureInitialized();
   const definition = requireModeDefinition(modeKey);
   await enrichConfigWithGameContext(config, bet);
   const ctx = buildModeContext(config, bet);
 
   const gameId = extractGameId(config) ?? '';
-  const league = (config.league as League) || (bet?.league as League) || 'NFL';
+  const league = (config.league as League) || (bet?.league as League);
+  if (!league) {
+    throw new Error('league is required for mode preview');
+  }
   const description = await getMatchup(league, gameId);
   const winningCondition = computeWinningCondition(definition, ctx);
   const options = computeModeOptions(definition, ctx);
@@ -169,8 +185,12 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
   const betGameId = bet?.league_game_id ?? '';
   const gameId = existingGameId ?? betGameId;
 
-  // Get league from config or bet
-  const league = (target.league as League) || (bet?.league as League) || 'NFL';
+  // Get league from config or bet (required for proper data lookup)
+  const league = (target.league as League) || (bet?.league as League);
+  if (!league) {
+    console.warn('[enrichConfigWithGameContext] No league found in config or bet, skipping enrichment');
+    return;
+  }
 
   if (!gameId) {
     return;

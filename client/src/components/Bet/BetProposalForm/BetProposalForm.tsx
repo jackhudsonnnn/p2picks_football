@@ -30,6 +30,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     setGameId,
     league,
     setLeague,
+    activeLeagues,
     modeKey,
     setModeKey,
     stage,
@@ -44,7 +45,6 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     handleNext,
     handleChoiceChange,
     handleSubmit,
-    selectedModeAvailable,
     isModeAvailable,
     u2pickCondition,
     setU2pickCondition,
@@ -55,10 +55,16 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
 
   const handleLeagueChange = (value: string) => {
     setLeague(value as any);
-    if (value !== 'NFL' && value !== 'U2Pick') {
+    // Show modal for leagues that aren't active yet
+    if (!activeLeagues.includes(value as any)) {
       setShowLeagueModal(true);
     }
   };
+
+  // All possible leagues for the dropdown
+  const allLeagues = ['U2Pick', 'NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'] as const;
+  // Leagues that are not yet active
+  const inactiveLeagues = allLeagues.filter((l) => !activeLeagues.includes(l as any));
 
   const renderLeagueStage = () => (
     <div>
@@ -73,11 +79,14 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           onChange={(event) => handleLeagueChange(event.target.value)}
           disabled={bootstrapLoading || sessionLoading}
         >
-          {['U2Pick', 'NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'].map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
+          {allLeagues.map((value) => {
+            const isActive = activeLeagues.includes(value as any);
+            return (
+              <option key={value} value={value}>
+                {isActive ? value : `${value} (coming soon)`}
+              </option>
+            );
+          })}
         </select>
       </div>
 
@@ -92,7 +101,9 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
         )}
       >
         <p>
-          NBA, MLB, NHL, and NCAAF are on the roadmap. Only NFL and U2Pick bets are enabled today.
+          {inactiveLeagues.length > 0 
+            ? `${inactiveLeagues.join(', ')} ${inactiveLeagues.length === 1 ? 'is' : 'are'} on the roadmap.`
+            : 'All leagues are currently available!'}
         </p>
       </Modal>
     </div>
@@ -218,17 +229,16 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           disabled={bootstrapLoading || sessionLoading}
         >
           <option value="">Select Mode</option>
-          {modes.map((mode) => {
-            const available = isModeAvailable(mode.key, league);
-            return (
-              <option key={mode.key} value={mode.key} disabled={!available}>
-                {available ? mode.label : `${mode.label} (coming soon)`}
+          {modes
+            .filter((mode) => isModeAvailable(mode.key, league))
+            .map((mode) => (
+              <option key={mode.key} value={mode.key}>
+                {mode.label}
               </option>
-            );
-          })}
+            ))}
         </select>
-        {!selectedModeAvailable && modeKey && (
-          <div className="form-helper-text">That mode is not available yet for this league.</div>
+        {modes.filter((mode) => isModeAvailable(mode.key, league)).length === 0 && (
+          <div className="form-helper-text">No bet modes available for {league}.</div>
         )}
       </div>
     </div>

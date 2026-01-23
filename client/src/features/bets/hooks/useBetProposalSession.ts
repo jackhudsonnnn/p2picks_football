@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   applyBetConfigChoice,
   createBetConfigSession,
+  fetchActiveLeagues,
   fetchBetProposalBootstrap,
+  fetchGamesForLeague,
   updateBetGeneralConfig,
   type BetConfigSession,
   type BetGeneralConfigSchema,
@@ -65,7 +67,8 @@ type ModeEntry = {
 };
 
 const ALLOWED_LEAGUES: League[] = ['U2Pick', 'NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'];
-const ACTIVE_LEAGUES: League[] = ['U2Pick', 'NFL'];
+// Default active leagues (U2Pick is always active) - will be replaced by API response
+const DEFAULT_ACTIVE_LEAGUES: League[] = ['U2Pick'];
 
 const U2PICK_PLACEHOLDER_GAME = { id: 'u2pick-custom', label: 'Custom bet (no game required)' } as const;
 const U2PICK_PLACEHOLDER_MODE: ModeEntry = {
@@ -79,9 +82,10 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   const [bootstrapLoading, setBootstrapLoading] = useState(false);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [games, setGames] = useState<{ id: string; label: string }[]>([]);
-  const [bootstrapGames, setBootstrapGames] = useState<{ id: string; label: string }[]>([]);
+  const [gamesLoading, setGamesLoading] = useState(false);
   const [modes, setModes] = useState<ModeEntry[]>([]);
   const [generalSchema, setGeneralSchema] = useState<BetGeneralConfigSchema | null>(null);
+  const [activeLeagues, setActiveLeagues] = useState<League[]>(DEFAULT_ACTIVE_LEAGUES);
 
   const [gameId, setGameId] = useState('');
   const [league, setLeague] = useState<'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF'>('U2Pick');
@@ -112,16 +116,19 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
       try {
         setBootstrapLoading(true);
         setBootstrapError(null);
-        const payload = await fetchBetProposalBootstrap(controller.signal);
+        
+        // Fetch bootstrap data and active leagues in parallel
+        const [payload, leagues] = await Promise.all([
+          fetchBetProposalBootstrap(controller.signal),
+          fetchActiveLeagues(controller.signal).catch(() => DEFAULT_ACTIVE_LEAGUES),
+        ]);
+        
         if (cancelled) return;
-        const gameEntries = Array.isArray(payload?.games)
-          ? payload.games
-              .map((item: any) => ({
-                id: String(item?.id ?? ''),
-                label: String(item?.label ?? ''),
-              }))
-              .filter((entry) => entry.id && entry.label)
-          : [];
+        
+        // Set active leagues from server
+        setActiveLeagues(leagues.length > 0 ? leagues : DEFAULT_ACTIVE_LEAGUES);
+        
+        // Parse mode entries with supportedLeagues metadata
         const modeEntries = Array.isArray(payload?.modes)
           ? payload.modes
               .map((item: any) => {
@@ -143,8 +150,8 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
               })
               .filter((entry) => entry.key && entry.label)
           : [];
-  setGames(gameEntries);
-  setBootstrapGames(gameEntries);
+        
+        // Note: Games are fetched per-league when user selects a league
         setModes(modeEntries);
         if (payload?.general_config_schema) {
           setGeneralSchema(payload.general_config_schema as BetGeneralConfigSchema);
@@ -236,8 +243,42 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     setModeKey((prev) => (prev === U2PICK_PLACEHOLDER_MODE.key ? '' : prev));
     setGameId((prev) => (prev === U2PICK_PLACEHOLDER_GAME.id ? '' : prev));
     setModes((prevModes) => prevModes.filter((mode) => mode.key !== U2PICK_PLACEHOLDER_MODE.key));
-    setGames(bootstrapGames);
-  }, [league, bootstrapGames]);
+    
+    // Clear games while loading new ones for the selected league
+    setGames([]);
+  }, [league]);
+
+  // Fetch games when league changes (for non-U2Pick leagues)
+  useEffect(() => {
+    // Skip U2Pick since it uses a placeholder
+    if (league === 'U2Pick') return;
+    // Skip if league is not active
+    if (!activeLeagues.includes(league)) return;
+    
+    let cancelled = false;
+    const controller = new AbortController();
+    
+    (async () => {
+      try {
+        setGamesLoading(true);
+        const gameEntries = await fetchGamesForLeague(league, controller.signal);
+        if (cancelled) return;
+        setGames(gameEntries);
+      } catch (err) {
+        if (!cancelled) {
+          console.error('[useBetProposalSession] Failed to fetch games for league', league, err);
+          setGames([]);
+        }
+      } finally {
+        if (!cancelled) setGamesLoading(false);
+      }
+    })();
+    
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [league, activeLeagues]);
 
   // Clear mode selection if it becomes unavailable for the current league
   useEffect(() => {
@@ -369,7 +410,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
 
   const handleNext = useCallback(() => {
     if (stage === 'league') {
-      if (!ACTIVE_LEAGUES.includes(league)) return;
+      if (!activeLeagues.includes(league)) return;
       // U2Pick has its own flow
       if (league === 'U2Pick') {
         setStage('u2pick_condition');
@@ -424,7 +465,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
       }
       void handleGeneralSubmit();
     }
-  }, [stage, league, u2pickCondition, u2pickOptions, modes, modeKey, initializeSession, session, modeStepIndex, handleGeneralSubmit]);
+  }, [stage, league, activeLeagues, u2pickCondition, u2pickOptions, modes, modeKey, initializeSession, session, modeStepIndex, handleGeneralSubmit]);
 
   const handleSubmit = useCallback(() => {
     // U2Pick direct submission
@@ -473,7 +514,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
 
   const canProceed = useMemo(() => {
     if (stage === 'league') {
-      return Boolean(ACTIVE_LEAGUES.includes(league) && !sessionLoading);
+      return Boolean(activeLeagues.includes(league) && !sessionLoading);
     }
     if (stage === 'u2pick_condition') {
       const trimmed = u2pickCondition.trim();
@@ -504,6 +545,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     gameId,
     modeKey,
     league,
+    activeLeagues,
     sessionLoading,
     session,
     sessionUpdating,
@@ -546,6 +588,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     setGameId,
     league,
     setLeague,
+    activeLeagues,
     modeKey,
     setModeKey,
 
@@ -572,6 +615,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     stage,
     bootstrapLoading,
     bootstrapError,
+    gamesLoading,
     sessionLoading,
     sessionUpdating,
     sessionError,

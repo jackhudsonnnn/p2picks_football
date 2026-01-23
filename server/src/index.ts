@@ -6,7 +6,7 @@ import { startModeValidators } from './services/bet/modeValidatorService';
 import { startNflDataIngestService } from './services/nflData/nflDataIngestService';
 import { startNbaDataIngestService } from './services/nbaData/nbaDataIngestService';
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
-import { startResolutionQueue, stopResolutionQueue } from './nfl_modes/shared/resolutionQueue';
+import { startResolutionQueue, stopResolutionQueue } from './modes/nfl/shared/resolutionQueue';
 import { requireAuth } from './middleware/auth';
 import { PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, REDIS_URL, CORS_ALLOWED_ORIGINS } from './constants/environment';
 
@@ -22,7 +22,10 @@ app.use('/api', requireAuth, apiRouter);
 
 app.listen(PORT, () => {
   startResolutionQueue();
-  startModeValidators();
+  startModeValidators().catch((err) => {
+    console.error('[server] Failed to start mode validators:', err);
+    process.exit(1);
+  });
   startBetLifecycleService();
   startNflDataIngestService();
   startNbaDataIngestService();

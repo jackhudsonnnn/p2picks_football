@@ -2,11 +2,13 @@ import type { ModeOverview } from '@shared/types/modes';
 import { fetchJSON } from '@data/clients/restClient';
 
 import type { ModeConfigRecord, ModePreviewPayload } from '@shared/types/modes';
+import type { League } from '@features/bets/types';
 
 const previewCache = new Map<string, ModePreviewPayload>();
 
-let cachedOverviews: ModeOverview[] | null = null;
-let inflightOverviews: Promise<ModeOverview[]> | null = null;
+// Cache per league
+const overviewsCache = new Map<League, ModeOverview[]>();
+const inflightOverviews = new Map<League, Promise<ModeOverview[]>>();
 
 function getStatsServerBase(): string {
   const raw = (import.meta.env.VITE_STATS_SERVER_URL as string | undefined) || 'http://localhost:5001';
@@ -17,24 +19,28 @@ function getStatsServerBase(): string {
   return trimmed.replace(/\/$/, '');
 }
 
-export async function fetchModeOverviews(force = false): Promise<ModeOverview[]> {
-  if (!force && cachedOverviews) {
-    return cachedOverviews;
+/**
+ * Fetch mode overviews for a specific league.
+ */
+export async function fetchModeOverviews(league: League, force = false): Promise<ModeOverview[]> {
+  if (!force && overviewsCache.has(league)) {
+    return overviewsCache.get(league)!;
   }
-  if (!force && inflightOverviews) {
-    return inflightOverviews;
+  if (!force && inflightOverviews.has(league)) {
+    return inflightOverviews.get(league)!;
   }
 
-  inflightOverviews = fetchJSON<ModeOverview[]>('/api/bet-modes/overviews')
+  const promise = fetchJSON<ModeOverview[]>(`/api/leagues/${encodeURIComponent(league)}/modes/overviews`)
     .then((data) => {
-      cachedOverviews = data ?? [];
-      return cachedOverviews;
+      overviewsCache.set(league, data ?? []);
+      return overviewsCache.get(league)!;
     })
     .finally(() => {
-      inflightOverviews = null;
+      inflightOverviews.delete(league);
     });
 
-  return inflightOverviews;
+  inflightOverviews.set(league, promise);
+  return promise;
 }
 
 export async function fetchModeConfigs(betIds: string[]): Promise<Record<string, ModeConfigRecord>> {
@@ -53,7 +59,7 @@ export async function fetchModePreview(
   config: Record<string, unknown>,
   leagueGameId?: string | null,
   betId?: string | null,
-  league: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick' = 'U2Pick',
+  league: League = 'U2Pick',
 ): Promise<ModePreviewPayload | null> {
   if (!modeKey) return null;
 
@@ -69,12 +75,12 @@ export async function fetchModePreview(
     payloadConfig.league = league;
   }
 
-  const cacheKey = `${modeKey}:${JSON.stringify(payloadConfig)}:${betId ?? ''}`;
+  const cacheKey = `${league}:${modeKey}:${JSON.stringify(payloadConfig)}:${betId ?? ''}`;
   if (previewCache.has(cacheKey)) {
     return previewCache.get(cacheKey)!;
   }
 
-  const body: Record<string, unknown> = { config: payloadConfig, league };
+  const body: Record<string, unknown> = { config: payloadConfig };
   if (gameId) {
     body.league_game_id = gameId;
   }
@@ -82,7 +88,9 @@ export async function fetchModePreview(
     body.bet_id = betId;
   }
 
-  const data = await fetchJSON<ModePreviewPayload>(`/api/bet-modes/${encodeURIComponent(modeKey)}/preview`, {
+  // Use league-scoped endpoint
+  const url = `/api/leagues/${encodeURIComponent(league)}/modes/${encodeURIComponent(modeKey)}/preview`;
+  const data = await fetchJSON<ModePreviewPayload>(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

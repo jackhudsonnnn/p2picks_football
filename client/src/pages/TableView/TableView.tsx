@@ -14,7 +14,6 @@ import type { BetProposalFormValues } from "@features/bets/hooks/useBetProposalS
 import { Modal } from "@shared/widgets/Modal/Modal";
 import { useTableView } from "@features/table/hooks";
 import { useTableChat } from "@features/table/hooks/useTableChat";
-import { useModeCatalog } from "@features/bets/hooks/useModeCatalog";
 import { HttpError } from "@data/clients/restClient";
 
 const RATE_LIMIT_MESSAGE = "You've sent 20 messages and bet proposals in the last minute. Chill out a bit.";
@@ -35,12 +34,6 @@ export const TableView: React.FC = () => {
     tableId,
     user?.id
   );
-  const {
-    overviews: modeOverviews,
-    loading: modeOverviewLoading,
-    error: modeOverviewError,
-    refresh: refreshModeOverviews,
-  } = useModeCatalog({ enabled: Boolean(user) });
   const {
     messages: chatFeed,
     sendMessage,
@@ -178,10 +171,7 @@ export const TableView: React.FC = () => {
         )}
         {activeTab === "modes" && (
           <ModeReference
-            overviews={modeOverviews}
-            loading={modeOverviewLoading}
-            error={modeOverviewError}
-            onRetry={refreshModeOverviews}
+            enabled={Boolean(user)}
           />
         )}
         {activeTab === "controls" && tableId && (

@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { getModeDefinition } from '../../nfl_modes/registry';
-import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../nfl_modes/shared/types';
+import { getModeDefinition, ensureInitialized as ensureModeRegistryInitialized } from '../../modes';
+import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../modes/types';
 import { normalizeToHundredth } from '../../utils/number';
 import {
   buildModePreview,

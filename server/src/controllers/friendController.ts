@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getRedisClient } from '../nfl_modes/shared/redisClient';
+import { getRedisClient } from '../utils/redisClient';
 import { createFriendRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
 
 type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled';

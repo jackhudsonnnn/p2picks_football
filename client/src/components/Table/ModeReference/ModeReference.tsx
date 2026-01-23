@@ -1,20 +1,56 @@
-import React, { useCallback, useState } from 'react';
-import type { ModeOverview } from '@features/bets/types';
+import React, { useCallback, useEffect, useState } from 'react';
+import type { ModeOverview, League } from '@features/bets/types';
+import { useModeCatalog } from '@features/bets/hooks/useModeCatalog';
+import { fetchActiveLeagues } from '@features/bets/service';
 import { Modal } from '@shared/widgets/Modal/Modal';
 import './ModeReference.css';
 
+const FALLBACK_LEAGUES: League[] = ['U2Pick'];
+
 interface ModeReferenceProps {
-  overviews: ModeOverview[];
-  loading: boolean;
-  error: string | null;
-  onRetry?: () => void;
+  /** Initial league to display (defaults to NFL) */
+  initialLeague?: League;
+  /** Whether the component is enabled (e.g., user is logged in) */
+  enabled?: boolean;
 }
 
-export const ModeReference: React.FC<ModeReferenceProps> = ({ overviews, loading, error, onRetry }) => {
-  const showSkeleton = loading && overviews.length === 0;
-  const showError = Boolean(error) && !loading;
+export const ModeReference: React.FC<ModeReferenceProps> = ({ 
+  initialLeague = 'U2Pick',
+  enabled = true,
+}) => {
+  const [activeLeagues, setActiveLeagues] = useState<League[]>(FALLBACK_LEAGUES);
+  const [activeLeaguesLoading, setActiveLeaguesLoading] = useState(false);
+  const [selectedLeague, setSelectedLeague] = useState<League>(initialLeague);
   const [selectedOverview, setSelectedOverview] = useState<ModeOverview | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setActiveLeaguesLoading(true);
+    fetchActiveLeagues(controller.signal)
+      .then((leagues) => {
+        const list = leagues.length > 0 ? leagues : FALLBACK_LEAGUES;
+        setActiveLeagues(list);
+        setSelectedLeague((current) => (list.includes(current) ? current : list[0]));
+      })
+      .catch(() => {
+        setActiveLeagues(FALLBACK_LEAGUES);
+        setSelectedLeague((current) => (FALLBACK_LEAGUES.includes(current) ? current : FALLBACK_LEAGUES[0]));
+      })
+      .finally(() => setActiveLeaguesLoading(false));
+
+    return () => controller.abort();
+  }, []);
+
+  const {
+    overviews,
+    loading,
+    error,
+    refresh,
+  } = useModeCatalog({ league: selectedLeague, enabled });
+
+  const showSkeleton = loading && overviews.length === 0;
+  const showError = Boolean(error) && !loading;
 
   const openModal = useCallback((overview: ModeOverview) => {
     setSelectedOverview(overview);
@@ -35,8 +71,34 @@ export const ModeReference: React.FC<ModeReferenceProps> = ({ overviews, loading
     [openModal],
   );
 
+  const handleLeagueChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedLeague(event.target.value as League);
+  }, []);
+
   return (
     <section className="mode-reference" aria-live="polite">
+      <header className="mode-reference__header">
+        <h2 className="mode-reference__title">Bet Modes</h2>
+        <div className="mode-reference__league-selector">
+          <label htmlFor="mode-league-select" className="visually-hidden">
+            Select League
+          </label>
+          <select
+            id="mode-league-select"
+            className="mode-reference__select"
+            value={selectedLeague}
+            onChange={handleLeagueChange}
+            disabled={loading || activeLeaguesLoading}
+          >
+            {activeLeagues.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+      </header>
+
       {showSkeleton && (
         <div className="mode-reference__status" role="status">
           Loading bet modes…
@@ -45,16 +107,14 @@ export const ModeReference: React.FC<ModeReferenceProps> = ({ overviews, loading
       {showError && (
         <div className="mode-reference__status" role="alert">
           <p>{"Something went wrong, please try again later."}</p>
-          {onRetry && (
-            <button type="button" className="mode-reference__retry" onClick={onRetry}>
-              Try again
-            </button>
-          )}
+          <button type="button" className="mode-reference__retry" onClick={() => refresh()}>
+            Try again
+          </button>
         </div>
       )}
       {!showSkeleton && !showError && overviews.length === 0 && (
         <div className="mode-reference__status" role="status">
-          No bet modes available yet.
+          No bet modes available for {selectedLeague} yet.
         </div>
       )}
       <div className="mode-reference__grid">

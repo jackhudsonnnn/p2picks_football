@@ -2,8 +2,11 @@ import { Request, Response } from 'express';
 import { 
   listModeDefinitions, 
   getModeDefinition as findModeDefinition, 
-  listModeOverviews as getOverviewCatalog 
-} from '../nfl_modes/registry';
+  listModeOverviews as getOverviewCatalog,
+  ensureInitialized as ensureModeRegistryInitialized,
+  getActiveLeagues as getActiveLeaguesFromRegistry,
+  modeSupportsLeague,
+} from '../modes';
 import {
   buildModePreview,
   ensureModeKeyMatchesBet,
@@ -19,24 +22,249 @@ import {
 import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../utils/modeConfig';
 import { BetProposal } from '../supabaseClient';
 import { normalizeGameIdInConfig } from '../utils/gameId';
-import { normalizeLeague } from '../types/league';
+import { normalizeLeague, type League } from '../types/league';
 
-export function listModes(_req: Request, res: Response) {
-  res.json(listModeDefinitions());
+// ─────────────────────────────────────────────────────────────────────────────
+// League-scoped Mode Endpoints
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/leagues/:league/modes
+ * List all modes available for a specific league.
+ */
+export async function listModesForLeague(req: Request, res: Response) {
+  await ensureModeRegistryInitialized();
+  const leagueRaw = req.params.league;
+  if (!leagueRaw) {
+    res.status(400).json({ error: 'league parameter required' });
+    return;
+  }
+  const league = normalizeLeague(leagueRaw);
+  res.json(listModeDefinitions(league));
 }
 
-export function listModeOverviews(_req: Request, res: Response) {
-  res.json(getOverviewCatalog());
+/**
+ * GET /api/leagues/:league/modes/overviews
+ * List mode overviews for a specific league.
+ */
+export async function listModeOverviewsForLeague(req: Request, res: Response) {
+  await ensureModeRegistryInitialized();
+  const leagueRaw = req.params.league;
+  if (!leagueRaw) {
+    res.status(400).json({ error: 'league parameter required' });
+    return;
+  }
+  const league = normalizeLeague(leagueRaw);
+  res.json(getOverviewCatalog(league));
 }
 
-export function getModeDefinition(req: Request, res: Response) {
-  const def = findModeDefinition(req.params.modeKey);
+/**
+ * GET /api/leagues/active
+ * Returns the list of leagues that have at least one registered mode.
+ * U2Pick is always included since it's always "in season".
+ */
+export async function listActiveLeagues(_req: Request, res: Response) {
+  await ensureModeRegistryInitialized();
+  const activeLeagues = getActiveLeaguesFromRegistry();
+  
+  // Ensure U2Pick is always included (always in season)
+  if (!activeLeagues.includes('U2Pick')) {
+    activeLeagues.unshift('U2Pick');
+  }
+  
+  res.json({
+    leagues: activeLeagues,
+  });
+}
+
+/**
+ * GET /api/leagues/:league/modes/:modeKey
+ * Get a specific mode definition, validating it supports the league.
+ */
+export async function getModeDefinitionForLeague(req: Request, res: Response) {
+  await ensureModeRegistryInitialized();
+  const leagueRaw = req.params.league;
+  const { modeKey } = req.params;
+  
+  if (!leagueRaw) {
+    res.status(400).json({ error: 'league parameter required' });
+    return;
+  }
+  if (!modeKey) {
+    res.status(400).json({ error: 'modeKey parameter required' });
+    return;
+  }
+  
+  const league = normalizeLeague(leagueRaw);
+  const def = findModeDefinition(modeKey, league);
+  
+  if (!def) {
+    res.status(404).json({ error: 'mode not found or does not support this league' });
+    return;
+  }
+  res.json(def);
+}
+
+/**
+ * POST /api/leagues/:league/modes/:modeKey/user-config
+ * Get user configuration steps for a mode within a league context.
+ */
+export async function getUserConfigStepsForLeague(req: Request, res: Response) {
+  try {
+    await ensureModeRegistryInitialized();
+    const leagueRaw = req.params.league;
+    const { modeKey } = req.params;
+    
+    if (!leagueRaw) {
+      res.status(400).json({ error: 'league parameter required' });
+      return;
+    }
+    if (!modeKey) {
+      res.status(400).json({ error: 'modeKey parameter required' });
+      return;
+    }
+    
+    const league = normalizeLeague(leagueRaw);
+    
+    // Validate mode supports this league
+    if (!modeSupportsLeague(modeKey, league)) {
+      res.status(404).json({ error: `mode '${modeKey}' does not support league '${league}'` });
+      return;
+    }
+    
+    const rawConfig = req.body?.config;
+    const config =
+      rawConfig && typeof rawConfig === 'object'
+        ? { ...(rawConfig as Record<string, unknown>) }
+        : {};
+    const leagueGameId = typeof req.body?.league_game_id === 'string'
+      ? req.body.league_game_id
+      : undefined;
+    
+    const steps = await getModeUserConfigSteps(modeKey, {
+      leagueGameId,
+      league,
+      config,
+    });
+    res.json({ mode_key: modeKey, league, steps });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'failed to build mode user config' });
+  }
+}
+
+/**
+ * POST /api/leagues/:league/modes/:modeKey/preview
+ * Get a preview for a mode within a league context.
+ */
+export async function getModePreviewForLeague(req: Request, res: Response) {
+  try {
+    await ensureModeRegistryInitialized();
+    const leagueRaw = req.params.league;
+    const { modeKey } = req.params;
+    
+    if (!leagueRaw) {
+      res.status(400).json({ error: 'league parameter required' });
+      return;
+    }
+    if (!modeKey) {
+      res.status(400).json({ error: 'modeKey parameter required' });
+      return;
+    }
+    
+    const league = normalizeLeague(leagueRaw);
+    
+    // Validate mode supports this league
+    if (!modeSupportsLeague(modeKey, league)) {
+      res.status(404).json({ error: `mode '${modeKey}' does not support league '${league}'` });
+      return;
+    }
+    
+    const rawConfig = req.body?.config;
+    let config =
+      rawConfig && typeof rawConfig === 'object'
+        ? { ...(rawConfig as Record<string, unknown>) }
+        : {};
+    const leagueGameId = typeof req.body?.league_game_id === 'string'
+      ? req.body.league_game_id
+      : undefined;
+    
+    // Normalize game ID in config
+    if (leagueGameId) {
+      config = normalizeGameIdInConfig(config, leagueGameId);
+    }
+    config.league = league;
+
+    const betIdRaw = req.body?.bet_id;
+    const betId = typeof betIdRaw === 'string' && betIdRaw.trim().length ? betIdRaw.trim() : undefined;
+
+    let bet: BetProposal | null = null;
+    if (betId) {
+      try {
+        bet = await ensureModeKeyMatchesBet(betId, modeKey, req.supabase);
+      } catch (err: any) {
+        console.warn('[modePreview] failed to ensure bet/mode alignment', {
+          betId,
+          modeKey,
+          error: err?.message || String(err),
+        });
+      }
+      if (!config.player1_id || !config.player2_id) {
+        try {
+          const stored = await fetchModeConfig(betId);
+          if (stored && stored.mode_key === modeKey) {
+            Object.assign(config, { ...stored.data, ...config });
+          }
+        } catch (err: any) {
+          console.warn('[modePreview] failed to hydrate config from store', {
+            betId,
+            modeKey,
+            error: err?.message || String(err),
+          });
+        }
+      }
+    }
+
+    const preview = await buildModePreview(modeKey, config, bet);
+    res.json({ mode_key: modeKey, league, ...preview, config });
+  } catch (e: any) {
+    const status = /mode .* not found/i.test(String(e?.message || '')) ? 404 : 500;
+    res.status(status).json({ error: e?.message || 'failed to build mode preview' });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy endpoints (kept for backward compat during transition, can be removed)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function listModes(req: Request, res: Response) {
+  await ensureModeRegistryInitialized();
+  const leagueRaw = typeof req.query.league === 'string' ? req.query.league : undefined;
+  const league = leagueRaw ? normalizeLeague(leagueRaw) : undefined;
+  res.json(listModeDefinitions(league));
+}
+
+export async function listModeOverviews(req: Request, res: Response) {
+  await ensureModeRegistryInitialized();
+  const leagueRaw = typeof req.query.league === 'string' ? req.query.league : undefined;
+  const league = leagueRaw ? normalizeLeague(leagueRaw) : undefined;
+  res.json(getOverviewCatalog(league));
+}
+
+export async function getModeDefinition(req: Request, res: Response) {
+  await ensureModeRegistryInitialized();
+  const leagueRaw = typeof req.query.league === 'string' ? req.query.league : undefined;
+  const league = leagueRaw ? normalizeLeague(leagueRaw) : undefined;
+  const def = findModeDefinition(req.params.modeKey, league);
   if (!def) {
     res.status(404).json({ error: 'mode not found' });
     return;
   }
   res.json(def);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session Endpoints (these already require league in body)
+// ─────────────────────────────────────────────────────────────────────────────
 
 export async function createSession(req: Request, res: Response) {
   try {
@@ -46,7 +274,7 @@ export async function createSession(req: Request, res: Response) {
       ? req.body.league_game_id
       : '';
     const leagueGameId = leagueGameIdRaw.trim();
-    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
+    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : '';
     const league = leagueRaw.trim().toUpperCase();
     if (!modeKey) {
       res.status(400).json({ error: 'mode_key required' });
@@ -54,6 +282,10 @@ export async function createSession(req: Request, res: Response) {
     }
     if (!leagueGameId) {
       res.status(400).json({ error: 'league_game_id required' });
+      return;
+    }
+    if (!league) {
+      res.status(400).json({ error: 'league required' });
       return;
     }
     const session = await createModeConfigSession({ modeKey, leagueGameId, league: league as any });
@@ -134,7 +366,11 @@ export async function getUserConfigSteps(req: Request, res: Response) {
     const leagueGameId = typeof req.body?.league_game_id === 'string'
       ? req.body.league_game_id
       : undefined;
-    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
+    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : '';
+    if (!leagueRaw) {
+      res.status(400).json({ error: 'league required' });
+      return;
+    }
     const league = normalizeLeague(leagueRaw);
     const steps = await getModeUserConfigSteps(modeKey, {
       leagueGameId,
@@ -162,7 +398,11 @@ export async function getModePreview(req: Request, res: Response) {
     const leagueGameId = typeof req.body?.league_game_id === 'string'
       ? req.body.league_game_id
       : undefined;
-    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
+    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : '';
+    if (!leagueRaw) {
+      res.status(400).json({ error: 'league required' });
+      return;
+    }
     const league = normalizeLeague(leagueRaw);
     // Normalize game ID in config
     if (leagueGameId) {

@@ -105,6 +105,44 @@
   font-size: var(--font-size-sm);
 }
 
+.mode-reference__header {
+  margin-top: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-md);
+}
+
+.mode-reference__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mode-reference__select {
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  background-color: var(--form-bg);
+  border: var(--form-border);
+  border-radius: var(--form-radius);
+  color: var(--form-text);
+  cursor: pointer;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (max-width: 400px) {
   .mode-reference {
     margin: var(--spacing-xs);

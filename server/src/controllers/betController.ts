@@ -5,7 +5,11 @@
 
 import { Request, Response } from 'express';
 import { getAvailableGames } from '../services/leagueData';
-import { listModeDefinitions, getModeLiveInfo } from '../nfl_modes/registry';
+import {
+  listModeDefinitions,
+  getModeLiveInfo,
+  ensureInitialized as ensureModeRegistryInitialized,
+} from '../modes';
 import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
   createBetProposal as createBetProposalService,
@@ -13,7 +17,7 @@ import {
   BetProposalError,
 } from '../services/bet/betProposalService';
 import { fetchModeConfig } from '../utils/modeConfig';
-import { getRedisClient } from '../nfl_modes/shared/redisClient';
+import { getRedisClient } from '../utils/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
 import { normalizeLeague, type League } from '../types/league';
 
@@ -94,10 +98,10 @@ export async function createBetProposal(req: Request, res: Response) {
   }
 
   try {
-    const league = normalizeLeague(typeof body.league === 'string' ? body.league : 'NFL');
+    const league = normalizeLeague(typeof body.league === 'string' ? body.league : 'U2Pick');
     const leagueGameIdRaw = typeof body.league_game_id === 'string'
       ? body.league_game_id
-      : '';
+      : '-1';
     const leagueGameId = leagueGameIdRaw.trim() || null;
 
     const result = await createBetProposalService(
@@ -272,6 +276,7 @@ export async function getBetLiveInfo(req: Request, res: Response) {
 
     // Get live info from the mode
     const leagueGameId = (betRow.league_game_id as string | null) ?? null;
+    // Legacy fallback: older bets may not have league set in database
     const league = (betRow.league as any) ?? 'NFL';
 
     const liveInfo = await getModeLiveInfo(modeKey, {
@@ -296,17 +301,36 @@ export async function getBetLiveInfo(req: Request, res: Response) {
 /**
  * GET /api/bet-proposals/bootstrap
  * Get bootstrap data for bet proposal form.
+ * 
+ * If league is provided, returns games for that league.
+ * If no league is provided, returns all modes (for all leagues) and no games.
+ * The client should call this again with a league once the user selects one.
  */
 export async function getBetProposalBootstrap(req: Request, res: Response) {
   try {
-    // Get league from query param, default to NFL
-    const leagueParam = typeof req.query.league === 'string' ? req.query.league : 'NFL';
-    const league = normalizeLeague(leagueParam);
-    const gameMap = await getAvailableGames(league);
-    const modeList = listModeDefinitions();
+    // Ensure mode registry is initialized
+    await ensureModeRegistryInitialized();
 
-    const games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
-    res.json({ games, modes: modeList, general_config_schema: GENERAL_CONFIG_SCHEMA, league });
+    // Get optional league from query param
+    const leagueParam = typeof req.query.league === 'string' ? req.query.league : '';
+    const league = leagueParam ? normalizeLeague(leagueParam) : undefined;
+
+    // Get modes - if league specified, filter to that league; otherwise return all
+    const modeList = listModeDefinitions(league);
+
+    // Get games only if league is specified (games are league-specific)
+    let games: { id: string; label: string }[] = [];
+    if (league) {
+      const gameMap = await getAvailableGames(league);
+      games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
+    }
+
+    res.json({
+      games,
+      modes: modeList,
+      general_config_schema: GENERAL_CONFIG_SCHEMA,
+      ...(league ? { league } : {}),
+    });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to load bet proposal bootstrap data' });
   }

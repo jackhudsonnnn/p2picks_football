@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchModeOverviews } from '../service';
-import type { ModeOverview } from '../types';
+import type { ModeOverview, League } from '../types';
 
 type UseModeCatalogOptions = {
+  /** The league to fetch modes for (required) */
+  league: League;
   enabled?: boolean;
 };
 
@@ -16,8 +18,8 @@ type UseModeCatalogResult = {
 
 const DEFAULT_ERROR = 'Failed to load bet mode overviews.';
 
-export function useModeCatalog(options: UseModeCatalogOptions = {}): UseModeCatalogResult {
-  const { enabled = true } = options;
+export function useModeCatalog(options: UseModeCatalogOptions): UseModeCatalogResult {
+  const { league, enabled = true } = options;
   const [overviews, setOverviews] = useState<ModeOverview[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export function useModeCatalog(options: UseModeCatalogOptions = {}): UseModeCata
       if (!enabled) return;
       setLoading(true);
       try {
-        const data = await fetchModeOverviews(force);
+        const data = await fetchModeOverviews(league, force);
         if (!mountedRef.current) return;
         setOverviews(data);
         setError(null);
@@ -49,8 +51,14 @@ export function useModeCatalog(options: UseModeCatalogOptions = {}): UseModeCata
         }
       }
     },
-    [enabled],
+    [enabled, league],
   );
+
+  // Reset and refetch when league changes
+  useEffect(() => {
+    setOverviews(null);
+    setError(null);
+  }, [league]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -59,7 +67,7 @@ export function useModeCatalog(options: UseModeCatalogOptions = {}): UseModeCata
     let ignore = false;
     setLoading(true);
 
-    fetchModeOverviews()
+    fetchModeOverviews(league)
       .then((data) => {
         if (ignore || !mountedRef.current) return;
         setOverviews(data);
@@ -78,7 +86,7 @@ export function useModeCatalog(options: UseModeCatalogOptions = {}): UseModeCata
     return () => {
       ignore = true;
     };
-  }, [enabled, overviews]);
+  }, [enabled, overviews, league]);
 
   const refresh = useCallback(async () => {
     await load(true);
