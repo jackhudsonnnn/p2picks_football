@@ -235,15 +235,6 @@ export function getModeDefinition(modeKey: string, league?: League): ModeDefinit
 }
 
 /**
- * Get a mode overview by key.
- */
-export function getModeOverview(modeKey: string, league: League): ModeOverview | null {
-  const result = getMode(modeKey, league);
-  if (!result.found || !result.module!.overview) return null;
-  return cloneOverview(result.module!.overview);
-}
-
-/**
  * Prepare mode config payload before bet creation.
  */
 export async function prepareModeConfig(

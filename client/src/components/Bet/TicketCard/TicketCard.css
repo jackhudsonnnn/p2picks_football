@@ -117,7 +117,7 @@
   padding: var(--spacing-xs) var(--spacing-sm);
   display: inline-block;
   border-radius: var(--radius-sm);
-  width: 6.3rem;
+  width: 4.5rem;
   max-width: 100%;
   text-align: center;
 }
@@ -429,15 +429,5 @@
 
   .bet-details {
     font-size: var(--font-size-sm);
-  }
-
-  .ticket-description-actions {
-    margin-left: var(--spacing-sm);
-  }
-}
-
-@media (max-width: 325px) {
-  .ticket-description-actions {
-    margin-left: var(--spacing-xs);
   }
 }

@@ -33,6 +33,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     league: ticket.betRecord?.league ?? 'U2Pick',
     betId,
   });
+  const leagueLabel = ticket.betRecord?.league ?? 'U2Pick';
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const { liveInfo, loading: liveInfoLoading, error: liveInfoError } = useBetLiveInfo({
     betId,
@@ -41,7 +42,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const { poke, isPoking, getErrorMessage } = usePokeBet();
   const { showAlert, showConfirm, dialogNode } = useDialog();
 
-  const { summaryText, descriptionText, winningConditionText, optionList } = useMemo(
+  const { summaryText, winningConditionText, optionList } = useMemo(
     () => buildTicketTexts(ticket, preview, previewError),
     [ticket, preview, previewError]
   );
@@ -106,7 +107,7 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   const Content = () => (
     <div className="ticket-card-content">
       <div className="ticket-description-row">
-        <span className="game-context">{descriptionText}</span>
+        <span className="game-context">{leagueLabel}</span>
         <div className="ticket-description-actions">
           <button
             className="info-icon-btn"

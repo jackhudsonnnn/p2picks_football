@@ -41,7 +41,6 @@ export {
   listModeDefinitions,
   listModeOverviews,
   getModeDefinition,
-  getModeOverview,
   prepareModeConfig,
   buildModeUserConfig,
   validateModeProposal,
