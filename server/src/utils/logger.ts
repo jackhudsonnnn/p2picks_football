@@ -1,5 +1,5 @@
 /**
- * Shared logger utility for NFL data services.
+ * Shared logger utility for data services.
  */
 
 import { NODE_ENV } from '../constants/environment';

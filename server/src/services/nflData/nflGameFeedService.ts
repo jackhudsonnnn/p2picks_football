@@ -12,14 +12,14 @@ import { EventEmitter } from 'events';
 import path from 'path';
 import { getGameDoc, type RefinedGameDoc } from './nflRefinedDataAccessors';
 
-export type GameFeedEvent = {
+export type NflGameFeedEvent = {
   gameId: string;
   doc: RefinedGameDoc;
   signature: string;
   updatedAt: string;
 };
 
-export type GameFeedListener = (event: GameFeedEvent) => void;
+type NflGameFeedListener = (event: NflGameFeedEvent) => void;
 
 interface CachedDoc {
   signature: string;
@@ -30,7 +30,7 @@ interface CachedDoc {
 const REFINED_DIR = path.join('src', 'data', 'nfl_data', 'nfl_refined_live_stats');
 const GAME_UPDATE_EVENT = 'game-update';
 
-class GameFeedService extends EventEmitter {
+class NflGameFeedService extends EventEmitter {
   private watcher: chokidar.FSWatcher | null = null;
   private started = false;
   private cache = new Map<string, CachedDoc>();
@@ -52,13 +52,13 @@ class GameFeedService extends EventEmitter {
         void this.processFile(path.basename(file, '.json'));
       })
       .on('error', (err) => {
-        console.error('[gameFeed] watcher error', err);
+        console.error('[nflGameFeed] watcher error', err);
       });
   }
 
   stop(): void {
     if (this.watcher) {
-      this.watcher.close().catch((err) => console.error('[gameFeed] close watcher error', err));
+  this.watcher.close().catch((err) => console.error('[nflGameFeed] close watcher error', err));
       this.watcher = null;
     }
     this.started = false;
@@ -66,7 +66,7 @@ class GameFeedService extends EventEmitter {
     this.processing.clear();
   }
 
-  subscribe(listener: GameFeedListener, emitReplay = true): () => void {
+  subscribe(listener: NflGameFeedListener, emitReplay = true): () => void {
     this.on(GAME_UPDATE_EVENT, listener);
     if (emitReplay) {
       queueMicrotask(() => {
@@ -121,9 +121,9 @@ class GameFeedService extends EventEmitter {
         doc,
         signature,
         updatedAt: payload.updatedAt,
-      } satisfies GameFeedEvent);
+      } satisfies NflGameFeedEvent);
     } catch (err) {
-      console.error('[gameFeed] failed to process game file', { gameId }, err);
+    console.error('[nflGameFeed] failed to process game file', { gameId }, err);
     }
   }
 
@@ -173,26 +173,29 @@ function summarizePlayers(rawPlayers: unknown): Array<{ athleteId: string | null
   return records;
 }
 
-const service = new GameFeedService();
+const service = new NflGameFeedService();
 
-export function startGameFeedService(): void {
+export function startNflGameFeedService(): void {
   service.start();
 }
 
-export function stopGameFeedService(): void {
+export function stopNflGameFeedService(): void {
   service.stop();
 }
 
-export function subscribeToGameFeed(listener: GameFeedListener, emitReplay = true): () => void {
+export function subscribeToNflGameFeed(
+  listener: NflGameFeedListener,
+  emitReplay = true,
+): () => void {
   return service.subscribe(listener, emitReplay);
 }
 
-export function getCachedGameDoc(gameId: string): RefinedGameDoc | null {
+export function getCachedNflGameDoc(gameId: string): RefinedGameDoc | null {
   const cached = service.getCached(gameId);
   return cached ? cached.doc : null;
 }
 
-export function getCachedSignature(gameId: string): string | null {
+export function getCachedNflSignature(gameId: string): string | null {
   const cached = service.getCached(gameId);
   return cached ? cached.signature : null;
 }

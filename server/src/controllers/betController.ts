@@ -5,7 +5,7 @@
 
 import { Request, Response } from 'express';
 import { getAvailableGames } from '../services/nflData/nflRefinedDataAccessors';
-import { listModeDefinitions, getModeLiveInfo } from '../modes/registry';
+import { listModeDefinitions, getModeLiveInfo } from '../nfl_modes/registry';
 import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
   createBetProposal as createBetProposalService,
@@ -13,7 +13,7 @@ import {
   BetProposalError,
 } from '../services/bet/betProposalService';
 import { fetchModeConfig } from '../utils/modeConfig';
-import { getRedisClient } from '../modes/shared/redisClient';
+import { getRedisClient } from '../nfl_modes/shared/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
 import { normalizeLeague, type League } from '../types/league';
 
@@ -97,9 +97,7 @@ export async function createBetProposal(req: Request, res: Response) {
     const league = normalizeLeague(typeof body.league === 'string' ? body.league : 'NFL');
     const leagueGameIdRaw = typeof body.league_game_id === 'string'
       ? body.league_game_id
-      : typeof body.nfl_game_id === 'string'
-        ? body.nfl_game_id
-        : '';
+      : '';
     const leagueGameId = leagueGameIdRaw.trim() || null;
 
     const result = await createBetProposalService(
@@ -281,8 +279,6 @@ export async function getBetLiveInfo(req: Request, res: Response) {
       config,
       leagueGameId,
       league,
-      // Maintain legacy nflGameId alias for existing mode handlers
-      nflGameId: league === 'NFL' ? leagueGameId : null,
     });
 
     if (!liveInfo) {

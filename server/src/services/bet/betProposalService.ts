@@ -22,28 +22,27 @@ import {
 import { registerBetLifecycle } from './betLifecycleService';
 import { createBetProposalAnnouncement, type BetAnnouncementResult } from './betAnnouncementService';
 import { fetchActivePokeChildren, recordBetPokeLink } from './betPokeService';
-import { getModeModule } from '../../modes/registry';
+import { getModeModule } from '../../nfl_modes/registry';
 import { normalizeToHundredth } from '../../utils/number';
-import {
-  DEFAULT_WAGER,
-  DEFAULT_TIME_LIMIT,
-} from '../../constants/betting';
 import { normalizeLeague, type League } from '../../types/league';
+import {
+  extractGameId,
+  normalizeGameIdInConfig as normalizeGameIdUtil,
+} from '../../utils/gameId';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface CreateBetProposalInput {
+interface CreateBetProposalInput {
   tableId: string;
   proposerUserId: string;
-  modeKey?: string;
-  nflGameId?: string | null; // legacy alias
-  leagueGameId?: string | null;
-  league?: League;
+  modeKey: string;
+  leagueGameId: string;
+  league: League;
   configSessionId?: string;
-  wagerAmount?: number;
-  timeLimitSeconds?: number;
+  wagerAmount: number;
+  timeLimitSeconds: number;
   modeConfig?: Record<string, unknown>;
   // U2Pick-specific
   u2pickWinningCondition?: string;
@@ -99,14 +98,6 @@ export class BetProposalError extends Error {
 // Service Implementation
 // ─────────────────────────────────────────────────────────────────────────────
 
-// U2Pick validation constants
-const U2PICK_CONDITION_MIN = 4;
-const U2PICK_CONDITION_MAX = 70;
-const U2PICK_OPTION_MIN = 1;
-const U2PICK_OPTION_MAX = 40;
-const U2PICK_OPTIONS_MIN_COUNT = 2;
-const U2PICK_OPTIONS_MAX_COUNT = 6;
-
 /**
  * Creates a new bet proposal.
  */
@@ -114,7 +105,7 @@ export async function createBetProposal(
   input: CreateBetProposalInput,
   supabase: SupabaseClient,
 ): Promise<CreateBetProposalResult> {
-  let league: League = normalizeLeague(input.league, 'NFL');
+  let league: League = normalizeLeague(input.league);
 
   // U2Pick has a completely different flow
   if (league === 'U2Pick' || input.modeKey === 'u2pick') {
@@ -123,8 +114,8 @@ export async function createBetProposal(
 
   // Process session if provided
   let consumedSession: ConsumedModeConfigSession | null = null;
-  let modeKey = input.modeKey ?? '';
-  let leagueGameId = input.leagueGameId ?? input.nflGameId ?? null;
+  let modeKey = input.modeKey;
+  let leagueGameId = input.leagueGameId;
 
   if (input.configSessionId) {
     try {
@@ -143,9 +134,9 @@ export async function createBetProposal(
 
   // Normalize wager and time limit
   let wagerAmount = normalizeWagerAmount(
-    normalizeToHundredth(input.wagerAmount ?? DEFAULT_WAGER),
+    normalizeToHundredth(input.wagerAmount),
   );
-  let timeLimitSeconds = normalizeTimeLimitSeconds(input.timeLimitSeconds ?? DEFAULT_TIME_LIMIT);
+  let timeLimitSeconds = normalizeTimeLimitSeconds(input.timeLimitSeconds);
 
   // Build mode config
   let modeConfig: Record<string, unknown> = input.modeConfig
@@ -158,13 +149,12 @@ export async function createBetProposal(
     timeLimitSeconds = consumedSession.general.time_limit_seconds;
   }
 
-  // Ensure game/league identifiers are carried in config for NFL modes
+  // Ensure game/league identifiers are carried in config
   modeConfig.league = league;
-  modeConfig.league_game_id = leagueGameId ?? undefined;
-  if (league === 'NFL') {
-    modeConfig = normalizeGameIdInConfig(modeConfig, leagueGameId);
-  }
-  const configGameId = extractGameIdFromConfig(modeConfig);
+  modeConfig.league_game_id = leagueGameId;
+  // Normalize game ID in config
+  modeConfig = normalizeGameIdUtil(modeConfig, leagueGameId);
+  const configGameId = extractGameId(modeConfig);
 
   // Validate game status
   await validateGameStatus(configGameId, leagueGameId, league);
@@ -352,41 +342,12 @@ export async function pokeBet(
 // Helper Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
-function normalizeGameIdInConfig(
-  config: Record<string, unknown>,
-  leagueGameId: string | null,
-): Record<string, unknown> {
-  const result = { ...config };
-
-  if (typeof (result as any).nfl_game_id === 'string') {
-    const trimmed = (result as any).nfl_game_id.trim();
-    if (trimmed.length) {
-      (result as any).nfl_game_id = trimmed;
-    } else {
-      delete (result as any).nfl_game_id;
-    }
-  }
-
-  if (leagueGameId && !extractGameIdFromConfig(result)) {
-    (result as any).nfl_game_id = leagueGameId;
-  }
-
-  return result;
-}
-
-function extractGameIdFromConfig(config: Record<string, unknown>): string | null {
-  const value = (config as any).nfl_game_id;
-  if (typeof value === 'string' && value.trim().length) {
-    return value.trim();
-  }
-  return null;
-}
-
 async function validateGameStatus(
   configGameId: string | null,
-  leagueGameId: string | null,
+  leagueGameId: string,
   league: League,
 ): Promise<void> {
+  // TODO: Add support for other leagues (NBA, MLB, etc.)
   if (league !== 'NFL') return;
   const gameIdsToCheck = new Set<string>();
   if (configGameId) gameIdsToCheck.add(configGameId);
@@ -406,22 +367,21 @@ async function validateGameStatus(
 async function runModeSpecificValidation(
   modeKey: string,
   modeConfig: Record<string, unknown>,
-  leagueGameId: string | null,
+  leagueGameId: string,
   league: League,
 ): Promise<void> {
+  // TODO: Add support for other leagues (NBA, MLB, etc.)
   if (league !== 'NFL') return;
   const modeModule = getModeModule(modeKey);
   if (!modeModule?.validateProposal) return;
 
-  const gameIdForCheck =
-    typeof modeConfig.nfl_game_id === 'string' && modeConfig.nfl_game_id.trim().length
-      ? modeConfig.nfl_game_id.trim()
-      : leagueGameId;
+  const gameIdForCheck = extractGameId(modeConfig) ?? leagueGameId;
 
   if (!gameIdForCheck) return;
 
   const validationResult = await modeModule.validateProposal({
-    nflGameId: gameIdForCheck,
+    leagueGameId: gameIdForCheck,
+    league,
     config: modeConfig,
   });
 
@@ -441,19 +401,8 @@ function buildPokeConfig(
   existingData: Record<string, unknown>,
   sourceBet: BetProposal,
 ): Record<string, unknown> {
-  const modeConfig = { ...existingData };
-
-  if (sourceBet.league === 'NFL' && sourceBet.league_game_id && typeof sourceBet.league_game_id === 'string') {
-    const configGameId =
-      typeof (modeConfig as any).nfl_game_id === 'string'
-        ? (modeConfig as any).nfl_game_id.trim()
-        : '';
-    if (!configGameId.length) {
-      (modeConfig as any).nfl_game_id = sourceBet.league_game_id;
-    }
-  }
-
-  return modeConfig;
+  // Normalize game ID in config, setting from bet if not present
+  return normalizeGameIdUtil(existingData, sourceBet.league_game_id ?? undefined);
 }
 
 function validatePokeRestrictions(
@@ -558,8 +507,8 @@ async function createU2PickBetProposal(
   const winningCondition = u2pickWinningCondition.trim();
 
   // Normalize wager and time limit
-  const normalizedWager = normalizeWagerAmount(wagerAmount ?? DEFAULT_WAGER);
-  const normalizedTimeLimit = normalizeTimeLimitSeconds(timeLimitSeconds ?? DEFAULT_TIME_LIMIT);
+  const normalizedWager = normalizeWagerAmount(wagerAmount);
+  const normalizedTimeLimit = normalizeTimeLimitSeconds(timeLimitSeconds);
 
   // Insert bet proposal (U2Pick bypasses mode/runtime system)
   const { data: bet, error: betError } = await supabase

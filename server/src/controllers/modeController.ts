@@ -3,7 +3,7 @@ import {
   listModeDefinitions, 
   getModeDefinition as findModeDefinition, 
   listModeOverviews as getOverviewCatalog 
-} from '../modes/registry';
+} from '../nfl_modes/registry';
 import {
   buildModePreview,
   ensureModeKeyMatchesBet,
@@ -18,6 +18,8 @@ import {
 } from '../services/bet/configSessionService';
 import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../utils/modeConfig';
 import { BetProposal } from '../supabaseClient';
+import { normalizeGameIdInConfig } from '../utils/gameId';
+import { normalizeLeague } from '../types/league';
 
 export function listModes(_req: Request, res: Response) {
   res.json(listModeDefinitions());
@@ -42,9 +44,7 @@ export async function createSession(req: Request, res: Response) {
     const modeKey = modeKeyRaw.trim();
     const leagueGameIdRaw = typeof req.body?.league_game_id === 'string'
       ? req.body.league_game_id
-      : typeof req.body?.nfl_game_id === 'string'
-        ? req.body.nfl_game_id
-        : '';
+      : '';
     const leagueGameId = leagueGameIdRaw.trim();
     const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
     const league = leagueRaw.trim().toUpperCase();
@@ -133,10 +133,14 @@ export async function getUserConfigSteps(req: Request, res: Response) {
         : {};
     const leagueGameId = typeof req.body?.league_game_id === 'string'
       ? req.body.league_game_id
-      : typeof req.body?.nfl_game_id === 'string'
-        ? req.body.nfl_game_id
-        : undefined;
-    const steps = await getModeUserConfigSteps(modeKey, { nflGameId: leagueGameId, config });
+      : undefined;
+    const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
+    const league = normalizeLeague(leagueRaw);
+    const steps = await getModeUserConfigSteps(modeKey, {
+      leagueGameId,
+      league,
+      config,
+    });
     res.json({ mode_key: modeKey, steps });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to build mode user config' });
@@ -151,22 +155,18 @@ export async function getModePreview(req: Request, res: Response) {
       return;
     }
     const rawConfig = req.body?.config;
-    const config =
+    let config =
       rawConfig && typeof rawConfig === 'object'
         ? { ...(rawConfig as Record<string, unknown>) }
         : {};
     const leagueGameId = typeof req.body?.league_game_id === 'string'
       ? req.body.league_game_id
-      : typeof req.body?.nfl_game_id === 'string'
-        ? req.body.nfl_game_id
-        : undefined;
+      : undefined;
     const leagueRaw = typeof req.body?.league === 'string' ? req.body.league : 'NFL';
-    const league = leagueRaw.trim().toUpperCase();
+    const league = normalizeLeague(leagueRaw);
+    // Normalize game ID in config
     if (leagueGameId) {
-      config.league_game_id = leagueGameId;
-      if (league === 'NFL' && !config.nfl_game_id) {
-        config.nfl_game_id = leagueGameId;
-      }
+      config = normalizeGameIdInConfig(config, leagueGameId);
     }
     config.league = league;
 

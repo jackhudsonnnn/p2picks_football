@@ -12,14 +12,14 @@ import { EventEmitter } from 'events';
 import path from 'path';
 import { getGameDoc, type RefinedNbaGame, type RefinedTeam } from './nbaRefinedDataAccessors';
 
-export type GameFeedEvent = {
+export type NbaGameFeedEvent = {
   gameId: string;
   doc: RefinedNbaGame;
   signature: string;
   updatedAt: string;
 };
 
-export type GameFeedListener = (event: GameFeedEvent) => void;
+export type NbaGameFeedListener = (event: NbaGameFeedEvent) => void;
 
 interface CachedDoc {
   signature: string;
@@ -66,7 +66,7 @@ class NbaGameFeedService extends EventEmitter {
     this.processing.clear();
   }
 
-  subscribe(listener: GameFeedListener, emitReplay = true): () => void {
+  subscribe(listener: NbaGameFeedListener, emitReplay = true): () => void {
     this.on(GAME_UPDATE_EVENT, listener);
     if (emitReplay) {
       queueMicrotask(() => {
@@ -121,7 +121,7 @@ class NbaGameFeedService extends EventEmitter {
         doc,
         signature,
         updatedAt: payload.updatedAt,
-      } satisfies GameFeedEvent);
+      } satisfies NbaGameFeedEvent);
     } catch (err) {
       console.error('[nbaGameFeed] failed to process game file', { gameId }, err);
     }
@@ -179,7 +179,7 @@ export function stopNbaGameFeedService(): void {
   service.stop();
 }
 
-export function subscribeToNbaGameFeed(listener: GameFeedListener, emitReplay = true): () => void {
+export function subscribeToNbaGameFeed(listener: NbaGameFeedListener, emitReplay = true): () => void {
   return service.subscribe(listener, emitReplay);
 }
 

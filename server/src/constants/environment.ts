@@ -1,7 +1,7 @@
 // server
 export const PORT = Number(process.env.PORT || 5001);
 export const NODE_ENV = process.env.NODE_ENV || 'development';
-export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || '';
+export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:5173';
 
 // supabase
 export const SUPABASE_URL = process.env.SUPABASE_URL || '';

@@ -1,16 +1,16 @@
-import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../../modes/registry';
+import { getModeDefinition, getModeModule, prepareModeConfigPayload } from '../../nfl_modes/registry';
 import type {
   ModeConfigStepDefinition,
   ModeDefinitionDTO,
   ModeUserConfigChoice,
   ModeUserConfigStep,
-} from '../../modes/shared/types';
+} from '../../nfl_modes/shared/types';
 import {
   buildModeContext,
   computeModeOptions,
   computeWinningCondition,
   runModeValidator,
-} from '../../modes/shared/utils';
+} from '../../nfl_modes/shared/utils';
 import type { BetProposal } from '../../supabaseClient';
 import { getSupabaseAdmin } from '../../supabaseClient';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -21,9 +21,14 @@ import {
   extractTeamName,
   getMatchup,
 } from '../nflData/nflRefinedDataAccessors';
+import { extractGameId, resolveGameId } from '../../utils/gameId';
+import type { League } from '../../types/league';
 
 export type ModeUserConfigInput = {
-  nflGameId?: string | null;
+  /** Canonical game ID (league-agnostic) */
+  leagueGameId?: string | null;
+  /** League identifier */
+  league?: League;
   config?: Record<string, unknown>;
 };
 
@@ -50,8 +55,13 @@ export async function getModeUserConfigSteps(
   if (!module || !module.buildUserConfig) {
     return [];
   }
+  const gameId = resolveGameId({
+    leagueGameId: input.leagueGameId,
+    config: input.config,
+  });
   const steps = await module.buildUserConfig({
-    nflGameId: input.nflGameId ?? null,
+    leagueGameId: gameId,
+    league: input.league,
     config: input.config ?? {},
   });
   const definition = getModeDefinition(modeKey) ?? null;
@@ -67,7 +77,8 @@ export async function buildModePreview(
   await enrichConfigWithGameContext(config, bet);
   const ctx = buildModeContext(config, bet);
 
-  const description = await getMatchup(config.nfl_game_id ? String(config.nfl_game_id) : '');
+  const gameId = extractGameId(config) ?? '';
+  const description = await getMatchup(gameId);
   const winningCondition = computeWinningCondition(definition, ctx);
   const options = computeModeOptions(definition, ctx);
   const errors = runModeValidator(definition, ctx);
@@ -144,23 +155,25 @@ function normalizeChoice(choice: ModeUserConfigChoice): ModeUserConfigChoice {
 
 async function enrichConfigWithGameContext(config: Record<string, unknown>, bet: BetProposal | null): Promise<void> {
   const target = config as Record<string, unknown> & {
-    nfl_game_id?: unknown;
+    league_game_id?: unknown;
     home_team_id?: unknown;
     home_team_name?: unknown;
     away_team_id?: unknown;
     away_team_name?: unknown;
   };
 
-  const configGameId = typeof target.nfl_game_id === 'string' ? target.nfl_game_id.trim() : '';
+  // Use the new utility to extract game ID
+  const existingGameId = extractGameId(target);
   const betGameId = bet?.league_game_id ?? '';
-  const gameId = configGameId.length ? configGameId : betGameId;
+  const gameId = existingGameId ?? betGameId;
 
   if (!gameId) {
     return;
   }
 
-  if (!configGameId.length) {
-    target.nfl_game_id = gameId;
+  // Set league_game_id if not already present
+  if (!existingGameId) {
+    target.league_game_id = gameId;
   }
 
   const needsHomeId = !isNonEmptyString(target.home_team_id);

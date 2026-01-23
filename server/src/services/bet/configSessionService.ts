@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { getModeDefinition } from '../../modes/registry';
-import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../modes/shared/types';
+import { getModeDefinition } from '../../nfl_modes/registry';
+import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../nfl_modes/shared/types';
 import { normalizeToHundredth } from '../../utils/number';
 import {
   buildModePreview,
@@ -19,6 +19,7 @@ import {
   DEFAULT_TIME_LIMIT,
 } from '../../constants/betting';
 import { normalizeLeague, type League } from '../../types/league';
+import { setGameIdInConfig } from '../../utils/gameId';
 
 export type ModeConfigSessionStatus = 'mode_config' | 'general' | 'summary';
 
@@ -130,21 +131,18 @@ export function normalizeTimeLimitSeconds(value: number): number {
 export async function createModeConfigSession(params: {
   modeKey: string;
   leagueGameId: string;
-  league?: League;
+  league: League;
 }): Promise<ModeConfigSessionDTO> {
   pruneSessions();
   const id = randomUUID();
-  const league = normalizeLeague(params.league ?? 'NFL');
+  const league = normalizeLeague(params.league);
   const session: ModeConfigSession = {
     id,
     modeKey: params.modeKey,
     leagueGameId: params.leagueGameId,
     league,
-    config: {
-      league,
-      league_game_id: params.leagueGameId,
-      ...(league === 'NFL' ? { nfl_game_id: params.leagueGameId } : {}),
-    },
+    // Use utility to set league_game_id
+    config: setGameIdInConfig({ league }, params.leagueGameId),
     selections: {},
     status: 'mode_config',
     general: {
@@ -252,7 +250,8 @@ async function computeSteps(session: ModeConfigSession): Promise<{ steps: ModeUs
   pruneSessions();
   const definition = requireModeDefinition(session.modeKey);
   const rawSteps = await getModeUserConfigSteps(session.modeKey, {
-    nflGameId: session.league === 'NFL' ? session.leagueGameId : undefined,
+    leagueGameId: session.leagueGameId,
+    league: session.league,
     config: session.config,
   });
   reconcileSelections(session, rawSteps);

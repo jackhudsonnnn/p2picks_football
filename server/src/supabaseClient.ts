@@ -53,7 +53,7 @@ export type BetProposal = {
 	bet_id: string;
 	table_id: string;
 	league_game_id: string;
-	league: 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF' | 'U2Pick';
+	league: 'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF';
 	mode_key: string;
 	bet_status: 'active' | 'pending' | 'resolved' | 'washed';
 	description: string;

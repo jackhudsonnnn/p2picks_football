@@ -5,9 +5,8 @@ import apiRouter from './routes/api';
 import { startModeValidators } from './services/bet/modeValidatorService';
 import { startNflDataIngestService } from './services/nflData/nflDataIngestService';
 import { startNbaDataIngestService } from './services/nbaData/nbaDataIngestService';
-import { startNbaGameFeedService } from './services/nbaData/nbaGameFeedService';
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
-import { startResolutionQueue, stopResolutionQueue } from './modes/shared/resolutionQueue';
+import { startResolutionQueue, stopResolutionQueue } from './nfl_modes/shared/resolutionQueue';
 import { requireAuth } from './middleware/auth';
 import { PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, REDIS_URL, CORS_ALLOWED_ORIGINS } from './constants/environment';
 
@@ -27,7 +26,6 @@ app.listen(PORT, () => {
   startBetLifecycleService();
   startNflDataIngestService();
   startNbaDataIngestService();
-  startNbaGameFeedService();
 });
 
 // Graceful shutdown

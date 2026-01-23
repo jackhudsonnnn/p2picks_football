@@ -1,6 +1,6 @@
-import { MODE_MODULES } from '../../modes/modules';
-import type { ModeValidator } from '../../modes/shared/types';
-import { startGameFeedService, stopGameFeedService } from '../nflData/nflGameFeedService';
+import { MODE_MODULES } from '../../nfl_modes/modules';
+import type { ModeValidator } from '../../nfl_modes/shared/types';
+import { startNflGameFeedService, stopNflGameFeedService } from '../nflData/nflGameFeedService';
 
 const activeValidators: ModeValidator[] = [];
 let started = false;
@@ -8,7 +8,7 @@ let started = false;
 export function startModeValidators(): void {
   if (started) return;
   started = true;
-  startGameFeedService();
+  startNflGameFeedService();
   for (const module of MODE_MODULES) {
     if (!module.validator) continue;
     try {
@@ -35,6 +35,6 @@ export function stopModeValidators(): void {
       console.error('[modeValidatorService] failed to stop validator', (err as Error).message);
     }
   }
-  stopGameFeedService();
+  stopNflGameFeedService();
   started = false;
 }

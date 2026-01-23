@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getRedisClient } from '../modes/shared/redisClient';
+import { getRedisClient } from '../nfl_modes/shared/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
 import {
   validateMessage,
