@@ -1,7 +1,6 @@
 import { getAllTeams, getCategory } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
 import { normalizeNumber } from '../../../../utils/number';
-import { normalizeTeamId } from '../../shared/teamUtils';
 
 const league: League = 'NFL';
 
@@ -60,14 +59,14 @@ export function buildTeamScoresFromTeams(teams: any[]): ChooseFateScoreMap {
 		const punting = getCategory(stats, 'punting');
 		scores[key] = {
 			key,
-			teamId: normalizeTeamId((team as any)?.teamId),
-			abbreviation: normalizeTeamId((team as any)?.abbreviation),
-			homeAway: typeof (team as any)?.homeAway === 'string' ? (team as any)?.homeAway : null,
+			teamId: team?.teamId,
+			abbreviation: team?.abbreviation,
+			homeAway:  team?.homeAway,
 			touchdowns: readStat(scoring, ['touchdowns', 'Touchdowns']),
 			fieldGoals: readStat(scoring, ['fieldGoals', 'FieldGoals', 'fgMade', 'made']),
 			safeties: readStat(scoring, ['safeties', 'Safeties']),
 			punts: readStat(punting, ['punts', 'Punts', 'attempts']),
-			hasPossession: Boolean((team as any)?.possession),
+			hasPossession: team?.possession,
 		};
 	});
 	return scores;
@@ -80,8 +79,8 @@ export function determineChooseFateOutcome(
 ): ChooseFateOutcome | null {
 	if (!baseline) return null;
 
-	const baselineDriveTeamId = normalizeTeamId(baseline.possessionTeamId);
-	const offenseId = baselineDriveTeamId ?? normalizeTeamId(reportedPossessionTeamId ?? null);
+	const baselineDriveTeamId = baseline.possessionTeamId;
+	const offenseId = baselineDriveTeamId ?? reportedPossessionTeamId ?? null;
 	if (!offenseId) return null;
 
 	const offenseKey = resolveTeamKeyFromMaps(currentScores, baseline.teams, offenseId);
@@ -162,9 +161,9 @@ type OpponentSnapshot = {
 type ChooseFateStatKey = 'touchdowns' | 'fieldGoals' | 'safeties' | 'punts';
 
 function resolveTeamKey(team: unknown, fallbackIndex: number): string {
-	const normalizedId = normalizeTeamId((team as any)?.teamId);
+	const normalizedId = (team as any)?.teamId;
 	if (normalizedId) return normalizedId;
-	const normalizedAbbr = normalizeTeamId((team as any)?.abbreviation);
+	const normalizedAbbr = (team as any)?.abbreviation;
 	if (normalizedAbbr) return normalizedAbbr;
 	return `team_${fallbackIndex}`;
 }
@@ -186,7 +185,7 @@ function readStat(bucket: Record<string, unknown> | undefined, keys: string | st
 }
 
 function createEmptyScores(identifier?: string | null): ChooseFateTeamScores {
-	const normalized = normalizeTeamId(identifier ?? null);
+	const normalized = identifier ?? null;
 	return {
 		key: identifier ?? normalized ?? 'team',
 		teamId: normalized,
@@ -201,7 +200,7 @@ function createEmptyScores(identifier?: string | null): ChooseFateTeamScores {
 }
 
 function normalizeComparable(value: string | null | undefined): string | null {
-	const normalized = normalizeTeamId(value ?? null);
+	const normalized = value ?? null;
 	return normalized ? normalized.toLowerCase() : null;
 }
 

@@ -4,7 +4,7 @@
  */
 
 import { getPlayer } from '../../../../services/leagueData';
-import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
+import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../../sharedUtils/types';
 import {
   loadGameContext,
   buildStatStep,
@@ -14,8 +14,8 @@ import {
   getDefaultProgressPatch,
   filterPlayersByStatPosition,
   normalizeProgressMode,
-} from '../../shared/userConfigBuilder';
-import { prepareValidPlayers } from '../../shared/playerUtils';
+} from '../../utils/userConfigBuilder';
+import { prepareValidPlayers } from '../../utils/playerUtils';
 import {
   PROP_HUNT_ALLOWED_RESOLVE_AT,
   PROP_HUNT_DEFAULT_RESOLVE_AT,

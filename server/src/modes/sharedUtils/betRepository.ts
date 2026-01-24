@@ -1,5 +1,5 @@
 import type { PostgrestError } from '@supabase/supabase-js';
-import { getSupabaseAdmin, type BetProposal } from '../../../supabaseClient';
+import { getSupabaseAdmin, type BetProposal } from '../../supabaseClient';
 
 export type HistoryEventType = string;
 

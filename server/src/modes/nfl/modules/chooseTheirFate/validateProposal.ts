@@ -1,6 +1,6 @@
 import { getGameStatus, getPossessionTeamId, getPossessionTeamName } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import type { ValidateProposalInput, ValidateProposalResult } from '../../shared/types';
+import type { ValidateProposalInput, ValidateProposalResult } from '../../../sharedUtils/types';
 
 const league: League = 'NFL';
 

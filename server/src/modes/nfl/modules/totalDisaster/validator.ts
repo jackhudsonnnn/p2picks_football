@@ -1,8 +1,7 @@
 import { getGameStatus } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
 import { formatNumber } from '../../../../utils/number';
-import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/utils';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import {
   TotalDisasterConfig,
   describeLine,
@@ -13,6 +12,7 @@ import {
 export class TotalDisasterValidatorService extends BaseValidatorService<TotalDisasterConfig, Record<string, never>> {
   constructor() {
     super({
+      league: 'NFL',
       modeKey: 'total_disaster',
       channelName: 'total-disaster-pending',
       storeKeyPrefix: 'totalDisaster:noop',
@@ -29,7 +29,7 @@ export class TotalDisasterValidatorService extends BaseValidatorService<TotalDis
 
   protected async onGameUpdate(gameId: string): Promise<void> {
     const league: League = 'NFL'; // Default for nfl_modes
-    const status = normalizeStatus(await getGameStatus(league, gameId));
+    const status = await getGameStatus(league, gameId);
 
     if (status !== 'STATUS_FINAL') return;
     const bets = await this.listPendingBets({ gameId });

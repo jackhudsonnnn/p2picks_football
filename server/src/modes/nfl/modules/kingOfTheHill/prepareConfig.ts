@@ -14,7 +14,7 @@ import {
   clampResolveValue,
   isValidResolveValue,
 } from './constants';
-import { type PlayerRef } from '../../shared/playerUtils';
+import { type PlayerRef } from '../../utils/playerUtils';
 
 type KingOfTheHillConfig = Record<string, unknown> & {
   league_game_id?: string | null;

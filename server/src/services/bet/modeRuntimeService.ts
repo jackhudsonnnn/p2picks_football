@@ -5,20 +5,17 @@ import {
   ensureInitialized,
 } from '../../modes';
 import type {
+  ModeContext,
   ModeConfigStepDefinition,
   ModeDefinitionDTO,
   ModeUserConfigChoice,
   ModeUserConfigStep,
 } from '../../modes/types';
 import {
-  buildModeContext,
   computeModeOptions,
   computeWinningCondition,
-  runModeValidator,
-} from '../../modes/nfl/shared/utils';
+} from '../../modes/sharedUtils/utils';
 import type { BetProposal } from '../../supabaseClient';
-import { getSupabaseAdmin } from '../../supabaseClient';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   getHomeTeam,
   getAwayTeam,
@@ -235,27 +232,27 @@ function isNonEmptyString(value: unknown): boolean {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-export async function ensureModeKeyMatchesBet(
-  betId: string,
-  modeKey?: string,
-  client?: SupabaseClient,
-): Promise<BetProposal> {
-  const supabase = client ?? getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from('bet_proposals')
-    .select('*')
-    .eq('bet_id', betId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) {
-    throw new Error(`bet ${betId} not found`);
+function buildModeContext(
+  config: Record<string, unknown>,
+  bet?: BetProposal | null,
+): ModeContext {
+  return { config, bet: bet ?? null };
+}
+
+function runModeValidator(
+  mode: ModeDefinitionDTO | null | undefined,
+  ctx: ModeContext,
+): string[] {
+  if (!mode) return [];
+  if (mode.validateConfig) {
+    try {
+      const errors = mode.validateConfig(ctx);
+      return Array.isArray(errors) ? errors.filter((e) => e.trim().length > 0) : [];
+    } catch (err) {
+      console.warn('[modeValidator] validateConfig threw', { modeKey: mode.key, error: err });
+      return ['Validation error'];
+    }
   }
-  const bet = data as BetProposal;
-  if (modeKey && bet.mode_key && bet.mode_key !== modeKey) {
-    throw new Error(`mode_key mismatch for bet ${betId}`);
-  }
-  if (!modeKey && !bet.mode_key) {
-    throw new Error(`mode_key missing for bet ${betId}`);
-  }
-  return bet;
+
+  return [];
 }

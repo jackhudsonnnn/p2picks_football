@@ -1,8 +1,8 @@
-import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { RedisJsonStore } from '../../shared/redisJsonStore';
-import { getRedisClient } from '../../shared/redisClient';
+import type { GetLiveInfoInput, ModeLiveInfo } from '../../../sharedUtils/types';
+import { RedisJsonStore } from '../../../sharedUtils/redisJsonStore';
+import { getRedisClient } from '../../../../utils/redisClient';
 import { formatNumber } from '../../../../utils/number';
-import { STAT_KEY_LABELS } from '../../shared/statConstants';
+import { STAT_KEY_LABELS } from '../../utils/statConstants';
 import {
   type EitherOrConfig,
   type EitherOrBaseline,
@@ -14,7 +14,7 @@ import {
   getMatchup,
 } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { type PlayerRef } from '../../shared/playerUtils';
+import { type PlayerRef } from '../../utils/playerUtils';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();

@@ -19,7 +19,6 @@ import {
   DEFAULT_TIME_LIMIT,
 } from '../../constants/betting';
 import { normalizeLeague, type League } from '../../types/league';
-import { setGameIdInConfig } from '../../utils/gameId';
 
 export type ModeConfigSessionStatus = 'mode_config' | 'general' | 'summary';
 
@@ -351,4 +350,15 @@ function pruneSessions(): void {
       sessions.delete(id);
     }
   }
+}
+
+function setGameIdInConfig(
+  config: Record<string, unknown>,
+  gameId: string | null,
+): Record<string, unknown> {
+  const result = { ...config };
+  if (gameId?.trim()) {
+    result.league_game_id = gameId.trim();
+  }
+  return result;
 }

@@ -1,6 +1,6 @@
 /**
  * BaseValidatorService - Abstract base class for mode validators.
- * 
+ *
  * Provides common infrastructure for:
  * - ModeRuntimeKernel lifecycle management
  * - Redis store management for baselines/progress
@@ -8,25 +8,28 @@
  * - Config fetching
  * - Wash bet handling
  * - History recording
+ *
+ * This is the league-agnostic version that works with NFL, NBA, and future leagues.
  */
 
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { BetProposal } from '../../../supabaseClient';
-import { fetchModeConfig } from '../../../utils/modeConfig';
-import { getGameStatus } from '../../../services/leagueData';
-import type { League } from '../../../types/league';
+import { BetProposal } from '../../supabaseClient';
+import { fetchModeConfig } from '../../utils/modeConfig';
+import { getGameStatus } from '../../services/leagueData';
+import type { League } from '../../types/league';
 import { ModeRuntimeKernel, type KernelOptions } from './modeRuntimeKernel';
 import { betRepository } from './betRepository';
 import { washBetWithHistory } from './washService';
 import { RedisJsonStore } from './redisJsonStore';
-import { getRedisClient } from './redisClient';
-import type { NflGameFeedEvent } from '../../../services/nflData/nflGameFeedService';
+import { getRedisClient } from '../../utils/redisClient';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
-import { USE_RESOLUTION_QUEUE } from '../../../constants/environment';
-import { normalizeStatus } from './utils';
+import { USE_RESOLUTION_QUEUE } from '../../constants/environment';
+import type { GameFeedEvent } from './gameFeedTypes';
 
 export interface BaseValidatorConfig {
-  /** Unique mode key (e.g., 'either_or', 'king_of_the_hill') */
+  /** The league this validator handles (NFL, NBA, etc.) */
+  league: League;
+  /** Unique mode key (e.g., 'either_or', 'nba_score_sorcerer') */
   modeKey: string;
   /** Realtime channel name for pending bets */
   channelName: string;
@@ -65,14 +68,15 @@ export abstract class BaseValidatorService<TConfig, TStore> {
     );
 
     const kernelConfig: KernelOptions = {
+      league: config.league,
       modeKey: config.modeKey,
       channelName: config.channelName,
       dedupeGameFeed: config.dedupeGameFeed ?? true,
-      onPendingUpdate: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => 
+      onPendingUpdate: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) =>
         this.handleBetProposalUpdate(payload),
-      onPendingDelete: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => 
+      onPendingDelete: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) =>
         this.handleBetProposalDelete(payload),
-      onGameEvent: (event: NflGameFeedEvent) => 
+      onGameEvent: (event: GameFeedEvent) =>
         this.handleGameEvent(event.gameId),
       onReady: () => this.onKernelReady(),
     };
@@ -153,12 +157,11 @@ export abstract class BaseValidatorService<TConfig, TStore> {
   ): Promise<boolean> {
     if (!gameId) return false;
     try {
-      const rawStatus = await getGameStatus(league, String(gameId));
-      const status = normalizeStatus(rawStatus);
+      const status = await getGameStatus(league, String(gameId));
       if (status === 'STATUS_FINAL') {
         await this.washBet(
           betId,
-          { reason: 'game_final', status: rawStatus ?? status, game_id: gameId, ...(extraPayload ?? {}) },
+          { reason: 'game_final', status: status, game_id: gameId, ...(extraPayload ?? {}) },
           'Game already final before the bet became pending.',
         );
         return true;
@@ -192,7 +195,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       await this.store.delete(betId);
       return true; // Assume success; failures will be retried by queue
     }
-    
+
     // Direct execution (non-queued)
     const updated = await betRepository.setWinningChoice(betId, winningChoice);
     if (updated) {
@@ -223,7 +226,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
     explanation: string
   ): Promise<void> {
     const washPayload = { outcome: 'wash', ...payload };
-    
+
     if (this.useQueue) {
       await enqueueWashBet({
         betId,
@@ -235,7 +238,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       await this.store.delete(betId);
       return;
     }
-    
+
     // Direct execution (non-queued)
     await washBetWithHistory({
       betId,
@@ -296,7 +299,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       // Bet just became pending
       if (next.bet_status === 'pending' && prev.bet_status !== 'pending') {
         const gameId = (next as any)?.league_game_id ?? null;
-        const league = (next as any)?.league ?? 'NFL';
+        const league = (next as any)?.league ?? this.config.league;
         const washed = await this.washIfGameFinalAtBaseline(next.bet_id, league, gameId, { trigger: 'pending_transition' });
         if (!washed) {
           await this.onBetBecamePending(next as BetProposal);

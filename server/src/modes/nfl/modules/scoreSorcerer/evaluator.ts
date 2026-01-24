@@ -1,6 +1,4 @@
 import { normalizeNumber } from '../../../../utils/number';
-import { normalizeStatus } from '../../shared/utils';
-import { choiceLabel } from '../../shared/teamUtils';
 import {
   getHomeTeam,
   getAwayTeam,
@@ -99,7 +97,7 @@ export async function evaluateScoreSorcerer(
     return { decision: 'simultaneous', homeScore: snapshot.homeScore, awayScore: snapshot.awayScore, deltaHome, deltaAway };
   }
 
-  const status = normalizeStatus(await getGameStatus(league, gameId));
+  const status = await getGameStatus(league, gameId);
 
   if (status === 'STATUS_FINAL') {
     return { decision: 'no_more_scores', homeScore: snapshot.homeScore, awayScore: snapshot.awayScore, deltaHome, deltaAway };
@@ -109,11 +107,11 @@ export async function evaluateScoreSorcerer(
 }
 
 export function homeChoiceLabel(config: ScoreSorcererConfig): string {
-  return choiceLabel(config.home_team_name, config.home_team_abbrev ?? config.home_team_id, 'Home Team');
+  return config.home_team_name ?? 'Home Team';
 }
 
 export function awayChoiceLabel(config: ScoreSorcererConfig): string {
-  return choiceLabel(config.away_team_name, config.away_team_abbrev ?? config.away_team_id, 'Away Team');
+  return config.away_team_name ?? 'Away Team';
 }
 
 export function noMoreScoresChoice(): string {

@@ -1,5 +1,5 @@
 import type { ModeContext, LeagueModeModule } from '../../../types';
-import { ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../shared/statConstants';
+import { ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../utils/statConstants';
 import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
 import { buildEitherOrUserConfig } from './userConfig';

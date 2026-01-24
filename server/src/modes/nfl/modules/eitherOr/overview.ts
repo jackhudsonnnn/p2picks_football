@@ -1,4 +1,4 @@
-import type { ModeOverview } from '../../shared/types';
+import type { ModeOverview } from '../../../sharedUtils/types';
 
 export const eitherOrOverview: ModeOverview = {
   key: 'either_or',

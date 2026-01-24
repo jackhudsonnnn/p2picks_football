@@ -3,7 +3,7 @@
  * Uses shared UserConfigBuilder utilities.
  */
 
-import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../shared/types';
+import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../../sharedUtils/types';
 import {
   loadGameContext,
   buildStatStep,
@@ -11,7 +11,7 @@ import {
   buildProgressModeStep,
   getDefaultProgressPatch,
   filterPlayersByStatPosition,
-} from '../../shared/userConfigBuilder';
+} from '../../utils/userConfigBuilder';
 import {
   KING_OF_THE_HILL_MIN_RESOLVE_VALUE,
   KING_OF_THE_HILL_STAT_KEY_LABELS,
@@ -19,7 +19,7 @@ import {
   getStatResolveRange,
   getAllowedResolveValuesForStat,
 } from './constants';
-import { prepareValidPlayers, type PlayerRef } from '../../shared/playerUtils';
+import { prepareValidPlayers, type PlayerRef } from '../../utils/playerUtils';
 import { readPlayerStat, resolveStatKey, type KingOfTheHillConfig } from './evaluator';
 import { resolveGameId, type GameContextInput } from '../../../../utils/gameId';
 

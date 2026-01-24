@@ -3,7 +3,7 @@
  * Uses shared UserConfigBuilder utilities.
  */
 
-import type { ModeUserConfigStep } from '../../shared/types';
+import type { ModeUserConfigStep } from '../../../sharedUtils/types';
 import {
   loadGameContext,
   buildStatStep,
@@ -12,16 +12,16 @@ import {
   buildProgressModeStep,
   getDefaultProgressPatch,
   filterPlayersByStatPosition,
-} from '../../shared/userConfigBuilder';
-import { prepareValidPlayers } from '../../shared/playerUtils';
+} from '../../utils/userConfigBuilder';
+import { prepareValidPlayers } from '../../utils/playerUtils';
 import {
   ALLOWED_RESOLVE_AT,
   DEFAULT_RESOLVE_AT,
   STAT_KEY_TO_CATEGORY,
   STAT_KEY_LABELS,
-} from '../../shared/statConstants';
+} from '../../utils/statConstants';
 import { resolveGameId, type GameContextInput } from '../../../../utils/gameId';
-import type { BuildUserConfigInput } from '../../shared/types';
+import type { BuildUserConfigInput } from '../../../sharedUtils/types';
 
 export async function buildEitherOrUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
   const gameId = resolveGameId(input as GameContextInput);

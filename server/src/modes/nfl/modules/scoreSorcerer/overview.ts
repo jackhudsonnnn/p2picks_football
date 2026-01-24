@@ -1,4 +1,4 @@
-import type { ModeOverview } from '../../shared/types';
+import type { ModeOverview } from '../../../sharedUtils/types';
 import { SCORE_SORCERER_LABEL, SCORE_SORCERER_NO_MORE_SCORES } from './constants';
 
 export const scoreSorcererOverview: ModeOverview = {

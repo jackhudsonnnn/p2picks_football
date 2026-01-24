@@ -1,9 +1,7 @@
 import { getGameStatus } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
 import { formatNumber } from '../../../../utils/number';
-import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/utils';
-import { choiceLabel } from '../../shared/teamUtils';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import {
   SpreadTheWealthConfig,
   describeSpread,
@@ -14,6 +12,7 @@ import {
 export class SpreadTheWealthValidatorService extends BaseValidatorService<SpreadTheWealthConfig, Record<string, never>> {
   constructor() {
     super({
+      league: 'NFL',
       modeKey: 'spread_the_wealth',
       channelName: 'spread-the-wealth-pending',
       storeKeyPrefix: 'spreadTheWealth:noop',
@@ -30,7 +29,7 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
 
   protected async onGameUpdate(gameId: string): Promise<void> {
     const league: League = 'NFL'; // Default for nfl_modes
-    const status = normalizeStatus(await getGameStatus(league, gameId));
+    const status = await getGameStatus(league, gameId);
     if (status !== 'STATUS_FINAL') return;
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {
@@ -62,8 +61,8 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
 
       const allowsTie = Number.isInteger(spread);
 
-      const homeChoice = choiceLabel(config.home_team_name, config.home_team_id, 'Home Team');
-      const awayChoice = choiceLabel(config.away_team_name, config.away_team_id, 'Away Team');
+      const homeChoice = config.home_team_name ?? 'Home Team';
+      const awayChoice = config.away_team_name ?? 'Away Team';
 
       if (evaluation.decision === 'tie') {
         if (!allowsTie) {

@@ -1,4 +1,4 @@
-import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
+import type { GetLiveInfoInput, ModeLiveInfo } from '../../../sharedUtils/types';
 import { normalizeLine, describeLine, type TotalDisasterConfig } from './evaluator';
 import { normalizeNumber, formatNumber } from '../../../../utils/number';
 import { getScores, getHomeTeam, getAwayTeam, getMatchup } from '../../../../services/leagueData';

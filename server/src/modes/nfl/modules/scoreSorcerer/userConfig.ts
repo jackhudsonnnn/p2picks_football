@@ -1,4 +1,4 @@
-import type { BuildUserConfigInput, ModeUserConfigStep } from '../../shared/types';
+import type { BuildUserConfigInput, ModeUserConfigStep } from '../../../sharedUtils/types';
 
 /**
  * Score Sorcerer does not require additional user-driven configuration beyond the

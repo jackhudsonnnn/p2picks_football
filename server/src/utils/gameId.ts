@@ -24,16 +24,6 @@ export function extractGameId(config: Record<string, unknown>): string | null {
 }
 
 /**
- * Extract game ID with a fallback value.
- */
-export function extractGameIdOrFallback(
-  config: Record<string, unknown>,
-  fallback: string | null | undefined,
-): string | null {
-  return extractGameId(config) ?? (fallback?.trim() || null);
-}
-
-/**
  * Normalize a config object to use the canonical `league_game_id` key.
  * Optionally sets the game ID if provided and not already present.
  */
@@ -51,20 +41,6 @@ export function normalizeGameIdInConfig(
     result.league_game_id = gameIdFallback.trim();
   }
 
-  return result;
-}
-
-/**
- * Set the game ID in a config object using the canonical key.
- */
-export function setGameIdInConfig(
-  config: Record<string, unknown>,
-  gameId: string | null,
-): Record<string, unknown> {
-  const result = { ...config };
-  if (gameId?.trim()) {
-    result.league_game_id = gameId.trim();
-  }
   return result;
 }
 

@@ -1,7 +1,6 @@
 import { listTeams } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
 import { formatNumber, isApproximatelyEqual, normalizeNumber } from '../../../../utils/number';
-import { normalizeTeamId } from '../../shared/teamUtils';
 
 export interface SpreadTheWealthConfig {
   spread?: string | null;
@@ -86,10 +85,10 @@ export async function evaluateSpreadTheWealth(
 }
 
 function lookupTeam(teams: any[], id?: string | null, name?: string | null, homeAway?: 'home' | 'away'): any | null {
-  const normalizedId = normalizeTeamId(id);
+  const normalizedId = id ?? null;
   if (normalizedId) {
     const byId = teams.find(
-      (team) => normalizeTeamId(team?.teamId) === normalizedId || normalizeTeamId(team?.abbreviation) === normalizedId,
+      (team) => team?.teamId === normalizedId || team?.abbreviation === normalizedId,
     );
     if (byId) return byId;
   }

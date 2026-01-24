@@ -1,4 +1,4 @@
-import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
+import type { GetLiveInfoInput, ModeLiveInfo } from '../../../sharedUtils/types';
 import { formatNumber, normalizeNumber } from '../../../../utils/number';
 import { type SpreadTheWealthConfig, normalizeSpread, describeSpread } from './evaluator';
 import {

@@ -1,18 +1,39 @@
-import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { getSupabaseAdmin } from '../../../supabaseClient';
-import { subscribeToNflGameFeed, type NflGameFeedEvent } from '../../../services/nflData/nflGameFeedService';
+/**
+ * ModeRuntimeKernel - Generalized runtime kernel for mode validators.
+ *
+ * Provides:
+ * - Game feed subscription (NFL, NBA, or other leagues)
+ * - Pending bet monitoring via Supabase realtime
+ * - Lifecycle management (start/stop)
+ *
+ * This is the league-agnostic version that accepts a league parameter
+ * to determine which game feed to subscribe to.
+ */
 
-export interface KernelHandlers {
-  onGameEvent?: (event: NflGameFeedEvent) => Promise<void> | void;
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '../../supabaseClient';
+import { subscribeToNflGameFeed, type NflGameFeedEvent } from '../../services/nflData/nflGameFeedService';
+import { subscribeToNbaGameFeed, type NbaGameFeedEvent } from '../../services/nbaData/nbaGameFeedService';
+import type { League } from '../../types/league';
+import type { GameFeedEvent } from './gameFeedTypes';
+
+interface KernelHandlers {
+  onGameEvent?: (event: GameFeedEvent) => Promise<void> | void;
   onPendingUpdate?: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => Promise<void> | void;
   onPendingDelete?: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => Promise<void> | void;
   onReady?: () => Promise<void> | void;
 }
 
 export interface KernelOptions extends KernelHandlers {
+  /** The league this kernel monitors (NFL, NBA, etc.) */
+  league: League;
+  /** Unique mode key (e.g., 'either_or', 'nba_score_sorcerer') */
   modeKey: string;
+  /** Optional custom channel name for pending bets realtime subscription */
   channelName?: string;
+  /** Optional custom filter for pending bets (default: mode_key=eq.{modeKey}) */
   pendingFilter?: string;
+  /** Whether to dedupe game feed events by signature (default: true) */
   dedupeGameFeed?: boolean;
 }
 
@@ -45,8 +66,15 @@ export class ModeRuntimeKernel {
 
   private startFeedSubscription(): void {
     if (this.unsubscribe || !this.options.onGameEvent) return;
-  this.unsubscribe = subscribeToNflGameFeed(async (event) => {
-      if (this.options.dedupeGameFeed) {
+
+    const subscriber = this.getGameFeedSubscriber();
+    if (!subscriber) {
+      console.warn(`[kernel:${this.options.modeKey}] No game feed subscriber for league: ${this.options.league}`);
+      return;
+    }
+
+    this.unsubscribe = subscriber(async (event: GameFeedEvent) => {
+      if (this.options.dedupeGameFeed !== false) {
         const previous = this.lastSignatureByGame.get(event.gameId);
         if (previous === event.signature) {
           return;
@@ -55,6 +83,24 @@ export class ModeRuntimeKernel {
       }
       await this.options.onGameEvent?.(event);
     });
+  }
+
+  private getGameFeedSubscriber(): ((listener: (event: GameFeedEvent) => void | Promise<void>, emitReplay?: boolean) => () => void) | null {
+    switch (this.options.league) {
+      case 'NFL':
+        return (listener, emitReplay) => subscribeToNflGameFeed(
+          (event: NflGameFeedEvent) => listener(event as GameFeedEvent),
+          emitReplay
+        );
+      case 'NBA':
+        return (listener, emitReplay) => subscribeToNbaGameFeed(
+          (event: NbaGameFeedEvent) => listener(event as GameFeedEvent),
+          emitReplay
+        );
+      default:
+        // Future leagues can be added here
+        return null;
+    }
   }
 
   private startPendingMonitor(): void {

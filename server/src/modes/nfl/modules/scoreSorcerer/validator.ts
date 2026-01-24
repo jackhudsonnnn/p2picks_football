@@ -11,7 +11,7 @@ import {
 import type { League } from '../../../../types/league';
 
 const league: League = 'NFL';
-import { BaseValidatorService } from '../../shared/baseValidatorService';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import {
   SCORE_SORCERER_BASELINE_EVENT,
   SCORE_SORCERER_CHANNEL,
@@ -32,6 +32,7 @@ import {
 class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererConfig, ScoreSorcererBaseline> {
   constructor() {
     super({
+      league: 'NFL',
       modeKey: SCORE_SORCERER_MODE_KEY,
       channelName: SCORE_SORCERER_CHANNEL,
       storeKeyPrefix: SCORE_SORCERER_STORE_PREFIX,

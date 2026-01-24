@@ -12,7 +12,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import type { ConnectionOptions } from 'bullmq';
 import { betRepository } from './betRepository';
 import { washBetWithHistory, type WashOptions } from './washService';
-import { REDIS_URL, RESOLUTION_QUEUE_CONCURRENCY } from '../../../constants/environment';
+import { REDIS_URL, RESOLUTION_QUEUE_CONCURRENCY } from '../../constants/environment';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

@@ -1,6 +1,6 @@
-import type { GetLiveInfoInput, ModeLiveInfo } from '../../shared/types';
-import { RedisJsonStore } from '../../shared/redisJsonStore';
-import { getRedisClient } from '../../shared/redisClient';
+import type { GetLiveInfoInput, ModeLiveInfo } from '../../../sharedUtils/types';
+import { RedisJsonStore } from '../../../sharedUtils/redisJsonStore';
+import { getRedisClient } from '../../../../utils/redisClient';
 import { formatNumber } from '../../../../utils/number';
 import { STAT_KEY_LABELS } from './constants';
 import {

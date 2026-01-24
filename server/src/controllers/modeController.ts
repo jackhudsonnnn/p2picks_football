@@ -9,7 +9,6 @@ import {
 } from '../modes';
 import {
   buildModePreview,
-  ensureModeKeyMatchesBet,
   getModeUserConfigSteps,
   prepareModeConfig,
 } from '../services/bet/modeRuntimeService';
@@ -19,10 +18,10 @@ import {
   getModeConfigSession,
   setModeConfigGeneral,
 } from '../services/bet/configSessionService';
-import { fetchModeConfig, fetchModeConfigs, storeModeConfig } from '../utils/modeConfig';
+import { fetchModeConfig, fetchModeConfigs, storeModeConfig, ensureModeKeyMatchesBet } from '../utils/modeConfig';
 import { BetProposal } from '../supabaseClient';
 import { normalizeGameIdInConfig } from '../utils/gameId';
-import { normalizeLeague, type League } from '../types/league';
+import { normalizeLeague } from '../types/league';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // League-scoped Mode Endpoints

@@ -1,8 +1,7 @@
 import { BetProposal } from '../../../../supabaseClient';
 import { getGameStatus, getPlayerStat } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/utils';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import { clampResolveValue, KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE } from './constants';
 import {
   KingOfTheHillConfig,
@@ -19,6 +18,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
 
   constructor() {
     super({
+      league: 'NFL',
       modeKey: 'king_of_the_hill',
       channelName: 'king-of-the-hill-pending',
       storeKeyPrefix: 'kingOfTheHill:progress',
@@ -120,7 +120,7 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
         return;
       }
 
-      const status = normalizeStatus(await getGameStatus(league, effectiveGameId));
+      const status = await getGameStatus(league, effectiveGameId);
       if (status === 'STATUS_FINAL' && outcome === 'none') {
         await this.setNeitherResult(betId, updatedProgress);
       }

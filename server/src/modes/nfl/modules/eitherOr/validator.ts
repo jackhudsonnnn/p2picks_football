@@ -1,15 +1,15 @@
 import { BetProposal } from '../../../../supabaseClient';
 import { getPlayerStat, getGameStatus } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/utils';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import { PLAYER_STAT_MAP } from './constants';
-import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../utils/statConstants';
 import { evaluateEitherOr, EitherOrBaseline, EitherOrConfig } from './evaluator';
 
 export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfig, EitherOrBaseline> {
   constructor() {
     super({
+      league: 'NFL',
       modeKey: 'either_or',
       channelName: 'either-or-pending',
       storeKeyPrefix: 'eitherOr:baseline',
@@ -25,7 +25,7 @@ export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfi
 
   protected async onGameUpdate(gameId: string): Promise<void> {
     const league: League = 'NFL'; // Default for nfl_modes
-    const status = normalizeStatus(await getGameStatus(league, gameId));
+    const status = await getGameStatus(league, gameId);
     const halftimeResolveAt =
       ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
 

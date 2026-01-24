@@ -1,34 +1,4 @@
 import type { ModeContext, ModeDefinitionDTO } from './types';
-import type { BetProposal } from '../../../supabaseClient';
-
-export function normalizeStatus(raw: string | null | undefined): string {
-  return raw ? String(raw).trim().toUpperCase() : '';
-}
-
-export function buildModeContext(
-  config: Record<string, unknown>,
-  bet?: BetProposal | null,
-): ModeContext {
-  return { config, bet: bet ?? null };
-}
-
-export function runModeValidator(
-  mode: ModeDefinitionDTO | null | undefined,
-  ctx: ModeContext,
-): string[] {
-  if (!mode) return [];
-  if (mode.validateConfig) {
-    try {
-      const errors = mode.validateConfig(ctx);
-      return Array.isArray(errors) ? errors.filter((e) => e.trim().length > 0) : [];
-    } catch (err) {
-      console.warn('[modeValidator] validateConfig threw', { modeKey: mode.key, error: err });
-      return ['Validation error'];
-    }
-  }
-
-  return [];
-}
 
 export function computeModeOptions(
   mode: ModeDefinitionDTO | null | undefined,

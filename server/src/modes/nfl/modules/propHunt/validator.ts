@@ -2,8 +2,7 @@ import { BetProposal } from '../../../../supabaseClient';
 import { getPlayerStat, getGameStatus } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
 import { formatNumber, isApproximatelyEqual } from '../../../../utils/number';
-import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/utils';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT } from './constants';
 import {
   PropHuntBaseline,
@@ -16,6 +15,7 @@ import {
 export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfig, PropHuntBaseline> {
   constructor() {
     super({
+      league: 'NFL',
       modeKey: 'prop_hunt',
       channelName: 'prop-hunt-pending',
       storeKeyPrefix: 'propHunt:baseline',
@@ -31,7 +31,7 @@ export class PropHuntValidatorService extends BaseValidatorService<PropHuntConfi
 
   protected async onGameUpdate(gameId: string): Promise<void> {
     const league: League = 'NFL'; // Default for nfl_modes
-    const status = normalizeStatus(await getGameStatus(league, gameId));
+    const status = await getGameStatus(league, gameId);
     const halftimeOption =
       PROP_HUNT_ALLOWED_RESOLVE_AT.find((value) => value.toLowerCase() === 'halftime') ?? 'Halftime';
 

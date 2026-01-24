@@ -1,5 +1,5 @@
 import type { ModeContext, LeagueModeModule } from '../../../types';
-import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../shared/statConstants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../utils/statConstants';
 import { prepareSpreadTheWealthConfig } from './prepareConfig';
 import { spreadTheWealthValidator } from './validator';
 import { buildSpreadTheWealthUserConfig } from './userConfig';

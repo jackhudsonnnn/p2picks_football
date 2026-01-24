@@ -1,7 +1,5 @@
 import { BetProposal } from '../../../../supabaseClient';
-import { BaseValidatorService } from '../../shared/baseValidatorService';
-import { normalizeStatus } from '../../shared/utils';
-import { normalizeTeamId } from '../../shared/teamUtils';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import {
   getAllTeams,
   getGameStatus,
@@ -31,6 +29,7 @@ const league: League = 'NFL';
 export class ChooseTheirFateValidatorService extends BaseValidatorService<ChooseTheirFateConfig, ChooseFateBaseline> {
   constructor() {
     super({
+      league: 'NFL',
       modeKey: CHOOSE_THEIR_FATE_MODE_KEY,
       channelName: CHOOSE_THEIR_FATE_CHANNEL,
       storeKeyPrefix: CHOOSE_THEIR_FATE_STORE_PREFIX,
@@ -171,7 +170,7 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       return null;
     }
 
-    const status = normalizeStatus(await getGameStatus(league, gameId));
+    const status = await getGameStatus(league, gameId);
     if (this.shouldAutoWashForStatus(status)) {
       await this.washBet(
         bet.bet_id,
@@ -181,9 +180,9 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
       return null;
     }
 
-    const configuredPossessionTeamId = normalizeTeamId(config.possession_team_id ?? null);
+    const configuredPossessionTeamId = config.possession_team_id ?? null;
     const [currentPossessionTeamId, currentPossessionTeamName] = await Promise.all([
-      getPossessionTeamId(league, gameId).then(normalizeTeamId),
+      getPossessionTeamId(league, gameId),
       getPossessionTeamName(league, gameId),
     ]);
     if (!currentPossessionTeamId) {
@@ -261,14 +260,13 @@ export class ChooseTheirFateValidatorService extends BaseValidatorService<Choose
   private shouldAutoWashForStatus(status: string | null | undefined): boolean {
     if (!status) return false;
 
-    const normalized = normalizeStatus(status);
-    if (!normalized || normalized === 'STATUS_IN_PROGRESS' || normalized === 'STATUS_END_PERIOD') return false;
+    if (!status || status === 'STATUS_IN_PROGRESS' || status === 'STATUS_END_PERIOD') return false;
 
     if (
-      normalized.startsWith('STATUS_HALFTIME') ||
-      normalized.startsWith('STATUS_FINAL') ||
-      normalized.includes('POSTPONED') ||
-      normalized.includes('SUSPENDED')
+      status.startsWith('STATUS_HALFTIME') ||
+      status.startsWith('STATUS_FINAL') ||
+      status.includes('POSTPONED') ||
+      status.includes('SUSPENDED')
     ) {
       return true;
     }

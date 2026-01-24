@@ -1,4 +1,4 @@
-import type { ModeOverview } from '../../shared/types';
+import type { ModeOverview } from '../../../sharedUtils/types';
 
 export const spreadTheWealthOverview: ModeOverview = {
   key: 'spread_the_wealth',

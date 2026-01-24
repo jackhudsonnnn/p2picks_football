@@ -1,4 +1,4 @@
-import type { BetProposal } from '../../../supabaseClient';
+import type { BetProposal } from '../../supabaseClient';
 
 /**
  * Shared player record type used across all mode userConfig builders.
@@ -104,7 +104,7 @@ export interface ModeLiveInfo {
   /** Optional message if live info is unavailable */
   unavailableReason?: string;
 }
-import type { League } from '../../../types/league';
+import type { League } from '../../types/league';
 
 export interface GetLiveInfoInput {
   betId: string;

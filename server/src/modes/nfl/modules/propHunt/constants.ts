@@ -5,7 +5,7 @@ import {
   DEFAULT_RESOLVE_AT,
   getStatRange,
   DEFAULT_STAT_RANGE,
-} from '../../shared/statConstants';
+} from '../../utils/statConstants';
 
 export const PROP_HUNT_ALLOWED_RESOLVE_AT = [...ALLOWED_RESOLVE_AT];
 export const PROP_HUNT_DEFAULT_RESOLVE_AT = DEFAULT_RESOLVE_AT;

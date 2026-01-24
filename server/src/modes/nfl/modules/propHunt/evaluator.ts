@@ -1,5 +1,5 @@
-import { type PlayerRef } from '../../shared/playerUtils';
-import { readPlayerStatValue, resolveStatKey as baseResolveStatKey } from '../../shared/statEvaluatorHelpers';
+import { type PlayerRef } from '../../utils/playerUtils';
+import { readPlayerStatValue, resolveStatKey as baseResolveStatKey } from '../../utils/statEvaluatorHelpers';
 import type { League } from '../../../../types/league';
 
 export interface PropHuntConfig {

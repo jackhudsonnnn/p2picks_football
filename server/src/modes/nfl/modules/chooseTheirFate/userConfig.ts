@@ -1,4 +1,4 @@
-import type { BuildUserConfigInput, ModeUserConfigStep } from '../../shared/types';
+import type { BuildUserConfigInput, ModeUserConfigStep } from '../../../sharedUtils/types';
 
 /**
  * Choose Their Fate currently derives all configuration from the active drive context,

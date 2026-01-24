@@ -1,5 +1,5 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../../types';
-import { RedisJsonStore } from '../../../nfl/shared/redisJsonStore';
+import { RedisJsonStore } from '../../../sharedUtils/redisJsonStore';
 import { getRedisClient } from '../../../../utils/redisClient';
 import { formatNumber } from '../../../../utils/number';
 import {

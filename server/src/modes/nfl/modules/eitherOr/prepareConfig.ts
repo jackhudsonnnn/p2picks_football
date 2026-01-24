@@ -5,8 +5,8 @@ import {
   getPlayerStat,
 } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../shared/statConstants';
-import { type PlayerRef } from '../../shared/playerUtils';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../utils/statConstants';
+import { type PlayerRef } from '../../utils/playerUtils';
 
 export async function prepareEitherOrConfig({
   bet,

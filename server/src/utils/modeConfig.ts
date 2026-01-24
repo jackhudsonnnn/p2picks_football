@@ -1,4 +1,5 @@
-import { getSupabaseAdmin } from '../supabaseClient';
+import { getSupabaseAdmin, BetProposal } from '../supabaseClient';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -87,4 +88,29 @@ export async function fetchModeConfigs(betIds: string[]): Promise<Record<string,
     }
   }
   return result;
+}
+
+export async function ensureModeKeyMatchesBet(
+  betId: string,
+  modeKey?: string,
+  client?: SupabaseClient,
+): Promise<BetProposal> {
+  const supabase = client ?? getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from('bet_proposals')
+    .select('*')
+    .eq('bet_id', betId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    throw new Error(`bet ${betId} not found`);
+  }
+  const bet = data as BetProposal;
+  if (modeKey && bet.mode_key && bet.mode_key !== modeKey) {
+    throw new Error(`mode_key mismatch for bet ${betId}`);
+  }
+  if (!modeKey && !bet.mode_key) {
+    throw new Error(`mode_key missing for bet ${betId}`);
+  }
+  return bet;
 }

@@ -11,7 +11,7 @@
  */
 
 import type { League } from '../../../types/league';
-import type { ModeValidator } from '../../../modes/nfl/shared/types';
+import type { ModeValidator } from '../../../modes/sharedUtils/types';
 import { listModesForLeague, ensureInitialized } from '../../../modes';
 import {
   getFeedProvider,

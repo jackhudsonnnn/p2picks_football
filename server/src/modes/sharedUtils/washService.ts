@@ -1,5 +1,5 @@
 import { betRepository } from './betRepository';
-import { getSupabaseAdmin } from '../../../supabaseClient';
+import { getSupabaseAdmin } from '../../supabaseClient';
 
 export interface WashOptions {
   betId: string;
