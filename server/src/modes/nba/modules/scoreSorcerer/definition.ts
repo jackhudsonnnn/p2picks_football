@@ -23,7 +23,7 @@ function computeWinningCondition(): string {
 function computeOptions({ config }: ModeContext): string[] {
   const home = config.home_team_name || config.home_team_abbrev || config.home_team_id || 'Home Team';
   const away = config.away_team_name || config.away_team_abbrev || config.away_team_id || 'Away Team';
-  return ['pass', String(home), String(away), NBA_SCORE_SORCERER_NO_MORE_SCORES];
+  return ['No Entry', String(home), String(away), NBA_SCORE_SORCERER_NO_MORE_SCORES];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

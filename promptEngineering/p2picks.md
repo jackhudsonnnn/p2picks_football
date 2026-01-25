@@ -18,7 +18,7 @@ A bet progresses through several states from its creation to its completion.
 2.  **Participation (`Active` State):** Once proposed, the bet's timer begins. While the timer is running, the bet is **`Active`**. Members can join, and participants can change their choices.
 3.  **Lock-in (`Pending` State):** When the timer expires, choices are locked in. If the underlying game event is not yet complete, the bet is now **`Pending`**.
 4.  **Resolution (`Resolved` State):** Once the game event concludes, the bet is validated and either paid out or washed. The bet's state is now **`Resolved`**.
-5.  **Washed (`Washed` State):** If a bet meets wash conditions (zero participants, all users pass, all user choose same option, or no winners), it transitions to **`Washed`**. A system message is emitted.
+5.  **Washed (`Washed` State):** If a bet meets wash conditions (zero participants, all user choose same option, or no winners), it transitions to **`Washed`**. A system message is emitted.
 
 ---
 
@@ -33,7 +33,7 @@ The platform uses a pooled betting structure where winners split the losers' con
     * *Example:* If a **50-point losers pot** is split among **3 winners**, each gets 16 points ($3 \times 16 = 48$). The remaining **2 point** are distributed amongst the three winners at random.
 * **Edge Cases:** A bet is considered a **"wash"** (i.e., nullified, as if it never happened) under the following conditions. In these cases, no points are won or lost.
 * The timer expires with zero participants
-* The timer expires and all participants chose `pass`
+* The timer expires and all participants chose `No Entry`
 * The timer expires and all participants chose the same option
 * The bet is resolved and no one chose the winning option
 
@@ -53,7 +53,7 @@ This mode is a prop bet comparing the performance of two players.
     * Selects **two unique players** from the active game.
     * Selects when the bet should **resolve after**: Halftime or End of Game.
     * Selects how the validator should **Track Progress**: Cumulative or Starting Now
-* **Participant Choices:** `pass`, `{Player 1}`, `{Player 2}`.
+* **Participant Choices:** `No Entry`, `{Player 1}`, `{Player 2}`.
 * **Winning Condition:** The winning choice is the player who achieves the **largest** (in the case of "Cumulative") or **largest increase** in the selected stat from the moment the bet becomes pending (in the case of "Starting Now") until the "settle at" time.
 
 #### Mode 2: King Of The Hill
@@ -63,14 +63,14 @@ Race two players to a stat milestone.
     * Selects **two unique players** from the active game.
     * Selects how the validator should **Track Progress**: Cumulative or Starting Now
     * Sets a **resolve value** between `0` and `499`; this is the target both players are racing to hit.
-* **Participant Choices:** `pass`, `{Player 1}`, `{Player 2}`, `Neither`.
+* **Participant Choices:** `No Entry`, `{Player 1}`, `{Player 2}`, `Neither`.
 * **Winning Condition:** As the game progresses the validator watches the tracked stat. The first player to reach or exceed the resolve value (whether it starts from the start of the game or time of the bet closing, decided by the **Track Progress** configuration) wins. If the game reaches its final state before either player hits the target, `Neither` wins.
 * **Edge Cases:** The wager washes if the resolve value has already been met before the bet becomes pending or if both players cross the threshold on the same update.
 
 #### Mode 3: Choose their Fate
 This mode is a bet on the current drive outcome.
 * **Proposer Configuration:** None beyond the standard bet parameters.
-* **Participant Choices:** `pass`, `Touchdown`, `Field Goal`, `Safety`, `Punt`, `Turnover`.
+* **Participant Choices:** `No Entry`, `Touchdown`, `Field Goal`, `Safety`, `Punt`, `Turnover`.
 * **Winning Condition:** The winning choice reflects how the drive ends. 
 * **Edge Cases:** The wager washes if the drive ends scoreless without a punt or turnover (e.g., end of half/game).
 
@@ -78,13 +78,13 @@ This mode is a bet on the current drive outcome.
 #### Mode 4: Scorcerer
 This mode is a bet on the next score type.
 * **Proposer Configuration:** None beyond the standard bet parameters.
-* **Participant Choices:** `pass`, `TD`, `FG`, `Safety`, `No More Scores`.
+* **Participant Choices:** `No Entry`, `TD`, `FG`, `Safety`, `No More Scores`.
 * **Winning Condition:** The winning choice is the type of the next score.
 
 #### Mode 9: Score Sorcerer
 This mode is a bet on which **team** scores next.
 * **Proposer Configuration:** None beyond the standard bet parameters.
-* **Participant Choices:** `pass`, `{Home Team}`, `{Away Team}`, `No More Scores`.
+* **Participant Choices:** `No Entry`, `{Home Team}`, `{Away Team}`, `No More Scores`.
 * **Winning Condition:** The first team to add points after the bet locks wins. If the game reaches its final state without any additional scoring, `No More Scores` wins. If both teams’ scores increase on the same update, the bet is washed.
 
 #### Mode 5: Total Disaster
@@ -92,7 +92,7 @@ Bet on whether the total points scored in the game will be over or under a speci
 * **Proposer Configuration:** 
     * Sets the over/under value (a numeric line, e.g. `47.5`).
     * Selects when the bet should **resolve after**: Halftime or End of Game.
-* **Participant Choices:** `pass`, `Over`, `Under`.
+* **Participant Choices:** `No Entry`, `Over`, `Under`.
 * **Winning Condition:** Once the game is final, compute total points = homeScore + awayScore.
     * If total points > line, `Over` wins.
     * If total points < line, `Under` wins.
@@ -102,7 +102,7 @@ Bet on which team covers a specified point spread, applied to the home team.
 * **Proposer Configuration:** 
     * Sets the point spread (a numeric value that must end in .5). A spread is applied to the home teams score; the highest of the two scores wins/covers.
     * Selects when the bet should **resolve after**: Halftime or End of Game.
-* **Participant Choices:** `pass`, `{team 1}`, `{team 2}`
+* **Participant Choices:** `No Entry`, `{team 1}`, `{team 2}`
 * **Winning Condition:** Once the game is final, add the spread to the home team
     * If {team 1 score} + spread > {team 2 score}, bet participants choosing {team 1} win
     * If {team 1 score} + spread < {team 2 score}, bet participants choosing {team 2} win
@@ -115,13 +115,13 @@ This mode is a prop bet for users to guess over/under on whether a player will g
     * Selects when the bet should **resolve after**: Halftime or End of Game.
     * Selects how the validator should **Track Progress**: Cumulative or Starting Now
     * Sets the over/under value, a numeric **line** (a numeric value that must end in .5).
-* **Participant Choices:** `pass`, `over`, `under`.
+* **Participant Choices:** `No Entry`, `over`, `under`.
 * **Winning Condition:** The winning choice is decided by whether the player gets more/less than the specified amount for a given stat.
 
 #### Mode 8: Right On The Money
 Classic moneyline — pick who wins the game.
 * **Proposer Configuration:** None beyond selecting the game; team names are auto-filled when available.
-* **Participant Choices:** `pass`, `{Home Team}`, `{Away Team}`, `Tie`.
+* **Participant Choices:** `No Entry`, `{Home Team}`, `{Away Team}`, `Tie`.
 * **Winning Condition:** Once the game is final, the side with the higher score wins. If the home and away scores are equal at final, `Tie` wins.
 * **Edge Cases:**
     * Bets only resolve after the game status is final. If final scores are unavailable or the game is canceled, the bet will be washed.
@@ -149,7 +149,7 @@ User-defined bet with no preset game tie-in.
 * **Proposer Configuration:** Winning Condition text explaining Options list
     * Writes a **Win Condition** to describe what is being wagered on
     * Writes an **Options List** for participants to choose from
-* **Participant Choices:** `pass`, `{option 1}`, `{option 2}`, ..., `{option n}`.
+* **Participant Choices:** `No Entry`, `{option 1}`, `{option 2}`, ..., `{option n}`.
 * **Winning Condition:**  Any participant can resolve via the resolve icon; choose the winning option or wash. The bet washes if no one picked the winning option.
 
 ---

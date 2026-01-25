@@ -63,7 +63,7 @@ export function mapParticipationRowToTicket(row: any): Ticket {
     state: betStatus,
     gameContext: description,
     betDetails: description,
-    myGuess: row.user_guess || 'pass',
+    myGuess: row.user_guess || 'No Entry',
     wager: bet?.wager_amount != null ? normalizeToHundredth(bet.wager_amount) : 0,
     payout: bet?.wager_amount ? normalizeToHundredth((bet.wager_amount as number) * 2) : 0,
     result: bet?.winning_choice ?? null,

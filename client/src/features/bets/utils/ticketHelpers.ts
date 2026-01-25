@@ -40,7 +40,7 @@ export function buildTicketTexts(
         .map((option) => (typeof option === 'string' ? option.trim() : ''))
         .filter((option): option is string => Boolean(option && option.length));
     }
-    return ['pass'];
+    return ['No Entry'];
   })();
 
   return { summaryText, descriptionText, winningConditionText, optionList };
@@ -54,7 +54,7 @@ export function computeTicketOutcome(ticket: Ticket, phase?: string | null) {
   const normalizedResult = (ticket.result ?? '').toLowerCase();
   const normalizedWinningChoice = ticket.winningChoice != null ? String(ticket.winningChoice).trim().toLowerCase() : null;
   const normalizedGuess = ticket.myGuess != null ? String(ticket.myGuess).trim().toLowerCase() : null;
-  const hasGuess = Boolean(normalizedGuess && normalizedGuess.length > 0 && normalizedGuess !== 'pass');
+  const hasGuess = Boolean(normalizedGuess && normalizedGuess.length > 0 && normalizedGuess !== 'No Entry');
   const isCorrectGuess = Boolean(isResolved && hasGuess && normalizedWinningChoice && normalizedGuess === normalizedWinningChoice);
   const isIncorrectGuess = Boolean(isResolved && hasGuess && normalizedWinningChoice && normalizedGuess !== normalizedWinningChoice);
 

@@ -18,7 +18,7 @@ function computeWinningCondition({ config }: ModeContext): string {
 }
 
 function computeOptions(): string[] {
-  return ['pass', 'Over', 'Under'];
+  return ['No Entry', 'Over', 'Under'];
 }
 
 function validateLine(config: Record<string, unknown>): string[] {

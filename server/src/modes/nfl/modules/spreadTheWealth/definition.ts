@@ -18,7 +18,7 @@ function computeWinningCondition({ config }: ModeContext): string {
 }
 
 function computeOptions({ config }: ModeContext): string[] {
-  const opts: string[] = ['pass'];
+  const opts: string[] = ['No Entry'];
   const spreadRaw = Number(config.spread_value ?? config.spread ?? NaN);
   const allowTie = Number.isFinite(spreadRaw) && Number.isInteger(spreadRaw);
   

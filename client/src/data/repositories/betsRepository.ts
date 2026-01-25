@@ -52,7 +52,7 @@ export async function acceptBetProposal({
         bet_id: betId,
         table_id: tableId,
         user_id: userId,
-        user_guess: 'pass',
+        user_guess: 'No Entry',
         participation_time: new Date().toISOString(),
       },
     ])

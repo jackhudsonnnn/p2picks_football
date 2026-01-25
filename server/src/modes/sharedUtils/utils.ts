@@ -5,13 +5,13 @@ export function computeModeOptions(
   ctx: ModeContext,
 ): string[] {  
   if (!mode) {
-    return ['pass'];
+    return ['No Entry'];
   }
   
   const modeKey = mode.key || 'unknown';
   
   if (mode.staticOptions && mode.staticOptions.length > 0) {
-    const options = ensurePassOption(dedupeOptions(mode.staticOptions));
+    const options = ensureNoEntryOption(dedupeOptions(mode.staticOptions));
     return options;
   }
   
@@ -22,7 +22,7 @@ export function computeModeOptions(
         const options = result
           .map((item) => String(item))
           .filter((item) => item.trim().length > 0);
-        const finalOptions = ensurePassOption(dedupeOptions(options));
+        const finalOptions = ensureNoEntryOption(dedupeOptions(options));
         return finalOptions;
       }
     } catch (err) {
@@ -30,7 +30,7 @@ export function computeModeOptions(
     }
   }
   
-  return ensurePassOption(['pass']);
+  return ensureNoEntryOption(['No Entry']);
 }
 
 export function computeWinningCondition(
@@ -50,9 +50,9 @@ export function computeWinningCondition(
   return '';
 }
 
-function ensurePassOption(options: string[]): string[] {
-  if (!options.includes('pass')) {
-    return ['pass', ...options];
+function ensureNoEntryOption(options: string[]): string[] {
+  if (!options.includes('No Entry')) {
+    return ['No Entry', ...options];
   }
   return options;
 }

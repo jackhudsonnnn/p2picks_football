@@ -22,7 +22,7 @@ function computeWinningCondition({ config }: ModeContext): string {
 }
 
 function computeOptions(): string[] {
-  return ['pass', 'Touchdown', 'Field Goal', 'Safety', 'Punt', 'Turnover'];
+  return ['No Entry', 'Touchdown', 'Field Goal', 'Safety', 'Punt', 'Turnover'];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

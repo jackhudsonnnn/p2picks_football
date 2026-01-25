@@ -25,7 +25,7 @@ function computeWinningCondition({ config }: ModeContext): string {
 }
 
 function computeOptions({ config }: ModeContext): string[] {
-  const opts: string[] = ['pass'];
+  const opts: string[] = ['No Entry'];
   const player1 = config.player1_name || config.player1_id;
   const player2 = config.player2_name || config.player2_id;
   if (player1) opts.push(String(player1));
