@@ -6,7 +6,7 @@
  */
 
 import type { League } from '../../../types/league';
-import type { GameInfo, GameStatus, LeagueTeam, LeaguePlayer } from '../types';
+import type { GameInfo } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Feed Event Types

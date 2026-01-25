@@ -13,7 +13,7 @@ import type {
   GameStatus,
   GameScores,
 } from './types';
-import * as nflAccessors from '../nflData/nflRefinedDataAccessors';
+import * as nflAccessors from '../../data/nflRefinedDataAccessors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adapter Functions
@@ -59,9 +59,6 @@ function normalizeStatus(status: string): GameStatus {
       return 'STATUS_FINAL';
     case 'STATUS_POSTPONED':
       return 'STATUS_POSTPONED';
-    case 'STATUS_CANCELED':
-    case 'STATUS_CANCELLED':
-      return 'STATUS_CANCELED';
     default:
       return 'STATUS_UNKNOWN';
   }

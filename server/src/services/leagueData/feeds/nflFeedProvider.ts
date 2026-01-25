@@ -13,8 +13,6 @@ import {
   startNflGameFeedService,
   stopNflGameFeedService,
   subscribeToNflGameFeed,
-  getCachedNflGameDoc,
-  getCachedNflSignature,
   type NflGameFeedEvent,
 } from '../../nflData/nflGameFeedService';
 

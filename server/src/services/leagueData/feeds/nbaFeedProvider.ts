@@ -13,8 +13,6 @@ import {
   startNbaGameFeedService,
   stopNbaGameFeedService,
   subscribeToNbaGameFeed,
-  getCachedNbaGameDoc,
-  getCachedNbaSignature,
   type NbaGameFeedEvent,
 } from '../../nbaData/nbaGameFeedService';
 

@@ -10,7 +10,7 @@ import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { getGameDoc, type RefinedNbaGame, type RefinedTeam } from './nbaRefinedDataAccessors';
+import { getGameDoc, type RefinedNbaGame, type RefinedTeam } from '../../data/nbaRefinedDataAccessors';
 
 export type NbaGameFeedEvent = {
   gameId: string;

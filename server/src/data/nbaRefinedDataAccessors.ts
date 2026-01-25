@@ -9,14 +9,14 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { NBA_DATA_INTERVAL_SECONDS } from '../../constants/environment';
+import { NBA_DATA_INTERVAL_SECONDS } from '../constants/environment';
 import type {
   RefinedNbaGame,
   RefinedTeam,
   RefinedPlayer,
   PlayerStats,
   TeamStats,
-} from '../../utils/nba/nbaRefinementTransformer';
+} from '../utils/nba/nbaRefinementTransformer';
 
 // Re-export types for consumers
 export type { RefinedNbaGame, RefinedTeam, RefinedPlayer, PlayerStats, TeamStats };

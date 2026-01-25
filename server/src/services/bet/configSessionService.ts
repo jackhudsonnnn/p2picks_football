@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { getModeDefinition, ensureInitialized as ensureModeRegistryInitialized } from '../../modes';
+import { getModeDefinition } from '../../modes';
 import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../modes/types';
 import { normalizeToHundredth } from '../../utils/number';
 import {

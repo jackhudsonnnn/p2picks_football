@@ -28,7 +28,6 @@ import type {
   PlayerRecord,
   GameStatus,
   GameScores,
-  GameMatchup,
   GameInfo,
 } from './types';
 import { getLeagueProvider, hasLeagueProvider } from './registry';

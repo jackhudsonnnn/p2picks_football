@@ -10,7 +10,7 @@ import chokidar from 'chokidar';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
-import { getGameDoc, type RefinedGameDoc } from './nflRefinedDataAccessors';
+import { getGameDoc, type RefinedGameDoc } from '../../data/nflRefinedDataAccessors';
 
 export type NflGameFeedEvent = {
   gameId: string;

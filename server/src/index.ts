@@ -2,7 +2,7 @@ import express from 'express';
 import cors, { CorsOptions } from 'cors';
 import 'dotenv/config';
 import apiRouter from './routes/api';
-import { startModeValidators } from './services/bet/modeValidatorService';
+import { startModeRuntime, stopModeRuntime } from './services/leagueData';
 import { startNflDataIngestService } from './services/nflData/nflDataIngestService';
 import { startNbaDataIngestService } from './services/nbaData/nbaDataIngestService';
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
@@ -22,8 +22,8 @@ app.use('/api', requireAuth, apiRouter);
 
 app.listen(PORT, () => {
   startResolutionQueue();
-  startModeValidators().catch((err) => {
-    console.error('[server] Failed to start mode validators:', err);
+  startModeRuntime().catch((err) => {
+    console.error('[server] Failed to start mode runtime:', err);
     process.exit(1);
   });
   startBetLifecycleService();
@@ -34,12 +34,14 @@ app.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('[server] SIGTERM received, shutting down...');
+  stopModeRuntime();
   await stopResolutionQueue();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('[server] SIGINT received, shutting down...');
+  stopModeRuntime();
   await stopResolutionQueue();
   process.exit(0);
 });

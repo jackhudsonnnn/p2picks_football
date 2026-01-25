@@ -13,7 +13,7 @@ import type {
   GameStatus,
   GameScores,
 } from './types';
-import * as nbaAccessors from '../nbaData/nbaRefinedDataAccessors';
+import * as nbaAccessors from '../../data/nbaRefinedDataAccessors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adapter Functions

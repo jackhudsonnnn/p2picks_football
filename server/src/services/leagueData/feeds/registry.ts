@@ -10,7 +10,6 @@ import type {
   LeagueGameFeedProvider,
   LeagueGameFeedRegistry,
   GameFeedListener,
-  GameFeedEvent,
   Unsubscribe,
 } from './types';
 
