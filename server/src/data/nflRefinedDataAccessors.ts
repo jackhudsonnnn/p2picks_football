@@ -9,7 +9,7 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { NFL_DATA_INTERVAL_SECONDS } from '../../constants/environment'
+import { NFL_DATA_INTERVAL_SECONDS } from '../constants/environment'
 
 const REFINED_DIR = path.join('src', 'data', 'nfl_data', 'nfl_refined_live_stats');
 
