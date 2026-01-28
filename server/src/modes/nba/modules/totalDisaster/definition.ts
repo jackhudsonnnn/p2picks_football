@@ -21,7 +21,9 @@ function computeWinningCondition({ config }: ModeContext): string {
   const home = config.home_team_name || config.home_team_id || 'Home Team';
   const away = config.away_team_name || config.away_team_id || 'Away Team';
   const line = config.line_label || config.line || 'line';
-  return `Total points between ${home} and ${away} over/under ${line}`;
+  const resolveAt = typeof config.resolve_at === 'string' ? config.resolve_at : null;
+  const timing = resolveAt === 'Halftime' ? ' by halftime' : '';
+  return `Total points between ${home} and ${away} over/under ${line}${timing}`;
 }
 
 function computeOptions(): string[] {

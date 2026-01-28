@@ -1,29 +1,31 @@
-import { getAllPlayers, getPlayerStat } from '../../../../services/leagueData';
+import { getPlayerStat } from '../../../../services/leagueData';
 import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../../types';
 import type { LeaguePlayer } from '../../../../services/leagueData/types';
 import { resolveGameId, type GameContextInput } from '../../../../utils/gameId';
 import { formatNumber } from '../../../../utils/number';
 import {
   NBA_PROP_HUNT_ALLOWED_RESOLVE_AT,
-  NBA_PROP_HUNT_DEFAULT_RESOLVE_AT,
   NBA_PROP_HUNT_STAT_KEY_LABELS,
   NBA_PROP_HUNT_STAT_KEY_TO_CATEGORY,
   NBA_PROP_HUNT_LINE_RANGE,
 } from './constants';
+import { buildProgressModeStep, getDefaultProgressPatch, loadGameContext } from '../../utils/userConfigBuilder';
 
 export async function buildNbaPropHuntUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
   const league = input.league ?? 'NBA';
   const gameId = resolveGameId(input as GameContextInput) ?? '';
+  const context = await loadGameContext(league, gameId);
+  const defaultProgressPatch = getDefaultProgressPatch(context.showProgressStep);
 
   const statChoices: ModeUserConfigChoice[] = Object.entries(NBA_PROP_HUNT_STAT_KEY_LABELS).map(([key, label]) => ({
     id: key,
     value: key,
     label,
-    patch: { stat: key, stat_label: label },
+    patch: { stat: key, stat_label: label, ...defaultProgressPatch },
     clears: ['player_id', 'player_name', 'line', 'line_value', 'line_label'],
   }));
 
-  const players: LeaguePlayer[] = gameId ? await getAllPlayers(league, gameId) : [];
+  const players: LeaguePlayer[] = context.players;
   const playerChoices: ModeUserConfigChoice[] = players.map((p: LeaguePlayer) => ({
     id: p.playerId,
     value: p.playerId,
@@ -39,20 +41,26 @@ export async function buildNbaPropHuntUserConfig(input: BuildUserConfigInput): P
     patch: { resolve_at: v },
   }));
 
-  const progressChoices: ModeUserConfigChoice[] = [
-    { id: 'starting_now', value: 'starting_now', label: 'Starting Now', patch: { progress_mode: 'starting_now' }, description: 'Capture current stat as baseline.' },
-    { id: 'cumulative', value: 'cumulative', label: 'Cumulative', patch: { progress_mode: 'cumulative' }, description: 'Use full-game totals.' },
-  ];
-
   const lineChoices = await buildLineChoices(input.config ?? {}, league, gameId);
 
   const steps: ModeUserConfigStep[] = [
     { key: 'stat', title: 'Select Stat', inputType: 'select', choices: statChoices },
     { key: 'player', title: 'Select Player', inputType: 'select', choices: playerChoices },
     { key: 'resolve_at', title: 'Resolve At', inputType: 'select', choices: resolveChoices },
-    { key: 'progress_mode', title: 'Track Progress', inputType: 'select', choices: progressChoices },
     { key: 'line', title: 'Set Line', inputType: 'select', choices: lineChoices },
   ];
+
+  const progressStep = buildProgressModeStep({
+    showProgressStep: context.showProgressStep,
+    startingNowDescription: 'Capture current stat as baseline.',
+    cumulativeDescription: 'Use full-game totals.',
+    clearsOnChange: ['line', 'line_value', 'line_label'],
+    clearStepsOnChange: ['line'],
+  });
+
+  if (progressStep) {
+    steps.splice(3, 0, progressStep);
+  }
 
   return steps;
 }

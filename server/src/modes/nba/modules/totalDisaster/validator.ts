@@ -38,11 +38,19 @@ class NbaTotalDisasterValidatorService extends BaseValidatorService<NbaTotalDisa
   protected async onGameUpdate(gameId: string): Promise<void> {
     const league: League = 'NBA';
     const status = await getGameStatus(league, gameId);
-    if (status !== 'STATUS_FINAL') return;
 
     const bets = await this.listPendingBets({ gameId });
     for (const bet of bets) {
-      await this.resolveBet(bet.bet_id);
+      const config = await this.getConfigForBet(bet.bet_id);
+      const resolveAt = typeof config?.resolve_at === 'string' ? config.resolve_at : 'End of Game';
+
+      const shouldResolve =
+        resolveAt === 'Halftime'
+          ? status === 'STATUS_HALFTIME' || status === 'STATUS_FINAL'
+          : status === 'STATUS_FINAL';
+
+      if (!shouldResolve) continue;
+      await this.resolveBet(bet.bet_id, config ?? null);
     }
   }
 
@@ -50,9 +58,9 @@ class NbaTotalDisasterValidatorService extends BaseValidatorService<NbaTotalDisa
     // nothing to sync
   }
 
-  private async resolveBet(betId: string): Promise<void> {
+  private async resolveBet(betId: string, cachedConfig: NbaTotalDisasterConfig | null = null): Promise<void> {
     try {
-      const config = await this.getConfigForBet(betId);
+      const config = cachedConfig ?? (await this.getConfigForBet(betId));
       if (!config) {
         this.logWarn('missing config; skipping bet', { betId });
         return;

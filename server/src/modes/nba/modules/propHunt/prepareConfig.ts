@@ -1,9 +1,8 @@
 import type { BetProposal } from '../../../../supabaseClient';
 import { getAwayTeam, getHomeTeam, getPlayer } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, NBA_STAT_KEY_LABELS, NBA_STAT_KEY_TO_CATEGORY, getNbaStatRange } from '../../utils/statConstants';
+import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, NBA_STAT_KEY_LABELS, getNbaStatRange } from '../../utils/statConstants';
 import { resolvePlayerKey } from '../../utils/playerUtils';
-import { NBA_PROP_HUNT_DEFAULT_RESOLVE_AT } from './constants';
 
 interface NbaPropHuntConfig {
   league_game_id?: string | null;

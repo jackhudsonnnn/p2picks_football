@@ -11,6 +11,7 @@ export interface TotalDisasterConfig {
   away_team_id?: string | null;
   away_team_name?: string | null;
   league_game_id?: string | null;
+  resolve_at?: string | null;
 }
 
 export interface TotalDisasterEvaluationResult {
