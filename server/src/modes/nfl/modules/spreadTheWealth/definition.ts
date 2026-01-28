@@ -5,6 +5,7 @@ import { spreadTheWealthValidator } from './validator';
 import { buildSpreadTheWealthUserConfig } from './userConfig';
 import { spreadTheWealthOverview } from './overview';
 import { getSpreadTheWealthLiveInfo } from './liveInfo';
+import { SPREAD_MODE_KEY, SPREAD_LABEL } from './constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type-safe mode functions
@@ -78,12 +79,12 @@ function validateResolveAt({ config }: ModeContext): string[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const spreadTheWealthModule: LeagueModeModule = {
-  key: 'spread_the_wealth',
-  label: 'Spread The Wealth',
+  key: SPREAD_MODE_KEY,
+  label: SPREAD_LABEL,
   supportedLeagues: ['NFL'],
   definition: {
-    key: 'spread_the_wealth',
-    label: 'Spread The Wealth',
+    key: SPREAD_MODE_KEY,
+    label: SPREAD_LABEL,
     computeWinningCondition,
     computeOptions,
     validateConfig,

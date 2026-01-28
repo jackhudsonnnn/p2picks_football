@@ -1,8 +1,9 @@
 import type { ModeOverview } from '../../../sharedUtils/types';
+import { TOTAL_DISASTER_MODE_KEY, TOTAL_DISASTER_LABEL } from './constants';
 
 export const totalDisasterOverview: ModeOverview = {
-  key: 'total_disaster',
-  label: 'Total Disaster',
+  key: TOTAL_DISASTER_MODE_KEY,
+  label: TOTAL_DISASTER_LABEL,
   tagline: 'Pick whether the total points go over or under the line.',
   description:
     'Total Disaster turns the table into a collaborative over/under. Once the proposer sets a line, everyone wagers on whether the combined score will clear it or fall short.',

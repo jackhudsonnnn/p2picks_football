@@ -4,7 +4,13 @@ import { getRedisClient } from '../../../../utils/redisClient';
 import { formatNumber } from '../../../../utils/number';
 import { getMatchup, getAwayTeam, getHomeTeam, getPlayerStat } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { KING_OF_THE_HILL_STAT_KEY_LABELS } from './constants';
+import {
+  KING_OF_THE_HILL_STAT_KEY_LABELS,
+  PLAYER_STAT_MAP,
+  KING_OF_THE_HILL_MODE_KEY,
+  KING_OF_THE_HILL_LABEL,
+  KING_OF_THE_HILL_STORE_PREFIX,
+} from './constants';
 import {
   type KingOfTheHillConfig,
   type ProgressRecord,
@@ -13,15 +19,15 @@ import {
 
 // Shared progress store - must use same prefix as validator
 const redis = getRedisClient();
-const progressStore = new RedisJsonStore<ProgressRecord>(redis, 'kingOfTheHill:progress', 60 * 60 * 12);
+const progressStore = new RedisJsonStore<ProgressRecord>(redis, KING_OF_THE_HILL_STORE_PREFIX, 60 * 60 * 12);
 
 export async function getKingOfTheHillLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { betId, config, leagueGameId, league } = input;
   const typedConfig = config as KingOfTheHillConfig;
 
   const baseResult: ModeLiveInfo = {
-    modeKey: 'king_of_the_hill',
-    modeLabel: 'King Of The Hill',
+    modeKey: KING_OF_THE_HILL_MODE_KEY,
+    modeLabel: KING_OF_THE_HILL_LABEL,
     fields: [],
   };
 
@@ -124,29 +130,8 @@ async function readPlayerStatFromAccessors(
   statKey: string,
 ): Promise<number> {
   if (!playerIdOrName) return 0;
-  // statKey maps to evaluator constants; reuse category/field mapping from evaluator
-  const categoryFieldMap: Record<string, { category: string; field: string }> = {
-    passingYards: { category: 'passing', field: 'passingYards' },
-    passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
-    rushingYards: { category: 'rushing', field: 'rushingYards' },
-    rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
-    longRushing: { category: 'rushing', field: 'longRushing' },
-    receptions: { category: 'receiving', field: 'receptions' },
-    receivingYards: { category: 'receiving', field: 'receivingYards' },
-    receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
-    longReception: { category: 'receiving', field: 'longReception' },
-    totalTackles: { category: 'defensive', field: 'totalTackles' },
-    sacks: { category: 'defensive', field: 'sacks' },
-    passesDefended: { category: 'defensive', field: 'passesDefended' },
-    interceptions: { category: 'interceptions', field: 'interceptions' },
-    kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
-    longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
-    puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
-    longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
-    puntsInside20: { category: 'punting', field: 'puntsInside20' },
-    longPunt: { category: 'punting', field: 'longPunt' },
-  };
-  const spec = categoryFieldMap[statKey];
+  // Use the PLAYER_STAT_MAP defined in constants to map stat keys to league accessors
+  const spec = PLAYER_STAT_MAP[statKey];
   if (!spec) return 0;
   const raw = String(playerIdOrName ?? '').trim();
   if (!raw) return 0;

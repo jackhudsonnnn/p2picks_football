@@ -1,8 +1,9 @@
 import type { ModeOverview } from '../../../sharedUtils/types';
+import { PROP_HUNT_MODE_KEY, PROP_HUNT_LABEL } from './constants';
 
 export const propHuntOverview: ModeOverview = {
-  key: 'prop_hunt',
-  label: 'Prop Hunt',
+  key: PROP_HUNT_MODE_KEY,
+  label: PROP_HUNT_LABEL,
   tagline: 'Chase a single-player prop and decide if they clear the line.',
   description:
     'Prop Hunt tracks one player against a hand-picked stat line. The proposer chooses the athlete, selects which stat to watch, and sets the over/under threshold. Everyone else hunts for value by choosing Over, Under, or passing.',

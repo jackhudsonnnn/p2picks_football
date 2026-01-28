@@ -1,7 +1,7 @@
 import type { ModeOverview } from '../../../sharedUtils/types';
 
 export const eitherOrOverview: ModeOverview = {
-  key: 'either_or',
+  key: 'nfl_either_or',
   label: 'Either Or',
   tagline: 'Pick which player surges in the selected stat.',
   description:

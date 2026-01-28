@@ -1,5 +1,10 @@
 import { LeagueModeModule } from '../../types';
 import { nbaScoreSorcererModule } from './scoreSorcerer';
+import { nbaTotalDisasterModule } from './totalDisaster';
+import { nbaPropHuntModule } from './propHunt';
+import { spreadTheWealthNbaModule } from './spreadTheWealth';
+import { nbaEitherOrModule } from './eitherOr';
+import { kingOfTheHillModule as nbaKingOfTheHillModule } from './kingOfTheHill';
 
 /**
  * All NBA mode modules.
@@ -7,4 +12,9 @@ import { nbaScoreSorcererModule } from './scoreSorcerer';
  */
 export const NBA_MODE_MODULES: LeagueModeModule[] = [
   nbaScoreSorcererModule,
+  nbaTotalDisasterModule,
+  nbaPropHuntModule,
+  spreadTheWealthNbaModule,
+  nbaEitherOrModule,
+  nbaKingOfTheHillModule,
 ];

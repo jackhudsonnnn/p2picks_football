@@ -1,0 +1,1 @@
+export { kingOfTheHillModule } from './definition';

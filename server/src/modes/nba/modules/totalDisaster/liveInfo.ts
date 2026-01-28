@@ -1,0 +1,73 @@
+import type { GetLiveInfoInput, ModeLiveInfo } from '../../../types';
+import { normalizeLine, describeLine, type NbaTotalDisasterConfig } from './evaluator';
+import { normalizeNumber, formatNumber } from '../../../../utils/number';
+import { getScores, getHomeTeam, getAwayTeam, getMatchup } from '../../../../services/leagueData';
+import type { League } from '../../../../types/league';
+import type { LeagueTeam } from '../../../../services/leagueData/types';
+import { NBA_TOTAL_DISASTER_LABEL, NBA_TOTAL_DISASTER_MODE_KEY } from './constants';
+
+export async function getNbaTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
+  const { config, leagueGameId } = input;
+  const league: League = input.league ?? 'NBA';
+  const typedConfig = config as NbaTotalDisasterConfig;
+
+  const baseResult: ModeLiveInfo = {
+    modeKey: NBA_TOTAL_DISASTER_MODE_KEY,
+    modeLabel: NBA_TOTAL_DISASTER_LABEL,
+    fields: [],
+  };
+
+  // Get the line
+  const line = normalizeLine(typedConfig);
+  const lineLabel = describeLine(typedConfig) ?? 'N/A';
+
+  if (line == null) {
+    return {
+      ...baseResult,
+      fields: [{ label: 'Line', value: lineLabel }],
+      unavailableReason: 'Invalid line configuration',
+    };
+  }
+
+  // Try to get live game data
+  const gameId = leagueGameId ?? typedConfig.league_game_id ?? null;
+  if (!gameId) {
+    return {
+      ...baseResult,
+      fields: [{ label: 'Target Line', value: formatNumber(line) }],
+      unavailableReason: 'No game associated with this bet',
+    };
+  }
+
+  const [homeTeam, awayTeam, scoreBundle] = await Promise.all([
+    getHomeTeam(league, gameId),
+    getAwayTeam(league, gameId),
+    getScores(league, gameId),
+  ]);
+
+  const homeScore = normalizeNumber(scoreBundle.home);
+  const awayScore = normalizeNumber(scoreBundle.away);
+  const totalPoints = homeScore + awayScore;
+
+  const homeName = typedConfig.home_team_name ?? resolveTeamLabel(homeTeam) ?? 'Home';
+  const awayName = typedConfig.away_team_name ?? resolveTeamLabel(awayTeam) ?? 'Away';
+  const matchupLabel = await getMatchup(league, gameId || '');
+
+  const fields = [
+    { label: 'Matchup', value: matchupLabel },
+    { label: homeName, value: homeScore },
+    { label: awayName, value: awayScore },
+    { label: 'Total Points', value: totalPoints },
+    { label: 'Target Line', value: formatNumber(line) },
+  ];
+
+  return {
+    ...baseResult,
+    fields,
+  };
+}
+
+function resolveTeamLabel(team: LeagueTeam | null): string | null {
+  if (!team) return null;
+  return team.abbreviation ?? team.displayName ?? null;
+}

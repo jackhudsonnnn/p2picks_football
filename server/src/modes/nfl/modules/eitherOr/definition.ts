@@ -1,5 +1,13 @@
 import type { ModeContext, LeagueModeModule } from '../../../types';
 import { ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../utils/statConstants';
+import {
+  EITHER_OR_MODE_KEY,
+  EITHER_OR_LABEL,
+  EITHER_OR_CHANNEL,
+  EITHER_OR_STORE_PREFIX,
+  EITHER_OR_RESULT_EVENT,
+  EITHER_OR_BASELINE_EVENT,
+} from './constants';
 import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
 import { buildEitherOrUserConfig } from './userConfig';
@@ -75,12 +83,12 @@ function validateProgressMode({ config }: ModeContext): string[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const eitherOrModule: LeagueModeModule = {
-  key: 'either_or',
-  label: 'Either Or',
+  key: EITHER_OR_MODE_KEY,
+  label: EITHER_OR_LABEL,
   supportedLeagues: ['NFL'],
   definition: {
-    key: 'either_or',
-    label: 'Either Or',
+    key: EITHER_OR_MODE_KEY,
+    label: EITHER_OR_LABEL,
     computeWinningCondition,
     computeOptions,
     validateConfig,

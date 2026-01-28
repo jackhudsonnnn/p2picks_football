@@ -9,8 +9,6 @@ import {
   extractTeamAbbreviation,
 } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-
-const league: League = 'NFL';
 import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import {
   SCORE_SORCERER_BASELINE_EVENT,
@@ -29,10 +27,12 @@ import {
   noMoreScoresChoice,
 } from './evaluator';
 
+const league: League = 'NFL';
+
 class ScoreSorcererValidatorService extends BaseValidatorService<ScoreSorcererConfig, ScoreSorcererBaseline> {
   constructor() {
     super({
-      league: 'NFL',
+      league: league,
       modeKey: SCORE_SORCERER_MODE_KEY,
       channelName: SCORE_SORCERER_CHANNEL,
       storeKeyPrefix: SCORE_SORCERER_STORE_PREFIX,

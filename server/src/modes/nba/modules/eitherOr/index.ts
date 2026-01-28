@@ -1,0 +1,1 @@
+export { nbaEitherOrModule } from './definition';

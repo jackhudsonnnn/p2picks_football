@@ -1,8 +1,9 @@
 import type { ModeOverview } from '../../../sharedUtils/types';
+import { SPREAD_MODE_KEY, SPREAD_LABEL } from './constants';
 
 export const spreadTheWealthOverview: ModeOverview = {
-  key: 'spread_the_wealth',
-  label: 'Spread The Wealth',
+  key: SPREAD_MODE_KEY,
+  label: SPREAD_LABEL,
   tagline: 'Will the home team cover the chosen spread?',
   description:
     'Spread The Wealth lets the table decide a custom spread for the matchup. The home team receives the spread value and everyone bets on which side covers when the game ends. Whole-number spreads allow a Tie outcome.',

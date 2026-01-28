@@ -1,1 +1,1 @@
-export { kingOfTheHillModule } from './definition';
+export { kingOfTheHillModule } from './definition'; // uses constants from ./constants

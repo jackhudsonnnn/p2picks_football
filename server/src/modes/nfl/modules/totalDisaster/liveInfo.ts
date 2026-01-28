@@ -4,14 +4,15 @@ import { normalizeNumber, formatNumber } from '../../../../utils/number';
 import { getScores, getHomeTeam, getAwayTeam, getMatchup } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
 import type { LeagueTeam } from '../../../../services/leagueData/types';
+import { TOTAL_DISASTER_MODE_KEY, TOTAL_DISASTER_LABEL } from './constants';
 
 export async function getTotalDisasterLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { config, leagueGameId, league } = input;
   const typedConfig = config as TotalDisasterConfig;
 
   const baseResult: ModeLiveInfo = {
-  modeKey: 'total_disaster',
-    modeLabel: 'Total Disaster',
+  modeKey: TOTAL_DISASTER_MODE_KEY,
+    modeLabel: TOTAL_DISASTER_LABEL,
     fields: [],
   };
 

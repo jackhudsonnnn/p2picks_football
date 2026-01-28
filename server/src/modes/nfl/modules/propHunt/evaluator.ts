@@ -1,6 +1,7 @@
 import { type PlayerRef } from '../../utils/playerUtils';
 import { readPlayerStatValue, resolveStatKey as baseResolveStatKey } from '../../utils/statEvaluatorHelpers';
 import type { League } from '../../../../types/league';
+import { PLAYER_STAT_MAP } from './constants';
 
 export interface PropHuntConfig {
   player_id?: string | null;
@@ -35,28 +36,6 @@ export interface PropHuntEvaluationResult {
   baselineValue: number | null;
   metricValue: number;
 }
-
-const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
-  passingYards: { category: 'passing', field: 'passingYards' },
-  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
-  rushingYards: { category: 'rushing', field: 'rushingYards' },
-  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
-  longRushing: { category: 'rushing', field: 'longRushing' },
-  receptions: { category: 'receiving', field: 'receptions' },
-  receivingYards: { category: 'receiving', field: 'receivingYards' },
-  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
-  longReception: { category: 'receiving', field: 'longReception' },
-  totalTackles: { category: 'defensive', field: 'totalTackles' },
-  sacks: { category: 'defensive', field: 'sacks' },
-  passesDefended: { category: 'defensive', field: 'passesDefended' },
-  interceptions: { category: 'interceptions', field: 'interceptions' },
-  kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
-  longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
-  puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
-  longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
-  puntsInside20: { category: 'punting', field: 'puntsInside20' },
-  longPunt: { category: 'punting', field: 'longPunt' },
-};
 
 export function normalizePropHuntProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
   if (typeof mode === 'string' && mode.trim().toLowerCase() === 'cumulative') {

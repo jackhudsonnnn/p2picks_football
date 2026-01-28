@@ -5,6 +5,7 @@ import { totalDisasterValidator } from './validator';
 import { buildTotalDisasterUserConfig } from './userConfig';
 import { totalDisasterOverview } from './overview';
 import { getTotalDisasterLiveInfo } from './liveInfo';
+import { TOTAL_DISASTER_MODE_KEY, TOTAL_DISASTER_LABEL } from './constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type-safe mode functions
@@ -63,12 +64,12 @@ function validateResolveAt({ config }: ModeContext): string[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const totalDisasterModule: LeagueModeModule = {
-  key: 'total_disaster',
-  label: 'Total Disaster',
+  key: TOTAL_DISASTER_MODE_KEY,
+  label: TOTAL_DISASTER_LABEL,
   supportedLeagues: ['NFL'],
   definition: {
-    key: 'total_disaster',
-    label: 'Total Disaster',
+    key: TOTAL_DISASTER_MODE_KEY,
+    label: TOTAL_DISASTER_LABEL,
     computeWinningCondition,
     computeOptions,
     validateConfig,

@@ -4,6 +4,15 @@ import type { League } from '../../../../types/league';
 import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import { clampResolveValue, KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE } from './constants';
 import {
+  PLAYER_STAT_MAP,
+  KING_OF_THE_HILL_MODE_KEY,
+  KING_OF_THE_HILL_LABEL,
+  KING_OF_THE_HILL_CHANNEL,
+  KING_OF_THE_HILL_STORE_PREFIX,
+  KING_OF_THE_HILL_RESULT_EVENT,
+  KING_OF_THE_HILL_BASELINE_EVENT,
+} from './constants';
+import {
   KingOfTheHillConfig,
   ProgressRecord,
   applyProgressUpdate,
@@ -19,12 +28,12 @@ export class KingOfTheHillValidatorService extends BaseValidatorService<KingOfTh
   constructor() {
     super({
       league: 'NFL',
-      modeKey: 'king_of_the_hill',
-      channelName: 'king-of-the-hill-pending',
-      storeKeyPrefix: 'kingOfTheHill:progress',
-      modeLabel: 'King Of The Hill',
-      resultEvent: 'king_of_the_hill_result',
-      baselineEvent: 'king_of_the_hill_snapshot',
+      modeKey: KING_OF_THE_HILL_MODE_KEY,
+      channelName: KING_OF_THE_HILL_CHANNEL,
+      storeKeyPrefix: KING_OF_THE_HILL_STORE_PREFIX,
+      modeLabel: KING_OF_THE_HILL_LABEL,
+      resultEvent: KING_OF_THE_HILL_RESULT_EVENT,
+      baselineEvent: KING_OF_THE_HILL_BASELINE_EVENT,
     });
   }
 
@@ -328,25 +337,3 @@ function resolvePlayerKey(id?: string | null, name?: string | null): string | nu
   if (trimmedName) return `name:${trimmedName}`;
   return null;
 }
-
-const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
-  passingYards: { category: 'passing', field: 'passingYards' },
-  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
-  rushingYards: { category: 'rushing', field: 'rushingYards' },
-  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
-  longRushing: { category: 'rushing', field: 'longRushing' },
-  receptions: { category: 'receiving', field: 'receptions' },
-  receivingYards: { category: 'receiving', field: 'receivingYards' },
-  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
-  longReception: { category: 'receiving', field: 'longReception' },
-  totalTackles: { category: 'defensive', field: 'totalTackles' },
-  sacks: { category: 'defensive', field: 'sacks' },
-  passesDefended: { category: 'defensive', field: 'passesDefended' },
-  interceptions: { category: 'interceptions', field: 'interceptions' },
-  kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
-  longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
-  puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
-  longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
-  puntsInside20: { category: 'punting', field: 'puntsInside20' },
-  longPunt: { category: 'punting', field: 'longPunt' },
-};

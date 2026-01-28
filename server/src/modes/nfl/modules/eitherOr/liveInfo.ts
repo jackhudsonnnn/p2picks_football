@@ -4,6 +4,11 @@ import { getRedisClient } from '../../../../utils/redisClient';
 import { formatNumber } from '../../../../utils/number';
 import { STAT_KEY_LABELS } from '../../utils/statConstants';
 import {
+  EITHER_OR_MODE_KEY,
+  EITHER_OR_LABEL,
+  EITHER_OR_STORE_PREFIX,
+} from './constants';
+import {
   type EitherOrConfig,
   type EitherOrBaseline,
 } from './evaluator';
@@ -18,7 +23,7 @@ import { type PlayerRef } from '../../utils/playerUtils';
 
 // Shared baseline store - must use same prefix as validator
 const redis = getRedisClient();
-const baselineStore = new RedisJsonStore<EitherOrBaseline>(redis, 'eitherOr:baseline', 60 * 60 * 12);
+const baselineStore = new RedisJsonStore<EitherOrBaseline>(redis, EITHER_OR_STORE_PREFIX, 60 * 60 * 12);
 
 // Player stat map for reading current values
 const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
@@ -41,8 +46,8 @@ export async function getEitherOrLiveInfo(input: GetLiveInfoInput): Promise<Mode
   const typedConfig = config as EitherOrConfig;
 
   const baseResult: ModeLiveInfo = {
-    modeKey: 'either_or',
-    modeLabel: 'Either Or',
+    modeKey: EITHER_OR_MODE_KEY,
+    modeLabel: EITHER_OR_LABEL,
     fields: [],
   };
 

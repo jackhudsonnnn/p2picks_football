@@ -8,17 +8,25 @@ import {
   evaluateSpreadTheWealth,
   normalizeSpread,
 } from './evaluator';
+import {
+  SPREAD_MODE_KEY,
+  SPREAD_LABEL,
+  SPREAD_CHANNEL,
+  SPREAD_STORE_PREFIX,
+  SPREAD_RESULT_EVENT,
+  SPREAD_BASELINE_EVENT,
+} from './constants';
 
 export class SpreadTheWealthValidatorService extends BaseValidatorService<SpreadTheWealthConfig, Record<string, never>> {
   constructor() {
     super({
       league: 'NFL',
-      modeKey: 'spread_the_wealth',
-      channelName: 'spread-the-wealth-pending',
-      storeKeyPrefix: 'spreadTheWealth:noop',
-      modeLabel: 'Spread The Wealth',
-      resultEvent: 'spread_the_wealth_result',
-      baselineEvent: 'spread_the_wealth_baseline',
+      modeKey: SPREAD_MODE_KEY,
+      channelName: SPREAD_CHANNEL,
+      storeKeyPrefix: SPREAD_STORE_PREFIX,
+      modeLabel: SPREAD_LABEL,
+      resultEvent: SPREAD_RESULT_EVENT,
+      baselineEvent: SPREAD_BASELINE_EVENT,
       storeTtlSeconds: 60 * 60, // unused store, short TTL
     });
   }

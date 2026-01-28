@@ -4,6 +4,8 @@ import {
   KING_OF_THE_HILL_DEFAULT_RESOLVE_VALUE,
   KING_OF_THE_HILL_STAT_KEY_LABELS,
   KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY,
+  KING_OF_THE_HILL_MODE_KEY,
+  KING_OF_THE_HILL_LABEL,
 } from './constants';
 import { buildKingOfTheHillMetadata, prepareKingOfTheHillConfig } from './prepareConfig';
 import { kingOfTheHillValidator } from './validator';
@@ -92,12 +94,12 @@ function validateProgressMode({ config }: ModeContext): string[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const kingOfTheHillModule: LeagueModeModule = {
-  key: 'king_of_the_hill',
-  label: 'King Of The Hill',
+  key: KING_OF_THE_HILL_MODE_KEY,
+  label: KING_OF_THE_HILL_LABEL,
   supportedLeagues: ['NFL'],
   definition: {
-    key: 'king_of_the_hill',
-    label: 'King Of The Hill',
+    key: KING_OF_THE_HILL_MODE_KEY,
+    label: KING_OF_THE_HILL_LABEL,
     computeWinningCondition,
     computeOptions,
     validateConfig,

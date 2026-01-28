@@ -5,17 +5,18 @@ import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService'
 import { PLAYER_STAT_MAP } from './constants';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../utils/statConstants';
 import { evaluateEitherOr, EitherOrBaseline, EitherOrConfig } from './evaluator';
+import { EITHER_OR_MODE_KEY, EITHER_OR_LABEL, EITHER_OR_BASELINE_EVENT, EITHER_OR_CHANNEL, EITHER_OR_RESULT_EVENT, EITHER_OR_STORE_PREFIX } from './constants'
 
 export class EitherOrValidatorService extends BaseValidatorService<EitherOrConfig, EitherOrBaseline> {
   constructor() {
     super({
       league: 'NFL',
-      modeKey: 'either_or',
-      channelName: 'either-or-pending',
-      storeKeyPrefix: 'eitherOr:baseline',
-      modeLabel: 'Either Or',
-      resultEvent: 'either_or_result',
-      baselineEvent: 'either_or_baseline',
+      modeKey: EITHER_OR_MODE_KEY,
+      channelName: EITHER_OR_CHANNEL,
+      storeKeyPrefix: EITHER_OR_STORE_PREFIX,
+      modeLabel: EITHER_OR_LABEL,
+      resultEvent: EITHER_OR_RESULT_EVENT,
+      baselineEvent: EITHER_OR_BASELINE_EVENT,
     });
   }
 

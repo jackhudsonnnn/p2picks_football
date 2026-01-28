@@ -1,0 +1,334 @@
+import { BetProposal } from '../../../../supabaseClient';
+import { getGameStatus, getPlayerStat } from '../../../../services/leagueData';
+import type { League } from '../../../../types/league';
+import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
+import {
+  NBA_KOTH_CHANNEL,
+  NBA_KOTH_DEFAULT_RESOLVE_VALUE,
+  NBA_KOTH_LABEL,
+  NBA_KOTH_MODE_KEY,
+  NBA_KOTH_RESULT_EVENT,
+  NBA_KOTH_SNAPSHOT_EVENT,
+  NBA_KOTH_STORE_PREFIX,
+} from './constants';
+import {
+  KingOfTheHillConfig,
+  ProgressRecord,
+  applyProgressUpdate,
+  determineProgressOutcome,
+  readPlayerStat,
+  resolveStatKey,
+} from './evaluator';
+
+export class NbaKingOfTheHillValidatorService extends BaseValidatorService<KingOfTheHillConfig, ProgressRecord> {
+  private readonly initializingBets = new Set<string>();
+
+  constructor() {
+    super({
+      league: 'NBA',
+      modeKey: NBA_KOTH_MODE_KEY,
+      channelName: NBA_KOTH_CHANNEL,
+      storeKeyPrefix: NBA_KOTH_STORE_PREFIX,
+      modeLabel: NBA_KOTH_LABEL,
+      resultEvent: NBA_KOTH_RESULT_EVENT,
+      baselineEvent: NBA_KOTH_SNAPSHOT_EVENT,
+    });
+  }
+
+  protected async onBetBecamePending(bet: BetProposal): Promise<void> {
+    await this.initializeProgressForBet(bet);
+  }
+
+  protected async onGameUpdate(gameId: string): Promise<void> {
+    const bets = await this.listPendingBets({ gameId });
+    for (const bet of bets) {
+      if (this.initializingBets.has(bet.bet_id)) continue;
+      await this.evaluateBet(bet.bet_id, gameId);
+    }
+  }
+
+  protected async onKernelReady(): Promise<void> {
+    await this.syncPendingProgress();
+  }
+
+  private async syncPendingProgress(): Promise<void> {
+    const pending = await this.listPendingBets();
+    for (const bet of pending) {
+      const progress = await this.store.get(bet.bet_id);
+      if (!progress) {
+        await this.initializeProgressForBet(bet);
+      }
+    }
+  }
+
+  private async evaluateBet(betId: string, gameId: string, updatedAt?: string): Promise<void> {
+    try {
+      const config = await this.getConfigForBet(betId);
+      if (!config) {
+        this.logWarn('missing config; skipping bet', { betId });
+        return;
+      }
+
+      const threshold = this.normalizeResolveValue(config);
+      if (threshold == null) {
+        await this.washBet(betId, { reason: 'invalid_threshold', config }, 'Invalid resolve value configuration.');
+        return;
+      }
+
+      const progress =
+        (await this.store.get(betId)) ||
+        (await this.initializeProgressForBet({ bet_id: betId, league_game_id: config.league_game_id ?? undefined }, updatedAt));
+      if (!progress) {
+        this.logWarn('progress unavailable; skipping bet', { betId });
+        return;
+      }
+
+      const progressMode = progress.progressMode || normalizeProgressMode(config.progress_mode);
+      const effectiveGameId = progress.gameId || (config.league_game_id ? String(config.league_game_id) : gameId);
+      const league = config.league ?? 'NBA';
+      const player1Current = await readPlayerStat(league, effectiveGameId, { id: config.player1_id, name: config.player1_name }, progress.statKey);
+      const player2Current = await readPlayerStat(league, effectiveGameId, { id: config.player2_id, name: config.player2_name }, progress.statKey);
+      const timestamp = this.normalizeTimestamp(updatedAt);
+
+      const updatedProgress = applyProgressUpdate(
+        progress,
+        progressMode,
+        threshold,
+        player1Current,
+        player2Current,
+        timestamp,
+      );
+
+      await this.store.set(betId, updatedProgress);
+      const outcome = determineProgressOutcome(updatedProgress);
+      if (outcome === 'player1') {
+        await this.setWinner(betId, config.player1_name || updatedProgress.player1.name || 'Player 1', updatedProgress);
+        return;
+      }
+      if (outcome === 'player2') {
+        await this.setWinner(betId, config.player2_name || updatedProgress.player2.name || 'Player 2', updatedProgress);
+        return;
+      }
+      if (outcome === 'tie') {
+        await this.washBet(
+          betId,
+          {
+            reason: 'simultaneous_finish',
+            threshold: updatedProgress.threshold,
+            player1: updatedProgress.player1,
+            player2: updatedProgress.player2,
+            stat_key: updatedProgress.statKey,
+            progress_mode: updatedProgress.progressMode,
+          },
+          'Both players reached the resolve value at the same time.',
+        );
+        return;
+      }
+
+      const status = await getGameStatus(league, effectiveGameId);
+      if (status === 'STATUS_FINAL' && outcome === 'none') {
+        await this.setNeitherResult(betId, updatedProgress);
+      }
+    } catch (err) {
+      this.logError('evaluate bet error', { betId }, err);
+    }
+  }
+
+  private async initializeProgressForBet(
+    bet: Partial<BetProposal> & { bet_id: string; league_game_id?: string | null },
+    eventTimestamp?: string,
+  ): Promise<ProgressRecord | null> {
+    const existing = await this.store.get(bet.bet_id);
+    if (existing) return existing;
+
+    this.initializingBets.add(bet.bet_id);
+    const config = await this.getConfigForBet(bet.bet_id);
+    try {
+      if (!config) {
+        this.logWarn('cannot initialize progress; missing config', { betId: bet.bet_id });
+        return null;
+      }
+
+      const statKey = resolveStatKey(config);
+      if (!statKey) {
+        this.logWarn('unsupported stat key', { betId: bet.bet_id, stat: config.stat });
+        return null;
+      }
+
+      const progressMode = normalizeProgressMode(config.progress_mode);
+      const threshold = this.normalizeResolveValue(config);
+      if (threshold == null) {
+        this.logWarn('invalid resolve value', { betId: bet.bet_id });
+        return null;
+      }
+
+      const gameId = config.league_game_id || bet.league_game_id;
+      if (!gameId) {
+        this.logWarn('missing game id for progress capture', { betId: bet.bet_id });
+        return null;
+      }
+
+      const league = config.league ?? 'NBA';
+      const capturedAt = this.normalizeTimestamp(eventTimestamp);
+      const progress = await buildProgressRecordFromAccessors(
+        league,
+        gameId,
+        config,
+        statKey,
+        threshold,
+        progressMode,
+        capturedAt,
+      );
+      if (!progress) {
+        this.logWarn('unable to build progress from accessors', { betId: bet.bet_id, gameId });
+        return null;
+      }
+
+      const player1Value = progress.player1.lastValue;
+      const player2Value = progress.player2.lastValue;
+      if (progressMode === 'cumulative' && (player1Value >= threshold || player2Value >= threshold)) {
+        await this.washBet(
+          bet.bet_id,
+          {
+            reason: 'threshold_met_before_pending',
+            threshold,
+            player1_value: player1Value,
+            player2_value: player2Value,
+            progress_mode: progressMode,
+          },
+          'Resolve value was already met before the bet became pending.',
+        );
+        return null;
+      }
+
+      await this.store.set(bet.bet_id, progress);
+      await this.recordHistory(bet.bet_id, this.config.baselineEvent, progress as unknown as Record<string, unknown>);
+      return progress;
+    } finally {
+      this.initializingBets.delete(bet.bet_id);
+    }
+  }
+
+  private async setNeitherResult(betId: string, progress: ProgressRecord): Promise<void> {
+    await this.resolveWithWinner(betId, 'Neither', {
+      eventType: this.config.resultEvent,
+      payload: {
+        outcome: 'neither',
+        winning_choice: 'Neither',
+        threshold: progress.threshold,
+        player1: progress.player1,
+        player2: progress.player2,
+        stat: progress.statKey,
+        progress_mode: progress.progressMode,
+        captured_at: new Date().toISOString(),
+      },
+    });
+  }
+
+  private async setWinner(betId: string, winningChoice: string, progress: ProgressRecord): Promise<void> {
+    await this.resolveWithWinner(betId, winningChoice, {
+      eventType: this.config.resultEvent,
+      payload: {
+        outcome: winningChoice,
+        threshold: progress.threshold,
+        player1: progress.player1,
+        player2: progress.player2,
+        stat_key: progress.statKey,
+        progress_mode: progress.progressMode,
+        captured_at: new Date().toISOString(),
+      },
+    });
+  }
+
+  private normalizeResolveValue(config: KingOfTheHillConfig): number | null {
+    const raw = config.resolve_value ?? config.resolve_value_label ?? NBA_KOTH_DEFAULT_RESOLVE_VALUE;
+    const num = typeof raw === 'number' ? raw : Number(raw);
+    if (!Number.isFinite(num)) return null;
+    return num;
+  }
+}
+
+export const kingOfTheHillValidator = new NbaKingOfTheHillValidatorService();
+
+async function buildProgressRecordFromAccessors(
+  league: League,
+  gameId: string,
+  config: KingOfTheHillConfig,
+  statKey: string,
+  threshold: number,
+  progressMode: 'starting_now' | 'cumulative',
+  capturedAt: string = new Date().toISOString(),
+): Promise<ProgressRecord | null> {
+  const player1Key = resolvePlayerKey(config.player1_id, config.player1_name);
+  const player2Key = resolvePlayerKey(config.player2_id, config.player2_name);
+  if (!player1Key || !player2Key) return null;
+
+  const spec = PLAYER_STAT_MAP[statKey];
+  if (!spec) return null;
+
+  const [player1Value, player2Value] = await Promise.all([
+    getPlayerStat(league, gameId, player1Key, spec.category, spec.field),
+    getPlayerStat(league, gameId, player2Key, spec.category, spec.field),
+  ]);
+
+  const player1Baseline = Number(player1Value) || 0;
+  const player2Baseline = Number(player2Value) || 0;
+
+  const player1Progress = {
+    id: config.player1_id,
+    name: config.player1_name,
+    baselineValue: player1Baseline,
+    lastValue: player1Baseline,
+    reached: progressMode === 'cumulative' ? player1Baseline >= threshold : false,
+    reachedAt: null,
+    valueAtReach: null,
+    deltaAtReach: null,
+    metricAtReach: null,
+  };
+
+  const player2Progress = {
+    id: config.player2_id,
+    name: config.player2_name,
+    baselineValue: player2Baseline,
+    lastValue: player2Baseline,
+    reached: progressMode === 'cumulative' ? player2Baseline >= threshold : false,
+    reachedAt: null,
+    valueAtReach: null,
+    deltaAtReach: null,
+    metricAtReach: null,
+  };
+
+  return {
+    statKey,
+    threshold,
+    gameId,
+    capturedAt,
+    progressMode,
+    player1: player1Progress,
+    player2: player2Progress,
+  };
+}
+
+function resolvePlayerKey(id?: string | null, name?: string | null): string | null {
+  const trimmedId = (id ?? '').trim();
+  if (trimmedId) return trimmedId;
+  const trimmedName = (name ?? '').trim();
+  if (trimmedName) return `name:${trimmedName}`;
+  return null;
+}
+
+const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
+  points: { category: 'stats', field: 'points' },
+  rebounds: { category: 'stats', field: 'rebounds' },
+  assists: { category: 'stats', field: 'assists' },
+  steals: { category: 'stats', field: 'steals' },
+  blocks: { category: 'stats', field: 'blocks' },
+  turnovers: { category: 'stats', field: 'turnovers' },
+  threePointersMade: { category: 'stats', field: 'threePointersMade' },
+  freeThrowsMade: { category: 'stats', field: 'freeThrowsMade' },
+};
+
+function normalizeProgressMode(mode?: string | null): 'starting_now' | 'cumulative' {
+  const normalized = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
+  return normalized === 'starting_now' ? 'starting_now' : 'cumulative';
+}

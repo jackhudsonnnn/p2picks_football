@@ -3,7 +3,14 @@ import { propHuntOverview } from './overview';
 import { buildPropHuntUserConfig } from './userConfig';
 import { preparePropHuntConfig } from './prepareConfig';
 import { propHuntValidator } from './validator';
-import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS } from './constants';
+import {
+  PROP_HUNT_ALLOWED_RESOLVE_AT,
+  PROP_HUNT_DEFAULT_RESOLVE_AT,
+  PROP_HUNT_LINE_RANGE,
+  STAT_KEY_LABELS,
+  PROP_HUNT_MODE_KEY,
+  PROP_HUNT_LABEL,
+} from './constants';
 import { getPropHuntLiveInfo } from './liveInfo';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -86,12 +93,12 @@ function validateLineStep({ config }: ModeContext): string[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const propHuntModule: LeagueModeModule = {
-  key: 'prop_hunt',
-  label: 'Prop Hunt',
+  key: PROP_HUNT_MODE_KEY,
+  label: PROP_HUNT_LABEL,
   supportedLeagues: ['NFL'],
   definition: {
-    key: 'prop_hunt',
-    label: 'Prop Hunt',
+    key: PROP_HUNT_MODE_KEY,
+    label: PROP_HUNT_LABEL,
     computeWinningCondition,
     computeOptions,
     validateConfig,

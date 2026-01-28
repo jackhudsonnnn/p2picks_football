@@ -1,8 +1,9 @@
 import type { ModeOverview } from '../../../sharedUtils/types';
+import { KING_OF_THE_HILL_MODE_KEY, KING_OF_THE_HILL_LABEL } from './constants';
 
 export const kingOfTheHillOverview: ModeOverview = {
-  key: 'king_of_the_hill',
-  label: 'King Of The Hill',
+  key: KING_OF_THE_HILL_MODE_KEY,
+  label: KING_OF_THE_HILL_LABEL,
   tagline: 'Race two players to a stat milestone.',
   description:
     'King Of The Hill pits two players in a sprint to a stat threshold. The proposer selects the matchup, the tracked stat, and the milestone value. Participants back the player they believe will reach the target first—or bet that neither will get there before the final whistle.',

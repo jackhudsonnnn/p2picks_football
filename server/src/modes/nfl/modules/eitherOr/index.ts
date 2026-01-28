@@ -1,1 +1,1 @@
-export { eitherOrModule } from './definition';
+export { eitherOrModule } from './definition'; // uses constants from ./constants

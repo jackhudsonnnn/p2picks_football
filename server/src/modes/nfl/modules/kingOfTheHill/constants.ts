@@ -1,5 +1,34 @@
 import { STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS, STAT_KEY_RANGES, DEFAULT_STAT_RANGE } from '../../utils/statConstants';
 
+export const KING_OF_THE_HILL_MODE_KEY = 'nfl_king_of_the_hill';
+export const KING_OF_THE_HILL_LABEL = 'King of the Hill';
+export const KING_OF_THE_HILL_CHANNEL = 'king-of-the-hill-pending';
+export const KING_OF_THE_HILL_STORE_PREFIX = 'kingOfTheHill:progress';
+export const KING_OF_THE_HILL_RESULT_EVENT = 'king_of_the_hill_result';
+export const KING_OF_THE_HILL_BASELINE_EVENT = 'king_of_the_hill_baseline';
+
+export const PLAYER_STAT_MAP: Record<string, { category: string; field: string }> = {
+  passingYards: { category: 'passing', field: 'passingYards' },
+  passingTouchdowns: { category: 'passing', field: 'passingTouchdowns' },
+  rushingYards: { category: 'rushing', field: 'rushingYards' },
+  rushingTouchdowns: { category: 'rushing', field: 'rushingTouchdowns' },
+  longRushing: { category: 'rushing', field: 'longRushing' },
+  receptions: { category: 'receiving', field: 'receptions' },
+  receivingYards: { category: 'receiving', field: 'receivingYards' },
+  receivingTouchdowns: { category: 'receiving', field: 'receivingTouchdowns' },
+  longReception: { category: 'receiving', field: 'longReception' },
+  totalTackles: { category: 'defensive', field: 'totalTackles' },
+  sacks: { category: 'defensive', field: 'sacks' },
+  passesDefended: { category: 'defensive', field: 'passesDefended' },
+  interceptions: { category: 'interceptions', field: 'interceptions' },
+  kickReturnYards: { category: 'kickReturns', field: 'kickReturnYards' },
+  longKickReturn: { category: 'kickReturns', field: 'longKickReturn' },
+  puntReturnYards: { category: 'puntReturns', field: 'puntReturnYards' },
+  longPuntReturn: { category: 'puntReturns', field: 'longPuntReturn' },
+  puntsInside20: { category: 'punting', field: 'puntsInside20' },
+  longPunt: { category: 'punting', field: 'longPunt' },
+};
+
 export const KING_OF_THE_HILL_STAT_KEY_TO_CATEGORY = STAT_KEY_TO_CATEGORY;
 export const KING_OF_THE_HILL_STAT_KEY_LABELS = STAT_KEY_LABELS;
 

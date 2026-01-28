@@ -9,14 +9,15 @@ import {
   getMatchup,
 } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
+import { SPREAD_MODE_KEY, SPREAD_LABEL } from './constants';
 
 export async function getSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {
   const { config, leagueGameId, league } = input;
   const typedConfig = config as SpreadTheWealthConfig;
 
   const baseResult: ModeLiveInfo = {
-    modeKey: 'spread_the_wealth',
-    modeLabel: 'Spread The Wealth',
+    modeKey: SPREAD_MODE_KEY,
+    modeLabel: SPREAD_LABEL,
     fields: [],
   };
 

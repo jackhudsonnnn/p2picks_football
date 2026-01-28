@@ -8,17 +8,25 @@ import {
   evaluateTotalDisaster,
   normalizeLine,
 } from './evaluator';
+import {
+  TOTAL_DISASTER_MODE_KEY,
+  TOTAL_DISASTER_LABEL,
+  TOTAL_DISASTER_CHANNEL,
+  TOTAL_DISASTER_STORE_PREFIX,
+  TOTAL_DISASTER_RESULT_EVENT,
+  TOTAL_DISASTER_BASELINE_EVENT,
+} from './constants';
 
 export class TotalDisasterValidatorService extends BaseValidatorService<TotalDisasterConfig, Record<string, never>> {
   constructor() {
     super({
       league: 'NFL',
-      modeKey: 'total_disaster',
-      channelName: 'total-disaster-pending',
-      storeKeyPrefix: 'totalDisaster:noop',
-      modeLabel: 'Total Disaster',
-      resultEvent: 'total_disaster_result',
-      baselineEvent: 'total_disaster_baseline',
+      modeKey: TOTAL_DISASTER_MODE_KEY,
+      channelName: TOTAL_DISASTER_CHANNEL,
+      storeKeyPrefix: TOTAL_DISASTER_STORE_PREFIX,
+      modeLabel: TOTAL_DISASTER_LABEL,
+      resultEvent: TOTAL_DISASTER_RESULT_EVENT,
+      baselineEvent: TOTAL_DISASTER_BASELINE_EVENT,
       storeTtlSeconds: 60 * 60,
     });
   }
