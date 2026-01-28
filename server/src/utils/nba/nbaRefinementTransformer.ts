@@ -164,15 +164,9 @@ function extractPlayerStats(rawStats: Record<string, unknown>, rawPlayer: Record
 }
 
 function refinePlayer(rawPlayer: Record<string, unknown>): RefinedPlayer | null {
-  // Skip inactive players
+  // Skip inactive players only; include all ACTIVE players even if they haven't played yet
   const status = String(rawPlayer.status ?? '').toUpperCase();
   if (status === 'INACTIVE') {
-    return null;
-  }
-
-  // Skip players who haven't played
-  const played = rawPlayer.played;
-  if (played === '0' || played === 0) {
     return null;
   }
 
@@ -286,8 +280,8 @@ export function refineBoxscore(raw: unknown, gameId: string): RefinedNbaGame | n
       return null;
     }
 
-    const gameStatus = Number(game.gameStatus ?? 1);
-    const statusText = String(game.gameStatusText ?? '');
+  const gameStatus = Number(game.gameStatus ?? 1);
+  const statusText = String(game.gameStatusText ?? '');
 
     const arena = game.arena as Record<string, unknown>;
 
@@ -295,7 +289,7 @@ export function refineBoxscore(raw: unknown, gameId: string): RefinedNbaGame | n
       eventId: gameId,
       generatedAt: new Date().toISOString(),
       source: 'nba.com',
-      status: mapGameStatus(gameStatus, statusText),
+  status: mapGameStatus(gameStatus, statusText),
       statusText,
       period: Number(game.period ?? 0),
       gameClock: String(game.gameClock ?? ''),
