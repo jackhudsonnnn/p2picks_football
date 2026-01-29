@@ -34,9 +34,9 @@ const BALANCE_LABELS: Record<BalanceType, string> = {
 };
 
 const BALANCE_DESCRIPTIONS: Record<BalanceType, string> = {
-  bust: 'Bust Balance assumes you incorrectly chose all pending bets.',
-  push: 'Push Balance assumes all pending bets end in a wash; note that every table member\'s balance sums to 0.',
-  sweep: 'Sweep Balance assumes you\'ve chosen the correct answer in all pending bets.',
+  bust: 'Bust Balance assumes all pending bets are incorrectly chosen',
+  push: 'Push Balance assumes all pending bets will end in a wash',
+  sweep: 'Sweep Balance assumes all pending bets are correctly chosen',
 };
 
 const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disabled, onMemberClick, balanceType }) => {

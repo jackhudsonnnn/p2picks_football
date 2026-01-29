@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { getModeDefinition } from '../../modes';
-import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../modes/types';
+import { getModeDefinition } from '../../leagues';
+import type { ModeDefinitionDTO, ModeUserConfigChoice, ModeUserConfigStep } from '../../leagues/types';
 import { normalizeToHundredth } from '../../utils/number';
 import {
   buildModePreview,

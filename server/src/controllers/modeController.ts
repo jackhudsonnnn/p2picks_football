@@ -6,7 +6,7 @@ import {
   ensureInitialized as ensureModeRegistryInitialized,
   getActiveLeagues as getActiveLeaguesFromRegistry,
   modeSupportsLeague,
-} from '../modes';
+} from '../leagues';
 import {
   buildModePreview,
   getModeUserConfigSteps,

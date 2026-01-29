@@ -3,18 +3,18 @@ import {
   getMode,
   prepareModeConfig as prepareModeConfigFromRegistry,
   ensureInitialized,
-} from '../../modes';
+} from '../../leagues';
 import type {
   ModeContext,
   ModeConfigStepDefinition,
   ModeDefinitionDTO,
   ModeUserConfigChoice,
   ModeUserConfigStep,
-} from '../../modes/types';
+} from '../../leagues/types';
 import {
   computeModeOptions,
   computeWinningCondition,
-} from '../../modes/sharedUtils/utils';
+} from '../../leagues/sharedUtils/utils';
 import type { BetProposal } from '../../supabaseClient';
 import {
   getHomeTeam,

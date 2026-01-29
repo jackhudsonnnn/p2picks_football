@@ -147,10 +147,10 @@ export const TableView: React.FC = () => {
             <Modal
               isOpen={showBetErrorModal && Boolean(betError)}
               onClose={handleBetErrorClose}
-              title="Bet proposal unavailable"
+              title="Bet proposal Failed"
             >
               <div className="friends-list-shared empty bet-error-modal-message" role="alert">
-                {betError ?? "Unable to create bet proposal."}
+                {"Unable to create bet proposal. Either the game has ended or this mode is currently unavailable."}
               </div>
             </Modal>
             <Modal

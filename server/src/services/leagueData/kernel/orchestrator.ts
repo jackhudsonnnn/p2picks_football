@@ -17,7 +17,7 @@
  * ```
  */
 
-import { ensureInitialized, getActiveLeagues } from '../../../modes';
+import { ensureInitialized, getActiveLeagues } from '../../../leagues';
 import { initializeFeedProviders } from '../feeds';
 import { startLeagueKernels, stopAllKernels, getRunningKernels } from '../kernel';
 import type { League } from '../../../types/league';

@@ -9,7 +9,7 @@ import {
   listModeDefinitions,
   getModeLiveInfo,
   ensureInitialized as ensureModeRegistryInitialized,
-} from '../modes';
+} from '../leagues';
 import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
   createBetProposal as createBetProposalService,

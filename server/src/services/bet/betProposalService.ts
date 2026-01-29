@@ -22,7 +22,7 @@ import {
 import { registerBetLifecycle } from './betLifecycleService';
 import { createBetProposalAnnouncement, type BetAnnouncementResult } from './betAnnouncementService';
 import { fetchActivePokeChildren, recordBetPokeLink } from './betPokeService';
-import { getMode, ensureInitialized as ensureModeRegistryInitialized } from '../../modes';
+import { getMode, ensureInitialized as ensureModeRegistryInitialized } from '../../leagues';
 import { normalizeToHundredth } from '../../utils/number';
 import { normalizeLeague, type League } from '../../types/league';
 import {

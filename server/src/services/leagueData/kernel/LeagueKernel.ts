@@ -11,8 +11,8 @@
  */
 
 import type { League } from '../../../types/league';
-import type { ModeValidator } from '../../../modes/sharedUtils/types';
-import { listModesForLeague, ensureInitialized } from '../../../modes';
+import type { ModeValidator } from '../../../leagues/sharedUtils/types';
+import { listModesForLeague, ensureInitialized } from '../../../leagues';
 import {
   getFeedProvider,
   subscribeToLeagueFeed,

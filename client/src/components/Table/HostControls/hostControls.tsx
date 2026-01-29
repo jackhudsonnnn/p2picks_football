@@ -111,7 +111,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
       title: 'Settle Table',
       message: (
         <div>
-          <p>Settling the table will reset every member&apos;s balance to 0. All bets should be resolved or washed before you settle. A settlement summary will be posted to the table&apos;s chat history.</p>
+          <p>Settling the table will reset every member&apos;s push balance to 0. A settlement summary will be posted to the table.</p>
         </div>
       ),
       confirmLabel: 'Confirm',
