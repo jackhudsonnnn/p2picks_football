@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import "./memberList.css";
-import type { TableMember } from "@features/table/types";
+import type { TableMember, BalanceType } from "@features/table/types";
 import { UserList, type UserItem, type UserActionProps } from "@components/Social/UserList/UserList";
 import { formatSignedCurrency, normalizeToHundredth } from "@shared/utils/number";
 import { useAuth } from "@features/auth";
@@ -14,18 +14,37 @@ interface MemberListProps {
   members: MemberListMember[];
 }
 
-// Extended user item to include balance
+// Extended user item to include all three balances
 interface MemberUserItem extends UserItem {
-  balance: number;
+  bust_balance: number;
+  push_balance: number;
+  sweep_balance: number;
 }
 
 interface MemberBalanceActionProps extends UserActionProps {
   user: MemberUserItem;
   onMemberClick: (member: MemberUserItem) => void;
+  balanceType: BalanceType;
 }
 
-const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disabled, onMemberClick }) => {
-  const balanceValue = normalizeToHundredth(user.balance);
+const BALANCE_LABELS: Record<BalanceType, string> = {
+  bust: 'Bust',
+  push: 'Push',
+  sweep: 'Sweep',
+};
+
+const BALANCE_DESCRIPTIONS: Record<BalanceType, string> = {
+  bust: 'Bust Balance assumes you incorrectly chose all pending bets.',
+  push: 'Push Balance assumes all pending bets end in a wash; note that every table member\'s balance sums to 0.',
+  sweep: 'Sweep Balance assumes you\'ve chosen the correct answer in all pending bets.',
+};
+
+const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disabled, onMemberClick, balanceType }) => {
+  const balanceValue = normalizeToHundredth(
+    balanceType === 'bust' ? user.bust_balance :
+    balanceType === 'push' ? user.push_balance :
+    user.sweep_balance
+  );
   const isNegative = balanceValue < 0;
   const isZero = balanceValue === 0;
   const balanceClass = isZero ? "zero" : isNegative ? "negative" : "positive";
@@ -38,11 +57,37 @@ const MemberBalanceAction: React.FC<MemberBalanceActionProps> = ({ user, disable
         if (disabled) return;
         onMemberClick(user);
       }}
-      aria-label={`Balance for ${user.username}: ${balanceLabel}. Click to send friend request.`}
+      aria-label={`${BALANCE_LABELS[balanceType]} balance for ${user.username}: ${balanceLabel}. Click to send friend request.`}
       aria-disabled={disabled}
       title={balanceLabel}
     >
       <span className="balance-badge">{balanceLabel}</span>
+    </div>
+  );
+};
+
+interface BalanceToggleProps {
+  value: BalanceType;
+  onChange: (value: BalanceType) => void;
+}
+
+const BalanceToggle: React.FC<BalanceToggleProps> = ({ value, onChange }) => {
+  const options: BalanceType[] = ['bust', 'push', 'sweep'];
+
+  return (
+    <div className="balance-toggle" role="tablist" aria-label="Balance type selector">
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          role="tab"
+          aria-selected={value === option}
+          className={`balance-toggle-option ${value === option ? 'active' : ''}`}
+          onClick={() => onChange(option)}
+        >
+          {BALANCE_LABELS[option]}
+        </button>
+      ))}
     </div>
   );
 };
@@ -53,6 +98,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
   const { friends, add } = useFriends(profile?.user_id || undefined);
   const { showAlert, showConfirm, dialogNode } = useDialog();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [balanceType, setBalanceType] = useState<BalanceType>('bust');
 
   const friendIds = useMemo(() => new Set(friends.map((f) => f.user_id)), [friends]);
 
@@ -60,7 +106,9 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
     () => members.map((m) => ({
       id: m.user_id,
       username: m.username,
-      balance: m.balance,
+      bust_balance: m.bust_balance,
+      push_balance: m.push_balance,
+      sweep_balance: m.sweep_balance,
     })),
     [members]
   );
@@ -106,15 +154,19 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
         {...props}
         user={props.user as MemberUserItem}
         onMemberClick={handleMemberClick}
+        balanceType={balanceType}
       />
     ),
-    [handleMemberClick]
+    [handleMemberClick, balanceType]
   );
 
   const isClickable = Boolean(user && profile);
 
   return (
     <section className="members-container" aria-label="Table members">
+      <header className="members-header">
+        <BalanceToggle value={balanceType} onChange={setBalanceType} />
+      </header>
       <UserList
         users={memberUsers}
         ActionComponent={isClickable ? ActionComponent : undefined}
@@ -123,6 +175,9 @@ export const MemberList: React.FC<MemberListProps> = ({ members }) => {
         disabled={busyId !== null}
         className="members-list-wrapper"
       />
+      <footer className="members-footer">
+        <p className="balance-description">{BALANCE_DESCRIPTIONS[balanceType]}</p>
+      </footer>
       {dialogNode}
     </section>
   );

@@ -300,21 +300,27 @@ export interface Database {
       };
       "table_members": {
         Row: {
-          "balance": number;
+          "bust_balance": number;
+          "push_balance": number;
+          "sweep_balance": number;
           "joined_at": string | null;
           "member_id": string;
           "table_id": string;
           "user_id": string;
         };
         Insert: {
-          "balance"?: number;
+          "bust_balance"?: number;
+          "push_balance"?: number;
+          "sweep_balance"?: number;
           "joined_at"?: string | null;
           "member_id"?: string;
           "table_id"?: string;
           "user_id"?: string;
         };
         Update: {
-          "balance"?: number;
+          "bust_balance"?: number;
+          "push_balance"?: number;
+          "sweep_balance"?: number;
           "joined_at"?: string | null;
           "member_id"?: string;
           "table_id"?: string;

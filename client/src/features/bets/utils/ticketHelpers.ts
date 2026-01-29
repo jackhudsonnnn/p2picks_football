@@ -16,10 +16,20 @@ export function buildTicketTexts(
   previewError: string | null,
 ) {
   const modeKey = getModeKeyString(ticket);
+  const fallbackLabelFromKey = modeKey
+    ? (() => {
+        const parts = modeKey.split('_').filter(Boolean);
+        const withoutPrefix = parts.length > 1 ? parts.slice(1) : parts;
+        return withoutPrefix
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+      })()
+    : '';
+  const modeLabel = preview?.modeLabel || fallbackLabelFromKey;
 
   const summaryText = (() => {
     if (preview?.summary && preview.summary.trim().length) return preview.summary;
-    if (modeKey) return modeKey.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+    if (modeLabel) return modeLabel;
     return 'Bet';
   })();
 

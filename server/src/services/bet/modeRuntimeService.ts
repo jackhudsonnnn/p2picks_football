@@ -39,6 +39,7 @@ export interface ModePreviewResult {
   options: string[];
   winningCondition?: string;
   errors: string[];
+  modeLabel: string;
 }
 
 export async function prepareModeConfig(
@@ -96,12 +97,14 @@ export async function buildModePreview(
   const winningCondition = computeWinningCondition(definition, ctx);
   const options = computeModeOptions(definition, ctx);
   const errors = runModeValidator(definition, ctx);
+  const modeLabel = deriveModeLabel(modeKey, definition);
 
   return {
     description,
     winningCondition: winningCondition && winningCondition.trim().length ? winningCondition : undefined,
     options,
     errors,
+    modeLabel,
   };
 }
 
@@ -255,4 +258,17 @@ function runModeValidator(
   }
 
   return [];
+}
+
+function deriveModeLabel(modeKey: string, definition: ModeDefinitionDTO): string {
+  const explicitLabel = typeof definition.label === 'string' ? definition.label.trim() : '';
+  if (explicitLabel.length) {
+    return explicitLabel;
+  }
+  const parts = modeKey.split(/[_\s]+/).filter(Boolean);
+  const withoutPrefix = parts.length > 1 ? parts.slice(1) : parts;
+  const formatted = withoutPrefix
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  return formatted.length ? formatted : 'Bet Mode';
 }

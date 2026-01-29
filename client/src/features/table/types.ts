@@ -7,10 +7,14 @@ export interface Table {
   last_activity_at: string | null;
 }
 
+export type BalanceType = 'bust' | 'push' | 'sweep';
+
 export interface TableMember {
   user_id: string;
   username: string;
-  balance: number;
+  bust_balance: number;
+  push_balance: number;
+  sweep_balance: number;
 }
 
 export interface TableListItem {
@@ -25,7 +29,9 @@ export interface TableListItem {
 
 export interface TableRelationMember {
   user_id: string;
-  balance: number | null;
+  bust_balance: number | null;
+  push_balance: number | null;
+  sweep_balance: number | null;
   users?: {
     username?: string | null;
   } | null;

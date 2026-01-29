@@ -7,13 +7,24 @@ export function useTableMembers(table?: TableWithMembers | null, userId?: string
     if (!table?.table_members?.length) return [];
 
     return table.table_members.map((tm) => {
-      const rawBalance = tm.balance ?? 0;
-      const numericBalance = typeof rawBalance === 'string' ? Number(rawBalance) : rawBalance;
-      const safeBalance = Number.isFinite(numericBalance) ? numericBalance : 0;
+      const rawBustBalance = tm.bust_balance ?? 0;
+      const rawPushBalance = tm.push_balance ?? 0;
+      const rawSweepBalance = tm.sweep_balance ?? 0;
+
+      const numericBustBalance = typeof rawBustBalance === 'string' ? Number(rawBustBalance) : rawBustBalance;
+      const numericPushBalance = typeof rawPushBalance === 'string' ? Number(rawPushBalance) : rawPushBalance;
+      const numericSweepBalance = typeof rawSweepBalance === 'string' ? Number(rawSweepBalance) : rawSweepBalance;
+
+      const safeBustBalance = Number.isFinite(numericBustBalance) ? numericBustBalance : 0;
+      const safePushBalance = Number.isFinite(numericPushBalance) ? numericPushBalance : 0;
+      const safeSweepBalance = Number.isFinite(numericSweepBalance) ? numericSweepBalance : 0;
+
       return {
         user_id: tm.user_id,
         username: tm.users?.username ?? tm.user_id,
-        balance: normalizeToHundredth(safeBalance),
+        bust_balance: normalizeToHundredth(safeBustBalance),
+        push_balance: normalizeToHundredth(safePushBalance),
+        sweep_balance: normalizeToHundredth(safeSweepBalance),
       } satisfies TableMember;
     });
   }, [table]);

@@ -112,6 +112,7 @@ export type BetModePreview = {
   options: string[];
   winningCondition?: string;
   errors?: string[];
+  modeLabel?: string;
 };
 
 export type BetGeneralConfigFieldSchema = {

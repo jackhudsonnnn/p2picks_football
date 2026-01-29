@@ -27,4 +27,5 @@ export type ModePreviewPayload = {
   options?: string[];
   fields?: Array<{ label: string; value: string }>;
   rows?: Array<Record<string, string | number | null>>;
+  modeLabel?: string;
 };

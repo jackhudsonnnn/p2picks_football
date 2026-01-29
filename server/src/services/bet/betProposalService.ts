@@ -543,6 +543,7 @@ async function createU2PickBetProposal(
     options: u2pickOptions.map((o) => o.trim()),
     winningCondition,
     errors: [],
+    modeLabel: 'Table Talk',
   };
 
   // Create announcement

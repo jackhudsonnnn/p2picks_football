@@ -1,7 +1,7 @@
 export { useTablesList } from './hooks/useTablesList';
 export { useTable } from './hooks/useTable';
 export { useTableMembers } from './hooks/useTableMembers';
-export type { TableListItem, TableMember, Table } from './types';
+export type { TableListItem, TableMember, Table, BalanceType } from './types';
 
 import { useEffect } from 'react';
 import { subscribeToTableMembers } from './services/tableService';
