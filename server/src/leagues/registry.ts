@@ -359,6 +359,10 @@ export async function initializeRegistry(): Promise<void> {
   const { NBA_MODE_MODULES: nbaModes } = await import('./nba/modules');
   registerModes(nbaModes);
   
+  // Import and register U2Pick modes
+  const { U2PICK_MODE_MODULES: u2pickModes } = await import('./u2pick/modules');
+  registerModes(u2pickModes);
+  
   // Future: Import and register MLB, NHL, etc. modes here
   
   initialized = true;

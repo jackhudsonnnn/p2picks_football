@@ -299,6 +299,147 @@ export async function getBetLiveInfo(req: Request, res: Response) {
 }
 
 /**
+ * POST /api/bets/:betId/validate
+ * Validate a U2Pick/Table Talk bet by setting the winning choice.
+ * Only available for pending U2Pick bets.
+ */
+export async function validateBet(req: Request, res: Response) {
+  const { betId } = req.params as any;
+  if (!betId || typeof betId !== 'string') {
+    res.status(400).json({ error: 'betId required' });
+    return;
+  }
+
+  const body = req.body || {};
+  const winningChoice = typeof body.winning_choice === 'string' ? body.winning_choice.trim() : '';
+
+  if (!winningChoice) {
+    res.status(400).json({ error: 'winning_choice is required' });
+    return;
+  }
+
+  const supabase = req.supabase;
+  const authUser = req.authUser;
+  if (!supabase || !authUser) {
+    res.status(500).json({ error: 'Authentication context missing' });
+    return;
+  }
+
+  try {
+    const { getSupabaseAdmin } = await import('../supabaseClient');
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Fetch the bet
+    const { data: betRow, error: betError } = await supabaseAdmin
+      .from('bet_proposals')
+      .select('bet_id, table_id, mode_key, league, bet_status, winning_choice')
+      .eq('bet_id', betId)
+      .maybeSingle();
+
+    if (betError) throw betError;
+    if (!betRow) {
+      res.status(404).json({ error: 'Bet not found' });
+      return;
+    }
+
+    // Check if this is a U2Pick bet
+    if (betRow.league !== 'U2Pick') {
+      res.status(400).json({ error: 'Only U2Pick bets can be manually validated' });
+      return;
+    }
+
+    // Check bet status
+    if (betRow.bet_status !== 'pending') {
+      res.status(400).json({ 
+        error: 'Bet cannot be validated',
+        details: betRow.bet_status === 'active' 
+          ? 'Bet is still active. Wait for the betting window to close.'
+          : `Bet is already ${betRow.bet_status}.`
+      });
+      return;
+    }
+
+    // Check if already resolved
+    if (betRow.winning_choice) {
+      res.status(400).json({ error: 'Bet has already been validated' });
+      return;
+    }
+
+    // Check if user is a participant in this bet
+    const { data: participation, error: participationError } = await supabaseAdmin
+      .from('bet_participations')
+      .select('user_id')
+      .eq('bet_id', betId)
+      .eq('user_id', authUser.id)
+      .maybeSingle();
+
+    if (participationError) throw participationError;
+    if (!participation) {
+      res.status(403).json({ error: 'Only participants can validate this bet' });
+      return;
+    }
+
+    // Fetch mode config to validate the winning choice
+    const modeConfig = await fetchModeConfig(betId);
+    const config = modeConfig?.data as Record<string, unknown> | null;
+    const validOptions = config?.options as string[] | undefined;
+
+    if (!validOptions || !Array.isArray(validOptions)) {
+      res.status(500).json({ error: 'Could not determine valid options for this bet' });
+      return;
+    }
+
+    // Check if winning_choice is a valid option
+    if (!validOptions.includes(winningChoice)) {
+      res.status(400).json({ 
+        error: 'Invalid winning choice',
+        valid_options: validOptions,
+      });
+      return;
+    }
+
+    // Set the winning choice - the DB trigger will handle the rest
+    const { error: updateError } = await supabaseAdmin
+      .from('bet_proposals')
+      .update({ winning_choice: winningChoice })
+      .eq('bet_id', betId)
+      .eq('bet_status', 'pending')
+      .is('winning_choice', null);
+
+    if (updateError) throw updateError;
+
+    // Record validation in history
+    try {
+      await supabaseAdmin.from('resolution_history').insert({
+        bet_id: betId,
+        event_type: 'manual_validation',
+        payload: {
+          validated_by: authUser.id,
+          winning_choice: winningChoice,
+          validated_at: new Date().toISOString(),
+        },
+      });
+    } catch (historyError) {
+      // Log but don't fail the request
+      console.warn('[betController] failed to record validation history', { 
+        betId, 
+        error: (historyError as any)?.message 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      bet_id: betId, 
+      winning_choice: winningChoice,
+      message: 'Bet validated successfully',
+    });
+  } catch (e: any) {
+    console.error('[betController] validateBet error', { betId, error: e?.message });
+    res.status(500).json({ error: e?.message || 'failed to validate bet' });
+  }
+}
+
+/**
  * GET /api/bet-proposals/bootstrap/league/:league
  * Get bootstrap data for bet proposal form.
  */

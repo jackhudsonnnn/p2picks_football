@@ -560,7 +560,7 @@ async function createU2PickBetProposal(
 
   // Store U2Pick-specific config
   try {
-    await storeModeConfig(typedBet.bet_id, 'u2pick', u2pickConfig);
+    await storeModeConfig(typedBet.bet_id, 'table_talk', u2pickConfig);
   } catch (cfgError) {
     console.error('[betProposal] failed to store U2Pick config', {
       betId: typedBet.bet_id,

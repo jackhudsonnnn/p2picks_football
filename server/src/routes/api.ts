@@ -18,6 +18,7 @@ router.get('/leagues/active', modeController.listActiveLeagues);
 router.get('/bet-proposals/bootstrap/league/:league', betController.getBetProposalBootstrap);
 router.post('/tables/:tableId/bets', betController.createBetProposal);
 router.post('/bets/:betId/poke', betController.pokeBet);
+router.post('/bets/:betId/validate', betController.validateBet);
 router.get('/bets/:betId/live-info', betController.getBetLiveInfo);
 
 // Tables

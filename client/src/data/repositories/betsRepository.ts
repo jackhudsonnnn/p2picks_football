@@ -36,6 +36,21 @@ export async function pokeBet(betId: string) {
   });
 }
 
+export interface ValidateBetResult {
+  success: boolean;
+  bet_id: string;
+  winning_choice: string;
+  message: string;
+}
+
+export async function validateBet(betId: string, winningChoice: string): Promise<ValidateBetResult> {
+  return fetchJSON<ValidateBetResult>(`/api/bets/${encodeURIComponent(betId)}/validate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ winning_choice: winningChoice }),
+  });
+}
+
 export async function acceptBetProposal({
   betId,
   tableId,

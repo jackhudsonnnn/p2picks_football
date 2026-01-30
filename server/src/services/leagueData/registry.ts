@@ -9,6 +9,7 @@ import type { League } from '../../types/league';
 import type { LeagueDataProvider } from './types';
 import { nflDataProvider } from './nflProvider';
 import { nbaDataProvider } from './nbaProvider';
+import { u2pickDataProvider } from './u2pickProvider';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Provider Registry
@@ -17,6 +18,7 @@ import { nbaDataProvider } from './nbaProvider';
 const providers: Map<League, LeagueDataProvider> = new Map([
   ['NFL', nflDataProvider],
   ['NBA', nbaDataProvider],
+  ['U2Pick', u2pickDataProvider],
 ]);
 
 /**
@@ -58,3 +60,4 @@ export function registerProvider(league: League, provider: LeagueDataProvider): 
 
 export { nflDataProvider } from './nflProvider';
 export { nbaDataProvider } from './nbaProvider';
+export { u2pickDataProvider } from './u2pickProvider';
