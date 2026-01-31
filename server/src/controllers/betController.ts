@@ -19,7 +19,7 @@ import {
 import { fetchModeConfig } from '../utils/modeConfig';
 import { getRedisClient } from '../utils/redisClient';
 import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
-import { normalizeLeague, type League } from '../types/league';
+import { normalizeLeague } from '../types/league';
 
 // Lazy-initialize the rate limiter (shared with messages)
 let sharedRateLimiter: ReturnType<typeof createMessageRateLimiter> | null = null;
@@ -462,7 +462,7 @@ export async function getBetProposalBootstrap(req: Request, res: Response) {
       res.json({
         games: [],
         modes: [],
-        general_config_schema: null,
+        general_config_schema: GENERAL_CONFIG_SCHEMA,
         league,
       });
       return;

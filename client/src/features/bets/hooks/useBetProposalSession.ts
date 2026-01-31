@@ -66,10 +66,6 @@ type ModeEntry = {
   supportedLeagues?: League[];
 };
 
-const ALLOWED_LEAGUES: League[] = ['U2Pick', 'NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'];
-// Default active leagues (U2Pick is always active) - will be replaced by API response
-const DEFAULT_ACTIVE_LEAGUES: League[] = ['U2Pick'];
-
 const U2PICK_PLACEHOLDER_GAME = { id: 'u2pick-custom', label: 'Custom bet (no game required)' } as const;
 const U2PICK_PLACEHOLDER_MODE: ModeEntry = {
   key: 'u2pick',
@@ -85,7 +81,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   const [gamesLoading, setGamesLoading] = useState(false);
   const [modes, setModes] = useState<ModeEntry[]>([]);
   const [generalSchema, setGeneralSchema] = useState<BetGeneralConfigSchema | null>(null);
-  const [activeLeagues, setActiveLeagues] = useState<League[]>(DEFAULT_ACTIVE_LEAGUES);
+  const [activeLeagues, setActiveLeagues] = useState<League[]>([]);
 
   const [gameId, setGameId] = useState('');
   const [league, setLeague] = useState<'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF'>('U2Pick');
@@ -107,6 +103,23 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   // U2Pick-specific state
   const [u2pickCondition, setU2pickCondition] = useState('');
   const [u2pickOptions, setU2pickOptions] = useState<string[]>(['', '']);
+  // Server-driven validation rules for U2Pick (fallback to local constants)
+  type U2PickValidation = {
+    conditionMin: number;
+    conditionMax: number;
+    optionMin: number;
+    optionMax: number;
+    optionsMinCount: number;
+    optionsMaxCount: number;
+  };
+  const [u2pickValidation, setU2pickValidation] = useState<U2PickValidation>({
+    conditionMin: U2PICK_CONDITION_MIN,
+    conditionMax: U2PICK_CONDITION_MAX,
+    optionMin: U2PICK_OPTION_MIN,
+    optionMax: U2PICK_OPTION_MAX,
+    optionsMinCount: U2PICK_OPTIONS_MIN_COUNT,
+    optionsMaxCount: U2PICK_OPTIONS_MAX_COUNT,
+  });
 
   // Always fetch active leagues on mount (and keep a cached copy) so the UI knows what is truly available
   useEffect(() => {
@@ -134,17 +147,8 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     };
   }, []);
 
-  // Bootstrap fetch
+  // Bootstrap fetch - query server for league-specific metadata, including U2Pick
   useEffect(() => {
-    if (league === 'U2Pick') {
-      // Skip bootstrap fetch for U2Pick
-      setModes([]);
-      setGames([]);
-      setGeneralSchema(null);
-      setGeneralValues(DEFAULT_GENERAL_VALUES);
-      return;
-    }
-
     let cancelled = false;
     const controller = new AbortController();
     (async () => {
@@ -155,13 +159,13 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
         // Fetch bootstrap data (league required) and active leagues in parallel
         const [payload, leagues] = await Promise.all([
           fetchBetProposalBootstrap(league, controller.signal),
-          fetchActiveLeagues(controller.signal).catch(() => DEFAULT_ACTIVE_LEAGUES),
+          fetchActiveLeagues(controller.signal).catch(() => []),
         ]);
 
         if (cancelled) return;
 
         // Set active leagues from server
-        setActiveLeagues(leagues.length > 0 ? leagues : DEFAULT_ACTIVE_LEAGUES);
+        setActiveLeagues(leagues.length > 0 ? leagues : []);
 
         // Parse mode entries with supportedLeagues metadata
         const modeEntries = Array.isArray(payload?.modes)
@@ -171,7 +175,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
                 const supportedLeagues = Array.isArray(supportedLeaguesRaw)
                   ? supportedLeaguesRaw
                       .map((value: any) => (typeof value === 'string' ? value.trim() : ''))
-                      .filter((value: string): value is League => (ALLOWED_LEAGUES as string[]).includes(value as string))
+                      .filter((value: any): value is League => typeof value === 'string')
                   : undefined;
 
                 const available = item?.available ?? item?.enabled ?? item?.isAvailable ?? item?.metadata?.available ?? true;
@@ -193,6 +197,34 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
             wager_amount: String(payload.general_config_schema?.wager_amount?.defaultValue ?? DEFAULT_GENERAL_VALUES.wager_amount),
             time_limit_seconds: String(payload.general_config_schema?.time_limit_seconds?.defaultValue ?? DEFAULT_GENERAL_VALUES.time_limit_seconds),
           });
+        }
+
+        // If server provided validation metadata for U2Pick, use it
+        if (league === 'U2Pick') {
+          const validation = (payload as any)?.validation ?? (payload as any)?.u2pick_validation ?? (payload as any)?.mode_validation ?? null;
+          if (validation && typeof validation === 'object') {
+            setU2pickValidation({
+              conditionMin: Number((validation.conditionMin ?? validation.condition_min) ?? U2PICK_CONDITION_MIN),
+              conditionMax: Number((validation.conditionMax ?? validation.condition_max) ?? U2PICK_CONDITION_MAX),
+              optionMin: Number((validation.optionMin ?? validation.option_min) ?? U2PICK_OPTION_MIN),
+              optionMax: Number((validation.optionMax ?? validation.option_max) ?? U2PICK_OPTION_MAX),
+              optionsMinCount: Number((validation.optionsMinCount ?? validation.options_min_count) ?? U2PICK_OPTIONS_MIN_COUNT),
+              optionsMaxCount: Number((validation.optionsMaxCount ?? validation.options_max_count) ?? U2PICK_OPTIONS_MAX_COUNT),
+            });
+          }
+
+          // Prefer server-provided games for U2Pick; fall back to placeholder
+          const gamesList = Array.isArray(payload?.games) && payload.games.length ? payload.games : [U2PICK_PLACEHOLDER_GAME];
+          setGames(gamesList as { id: string; label: string }[]);
+          setGameId((prev) => (prev ? prev : String((gamesList[0] as any)?.id ?? U2PICK_PLACEHOLDER_GAME.id)));
+
+          // Ensure a U2Pick placeholder mode is present if server didn't return one
+          setModes((prevModes) => {
+            const hasU2Pick = prevModes.some((m) => m.key === U2PICK_PLACEHOLDER_MODE.key) || modeEntries.some((m) => m.key === U2PICK_PLACEHOLDER_MODE.key);
+            const entries = modeEntries.length ? modeEntries : prevModes;
+            return hasU2Pick ? entries : [...entries, U2PICK_PLACEHOLDER_MODE];
+          });
+          setModeKey((prev) => (prev ? prev : U2PICK_PLACEHOLDER_MODE.key));
         }
       } catch (err: any) {
         if (!cancelled) {
@@ -457,13 +489,13 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     // U2Pick-specific forward navigation
     if (stage === 'u2pick_condition') {
       const trimmed = u2pickCondition.trim();
-      if (trimmed.length < U2PICK_CONDITION_MIN || trimmed.length > U2PICK_CONDITION_MAX) return;
+      if (trimmed.length < u2pickValidation.conditionMin || trimmed.length > u2pickValidation.conditionMax) return;
       setStage('u2pick_options');
       return;
     }
     if (stage === 'u2pick_options') {
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= U2PICK_OPTION_MIN && o.length <= U2PICK_OPTION_MAX);
-      if (validOptions.length < U2PICK_OPTIONS_MIN_COUNT) return;
+      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      if (validOptions.length < u2pickValidation.optionsMinCount) return;
       setStage('general');
       return;
     }
@@ -505,8 +537,8 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     // U2Pick direct submission
     if (league === 'U2Pick') {
       const trimmedCondition = u2pickCondition.trim();
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= U2PICK_OPTION_MIN && o.length <= U2PICK_OPTION_MAX);
-      if (trimmedCondition.length < U2PICK_CONDITION_MIN || validOptions.length < U2PICK_OPTIONS_MIN_COUNT) return;
+      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      if (trimmedCondition.length < u2pickValidation.conditionMin || validOptions.length < u2pickValidation.optionsMinCount) return;
       onSubmit({
         league: 'U2Pick',
         mode_key: 'u2pick',
@@ -552,11 +584,11 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     }
     if (stage === 'u2pick_condition') {
       const trimmed = u2pickCondition.trim();
-      return trimmed.length >= U2PICK_CONDITION_MIN && trimmed.length <= U2PICK_CONDITION_MAX;
+      return trimmed.length >= u2pickValidation.conditionMin && trimmed.length <= u2pickValidation.conditionMax;
     }
     if (stage === 'u2pick_options') {
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= U2PICK_OPTION_MIN && o.length <= U2PICK_OPTION_MAX);
-      return validOptions.length >= U2PICK_OPTIONS_MIN_COUNT;
+      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      return validOptions.length >= u2pickValidation.optionsMinCount;
     }
     if (stage === 'start') {
       return Boolean(gameId && modeKey && league && !sessionLoading && selectedModeAvailable);
@@ -595,8 +627,8 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     // U2Pick direct submission
     if (league === 'U2Pick' && stage === 'summary') {
       const trimmed = u2pickCondition.trim();
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= U2PICK_OPTION_MIN && o.length <= U2PICK_OPTION_MAX);
-      return trimmed.length >= U2PICK_CONDITION_MIN && validOptions.length >= U2PICK_OPTIONS_MIN_COUNT && !generalSaving;
+      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      return trimmed.length >= u2pickValidation.conditionMin && validOptions.length >= u2pickValidation.optionsMinCount && !generalSaving;
     }
     if (!session || session.status !== 'summary' || !session.preview) return false;
     return (session.preview.errors?.length ?? 0) === 0 && !generalSaving && !sessionUpdating;
@@ -631,14 +663,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     setU2pickCondition,
     u2pickOptions,
     setU2pickOptions,
-    u2pickValidation: {
-      conditionMin: U2PICK_CONDITION_MIN,
-      conditionMax: U2PICK_CONDITION_MAX,
-      optionMin: U2PICK_OPTION_MIN,
-      optionMax: U2PICK_OPTION_MAX,
-      optionsMinCount: U2PICK_OPTIONS_MIN_COUNT,
-      optionsMaxCount: U2PICK_OPTIONS_MAX_COUNT,
-    },
+    u2pickValidation,
 
     // availability
     selectedModeAvailable,
