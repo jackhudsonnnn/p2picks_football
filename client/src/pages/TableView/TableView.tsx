@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import "./TableView.css";
 import { useAuth } from "@features/auth";
 import { ChatArea } from "@components/Table/ChatArea/ChatArea";
 import { MemberList } from "@components/Table/MemberList/memberList";
@@ -15,8 +14,9 @@ import { Modal } from "@shared/widgets/Modal/Modal";
 import { useTableView } from "@features/table/hooks";
 import { useTableChat } from "@features/table/hooks/useTableChat";
 import { HttpError } from "@data/clients/restClient";
+import "./TableView.css";
 
-const RATE_LIMIT_MESSAGE = "You've sent 20 messages and bet proposals in the last minute. Chill out a bit.";
+const RATE_LIMIT_MESSAGE = "You've sent too many messages and bet proposals in the last minute. Chill out a bit.";
 
 function isRateLimitError(error: unknown): error is HttpError {
   return error instanceof HttpError && error.status === 429;

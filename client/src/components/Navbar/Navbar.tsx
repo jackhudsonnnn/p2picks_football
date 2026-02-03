@@ -1,11 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@features/auth";
-import "./Navbar.css";
-
 import TablesIcon from "@assets/TablesIcon.png";
 import TicketsIcon from "@assets/TicketsIcon.png";
 import AccountIcon from "@assets/AccountIcon.png";
+import "./Navbar.css";
 
 export const Navbar: React.FC = () => {
   const { user, signOut, signInWithGoogle } = useAuth();

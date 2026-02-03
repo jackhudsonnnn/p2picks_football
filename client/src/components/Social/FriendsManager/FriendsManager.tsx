@@ -8,10 +8,6 @@ import "./FriendsManager.css";
 import { useDialog } from "@shared/hooks/useDialog";
 import { HttpError } from "@data/clients/restClient";
 
-const FRIEND_RATE_LIMIT_TITLE = "Add Friend";
-const FRIEND_RATE_LIMIT_MESSAGE = "You've already added 10 friends in the last minute. Take a quick breather before adding more.";
-const FRIEND_PENDING_MESSAGE = "A friend request is already pending with this user.";
-
 const isRateLimited = (error: unknown): error is HttpError => error instanceof HttpError && error.status === 429;
 
 interface RemoveFriendActionProps extends UserActionProps {
@@ -119,9 +115,9 @@ export const FriendsManager: React.FC = () => {
       }
     } catch (err) {
       if (isRateLimited(err)) {
-        await showAlert({ title: FRIEND_RATE_LIMIT_TITLE, message: FRIEND_RATE_LIMIT_MESSAGE });
+        await showAlert({ title: "Add Friend", message: "You've already added 10 friends in the last minute. Take a quick breather before adding more friends." });
       } else if (err instanceof HttpError && err.status === 409) {
-        await showAlert({ title: "Add Friend", message: FRIEND_PENDING_MESSAGE });
+        await showAlert({ title: "Add Friend", message: "A friend request is already pending with this user." });
       } else {
         await showAlert({ title: "Add Friend", message: "An unexpected error occurred while adding friend." });
       }

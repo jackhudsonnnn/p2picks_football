@@ -457,27 +457,39 @@ export async function getBetProposalBootstrap(req: Request, res: Response) {
 
     const league = normalizeLeague(leagueParam);
 
-    // Handle U2Pick league explicitly
-    if (league === 'U2Pick') {
-      res.json({
-        games: [],
-        modes: [],
-        general_config_schema: GENERAL_CONFIG_SCHEMA,
-        league,
-      });
-      return;
-    }
-
-    // Modes and games are league-scoped
+    // Modes and games are league-scoped. Prefer returning the same payload
+    // shape for all leagues, including U2Pick, so clients can rely on server-
+    // provided mode definitions and validation metadata.
     const modeList = listModeDefinitions(league);
     const gameMap = await getAvailableGames(league);
     const games = Object.entries(gameMap).map(([id, label]) => ({ id, label }));
+
+    // For U2Pick, try to extract validation metadata from registered mode
+    // definitions (e.g. the Table Talk mode exposes condition/option limits).
+    let validation: Record<string, unknown> | undefined;
+    if (league === 'U2Pick') {
+      // Look for the first mode that exposes metadata we can map
+      const src = modeList.find((m: any) => m?.metadata && Object.keys(m.metadata).length > 0);
+      if (src && src.metadata) {
+        const md = src.metadata as Record<string, any>;
+        validation = {
+          // Accept multiple possible metadata key names to be robust
+          conditionMin: md.conditionMin ?? md.conditionMinLength ?? md.condition_min,
+          conditionMax: md.conditionMax ?? md.conditionMaxLength ?? md.condition_max,
+          optionMin: md.optionMin ?? md.optionMinLength ?? md.option_min,
+          optionMax: md.optionMax ?? md.optionMaxLength ?? md.option_max,
+          optionsMinCount: md.optionsMinCount ?? md.options_min_count ?? md.optionsMinCount,
+          optionsMaxCount: md.optionsMaxCount ?? md.options_max_count ?? md.optionsMaxCount,
+        };
+      }
+    }
 
     res.json({
       games,
       modes: modeList,
       general_config_schema: GENERAL_CONFIG_SCHEMA,
       league,
+      ...(validation ? { validation } : {}),
     });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'failed to load bet proposal bootstrap data' });

@@ -1,20 +1,20 @@
 /**
  * NBA API Client
- * 
- * Fetches live game data from NBA.com CDN endpoints.
+ *
+ * Uses a Python helper that wraps the `nba_api` package to fetch live game
+ * data.
  */
 
+import path from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { createLogger } from '../logger';
 
 const logger = createLogger('nbaClient');
 
-const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-  'Referer': 'https://www.nba.com/',
-  'Origin': 'https://www.nba.com'
-};
-
-const SCOREBOARD_URL = 'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json';
+const execFileAsync = promisify(execFile);
+const PYTHON_EXEC = process.env.NBA_PYTHON_EXEC || 'python3.14';
+const PYTHON_SCRIPT = path.resolve(__dirname, 'nba-data.py');
 
 export interface NbaGame {
   gameId: string;
@@ -42,18 +42,44 @@ export interface ScoreboardResponse {
 }
 
 /**
- * Generic fetch helper for NBA JSON endpoints.
+ * Run the Python nba-data helper and parse JSON output.
  */
-async function fetchNbaJson<T>(url: string): Promise<T | null> {
+async function runPythonJson<T>(args: string[]): Promise<T | null> {
   try {
-    const response = await fetch(url, { headers: HEADERS });
-    if (!response.ok) {
-      logger.warn({ url, status: response.status }, 'NBA API request failed');
-      return null;
+    const { stdout, stderr } = await execFileAsync(PYTHON_EXEC, [PYTHON_SCRIPT, ...args], {
+      timeout: 15000,
+      maxBuffer: 10 * 1024 * 1024,
+    });
+
+    if (stderr) {
+      logger.warn({ stderr: stderr.trim() }, 'NBA python helper emitted stderr');
     }
-    return response.json() as Promise<T>;
+
+    return JSON.parse(stdout) as T;
   } catch (err) {
-    logger.error({ err, url }, 'Failed to fetch NBA data');
+    // If the python helper returned a structured error on stderr we may be able
+    // to detect a known condition (like a missing boxscore) and handle it
+    // gracefully. The python helper prints JSON to stderr on failure.
+    try {
+      const stderr = (err as any).stderr;
+      if (stderr) {
+        // Try parse JSON error emitted by the python helper
+        const parsed = JSON.parse(stderr.toString());
+        const msg = parsed?.error?.toString() ?? '';
+
+        // If this was a boxscore request and the helper couldn't provide a
+        // boxscore (often manifested as a JSON/parse error upstream), print
+        // a friendly message and skip processing.
+        if (args[0] === 'boxscore' && /Expecting value|No boxscore|not available/i.test(msg)) {
+          return null;
+        }
+      }
+    } catch (parseErr) {
+      // fall through to generic error logging below
+      logger.debug({ parseErr }, 'Failed to parse python helper stderr');
+    }
+
+    logger.error({ err, args }, 'NBA python helper failed');
     return null;
   }
 }
@@ -62,7 +88,7 @@ async function fetchNbaJson<T>(url: string): Promise<T | null> {
  * Fetch today's scoreboard to get list of games.
  */
 export async function getScoreboard(): Promise<ScoreboardResponse | null> {
-  return fetchNbaJson<ScoreboardResponse>(SCOREBOARD_URL);
+  return runPythonJson<ScoreboardResponse>(['scoreboard']);
 }
 
 /**
@@ -81,6 +107,5 @@ export async function getLiveGames(): Promise<NbaGame[]> {
  * Fetch boxscore for a specific game.
  */
 export async function fetchBoxscore(gameId: string): Promise<unknown | null> {
-  const url = `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json`;
-  return fetchNbaJson(url);
+  return runPythonJson(['boxscore', gameId]);
 }

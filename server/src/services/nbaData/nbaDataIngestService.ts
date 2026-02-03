@@ -118,7 +118,6 @@ async function runRawTick(firstTick: boolean): Promise<void> {
       
       const box = await fetchBoxscore(gameId);
       if (!box) {
-        logger.warn({ gameId }, 'Skipping game: boxscore unavailable');
         continue;
       }
       await writeJsonAtomic(box, NBA_RAW_DIR, `${gameId}.json`);

@@ -1,8 +1,5 @@
-// Domain types for the bets feature
-
-export type BetModeKey = string & { _brand?: 'BetModeKey' };
-export type BetStatus = 'active' | 'pending' | 'resolved' | 'washed';
-export type League = 'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF';
+import type { League } from '@shared/types/bet';
+import type { BetModeKey, BetStatus } from '@shared/types/bet';
 
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
 export interface BetRecord {

@@ -15,7 +15,7 @@ import infoIcon from '@assets/information.png';
 import pokeIcon from '@assets/poke.png';
 import validateIcon from '@assets/validate.png';
 
-export interface TicketCardProps {
+interface TicketCardProps {
   ticket: Ticket;
   onChangeGuess: (ticketId: string, newGuess: string) => void;
   onEnterTable: (tableId: string) => void;

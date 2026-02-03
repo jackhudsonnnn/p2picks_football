@@ -12,7 +12,7 @@ import {
 import "./hostControls.css";
 import { useDialog } from "@shared/hooks/useDialog";
 
-export interface HostControlsMember { 
+interface HostControlsMember { 
   user_id: string; 
   username: string; 
   bust_balance?: number;

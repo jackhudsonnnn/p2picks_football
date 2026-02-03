@@ -1,11 +1,12 @@
 import { supabase } from '@data/clients/supabaseClient';
 import { fetchJSON } from '@data/clients/restClient';
 import { fetchModeConfigs } from '@data/repositories/modesRepository';
+import type { League } from '@shared/types/bet';
 
 export interface BetProposalRequestPayload {
   config_session_id?: string;
   league_game_id?: string;
-  league?: 'U2Pick' |'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF';
+  league?: League;
   mode_key?: string;
   mode_config?: Record<string, unknown>;
   wager_amount?: number;

@@ -85,7 +85,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
             const isActive = activeLeagues.includes(value as any);
             return (
               <option key={value} value={value} disabled={!isActive}>
-                {isActive ? value : `${value} (coming soon)`}
+                {isActive ? value : `${value}`}
               </option>
             );
           })}
@@ -235,7 +235,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
             const available = isModeAvailable(mode.key, league);
             return (
               <option key={mode.key} value={mode.key} disabled={!available}>
-                {available ? mode.label : `${mode.label} (coming soon)`}
+                {available ? mode.label : `${mode.label}`}
               </option>
             );
           })}

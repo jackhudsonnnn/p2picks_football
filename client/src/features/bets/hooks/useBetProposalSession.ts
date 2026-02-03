@@ -11,7 +11,7 @@ import {
   type BetModePreview,
   type BetModeUserConfigStep,
 } from '../service';
-import type { League } from '../types';
+import type { League } from '@shared/types/bet';
 
 export type BetProposalFormValues = {
   config_session_id?: string;
@@ -27,7 +27,7 @@ export type BetProposalFormValues = {
   u2pick_options?: string[];
 };
 
-export type ConfigSessionStage =
+type ConfigSessionStage =
   | 'league'
   | 'start'
   | 'mode'
@@ -46,13 +46,14 @@ const STAGE_ORDER: Record<ConfigSessionStage, number> = {
   summary: 4,
 };
 
-// U2Pick validation constants
-const U2PICK_CONDITION_MIN = 4;
-const U2PICK_CONDITION_MAX = 70;
-const U2PICK_OPTION_MIN = 1;
-const U2PICK_OPTION_MAX = 40;
-const U2PICK_OPTIONS_MIN_COUNT = 2;
-const U2PICK_OPTIONS_MAX_COUNT = 6;
+const DEFAULT_U2PICK_VALIDATION = {
+  conditionMin: 1,
+  conditionMax: 999,
+  optionMin: 1,
+  optionMax: 999,
+  optionsMinCount: 2,
+  optionsMaxCount: 99,
+} as const;
 
 const DEFAULT_GENERAL_VALUES = {
   wager_amount: '0.25',
@@ -64,14 +65,6 @@ type ModeEntry = {
   label: string;
   available?: boolean;
   supportedLeagues?: League[];
-};
-
-const U2PICK_PLACEHOLDER_GAME = { id: 'u2pick-custom', label: 'Custom bet (no game required)' } as const;
-const U2PICK_PLACEHOLDER_MODE: ModeEntry = {
-  key: 'u2pick',
-  label: 'U2Pick (custom bet)',
-  available: true,
-  supportedLeagues: ['U2Pick'],
 };
 
 export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) => void) {
@@ -103,7 +96,6 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   // U2Pick-specific state
   const [u2pickCondition, setU2pickCondition] = useState('');
   const [u2pickOptions, setU2pickOptions] = useState<string[]>(['', '']);
-  // Server-driven validation rules for U2Pick (fallback to local constants)
   type U2PickValidation = {
     conditionMin: number;
     conditionMax: number;
@@ -113,15 +105,14 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     optionsMaxCount: number;
   };
   const [u2pickValidation, setU2pickValidation] = useState<U2PickValidation>({
-    conditionMin: U2PICK_CONDITION_MIN,
-    conditionMax: U2PICK_CONDITION_MAX,
-    optionMin: U2PICK_OPTION_MIN,
-    optionMax: U2PICK_OPTION_MAX,
-    optionsMinCount: U2PICK_OPTIONS_MIN_COUNT,
-    optionsMaxCount: U2PICK_OPTIONS_MAX_COUNT,
+    conditionMin: DEFAULT_U2PICK_VALIDATION.conditionMin,
+    conditionMax: DEFAULT_U2PICK_VALIDATION.conditionMax,
+    optionMin: DEFAULT_U2PICK_VALIDATION.optionMin,
+    optionMax: DEFAULT_U2PICK_VALIDATION.optionMax,
+    optionsMinCount: DEFAULT_U2PICK_VALIDATION.optionsMinCount,
+    optionsMaxCount: DEFAULT_U2PICK_VALIDATION.optionsMaxCount,
   });
 
-  // Always fetch active leagues on mount (and keep a cached copy) so the UI knows what is truly available
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
@@ -204,27 +195,19 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
           const validation = (payload as any)?.validation ?? (payload as any)?.u2pick_validation ?? (payload as any)?.mode_validation ?? null;
           if (validation && typeof validation === 'object') {
             setU2pickValidation({
-              conditionMin: Number((validation.conditionMin ?? validation.condition_min) ?? U2PICK_CONDITION_MIN),
-              conditionMax: Number((validation.conditionMax ?? validation.condition_max) ?? U2PICK_CONDITION_MAX),
-              optionMin: Number((validation.optionMin ?? validation.option_min) ?? U2PICK_OPTION_MIN),
-              optionMax: Number((validation.optionMax ?? validation.option_max) ?? U2PICK_OPTION_MAX),
-              optionsMinCount: Number((validation.optionsMinCount ?? validation.options_min_count) ?? U2PICK_OPTIONS_MIN_COUNT),
-              optionsMaxCount: Number((validation.optionsMaxCount ?? validation.options_max_count) ?? U2PICK_OPTIONS_MAX_COUNT),
+              conditionMin: Number((validation.conditionMin ?? validation.condition_min) ?? DEFAULT_U2PICK_VALIDATION.conditionMin),
+              conditionMax: Number((validation.conditionMax ?? validation.condition_max) ?? DEFAULT_U2PICK_VALIDATION.conditionMax),
+              optionMin: Number((validation.optionMin ?? validation.option_min) ?? DEFAULT_U2PICK_VALIDATION.optionMin),
+              optionMax: Number((validation.optionMax ?? validation.option_max) ?? DEFAULT_U2PICK_VALIDATION.optionMax),
+              optionsMinCount: Number((validation.optionsMinCount ?? validation.options_min_count) ?? DEFAULT_U2PICK_VALIDATION.optionsMinCount),
+              optionsMaxCount: Number((validation.optionsMaxCount ?? validation.options_max_count) ?? DEFAULT_U2PICK_VALIDATION.optionsMaxCount),
             });
           }
 
-          // Prefer server-provided games for U2Pick; fall back to placeholder
-          const gamesList = Array.isArray(payload?.games) && payload.games.length ? payload.games : [U2PICK_PLACEHOLDER_GAME];
+          const gamesList = Array.isArray(payload?.games) && payload.games.length ? payload.games : [];
           setGames(gamesList as { id: string; label: string }[]);
-          setGameId((prev) => (prev ? prev : String((gamesList[0] as any)?.id ?? U2PICK_PLACEHOLDER_GAME.id)));
-
-          // Ensure a U2Pick placeholder mode is present if server didn't return one
-          setModes((prevModes) => {
-            const hasU2Pick = prevModes.some((m) => m.key === U2PICK_PLACEHOLDER_MODE.key) || modeEntries.some((m) => m.key === U2PICK_PLACEHOLDER_MODE.key);
-            const entries = modeEntries.length ? modeEntries : prevModes;
-            return hasU2Pick ? entries : [...entries, U2PICK_PLACEHOLDER_MODE];
-          });
-          setModeKey((prev) => (prev ? prev : U2PICK_PLACEHOLDER_MODE.key));
+          setGameId((prev) => (prev ? prev : String((gamesList[0] as any)?.id ?? '')));
+          setModeKey((prev) => (prev ? prev : (modeEntries[0]?.key ?? '')));
         }
       } catch (err: any) {
         if (!cancelled) {
@@ -293,32 +276,19 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
   // League-specific defaults/placeholders
   useEffect(() => {
     if (league === 'U2Pick') {
-      // Ensure a placeholder game/mode is present so the UI can render selections, but keep them disabled
-      setGames([U2PICK_PLACEHOLDER_GAME]);
-      setGameId((prev) => (prev ? prev : U2PICK_PLACEHOLDER_GAME.id));
-
-      setModes((prevModes) => {
-        const hasU2Pick = prevModes.some((mode) => mode.key === U2PICK_PLACEHOLDER_MODE.key);
-        return hasU2Pick ? prevModes : [...prevModes, U2PICK_PLACEHOLDER_MODE];
-      });
-      setModeKey((prev) => (prev ? prev : U2PICK_PLACEHOLDER_MODE.key));
+      setGames([]);
+      setGameId((prev) => (prev ? prev : ''));
+      setModeKey((prev) => (prev ? prev : ''));
       return;
     }
 
-    // Reset placeholder selections when switching away
-    setModeKey((prev) => (prev === U2PICK_PLACEHOLDER_MODE.key ? '' : prev));
-    setGameId((prev) => (prev === U2PICK_PLACEHOLDER_GAME.id ? '' : prev));
-    setModes((prevModes) => prevModes.filter((mode) => mode.key !== U2PICK_PLACEHOLDER_MODE.key));
-    
     // Clear games while loading new ones for the selected league
     setGames([]);
   }, [league]);
 
   // Fetch games when league changes (for non-U2Pick leagues)
   useEffect(() => {
-    // Skip U2Pick since it uses a placeholder
     if (league === 'U2Pick') return;
-    // Skip if league is not active
     if (!activeLeagues.includes(league)) return;
     
     let cancelled = false;

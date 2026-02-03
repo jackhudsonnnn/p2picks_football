@@ -8,10 +8,8 @@ import { useAuthProfile, useFriends } from "@features/social/hooks";
 import { useDialog } from "@shared/hooks/useDialog";
 import { HttpError } from "@data/clients/restClient";
 
-export type MemberListMember = TableMember;
-
 interface MemberListProps {
-  members: MemberListMember[];
+  members: TableMember[];
 }
 
 // Extended user item to include all three balances

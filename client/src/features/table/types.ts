@@ -27,7 +27,7 @@ export interface TableListItem {
   memberCount?: number;
 }
 
-export interface TableRelationMember {
+interface TableRelationMember {
   user_id: string;
   bust_balance: number | null;
   push_balance: number | null;
