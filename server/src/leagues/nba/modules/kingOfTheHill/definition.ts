@@ -98,6 +98,12 @@ export const kingOfTheHillModule: LeagueModeModule = {
         validate: validatePlayer2,
       },
       {
+        key: 'progress_mode',
+        component: 'kingOfTheHill.progressMode',
+        label: 'Track Progress',
+        validate: validateProgressMode,
+      },
+      {
         key: 'resolve_value',
         component: 'kingOfTheHill.resolveValue',
         label: 'Resolve Value',
@@ -106,12 +112,6 @@ export const kingOfTheHillModule: LeagueModeModule = {
           defaultValue: NBA_KOTH_DEFAULT_RESOLVE_VALUE,
         },
         validate: validateResolveValue,
-      },
-      {
-        key: 'progress_mode',
-        component: 'kingOfTheHill.progressMode',
-        label: 'Track Progress',
-        validate: validateProgressMode,
       },
     ],
     metadata: buildKingOfTheHillMetadata(),

@@ -106,8 +106,8 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
 
       const winningChoice = allowsTie
         ? evaluation.decision === 'home'
-          ? 'Over'
-          : 'Under'
+          ? homeChoice
+          : awayChoice
         : evaluation.decision === 'home'
         ? homeChoice
         : awayChoice;

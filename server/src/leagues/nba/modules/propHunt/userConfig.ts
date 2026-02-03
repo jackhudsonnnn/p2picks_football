@@ -41,7 +41,15 @@ export async function buildNbaPropHuntUserConfig(input: BuildUserConfigInput): P
     patch: { resolve_at: v },
   }));
 
-  const lineChoices = await buildLineChoices(input.config ?? {}, league, gameId);
+  // Determine current stat and preferred progress mode for line generation
+  const statKey = typeof input.config?.stat === 'string' ? input.config?.stat : null;
+  const progressModeForLines: 'starting_now' | 'cumulative' = context.showProgressStep
+    ? (typeof input.config?.progress_mode === 'string' && input.config.progress_mode.trim().toLowerCase() === 'cumulative' ? 'cumulative' : 'starting_now')
+    : 'starting_now';
+
+  const currentStat = gameId && statKey && input.config ? await getCurrentStatValue(league, gameId, input.config ?? {}) : null;
+
+  const lineChoices = await buildLineChoices(input.config ?? {}, currentStat, progressModeForLines, statKey);
 
   const steps: ModeUserConfigStep[] = [
     { key: 'stat', title: 'Select Stat', inputType: 'select', choices: statChoices },
@@ -67,15 +75,33 @@ export async function buildNbaPropHuntUserConfig(input: BuildUserConfigInput): P
 
 async function buildLineChoices(
   existingConfig: Record<string, unknown>,
-  league: string,
-  gameId: string,
+  currentStat: number | null,
+  progressMode: 'starting_now' | 'cumulative',
+  statKey: string | null,
 ): Promise<ModeUserConfigChoice[]> {
-  const statKey = typeof existingConfig.stat === 'string' ? existingConfig.stat : null;
   const { min, max, step } = NBA_PROP_HUNT_LINE_RANGE;
-  const start = min;
   const choices: ModeUserConfigChoice[] = [];
+
+  const minimumBase = progressMode === 'starting_now' ? min : currentStat != null ? currentStat + 0.5 : min;
+  const start = Math.max(min, Math.ceil(minimumBase * 2) / 2);
+
+  if (start > max) {
+    return [
+      {
+        id: 'unavailable',
+        value: 'unavailable',
+        label: 'No valid lines available',
+        description: `The selected stat already exceeds the maximum supported line (${max}).`,
+        disabled: true,
+      },
+    ];
+  }
+
   for (let value = start; value <= max; value += step) {
     const numeric = Number(value.toFixed(1));
+    // Only include values that end in .5 to avoid ties (validator requires .5)
+    const scaled = Math.round(numeric * 2);
+    if (Math.abs(scaled) % 2 !== 1) continue;
     const label = numeric.toFixed(1);
     choices.push({
       id: label,
@@ -86,13 +112,17 @@ async function buildLineChoices(
   }
 
   // include current stat as hint if available
+  // include current stat as hint if available
+  const gameId = typeof existingConfig.league_game_id === 'string' ? existingConfig.league_game_id : '';
   if (gameId && statKey && existingConfig.player_id) {
     try {
       const category = NBA_PROP_HUNT_STAT_KEY_TO_CATEGORY[statKey] || 'stats';
       const stat = await getPlayerStat('NBA', gameId, String(existingConfig.player_id), category, statKey);
       if (Number.isFinite(stat)) {
         const num = Number(stat);
-        const suggested = (Math.floor(num * 2) + 1) / 2;
+        // ensure suggested line ends in .5 and sits above current stat if needed
+        const base = Math.floor(num * 2);
+        const suggested = (base % 2 === 0 ? base + 1 : base) / 2;
         const label = formatNumber(suggested);
         if (!choices.find((c) => c.value === label)) {
           choices.unshift({
@@ -109,4 +139,22 @@ async function buildLineChoices(
   }
 
   return choices;
+}
+
+async function getCurrentStatValue(league: string, gameId: string, config: Record<string, unknown>): Promise<number | null> {
+  const statKey = typeof config.stat === 'string' ? config.stat : '';
+  if (!statKey || !NBA_PROP_HUNT_STAT_KEY_TO_CATEGORY[statKey]) return null;
+  const playerKey = typeof config.player_id === 'string' && config.player_id
+    ? String(config.player_id)
+    : typeof config.player_name === 'string' && config.player_name
+    ? `name:${String(config.player_name)}`
+    : null;
+  if (!playerKey) return null;
+  try {
+    const category = NBA_PROP_HUNT_STAT_KEY_TO_CATEGORY[statKey] || 'stats';
+    const value = await getPlayerStat('NBA', gameId, playerKey, category, statKey);
+    return Number.isFinite(value) ? Number(value) : null;
+  } catch (err) {
+    return null;
+  }
 }

@@ -8,11 +8,11 @@ import { kingOfTheHillModule } from './kingOfTheHill';
 import { scoreSorcererModule } from './scoreSorcerer';
 
 export const MODE_MODULES: LeagueModeModule[] = [
+  chooseTheirFateModule,
   eitherOrModule,
   kingOfTheHillModule,
-  totalDisasterModule,
-  spreadTheWealthModule,
-  chooseTheirFateModule,
   propHuntModule,
   scoreSorcererModule,
+  spreadTheWealthModule,
+  totalDisasterModule,
 ];

@@ -11,15 +11,21 @@ import { getNbaSpreadTheWealthLiveInfo } from './liveInfo';
 import { describeSpread, normalizeSpread } from './evaluator';
 
 function computeWinningCondition({ config }: ModeContext): string {
-  const spread = describeSpread(config) ?? 'spread';
-  return `Beat the spread: ${spread}`;
+  const home = (config as any).home_team_name || (config as any).home_team_id || 'Home Team';
+  const away = (config as any).away_team_name || (config as any).away_team_id || 'Away Team';
+  const spread = (config as any).spread_label || (config as any).spread || 'adjusted';
+  return `Highest score between ${home} (${spread} points) and ${away}`;
 }
 
 function computeOptions({ config }: ModeContext): string[] {
   const spread = normalizeSpread(config as any);
   const allowsTie = spread != null && Number.isInteger(spread);
-  const opts = allowsTie ? ['No Entry', 'Over', 'Under', 'Tie'] : ['No Entry', 'Home', 'Away'];
-  return opts;
+  const home = (config as any).home_team_name || (config as any).home_team_id || 'Home Team';
+  const away = (config as any).away_team_name || (config as any).away_team_id || 'Away Team';
+  if (allowsTie) {
+    return ['No Entry', String(home), String(away), 'Tie'];
+  }
+  return ['No Entry', String(home), String(away)];
 }
 
 function validateConfig({ config }: ModeContext): string[] {
@@ -29,7 +35,7 @@ function validateConfig({ config }: ModeContext): string[] {
   return errors;
 }
 
-export const spreadTheWealthNbaModule: LeagueModeModule = {
+export const nbaSpreadTheWealthModule: LeagueModeModule = {
   key: NBA_SPREAD_THE_WEALTH_MODE_KEY,
   label: NBA_SPREAD_THE_WEALTH_LABEL,
   supportedLeagues: ['NBA'],

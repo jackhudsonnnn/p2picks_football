@@ -19,12 +19,21 @@ export async function buildEitherOrUserConfig(input: BuildUserConfigInput): Prom
   }));
 
   const players: LeaguePlayer[] = context.players;
-  const playerChoices: ModeUserConfigChoice[] = players.map((p) => ({
+
+  const player1Choices: ModeUserConfigChoice[] = players.map((p) => ({
     id: p.playerId,
     value: p.playerId,
     label: p.fullName,
     description: p.position,
-    patch: { player_id: p.playerId, player_name: p.fullName },
+    patch: { player1_id: p.playerId, player1_name: p.fullName },
+  }));
+
+  const player2Choices: ModeUserConfigChoice[] = players.map((p) => ({
+    id: p.playerId,
+    value: p.playerId,
+    label: p.fullName,
+    description: p.position,
+    patch: { player2_id: p.playerId, player2_name: p.fullName },
   }));
 
   const resolveChoices: ModeUserConfigChoice[] = ALLOWED_RESOLVE_AT.map((v) => ({
@@ -36,8 +45,8 @@ export async function buildEitherOrUserConfig(input: BuildUserConfigInput): Prom
 
   const steps: ModeUserConfigStep[] = [
     { key: 'stat', title: 'Select Stat', inputType: 'select', choices: statChoices },
-    { key: 'player1', title: 'Select Player 1', inputType: 'select', choices: playerChoices },
-    { key: 'player2', title: 'Select Player 2', inputType: 'select', choices: playerChoices },
+  { key: 'player1', title: 'Select Player 1', inputType: 'select', choices: player1Choices },
+  { key: 'player2', title: 'Select Player 2', inputType: 'select', choices: player2Choices },
     { key: 'resolve_at', title: 'Resolve At', inputType: 'select', choices: resolveChoices },
   ];
 

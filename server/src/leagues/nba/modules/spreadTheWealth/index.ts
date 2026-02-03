@@ -1,1 +1,1 @@
-export { spreadTheWealthNbaModule } from './definition';
+export { nbaSpreadTheWealthModule } from './definition';

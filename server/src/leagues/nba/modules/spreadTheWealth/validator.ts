@@ -102,8 +102,8 @@ class NbaSpreadTheWealthValidatorService extends BaseValidatorService<NbaSpreadT
 
       const winningChoice = allowsTie
         ? evaluation.decision === 'home'
-          ? 'Over'
-          : 'Under'
+          ? homeChoice
+          : awayChoice
         : evaluation.decision === 'home'
         ? homeChoice
         : awayChoice;

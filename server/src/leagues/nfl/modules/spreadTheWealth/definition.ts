@@ -22,16 +22,15 @@ function computeOptions({ config }: ModeContext): string[] {
   const opts: string[] = ['No Entry'];
   const spreadRaw = Number(config.spread_value ?? config.spread ?? NaN);
   const allowTie = Number.isFinite(spreadRaw) && Number.isInteger(spreadRaw);
+  const home = config.home_team_name || config.home_team_id || 'Home Team';
+  const away = config.away_team_name || config.away_team_id || 'Away Team';
   
   if (allowTie) {
-    opts.push('Over');
-    opts.push('Under');
+    opts.push(String(home));
+    opts.push(String(away));
     opts.push('Tie');
     return opts;
   }
-  
-  const home = config.home_team_name || config.home_team_id || 'Home Team';
-  const away = config.away_team_name || config.away_team_id || 'Away Team';
   opts.push(String(home));
   opts.push(String(away));
   return opts;
