@@ -8,7 +8,7 @@ import { nbaSpreadTheWealthValidator } from './validator';
 import { buildNbaSpreadTheWealthUserConfig } from './userConfig';
 import { nbaSpreadTheWealthOverview } from './overview';
 import { getNbaSpreadTheWealthLiveInfo } from './liveInfo';
-import { describeSpread, normalizeSpread } from './evaluator';
+import { normalizeSpread } from './evaluator';
 
 function computeWinningCondition({ config }: ModeContext): string {
   const home = (config as any).home_team_name || (config as any).home_team_id || 'Home Team';

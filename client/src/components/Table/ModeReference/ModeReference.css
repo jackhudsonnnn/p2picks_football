@@ -20,6 +20,16 @@
   padding: var(--spacing-xl) var(--spacing-lg);
 }
 
+.mode-reference__retry {
+  background: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  border-radius: var(--btn-primary-radius);
+  color: var(--btn-primary-text);
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
 .mode-reference__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

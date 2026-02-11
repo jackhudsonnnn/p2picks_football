@@ -207,9 +207,13 @@
 }
 
 .u2pick-summary-option {
-  background: var(--form-bg);
+  background: transparent;
   border: var(--form-border);
   border-radius: var(--form-radius);
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: var(--font-size-sm);
+}
+
+.summary-header {
+  color: var(--text-blue);
 }

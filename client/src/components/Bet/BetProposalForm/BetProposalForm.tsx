@@ -121,7 +121,7 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
           id="u2pick-condition"
           type="text"
           className="form-input"
-          placeholder="e.g. Who will score first?"
+          placeholder="e.g. first to score"
           value={u2pickCondition}
           onChange={(e) => setU2pickCondition(e.target.value)}
           minLength={u2pickValidation.conditionMin}
@@ -345,12 +345,13 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
         .filter((o) => o.length >= u2pickValidation.optionMin);
       return (
         <div className="form-step centered-step">
-          <div>
-            <strong>{u2pickCondition.trim()}</strong>
+          <div className='summary-header'>
+            <strong>U2Pick • Table Talk</strong>
           </div>
           <div>
             ${formatToHundredth(Number(generalValues.wager_amount))} • {generalValues.time_limit_seconds}s window
           </div>
+          <div>{u2pickCondition.trim()}</div>
           <div className="u2pick-summary-options">
             {validOptions.map((opt, i) => (
               <span key={i} className="u2pick-summary-option">{opt}</span>
@@ -367,12 +368,13 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     }
     return (
       <div className="form-step centered-step">
-        <div>
-          <strong>{session.preview.description}</strong>
+        <div className='summary-header'>
+          <strong>{session.league} • {session.preview.modeLabel ?? session.mode_key}</strong>
         </div>
         <div>
           ${formatToHundredth(session.general.wager_amount)} • {session.general.time_limit_seconds}s window
         </div>
+        <div>{session.preview.description}</div>
         <div>{session.preview.summary}</div>
         {session.preview.winningCondition && <div>{session.preview.winningCondition}</div>}
       </div>
