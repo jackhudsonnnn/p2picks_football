@@ -9,10 +9,10 @@ export interface WashResult {
 }
 
 export class BetRepository {
-  private readonly supa = getSupabaseAdmin();
+  private readonly supabase = getSupabaseAdmin();
 
   async listPendingBets(modeKey: string, filters?: { gameId?: string | null }): Promise<BetProposal[]> {
-    let query = this.supa
+    let query = this.supabase
       .from('bet_proposals')
       .select('*')
       .eq('mode_key', modeKey)
@@ -28,7 +28,7 @@ export class BetRepository {
   }
 
   async setWinningChoice(betId: string, winningChoice: string): Promise<boolean> {
-    const { error, data } = await this.supa
+    const { error, data } = await this.supabase
       .from('bet_proposals')
       .update({ winning_choice: winningChoice })
       .eq('bet_id', betId)
@@ -41,7 +41,7 @@ export class BetRepository {
   }
 
   async recordHistory(betId: string, eventType: HistoryEventType, payload: Record<string, unknown>): Promise<void> {
-    const { error } = await this.supa.from('resolution_history').insert([
+    const { error } = await this.supabase.from('resolution_history').insert([
       {
         bet_id: betId,
         event_type: eventType,
@@ -59,7 +59,7 @@ export class BetRepository {
       winning_choice: null as string | null,
       resolution_time: new Date().toISOString(),
     };
-    const { data, error } = await this.supa
+    const { data, error } = await this.supabase
       .from('bet_proposals')
       .update(updates)
       .eq('bet_id', betId)

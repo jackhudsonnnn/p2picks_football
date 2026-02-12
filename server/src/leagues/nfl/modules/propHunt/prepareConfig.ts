@@ -5,7 +5,7 @@ import {
   getPlayerStat,
 } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { normalizeResolveAt } from '../../utils/resolveUtils';
+import { normalizeResolveAt } from '../../../sharedUtils/resolveUtils';
 import { PROP_HUNT_ALLOWED_RESOLVE_AT, PROP_HUNT_DEFAULT_RESOLVE_AT, PROP_HUNT_LINE_RANGE, STAT_KEY_LABELS, STAT_KEY_TO_CATEGORY } from './constants';
 import { type PlayerRef } from '../../utils/playerUtils';
 

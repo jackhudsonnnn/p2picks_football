@@ -6,7 +6,7 @@
 import { getGameStatus, getGamePeriod, getAllPlayerRecords } from '../../../services/leagueData';
 import type { League } from '../../../types/league';
 import { prepareValidPlayers, sortPlayersByPositionAndName } from './playerUtils';
-import { shouldSkipResolveStep } from './resolveUtils';
+import { shouldSkipResolveStep } from '../../sharedUtils/resolveUtils';
 import { getValidPositionsForStat } from './statMappings';
 import type { ModeUserConfigChoice, ModeUserConfigStep, PlayerRecord } from '../../sharedUtils/types';
 

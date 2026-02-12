@@ -1,7 +1,6 @@
 import { getHomeTeamName } from '../../../../services/leagueData';
 import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../../sharedUtils/types';
-import { shouldSkipResolveStep } from '../../utils/resolveUtils';
-import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../utils/statConstants';
+import { shouldSkipResolveStep, ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../../sharedUtils/resolveUtils';
 import { MAX_MAGNITUDE, MIN_MAGNITUDE, STEP } from './constants';
 import { resolveGameId } from '../../../../utils/gameId';
 

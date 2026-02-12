@@ -3,11 +3,11 @@ import type { League } from '../../../../types/league';
 import { formatNumber } from '../../../../utils/number';
 import { BaseValidatorService } from '../../../sharedUtils/baseValidatorService';
 import {
-  SpreadTheWealthConfig,
+  type SpreadConfig as SpreadTheWealthConfig,
   describeSpread,
-  evaluateSpreadTheWealth,
+  evaluateSpread,
   normalizeSpread,
-} from './evaluator';
+} from '../../../sharedUtils/spreadEvaluator';
 import {
   SPREAD_MODE_KEY,
   SPREAD_LABEL,
@@ -65,7 +65,7 @@ export class SpreadTheWealthValidatorService extends BaseValidatorService<Spread
         );
         return;
       }
-      const evaluation = await evaluateSpreadTheWealth(config, spread);
+      const evaluation = await evaluateSpread(config, spread, 'NFL');
 
       const allowsTie = Number.isInteger(spread);
 

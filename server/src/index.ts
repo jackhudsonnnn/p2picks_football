@@ -8,6 +8,8 @@ import { startNbaDataIngestService } from './services/nbaData/nbaDataIngestServi
 import { startBetLifecycleService } from './services/bet/betLifecycleService';
 import { startResolutionQueue, stopResolutionQueue } from './leagues/sharedUtils/resolutionQueue';
 import { requireAuth } from './middleware/auth';
+import { errorHandler } from './middleware/errorHandler';
+import { requestIdMiddleware } from './middleware/requestId';
 import { PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, REDIS_URL, CORS_ALLOWED_ORIGINS } from './constants/environment';
 
 assertRequiredEnv();
@@ -17,8 +19,12 @@ const app = express();
 const corsOptions: CorsOptions = buildCorsOptions();
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(requestIdMiddleware);
 
 app.use('/api', requireAuth, apiRouter);
+
+// Global error handler - must be last middleware
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   startResolutionQueue();

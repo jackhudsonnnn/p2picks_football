@@ -1,49 +1,10 @@
 import type { Request, Response } from 'express';
-
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
-
-type TicketCursor = {
-  participatedAt: string;
-  participationId: string;
-};
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const DIGITS_REGEX = /^\d+$/;
-
-function isValidParticipationId(raw: string | undefined): raw is string {
-  if (!raw) return false;
-  return UUID_REGEX.test(raw) || DIGITS_REGEX.test(raw);
-}
-
-function parseCursor(raw: any): TicketCursor | null {
-  if (!raw) return null;
-  const participatedAt = typeof raw.participatedAt === 'string' ? raw.participatedAt : undefined;
-  const participationId =
-    typeof raw.participationId === 'string' && isValidParticipationId(raw.participationId)
-      ? raw.participationId
-      : undefined;
-  if (!participatedAt || !participationId) return null;
-  const date = new Date(participatedAt);
-  if (Number.isNaN(date.getTime())) return null;
-  return { participatedAt: date.toISOString(), participationId };
-}
-
-function normalizeTimestamp(value: string | null | undefined): string {
-  if (!value) return new Date().toISOString();
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return new Date().toISOString();
-  return parsed.toISOString();
-}
-
-function buildNextCursor(rows: any[]): TicketCursor | null {
-  if (!rows.length) return null;
-  const last = rows[rows.length - 1];
-  return {
-    participatedAt: normalizeTimestamp(last.participation_time),
-    participationId: String(last.participation_id),
-  };
-}
+import {
+  parseTicketCursor,
+  buildTicketCursor,
+  parsePageSize,
+  type TicketCursor,
+} from '../utils/pagination';
 
 /**
  * GET /tickets
@@ -66,16 +27,13 @@ export async function listTickets(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const rawLimit = Number(req.query.limit ?? DEFAULT_PAGE_SIZE);
-    const limit = Number.isFinite(rawLimit)
-      ? Math.min(Math.max(Math.trunc(rawLimit), 1), MAX_PAGE_SIZE)
-      : DEFAULT_PAGE_SIZE;
+    const limit = parsePageSize(req.query.limit);
 
-    const before = parseCursor({
+    const before = parseTicketCursor({
       participatedAt: req.query.beforeParticipatedAt,
       participationId: req.query.beforeParticipationId,
     });
-    const after = parseCursor({
+    const after = parseTicketCursor({
       participatedAt: req.query.afterParticipatedAt,
       participationId: req.query.afterParticipationId,
     });
@@ -158,7 +116,7 @@ export async function listTickets(req: Request, res: Response): Promise<void> {
 
     res.json({
       participations: rows,
-      nextCursor: hasMore ? buildNextCursor(rows) : null,
+      nextCursor: hasMore ? buildTicketCursor(rows) : null,
       hasMore,
       limit,
       serverTime: new Date().toISOString(),

@@ -1,7 +1,6 @@
 import { getHomeScore, getAwayScore } from '../../../../services/leagueData';
 import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../../sharedUtils/types';
-import { shouldSkipResolveStep } from '../../utils/resolveUtils';
-import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../utils/statConstants';
+import { shouldSkipResolveStep, ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../../sharedUtils/resolveUtils';
 import { LINE_MIN, LINE_MAX, LINE_STEP } from './constants';
 import { resolveGameId, type GameContextInput } from '../../../../utils/gameId';
 import type { League } from '../../../../types/league';

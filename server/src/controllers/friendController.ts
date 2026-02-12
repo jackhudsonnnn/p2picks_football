@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { getRedisClient } from '../utils/redisClient';
-import { createFriendRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
+import { createFriendRateLimiter } from '../utils/rateLimiter';
+import { setRateLimitHeaders } from '../middleware/rateLimitHeaders';
 
 type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled';
 
@@ -14,14 +15,6 @@ function getFriendRateLimiter() {
     friendRateLimiter = createFriendRateLimiter(redis);
   }
   return friendRateLimiter;
-}
-
-function applyRateLimitHeaders(res: Response, result: RateLimitResult) {
-  res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
-  res.setHeader('X-RateLimit-Reset', result.resetInSeconds.toString());
-  if (result.retryAfterSeconds !== null) {
-    res.setHeader('Retry-After', result.retryAfterSeconds.toString());
-  }
 }
 
 function normalizeUsername(raw: string): string {
@@ -102,7 +95,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
     const limiter = getFriendRateLimiter();
     const rateKey = authUser.id;
     const rateResult = await limiter.check(rateKey);
-    applyRateLimitHeaders(res, rateResult);
+    setRateLimitHeaders(res, rateResult);
 
     if (!rateResult.allowed) {
       res.status(429).json({ error: RATE_LIMIT_MESSAGE, retryAfter: rateResult.retryAfterSeconds });

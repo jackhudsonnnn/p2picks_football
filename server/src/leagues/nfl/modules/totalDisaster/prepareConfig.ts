@@ -1,8 +1,7 @@
 import type { BetProposal } from '../../../../supabaseClient';
 import { getAwayTeam, getHomeTeam } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { normalizeResolveAt } from '../../utils/resolveUtils';
-import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../utils/statConstants';
+import { normalizeResolveAt, ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT } from '../../../sharedUtils/resolveUtils';
 import { LINE_MAX, LINE_MIN } from './constants';
 
 interface TotalDisasterConfig {

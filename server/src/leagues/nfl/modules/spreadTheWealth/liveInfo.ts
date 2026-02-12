@@ -1,6 +1,6 @@
 import type { GetLiveInfoInput, ModeLiveInfo } from '../../../sharedUtils/types';
 import { formatNumber, normalizeNumber } from '../../../../utils/number';
-import { type SpreadTheWealthConfig, normalizeSpread, describeSpread } from './evaluator';
+import { type SpreadConfig as SpreadTheWealthConfig, normalizeSpread, describeSpread } from '../../../sharedUtils/spreadEvaluator';
 import {
   getAwayTeam,
   getHomeScore,

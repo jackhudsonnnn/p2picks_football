@@ -18,8 +18,9 @@ import {
 } from '../services/bet/betProposalService';
 import { fetchModeConfig } from '../utils/modeConfig';
 import { getRedisClient } from '../utils/redisClient';
-import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
+import { createMessageRateLimiter } from '../utils/rateLimiter';
 import { normalizeLeague } from '../types/league';
+import { setRateLimitHeaders } from '../middleware/rateLimitHeaders';
 
 // Lazy-initialize the rate limiter (shared with messages)
 let sharedRateLimiter: ReturnType<typeof createMessageRateLimiter> | null = null;
@@ -30,17 +31,6 @@ function getSharedRateLimiter() {
     sharedRateLimiter = createMessageRateLimiter(redis);
   }
   return sharedRateLimiter;
-}
-
-/**
- * Helper to set rate limit headers on the response.
- */
-function setRateLimitHeaders(res: Response, result: RateLimitResult): void {
-  res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
-  res.setHeader('X-RateLimit-Reset', result.resetInSeconds.toString());
-  if (result.retryAfterSeconds !== null) {
-    res.setHeader('Retry-After', result.retryAfterSeconds.toString());
-  }
 }
 
 /**

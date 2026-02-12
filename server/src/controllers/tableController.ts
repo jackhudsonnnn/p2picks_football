@@ -1,49 +1,11 @@
 import { Request, Response } from 'express';
-
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
-
-type TableCursor = {
-  activityAt: string;
-  tableId: string;
-};
-
-function normalizeTimestamp(value: string | null | undefined): string {
-  if (!value) return new Date().toISOString();
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return new Date().toISOString();
-  return parsed.toISOString();
-}
-
-function isValidIso(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
-  const d = new Date(value);
-  return !Number.isNaN(d.getTime());
-}
-
-function isValidTableId(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function parseCursor(raw: any): TableCursor | null {
-  if (!raw) return null;
-  const activityAt = typeof raw.activityAt === 'string' ? raw.activityAt : undefined;
-  const tableId = typeof raw.tableId === 'string' ? raw.tableId : undefined;
-  if (!activityAt || !tableId) return null;
-  if (!isValidIso(activityAt) || !isValidTableId(tableId)) return null;
-  return { activityAt: new Date(activityAt).toISOString(), tableId };
-}
-
-function buildNextCursor(rows: any[]): TableCursor | null {
-  if (!rows.length) return null;
-  const last = rows[rows.length - 1];
-  const activityAt = normalizeTimestamp(last.last_activity_at ?? last.created_at ?? null);
-  if (!last.table_id || !activityAt) return null;
-  return {
-    activityAt,
-    tableId: String(last.table_id),
-  };
-}
+import {
+  parseTableCursor,
+  buildTableCursor,
+  parsePageSize,
+  normalizeTimestamp,
+  type TableCursor,
+} from '../utils/pagination';
 
 export async function listTables(req: Request, res: Response): Promise<void> {
   try {
@@ -55,16 +17,13 @@ export async function listTables(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const rawLimit = Number(req.query.limit ?? DEFAULT_PAGE_SIZE);
-    const limit = Number.isFinite(rawLimit)
-      ? Math.min(Math.max(Math.trunc(rawLimit), 1), MAX_PAGE_SIZE)
-      : DEFAULT_PAGE_SIZE;
+    const limit = parsePageSize(req.query.limit);
 
-    const before = parseCursor({
+    const before = parseTableCursor({
       activityAt: req.query.beforeActivityAt,
       tableId: req.query.beforeTableId,
     });
-    const after = parseCursor({
+    const after = parseTableCursor({
       activityAt: req.query.afterActivityAt,
       tableId: req.query.afterTableId,
     });
@@ -145,7 +104,7 @@ export async function listTables(req: Request, res: Response): Promise<void> {
 
     res.json({
       tables,
-      nextCursor: hasMore ? buildNextCursor(rows) : null,
+      nextCursor: hasMore ? buildTableCursor(rows) : null,
       hasMore,
       serverTime: new Date().toISOString(),
       limit,

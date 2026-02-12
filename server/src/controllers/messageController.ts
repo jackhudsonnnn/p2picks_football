@@ -1,12 +1,22 @@
 import type { Request, Response } from 'express';
 import { getRedisClient } from '../utils/redisClient';
-import { createMessageRateLimiter, type RateLimitResult } from '../utils/rateLimiter';
+import { createMessageRateLimiter } from '../utils/rateLimiter';
 import {
   validateMessage,
   isValidUUID,
   validateTableMembership,
   MAX_MESSAGE_LENGTH,
 } from '../utils/messageValidation';
+import { setRateLimitHeaders } from '../middleware/rateLimitHeaders';
+import {
+  parseMessageCursor,
+  buildMessageCursor,
+  parsePageSize,
+  normalizeTimestamp,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  type MessageCursor,
+} from '../utils/pagination';
 
 // Lazy-initialize the rate limiter
 let messageRateLimiter: ReturnType<typeof createMessageRateLimiter> | null = null;
@@ -17,60 +27,6 @@ function getMessageRateLimiter() {
     messageRateLimiter = createMessageRateLimiter(redis);
   }
   return messageRateLimiter;
-}
-
-/**
- * Helper to set rate limit headers on the response.
- */
-function setRateLimitHeaders(res: Response, result: RateLimitResult): void {
-  res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
-  res.setHeader('X-RateLimit-Reset', result.resetInSeconds.toString());
-  if (result.retryAfterSeconds !== null) {
-    res.setHeader('Retry-After', result.retryAfterSeconds.toString());
-  }
-}
-
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
-
-type MessageCursor = {
-  postedAt: string;
-  messageId: string;
-};
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const DIGITS_REGEX = /^\d+$/;
-
-function isValidMessageId(raw: string | undefined): raw is string {
-  if (!raw) return false;
-  // Support UUID (likely for child rows) or numeric IDs (if sequence-based PK)
-  return UUID_REGEX.test(raw) || DIGITS_REGEX.test(raw);
-}
-
-function parseCursor(raw: any): MessageCursor | null {
-  if (!raw) return null;
-  const postedAt = typeof raw.postedAt === 'string' ? raw.postedAt : undefined;
-  const messageId = typeof raw.messageId === 'string' && isValidMessageId(raw.messageId) ? raw.messageId : undefined;
-  if (!postedAt || !messageId) return null;
-  const date = new Date(postedAt);
-  if (Number.isNaN(date.getTime())) return null;
-  return { postedAt: date.toISOString(), messageId };
-}
-
-function normalizeTimestamp(value: string | null | undefined): string {
-  if (!value) return new Date().toISOString();
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return new Date().toISOString();
-  return parsed.toISOString();
-}
-
-function buildNextCursor(rows: any[]): MessageCursor | null {
-  if (!rows.length) return null;
-  const last = rows[rows.length - 1];
-  return {
-    postedAt: normalizeTimestamp(last.posted_at),
-    messageId: String(last.message_id),
-  };
 }
 
 /**
@@ -248,13 +204,10 @@ export async function listMessages(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const rawLimit = Number(req.query.limit ?? DEFAULT_PAGE_SIZE);
-    const limit = Number.isFinite(rawLimit)
-      ? Math.min(Math.max(Math.trunc(rawLimit), 1), MAX_PAGE_SIZE)
-      : DEFAULT_PAGE_SIZE;
+    const limit = parsePageSize(req.query.limit);
 
-    const before = parseCursor({ postedAt: req.query.beforePostedAt, messageId: req.query.beforeMessageId });
-    const after = parseCursor({ postedAt: req.query.afterPostedAt, messageId: req.query.afterMessageId });
+    const before = parseMessageCursor({ postedAt: req.query.beforePostedAt, messageId: req.query.beforeMessageId });
+    const after = parseMessageCursor({ postedAt: req.query.afterPostedAt, messageId: req.query.afterMessageId });
 
     if (before && after) {
       res.status(400).json({ error: 'Use either before* or after*, not both' });
@@ -417,7 +370,7 @@ export async function listMessages(req: Request, res: Response): Promise<void> {
 
     res.json({
       messages,
-      nextCursor: hasMore ? buildNextCursor(normalized) : null,
+      nextCursor: hasMore ? buildMessageCursor(normalized) : null,
       hasMore,
       serverTime: new Date().toISOString(),
       limit,

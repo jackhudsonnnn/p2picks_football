@@ -11,11 +11,11 @@ import {
   NBA_SPREAD_THE_WEALTH_STORE_PREFIX,
 } from './constants';
 import {
-  NbaSpreadTheWealthConfig,
+  type SpreadConfig as NbaSpreadTheWealthConfig,
   describeSpread,
-  evaluateSpreadTheWealth,
+  evaluateSpread,
   normalizeSpread,
-} from './evaluator';
+} from '../../../sharedUtils/spreadEvaluator';
 
 class NbaSpreadTheWealthValidatorService extends BaseValidatorService<NbaSpreadTheWealthConfig, Record<string, never>> {
   constructor() {
@@ -63,7 +63,7 @@ class NbaSpreadTheWealthValidatorService extends BaseValidatorService<NbaSpreadT
         return;
       }
 
-      const evaluation = await evaluateSpreadTheWealth(config, spread);
+      const evaluation = await evaluateSpread(config, spread, 'NBA');
       const allowsTie = Number.isInteger(spread);
 
       const homeChoice = config.home_team_name ?? 'Home Team';

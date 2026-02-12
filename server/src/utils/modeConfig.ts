@@ -1,38 +1,49 @@
 import { getSupabaseAdmin, BetProposal } from '../supabaseClient';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { LRUCache } from 'lru-cache';
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_MAX_SIZE = 1000; // Maximum number of entries
 
 type ModeConfigRecord = {
   mode_key: string;
   data: Record<string, unknown>;
 };
 
-interface CachedConfig extends ModeConfigRecord {
-  expiresAt: number;
-}
-
-const memoryCache = new Map<string, CachedConfig>();
+/**
+ * LRU cache for mode configurations.
+ * - Max 1000 entries to prevent unbounded memory growth
+ * - 5 minute TTL for each entry
+ * - Automatically evicts least-recently-used entries when full
+ */
+const modeConfigCache = new LRUCache<string, ModeConfigRecord>({
+  max: CACHE_MAX_SIZE,
+  ttl: CACHE_TTL_MS,
+});
 
 function setCache(betId: string, record: ModeConfigRecord) {
-  memoryCache.set(betId, { ...record, expiresAt: Date.now() + CACHE_TTL_MS });
+  modeConfigCache.set(betId, record);
+}
+
+function getCache(betId: string): ModeConfigRecord | undefined {
+  return modeConfigCache.get(betId);
 }
 
 export async function storeModeConfig(betId: string, modeKey: string, data: Record<string, unknown>): Promise<void> {
-  const supa = getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const payload = { mode_key: modeKey, data };
-  const { error } = await supa.from('resolution_history').insert([{ bet_id: betId, event_type: 'mode_config', payload }]);
+  const { error } = await supabase.from('resolution_history').insert([{ bet_id: betId, event_type: 'mode_config', payload }]);
   if (error) throw error;
   setCache(betId, { mode_key: modeKey, data });
 }
 
 export async function fetchModeConfig(betId: string): Promise<ModeConfigRecord | null> {
-  const cached = memoryCache.get(betId);
-  if (cached && cached.expiresAt > Date.now()) {
-    return { mode_key: cached.mode_key, data: cached.data };
+  const cached = getCache(betId);
+  if (cached) {
+    return cached;
   }
-  const supa = getSupabaseAdmin();
-  const { data, error } = await supa
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
     .from('resolution_history')
     .select('payload')
     .eq('bet_id', betId)
@@ -55,16 +66,16 @@ export async function fetchModeConfigs(betIds: string[]): Promise<Record<string,
   const result: Record<string, ModeConfigRecord> = {};
   const missing: string[] = [];
   for (const betId of betIds) {
-    const cached = memoryCache.get(betId);
-    if (cached && cached.expiresAt > Date.now()) {
-      result[betId] = { mode_key: cached.mode_key, data: cached.data };
+    const cached = getCache(betId);
+    if (cached) {
+      result[betId] = cached;
     } else {
       missing.push(betId);
     }
   }
   if (missing.length === 0) return result;
-  const supa = getSupabaseAdmin();
-  const { data, error } = await supa
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
     .from('resolution_history')
     .select('bet_id, payload, created_at')
     .in('bet_id', missing)

@@ -38,7 +38,7 @@ export interface KernelOptions extends KernelHandlers {
 }
 
 export class ModeRuntimeKernel {
-  private readonly supa = getSupabaseAdmin();
+  private readonly supabase = getSupabaseAdmin();
   private unsubscribe: (() => void) | null = null;
   private pendingChannel: RealtimeChannel | null = null;
   private readonly lastSignatureByGame = new Map<string, string>();
@@ -103,11 +103,12 @@ export class ModeRuntimeKernel {
     }
   }
 
+
   private startPendingMonitor(): void {
     if (this.pendingChannel || (!this.options.onPendingUpdate && !this.options.onPendingDelete)) return;
     const channelName = this.options.channelName ?? `${this.options.modeKey}-pending`;
     const filter = this.options.pendingFilter ?? `mode_key=eq.${this.options.modeKey}`;
-    const channel = this.supa
+    const channel = this.supabase
       .channel(channelName)
       .on(
         'postgres_changes',

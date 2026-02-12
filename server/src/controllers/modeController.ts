@@ -95,13 +95,13 @@ export async function getModeDefinitionForLeague(req: Request, res: Response) {
   }
   
   const league = normalizeLeague(leagueRaw);
-  const def = findModeDefinition(modeKey, league);
+  const definition = findModeDefinition(modeKey, league);
   
-  if (!def) {
+  if (!definition) {
     res.status(404).json({ error: 'mode not found or does not support this league' });
     return;
   }
-  res.json(def);
+  res.json(definition);
 }
 
 /**
@@ -253,12 +253,12 @@ export async function getModeDefinition(req: Request, res: Response) {
   await ensureModeRegistryInitialized();
   const leagueRaw = typeof req.query.league === 'string' ? req.query.league : undefined;
   const league = leagueRaw ? normalizeLeague(leagueRaw) : undefined;
-  const def = findModeDefinition(req.params.modeKey, league);
-  if (!def) {
+  const definition = findModeDefinition(req.params.modeKey, league);
+  if (!definition) {
     res.status(404).json({ error: 'mode not found' });
     return;
   }
-  res.json(def);
+  res.json(definition);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

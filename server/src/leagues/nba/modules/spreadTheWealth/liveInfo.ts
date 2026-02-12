@@ -2,7 +2,7 @@ import type { GetLiveInfoInput, ModeLiveInfo } from '../../../types';
 import { formatNumber } from '../../../../utils/number';
 import { getScores, getMatchup } from '../../../../services/leagueData';
 import type { League } from '../../../../types/league';
-import { describeSpread, normalizeSpread } from './evaluator';
+import { describeSpread, normalizeSpread } from '../../../sharedUtils/spreadEvaluator';
 import { NBA_SPREAD_THE_WEALTH_LABEL, NBA_SPREAD_THE_WEALTH_MODE_KEY } from './constants';
 
 export async function getNbaSpreadTheWealthLiveInfo(input: GetLiveInfoInput): Promise<ModeLiveInfo> {

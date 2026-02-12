@@ -18,10 +18,10 @@ function formatBetLabel(betId: string): string {
 }
 
 async function createWashSystemMessage(tableId: string, betId: string, explanation: string): Promise<void> {
-  const supa = getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const reason = explanation && explanation.trim().length ? explanation.trim() : 'See resolution history for details.';
   const message = `Bet #${formatBetLabel(betId)} washed\n\n${reason}`;
-  const { error } = await supa.from('system_messages').insert([
+  const { error } = await supabase.from('system_messages').insert([
     {
       table_id: tableId,
       message_text: message,
