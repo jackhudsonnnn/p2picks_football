@@ -1,8 +1,12 @@
 import { getSupabaseAdmin } from '../../supabaseClient';
-import { BET_LIFECYCLE_CATCHUP_MS } from '../../constants/environment'
+import { env } from '../../config/env';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('betLifecycleService');
 
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 const FIRE_GRACE_MS = 250;
+const BET_LIFECYCLE_CATCHUP_MS = env.BET_LIFECYCLE_CATCHUP_MS;
 
 const scheduledTimers = new Map<string, NodeJS.Timeout>();
 const inFlightTransitions = new Set<string>();
@@ -52,7 +56,7 @@ async function hydrateActiveBets(): Promise<void> {
     }
     await runCatchupCycle();
   } catch (err) {
-    console.error('[betLifecycle] failed to hydrate active bets', err);
+    logger.error({ error: err instanceof Error ? err.message : String(err) }, 'failed to hydrate active bets');
   }
 }
 
@@ -92,14 +96,14 @@ async function transitionBetToPending(betId: string): Promise<void> {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase.rpc('transition_bet_to_pending', { p_bet_id: betId });
     if (error) {
-      console.error('[betLifecycle] transition failed', { betId, error: error.message });
+      logger.error({ betId, error: error.message }, 'transition failed');
       return;
     }
     if (data && typeof data === 'string' && data !== 'pending') {
-      console.debug('[betLifecycle] transition result', { betId, result: data });
+      logger.debug({ betId, result: data }, 'transition result');
     }
   } catch (err) {
-    console.error('[betLifecycle] transition exception', { betId }, err);
+    logger.error({ betId, error: err instanceof Error ? err.message : String(err) }, 'transition exception');
   } finally {
     inFlightTransitions.delete(betId);
   }
@@ -126,6 +130,6 @@ async function runCatchupCycle(): Promise<void> {
       void transitionBetToPending(betId);
     }
   } catch (err) {
-    console.error('[betLifecycle] catchup cycle failed', err);
+    logger.error({ error: err instanceof Error ? err.message : String(err) }, 'catchup cycle failed');
   }
 }

@@ -15,6 +15,9 @@ import {
   subscribeToNbaGameFeed,
   type NbaGameFeedEvent,
 } from '../../nbaData/nbaGameFeedService';
+import { createLogger } from '../../../utils/logger';
+
+const logger = createLogger('NbaGameFeedProvider');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status Mapping
@@ -83,7 +86,7 @@ class NbaGameFeedProvider implements LeagueGameFeedProvider {
       }
     }, true);
     
-    console.log('[NbaGameFeedProvider] Started');
+    logger.info({}, 'Started');
   }
 
   stop(): void {
@@ -98,7 +101,7 @@ class NbaGameFeedProvider implements LeagueGameFeedProvider {
     this.cache.clear();
     this.running = false;
     
-    console.log('[NbaGameFeedProvider] Stopped');
+    logger.info({}, 'Stopped');
   }
 
   isRunning(): boolean {

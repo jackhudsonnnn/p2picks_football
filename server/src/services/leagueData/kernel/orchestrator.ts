@@ -21,6 +21,9 @@ import { ensureInitialized, getActiveLeagues } from '../../../leagues';
 import { initializeFeedProviders } from '../feeds';
 import { startLeagueKernels, stopAllKernels, getRunningKernels } from '../kernel';
 import type { League } from '../../../types/league';
+import { createLogger } from '../../../utils/logger';
+
+const logger = createLogger('ModeRuntime');
 
 let initialized = false;
 
@@ -34,26 +37,26 @@ let initialized = false;
  */
 export async function startModeRuntime(): Promise<void> {
   if (initialized) {
-    console.log('[ModeRuntime] Already initialized');
+    logger.info({}, 'Already initialized');
     return;
   }
 
-  console.log('[ModeRuntime] Starting...');
+  logger.info({}, 'Starting...');
 
   // Initialize mode registry
   await ensureInitialized();
-  console.log('[ModeRuntime] Mode registry initialized');
+  logger.info({}, 'Mode registry initialized');
 
   // Initialize feed providers
   initializeFeedProviders();
-  console.log('[ModeRuntime] Feed providers initialized');
+  logger.info({}, 'Feed providers initialized');
 
   // Get leagues that have registered modes
   const activeLeagues = getActiveLeagues();
-  console.log(`[ModeRuntime] Active leagues: ${activeLeagues.join(', ') || 'none'}`);
+  logger.info({ leagues: activeLeagues }, `Active leagues: ${activeLeagues.join(', ') || 'none'}`);
 
   if (activeLeagues.length === 0) {
-    console.warn('[ModeRuntime] No active leagues found, no kernels started');
+    logger.warn({}, 'No active leagues found, no kernels started');
     initialized = true;
     return;
   }
@@ -62,10 +65,10 @@ export async function startModeRuntime(): Promise<void> {
   await startLeagueKernels(activeLeagues);
   
   const runningKernels = getRunningKernels();
-  console.log(`[ModeRuntime] Started ${runningKernels.length} kernels`);
+  logger.info({ kernelCount: runningKernels.length }, `Started ${runningKernels.length} kernels`);
   
   initialized = true;
-  console.log('[ModeRuntime] Ready');
+  logger.info({}, 'Ready');
 }
 
 /**
@@ -74,14 +77,14 @@ export async function startModeRuntime(): Promise<void> {
  */
 export function stopModeRuntime(): void {
   if (!initialized) {
-    console.log('[ModeRuntime] Not initialized');
+    logger.info({}, 'Not initialized');
     return;
   }
 
-  console.log('[ModeRuntime] Stopping...');
+  logger.info({}, 'Stopping...');
   stopAllKernels();
   initialized = false;
-  console.log('[ModeRuntime] Stopped');
+  logger.info({}, 'Stopped');
 }
 
 /**

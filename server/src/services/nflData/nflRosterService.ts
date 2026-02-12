@@ -13,7 +13,7 @@ import {
   safeListFiles,
   getFileMtime,
 } from '../../utils/nfl/fileStorage';
-import { NFL_ROSTER_REFRESH_SECONDS } from '../../constants/environment';
+import { env } from '../../config/env';
 
 const logger = createLogger('rosterService');
 
@@ -33,7 +33,7 @@ const lastRosterRefresh = new Map<string, number>();
  * Check if a roster file is stale and needs refreshing.
  */
 export async function isRosterStale(teamId: string): Promise<boolean> {
-  const refreshInterval = NFL_ROSTER_REFRESH_SECONDS;
+  const refreshInterval = env.NFL_ROSTER_REFRESH_SECONDS;
   const last = lastRosterRefresh.get(teamId);
   if (last && Date.now() - last < refreshInterval) {
     return false;

@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './BetProposalForm.css';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { formatToHundredth } from '@shared/utils/number';
 import {
   useBetProposalSession,
   type BetProposalFormValues,
 } from '@features/bets/hooks/useBetProposalSession';
-import { Modal } from '@shared/widgets/Modal/Modal';
-import { PlusIcon } from '@shared/widgets/icons/PlusIcon';
-import { XIcon } from '@shared/widgets/icons/XIcon';
+import { LeagueStage } from './LeagueStage';
+import { StartStage } from './StartStage';
+import { ModeStage } from './ModeStage';
+import { U2PickConditionStage, U2PickOptionsStage } from './U2PickStages';
+import { GeneralStage } from './GeneralStage';
+import { SummaryStage } from './SummaryStage';
 
 interface BetProposalFormProps {
   onSubmit: (values: BetProposalFormValues) => void;
@@ -16,7 +18,6 @@ interface BetProposalFormProps {
 }
 
 const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) => {
-  const [showLeagueModal, setShowLeagueModal] = useState(false);
   const {
     games,
     modes,
@@ -53,349 +54,79 @@ const BetProposalForm: React.FC<BetProposalFormProps> = ({ onSubmit, loading }) 
     u2pickValidation,
   } = useBetProposalSession(onSubmit);
 
-  const handleLeagueChange = (value: string) => {
-    const isActive = activeLeagues.includes(value as any);
-    if (!isActive) {
-      // Block selection and show modal for inactive leagues
-      setShowLeagueModal(true);
-      return;
-    }
-    setLeague(value as any);
-  };
-
-  // All possible leagues for the dropdown
-  const allLeagues = ['U2Pick', 'NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'] as const;
-  // Leagues that are not yet active
-  const inactiveLeagues = allLeagues.filter((l) => !activeLeagues.includes(l as any));
-
-  const renderLeagueStage = () => (
-    <div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="league">
-          Choose League
-        </label>
-        <select
-          id="league"
-          className="form-select"
-          value={league}
-          onChange={(event) => handleLeagueChange(event.target.value)}
-          disabled={bootstrapLoading || sessionLoading}
-        >
-          {allLeagues.map((value) => {
-            const isActive = activeLeagues.includes(value as any);
-            return (
-              <option key={value} value={value} disabled={!isActive}>
-                {isActive ? value : `${value}`}
-              </option>
-            );
-          })}
-        </select>
-      </div>
-
-      <Modal
-        isOpen={showLeagueModal}
-        onClose={() => setShowLeagueModal(false)}
-        title="More leagues coming soon"
-        footer={(
-          <button className="submit-button" type="button" onClick={() => setShowLeagueModal(false)}>
-            Got it
-          </button>
-        )}
-      >
-        <p>
-          {inactiveLeagues.length > 0 
-            ? `${inactiveLeagues.join(', ')} ${inactiveLeagues.length === 1 ? 'is' : 'are'} on the roadmap.`
-            : 'All leagues are currently available!'}
-        </p>
-      </Modal>
-    </div>
-  );
-
-  const renderU2PickConditionStage = () => (
-    <div className="form-step">
-      <div className="form-group">
-        <label className="form-label" htmlFor="u2pick-condition">
-          Winning Condition
-        </label>
-        <input
-          id="u2pick-condition"
-          type="text"
-          className="form-input"
-          placeholder="e.g. first to score"
-          value={u2pickCondition}
-          onChange={(e) => setU2pickCondition(e.target.value)}
-          minLength={u2pickValidation.conditionMin}
-          maxLength={u2pickValidation.conditionMax}
-        />
-        <div className="form-helper-text">
-          {u2pickCondition.trim().length}/{u2pickValidation.conditionMax} characters
-          {u2pickCondition.trim().length < u2pickValidation.conditionMin && (
-            <span> (min {u2pickValidation.conditionMin})</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const handleU2PickOptionChange = (index: number, value: string) => {
-    setU2pickOptions((prev) => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
-    });
-  };
-
-  const handleAddU2PickOption = () => {
-    if (u2pickOptions.length >= u2pickValidation.optionsMaxCount) return;
-    setU2pickOptions((prev) => [...prev, '']);
-  };
-
-  const handleRemoveU2PickOption = (index: number) => {
-    if (u2pickOptions.length <= u2pickValidation.optionsMinCount) return;
-    setU2pickOptions((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const renderU2PickOptionsStage = () => (
-    <div className="form-step">
-      <div className="form-group">
-        <label className="form-label">
-          Options ({u2pickValidation.optionsMinCount}-{u2pickValidation.optionsMaxCount})
-        </label>
-        {u2pickOptions.map((option, index) => (
-          <div key={index} className="u2pick-option-row">
-            <input
-              type="text"
-              className="form-input"
-              placeholder={`Option ${index + 1}`}
-              value={option}
-              onChange={(e) => handleU2PickOptionChange(index, e.target.value)}
-              minLength={u2pickValidation.optionMin}
-              maxLength={u2pickValidation.optionMax}
-            />
-            {u2pickOptions.length > u2pickValidation.optionsMinCount && (
-              <button
-                type="button"
-                className="u2pick-option-remove"
-                onClick={() => handleRemoveU2PickOption(index)}
-                aria-label={`Remove option ${index + 1}`}
-              >
-                <XIcon />
-              </button>
-            )}
-          </div>
-        ))}
-        {u2pickOptions.length < u2pickValidation.optionsMaxCount && (
-          <button
-            type="button"
-            className="u2pick-add-option"
-            onClick={handleAddU2PickOption}
-          >
-            <PlusIcon /> Add Option
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderStartStage = () => (
-    <div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="league_game_id">
-          Game
-        </label>
-        <select
-          id="league_game_id"
-          className="form-select"
-          value={gameId}
-          onChange={(event) => setGameId(event.target.value)}
-          disabled={bootstrapLoading || sessionLoading}
-        >
-          <option value="">Select Game</option>
-          {games.map((game) => (
-            <option key={game.id} value={game.id}>
-              {game.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label className="form-label" htmlFor="mode_key">
-          Game Mode
-        </label>
-        <select
-          id="mode_key"
-          className="form-select"
-          value={modeKey}
-          onChange={(event) => setModeKey(event.target.value)}
-          disabled={bootstrapLoading || sessionLoading}
-        >
-          <option value="">Select Mode</option>
-          {modes.map((mode) => {
-            const available = isModeAvailable(mode.key, league);
-            return (
-              <option key={mode.key} value={mode.key} disabled={!available}>
-                {available ? mode.label : `${mode.label}`}
-              </option>
-            );
-          })}
-        </select>
-        {modes.filter((mode) => isModeAvailable(mode.key, league)).length === 0 && (
-          <div className="form-helper-text">No bet modes available for {league}.</div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderModeStage = () => {
-    if (!session) {
-      return <div className="form-step centered-step">Select a game and mode to begin.</div>;
-    }
-    if (!session.steps.length) {
-      return null;
-    }
-    const step = activeModeStep;
-    if (!step) {
-      return <div className="form-step centered-step">Loading configuration options...</div>;
-    }
-    return (
-      <div className="form-step">
-        <div className="form-group">
-          <label className="form-label mode-step-label" htmlFor={`step-${step.key}`}>
-            <span>{step.title}</span>
-          </label>
-          <select
-            id={`step-${step.key}`}
-            className="form-select"
-            value={step.selectedChoiceId ?? ''}
-            disabled={sessionUpdating}
-            onChange={(event) => handleChoiceChange(step.key, event.target.value)}
-          >
-            <option value="">Select option</option>
-            {step.choices.map((choice) => (
-              <option key={choice.id} value={choice.id} disabled={choice.disabled}>
-                {choice.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    );
-  };
-
-  const renderGeneralStage = () => {
-    const schema = league === 'U2Pick' ? generalSchema : effectiveGeneralSchema;
-    if (!schema) {
-      return <div className="form-step centered-step">Configuration unavailable.</div>;
-    }
-    const wagerField = schema.wager_amount;
-    const timeField = schema.time_limit_seconds;
-    return (
-      <div className="form-step">
-        <div className="form-group">
-          <label className="form-label" htmlFor="general-wager">
-            Wager ({wagerField.unit})
-          </label>
-          <select
-            id="general-wager"
-            className="form-select"
-            value={generalValues.wager_amount}
-            onChange={(event) => setGeneralValues((prev) => ({
-              ...prev,
-              wager_amount: event.target.value,
-            }))}
-            disabled={generalSaving}
-          >
-            {wagerField.choices.map((value) => (
-              <option key={value} value={String(value)}>
-                {formatToHundredth(value)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="general-time">
-            Time Limit ({timeField.unit})
-          </label>
-          <select
-            id="general-time"
-            className="form-select"
-            value={generalValues.time_limit_seconds}
-            onChange={(event) => setGeneralValues((prev) => ({
-              ...prev,
-              time_limit_seconds: event.target.value,
-            }))}
-            disabled={generalSaving}
-          >
-            {timeField.choices.map((value) => (
-              <option key={value} value={String(value)}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    );
-  };
-
-  const renderSummaryStage = () => {
-    if (league === 'U2Pick') {
-      const validOptions = u2pickOptions
-        .map((o) => o.trim())
-        .filter((o) => o.length >= u2pickValidation.optionMin);
-      return (
-        <div className="form-step centered-step">
-          <div className='summary-header'>
-            <strong>U2Pick • Table Talk</strong>
-          </div>
-          <div>
-            ${formatToHundredth(Number(generalValues.wager_amount))} • {generalValues.time_limit_seconds}s window
-          </div>
-          <div>{u2pickCondition.trim()}</div>
-          <div className="u2pick-summary-options">
-            {validOptions.map((opt, i) => (
-              <span key={i} className="u2pick-summary-option">{opt}</span>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    if (!session) {
-      return <div className="form-step centered-step">Configuration session missing.</div>;
-    }
-    if (!session.preview) {
-      return <div className="form-step centered-step">Preview unavailable. Adjust selections or go back.</div>;
-    }
-    return (
-      <div className="form-step centered-step">
-        <div className='summary-header'>
-          <strong>{session.league} • {session.preview.modeLabel ?? session.mode_key}</strong>
-        </div>
-        <div>
-          ${formatToHundredth(session.general.wager_amount)} • {session.general.time_limit_seconds}s window
-        </div>
-        <div>{session.preview.description}</div>
-        <div>{session.preview.summary}</div>
-        {session.preview.winningCondition && <div>{session.preview.winningCondition}</div>}
-      </div>
-    );
-  };
+  const formDisabled = bootstrapLoading || sessionLoading;
 
   let content: React.ReactNode;
   if (stage === 'league') {
-    content = renderLeagueStage();
+    content = (
+      <LeagueStage
+        league={league}
+        activeLeagues={activeLeagues}
+        onLeagueChange={setLeague}
+        disabled={formDisabled}
+      />
+    );
   } else if (stage === 'u2pick_condition') {
-    content = renderU2PickConditionStage();
+    content = (
+      <U2PickConditionStage
+        condition={u2pickCondition}
+        onConditionChange={setU2pickCondition}
+        validation={u2pickValidation}
+      />
+    );
   } else if (stage === 'u2pick_options') {
-    content = renderU2PickOptionsStage();
+    content = (
+      <U2PickOptionsStage
+        options={u2pickOptions}
+        onOptionsChange={setU2pickOptions}
+        validation={u2pickValidation}
+      />
+    );
   } else if (stage === 'start') {
-    content = renderStartStage();
+    content = (
+      <StartStage
+        gameId={gameId}
+        onGameChange={setGameId}
+        modeKey={modeKey}
+        onModeChange={setModeKey}
+        games={games}
+        modes={modes}
+        league={league}
+        isModeAvailable={isModeAvailable}
+        disabled={formDisabled}
+      />
+    );
   } else if (stage === 'mode') {
-    content = renderModeStage();
+    content = (
+      <ModeStage
+        session={session}
+        activeModeStep={activeModeStep}
+        onChoiceChange={handleChoiceChange}
+        sessionUpdating={sessionUpdating}
+      />
+    );
   } else if (stage === 'general') {
-    content = renderGeneralStage();
+    content = (
+      <GeneralStage
+        league={league}
+        generalSchema={generalSchema}
+        effectiveGeneralSchema={effectiveGeneralSchema}
+        generalValues={generalValues}
+        onGeneralValuesChange={setGeneralValues}
+        disabled={generalSaving}
+      />
+    );
   } else {
-    content = renderSummaryStage();
+    content = (
+      <SummaryStage
+        league={league}
+        session={session}
+        generalValues={generalValues}
+        u2pickCondition={u2pickCondition}
+        u2pickOptions={u2pickOptions}
+        u2pickValidation={u2pickValidation}
+      />
+    );
   }
 
   return (

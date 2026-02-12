@@ -10,7 +10,10 @@ import { startResolutionQueue, stopResolutionQueue } from './leagues/sharedUtils
 import { requireAuth } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { requestIdMiddleware } from './middleware/requestId';
-import { PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, REDIS_URL, CORS_ALLOWED_ORIGINS } from './constants/environment';
+import { env } from './config/env';
+import { createLogger } from './utils/logger';
+
+const logger = createLogger('server');
 
 assertRequiredEnv();
 
@@ -26,10 +29,10 @@ app.use('/api', requireAuth, apiRouter);
 // Global error handler - must be last middleware
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(env.PORT, () => {
   startResolutionQueue();
   startModeRuntime().catch((err) => {
-    console.error('[server] Failed to start mode runtime:', err);
+    logger.error({ error: err instanceof Error ? err.message : String(err) }, 'Failed to start mode runtime');
     process.exit(1);
   });
   startBetLifecycleService();
@@ -39,32 +42,26 @@ app.listen(PORT, () => {
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('[server] SIGTERM received, shutting down...');
+  logger.info({}, 'SIGTERM received, shutting down...');
   stopModeRuntime();
   await stopResolutionQueue();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('[server] SIGINT received, shutting down...');
+  logger.info({}, 'SIGINT received, shutting down...');
   stopModeRuntime();
   await stopResolutionQueue();
   process.exit(0);
 });
 
 function assertRequiredEnv(): void {
-  const missing: string[] = [];
-  if (!SUPABASE_URL) missing.push('SUPABASE_URL');
-  if (!SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
-  if (!SUPABASE_ANON_KEY) missing.push('SUPABASE_ANON_KEY');
-  if (!REDIS_URL) missing.push('REDIS_URL');
-  if (missing.length) {
-    throw new Error(`Missing required environment variable(s): ${missing.join(', ')}`);
-  }
+  // Validation now handled by Zod schema in config/env.ts
+  // This function is kept for backward compatibility but does nothing
 }
 
 function buildCorsOptions(): CorsOptions {
-  const allowedOrigins = resolveAllowedOrigins(CORS_ALLOWED_ORIGINS);
+  const allowedOrigins = resolveAllowedOrigins(env.CORS_ALLOWED_ORIGINS);
   const allowAll = allowedOrigins.has('*');
 
   return {

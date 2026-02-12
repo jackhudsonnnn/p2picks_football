@@ -271,8 +271,6 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
     sweep_balance: member.sweep_balance ?? 0,
   }));
 
-  console.log('[settleTable] originalBalances:', originalBalances);
-
   // Settlement: subtract each member's push_balance from all three balances
   // This makes push_balance become 0, and adjusts bust/sweep relative to it
   const updatePromises = originalBalances.map(async ({ user_id, bust_balance, push_balance, sweep_balance }) => {
@@ -291,18 +289,13 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
   try {
     await Promise.all(updatePromises);
   } catch (balanceError) {
-    console.error('[settleTable] Failed to update balances:', balanceError);
     throw balanceError;
   }
 
-  console.log('[settleTable] update table_members complete');
-
-  const { data: updatedMembers, error: fetchUpdatedError } = await supabase
+  const { error: fetchUpdatedError } = await supabase
     .from('table_members')
     .select('user_id, bust_balance, push_balance, sweep_balance')
     .eq('table_id', tableId);
-
-  console.debug('[settleTable] verify updated table_members:', { data: updatedMembers, error: fetchUpdatedError });
 
   if (fetchUpdatedError) throw fetchUpdatedError;
 
@@ -312,10 +305,7 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
     .select('system_message_id, generated_at')
     .single();
 
-  console.debug('[settleTable] insert system_messages result:', { data: messageData, error: messageError });
-
   if (messageError) {
-    console.error('[settleTable] Failed to insert system message, rolling back balances');
     await Promise.all(
       originalBalances.map(async ({ user_id, bust_balance, push_balance, sweep_balance }) => {
         const { error: rollbackError } = await supabase
@@ -324,7 +314,7 @@ export async function settleTable(tableId: string): Promise<TableSettlementResul
           .eq('table_id', tableId)
           .eq('user_id', user_id);
         if (rollbackError) {
-          console.error('[settleTable] Failed to rollback balance for user', user_id, rollbackError);
+          // Rollback failure is non-recoverable; let the outer throw propagate
         }
       }),
     );

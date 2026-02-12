@@ -16,6 +16,7 @@ import { subscribeToNflGameFeed, type NflGameFeedEvent } from '../../services/nf
 import { subscribeToNbaGameFeed, type NbaGameFeedEvent } from '../../services/nbaData/nbaGameFeedService';
 import type { League } from '../../types/league';
 import type { GameFeedEvent } from './gameFeedTypes';
+import { createLogger } from '../../utils/logger';
 
 interface KernelHandlers {
   onGameEvent?: (event: GameFeedEvent) => Promise<void> | void;
@@ -39,11 +40,14 @@ export interface KernelOptions extends KernelHandlers {
 
 export class ModeRuntimeKernel {
   private readonly supabase = getSupabaseAdmin();
+  private readonly logger;
   private unsubscribe: (() => void) | null = null;
   private pendingChannel: RealtimeChannel | null = null;
   private readonly lastSignatureByGame = new Map<string, string>();
 
-  constructor(private readonly options: KernelOptions) {}
+  constructor(private readonly options: KernelOptions) {
+    this.logger = createLogger(`kernel:${options.modeKey}`);
+  }
 
   start(): void {
     this.startPendingMonitor();
@@ -57,7 +61,7 @@ export class ModeRuntimeKernel {
     }
     if (this.pendingChannel) {
       this.pendingChannel.unsubscribe().catch((err: unknown) => {
-        console.error(`[kernel:${this.options.modeKey}] pending channel unsubscribe error`, err);
+        this.logger.error({ error: err instanceof Error ? err.message : String(err) }, 'pending channel unsubscribe error');
       });
       this.pendingChannel = null;
     }
@@ -69,7 +73,7 @@ export class ModeRuntimeKernel {
 
     const subscriber = this.getGameFeedSubscriber();
     if (!subscriber) {
-      console.warn(`[kernel:${this.options.modeKey}] No game feed subscriber for league: ${this.options.league}`);
+      this.logger.warn({ league: this.options.league }, `No game feed subscriber for league: ${this.options.league}`);
       return;
     }
 

@@ -45,3 +45,61 @@ export { washBetWithHistory, type WashOptions } from './washService';
 // Utilities
 export { computeModeOptions, computeWinningCondition } from './utils';
 export { RedisJsonStore } from './redisJsonStore';
+
+// Mode factories
+export {
+  createEitherOrModule,
+  type EitherOrFactoryConfig,
+  type EitherOrFactoryHandlers,
+} from './modeFactories/eitherOrFactory';
+export {
+  createTotalDisasterModule,
+  type TotalDisasterFactoryConfig,
+  type TotalDisasterFactoryHandlers,
+} from './modeFactories/totalDisasterFactory';
+export {
+  createPropHuntModule,
+  type PropHuntFactoryConfig,
+  type PropHuntFactoryHandlers,
+} from './modeFactories/propHuntFactory';
+export {
+  createKingOfTheHillModule,
+  type KingOfTheHillFactoryConfig,
+  type KingOfTheHillFactoryHandlers,
+} from './modeFactories/kingOfTheHillFactory';
+export {
+  createScoreSorcererModule,
+  type ScoreSorcererConfig,
+  type ScoreSorcererHandlers,
+} from './modeFactories/scoreSorcererFactory';
+export {
+  createSpreadTheWealthModule,
+  type SpreadTheWealthConfig,
+  type SpreadTheWealthHandlers,
+} from './modeFactories/spreadTheWealthFactory';
+
+// User config builder utilities
+export {
+  loadGameContext,
+  buildStatStep,
+  buildPlayerStep,
+  buildResolveAtStep,
+  buildProgressModeStep,
+  buildResolveValueStep,
+  buildLineStep,
+  buildOverUnderStep,
+  formatPlayerLabel,
+  humanizeStatKey,
+  sortPlayersByPositionAndName,
+  prepareValidPlayers,
+  filterPlayersByStatPosition,
+  normalizeProgressMode,
+  getDefaultProgressPatch,
+  type GameContext,
+  type StatChoiceOptions,
+  type PlayerChoiceOptions,
+  type ResolveAtOptions,
+  type ProgressModeOptions,
+  type ResolveValueOptions,
+  type LineOptions,
+} from './userConfigBuilder';

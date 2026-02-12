@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@features/auth";
 import "./TablesListPage.css";
@@ -9,11 +9,13 @@ import { useDialog } from "@shared/hooks/useDialog";
 import { PlusIcon } from "@shared/widgets/icons/PlusIcon";
 import { useTablesList } from "@features/table/hooks/useTablesList";
 import { formatDateTime } from "@shared/utils/dateTime";
+import { getErrorMessage } from "@shared/utils/error";
 
 export const TablesListPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearch = useDeferredValue(searchQuery);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTableName, setNewTableName] = useState("");
 
@@ -21,7 +23,7 @@ export const TablesListPage: React.FC = () => {
   const { showAlert, dialogNode } = useDialog();
 
   const filteredTables = tables.filter((table) =>
-    searchQuery === "" || table.table_name.toLowerCase().includes(searchQuery.toLowerCase())
+    deferredSearch === "" || table.table_name.toLowerCase().includes(deferredSearch.toLowerCase())
   );
 
   const handleCreateTable = async () => {
@@ -38,10 +40,10 @@ export const TablesListPage: React.FC = () => {
       setIsCreateModalOpen(false);
       setNewTableName("");
       navigate(`/tables/${table.table_id}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       await showAlert({
         title: "Create Table",
-        message: `Failed to create table: ${e?.message || e}`,
+        message: `Failed to create table: ${getErrorMessage(e)}`,
       });
     }
   };

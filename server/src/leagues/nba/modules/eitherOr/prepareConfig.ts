@@ -3,6 +3,9 @@ import { getHomeTeam, getAwayTeam, getPlayerStat } from '../../../../services/le
 import type { League } from '../../../../types/league';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, NBA_STAT_KEY_LABELS, NBA_STAT_KEY_TO_CATEGORY } from '../../utils/statConstants';
 import type { PlayerRef } from '../../utils/playerUtils';
+import { createLogger } from '../../../../utils/logger';
+
+const logger = createLogger('nba:eitherOr:prepareConfig');
 
 export async function prepareEitherOrConfig({ bet, config }: { bet: BetProposal; config: Record<string, unknown> }): Promise<Record<string, unknown>> {
   const cfg = { ...config } as Record<string, unknown> & {
@@ -69,12 +72,12 @@ export async function prepareEitherOrConfig({ bet, config }: { bet: BetProposal;
       baseline_captured_at: new Date().toISOString(),
     };
   } catch (err) {
-    console.warn('[nba either_or] failed to capture baselines', {
+    logger.warn({
       bet_id: bet.bet_id,
       gameId,
       statKey,
       error: (err as Error).message,
-    });
+    }, 'failed to capture baselines');
     return {
       ...normalizeConfigPayload(cfg),
       bet_id: bet.bet_id,

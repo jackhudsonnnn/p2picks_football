@@ -11,6 +11,9 @@ import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
 import { getGameDoc, type RefinedGameDoc } from '../../data/nflRefinedDataAccessors';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('nflGameFeed');
 
 export type NflGameFeedEvent = {
   gameId: string;
@@ -52,13 +55,13 @@ class NflGameFeedService extends EventEmitter {
         void this.processFile(path.basename(file, '.json'));
       })
       .on('error', (err) => {
-        console.error('[nflGameFeed] watcher error', err);
+        logger.error({ error: err instanceof Error ? err.message : String(err) }, 'watcher error');
       });
   }
 
   stop(): void {
     if (this.watcher) {
-  this.watcher.close().catch((err) => console.error('[nflGameFeed] close watcher error', err));
+  this.watcher.close().catch((err) => logger.error({ error: err instanceof Error ? err.message : String(err) }, 'close watcher error'));
       this.watcher = null;
     }
     this.started = false;
@@ -123,7 +126,7 @@ class NflGameFeedService extends EventEmitter {
         updatedAt: payload.updatedAt,
       } satisfies NflGameFeedEvent);
     } catch (err) {
-    console.error('[nflGameFeed] failed to process game file', { gameId }, err);
+    logger.error({ gameId, error: err instanceof Error ? err.message : String(err) }, 'failed to process game file');
     }
   }
 

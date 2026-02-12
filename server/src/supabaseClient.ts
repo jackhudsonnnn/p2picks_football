@@ -1,21 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY } from './constants/environment';
+import { env } from './config/env';
 
-if (!SUPABASE_URL) {
-	throw new Error('Missing SUPABASE_URL environment variable');
-}
-if (!SUPABASE_SERVICE_ROLE_KEY) {
-	throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
-}
-if (!SUPABASE_ANON_KEY) {
-	throw new Error('Missing SUPABASE_ANON_KEY environment variable');
-}
+// Validation now handled by Zod schema in config/env.ts on startup
 
 let serviceClient: SupabaseClient | null = null;
 
 export function getSupabaseAdmin(): SupabaseClient {
 	if (serviceClient) return serviceClient;
-	serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+	serviceClient = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
 		auth: {
 			persistSession: false,
 			autoRefreshToken: false,
@@ -34,7 +26,7 @@ export function createSupabaseClientForToken(accessToken: string): SupabaseClien
 	if (!accessToken || !accessToken.trim()) {
 		throw new Error('Access token required to create scoped Supabase client');
 	}
-	return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+	return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
 		auth: {
 			persistSession: false,
 			autoRefreshToken: false,

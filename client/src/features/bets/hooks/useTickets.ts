@@ -1,105 +1,121 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@data/clients/supabaseClient';
+import type { Database } from '@data/types/database.types';
 import { fetchUserTicketsPage, type TicketListCursor } from '../service';
 import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
-import { subscribeToBetProposals } from '@features/table/services/tableService';
+import { logger } from '@shared/utils/logger';
+import { ticketKeys } from '@shared/queryKeys';
 
-type RefreshOptions = {
-  silent?: boolean;
-};
+type BetParticipationRow = Database['public']['Tables']['bet_participations']['Row'];
+type BetProposalRow = Database['public']['Tables']['bet_proposals']['Row'];
 
 export function useTickets(userId?: string) {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [loadingMore, setLoadingMore] = useState<boolean>(false);
-  const [nextCursor, setNextCursor] = useState<TicketListCursor | null>(null);
-  const [hasMore, setHasMore] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
-  const refresh = useCallback(async (options?: RefreshOptions) => {
-    const silent = Boolean(options?.silent);
-    if (!userId) {
-      setTickets([]);
-      setNextCursor(null);
-      setHasMore(false);
-      if (!silent) {
-        setLoading(false);
-      }
-      return;
-    }
-    if (!silent) {
-      setLoading(true);
-    }
-    try {
+  // --- First-page query via TanStack Query ---
+  const { data: firstPageData, isLoading: loading } = useQuery({
+    queryKey: ticketKeys.list(userId ?? ''),
+    queryFn: async () => {
       const page = await fetchUserTicketsPage({ limit: 6 });
-      setTickets((page.participations || []).map(mapParticipationRowToTicket));
-      setNextCursor(page.nextCursor);
-      setHasMore(page.hasMore);
-    } catch (error) {
-      console.warn('[useTickets] failed to load tickets', error);
-      setTickets([]);
-      setNextCursor(null);
-      setHasMore(false);
-    } finally {
-      if (!silent) {
-        setLoading(false);
-      }
+      return {
+        tickets: (page.participations || []).map(mapParticipationRowToTicket),
+        nextCursor: page.nextCursor,
+        hasMore: page.hasMore,
+      };
+    },
+    enabled: Boolean(userId),
+  });
+
+  // Local state for extras (load-more pages, realtime patches)
+  const [extraTickets, setExtraTickets] = useState<Ticket[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<TicketListCursor | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  // Realtime patches applied on top of query data
+  const [patches, setPatches] = useState<Map<string, Partial<Ticket>>>(new Map());
+
+  // Sync cursor/hasMore when first-page data changes
+  useEffect(() => {
+    if (firstPageData) {
+      setNextCursor(firstPageData.nextCursor);
+      setHasMore(firstPageData.hasMore);
+      setExtraTickets([]);
+      setPatches(new Map());
     }
-  }, [userId]);
+  }, [firstPageData]);
 
+  // Merge first-page data + extra pages + realtime patches
+  const tickets: Ticket[] = useMemo(() => {
+    const base = [...(firstPageData?.tickets ?? []), ...extraTickets];
+    if (patches.size === 0) return base;
+    return base.map((t) => {
+      const patch = patches.get(t.id) ?? (t.betId ? patches.get(t.betId) : undefined);
+      return patch ? { ...t, ...patch } : t;
+    });
+  }, [firstPageData, extraTickets, patches]);
+
+  const refresh = useCallback(async (_options?: { silent?: boolean }) => {
+    setExtraTickets([]);
+    setPatches(new Map());
+    await queryClient.invalidateQueries({ queryKey: ticketKeys.list(userId ?? '') });
+  }, [queryClient, userId]);
+
+  // Keep a ref of tracked bet IDs so the single subscription callback
+  // always sees the latest set without needing to re-subscribe.
+  const trackedBetIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const trackedTableIds = useMemo(() => {
-    return Array.from(new Set(tickets.map((t) => t.tableId))).sort();
+    trackedBetIdsRef.current = new Set(tickets.map((t) => t.betId).filter(Boolean) as string[]);
   }, [tickets]);
-  const trackedTableKey = trackedTableIds.join('|');
 
+  // §5.2 — Single channel for all bet_proposal changes relevant to this user,
+  // filtered client-side via trackedBetIdsRef.
   useEffect(() => {
-    if (!userId || !trackedTableKey) return;
+    if (!userId || tickets.length === 0) return;
 
-    const tableIds = trackedTableKey.split('|').filter(Boolean);
-    if (!tableIds.length) return;
+    const channel = supabase
+      .channel(`ticket_proposals:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bet_proposals' },
+        (payload: RealtimePostgresChangesPayload<BetProposalRow>) => {
+          const row = (payload.new ?? payload.old) as Partial<BetProposalRow>;
+          const betId = row?.bet_id;
+          if (!betId || !trackedBetIdsRef.current.has(betId)) return;
 
-    const channels: RealtimeChannel[] = tableIds.map((tableId) =>
-      subscribeToBetProposals(tableId, ({ bet_id }) => {
-        if (!bet_id) return;
-        supabase
-          .from('bet_proposals')
-          .select('bet_id, bet_status, close_time, winning_choice, resolution_time')
-          .eq('bet_id', bet_id)
-          .maybeSingle()
-          .then(({ data }) => {
-            if (!data) return;
-            setTickets((prev) =>
-              prev.map((t) => {
-                if (t.betId === data.bet_id) {
-                  const state = data.bet_status as string;
-                  const settled = state === 'resolved' || state === 'washed';
-                  return {
-                    ...t,
-                    state,
-                    closeTime: data.close_time ?? t.closeTime ?? null,
-                    winningChoice: data.winning_choice ?? t.winningChoice ?? null,
-                    resolutionTime: data.resolution_time ?? t.resolutionTime ?? null,
-                    settledStatus: settled,
-                    result: data.winning_choice ?? t.result ?? null,
-                    closedAt: data.resolution_time ?? t.closedAt ?? null,
-                  };
-                }
-                return t;
-              })
-            );
-          });
-      })
-    );
+          supabase
+            .from('bet_proposals')
+            .select('bet_id, bet_status, close_time, winning_choice, resolution_time')
+            .eq('bet_id', betId)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (!data) return;
+              const state = data.bet_status as string;
+              const settled = state === 'resolved' || state === 'washed';
+              setPatches((prev) => {
+                const next = new Map(prev);
+                next.set(betId, {
+                  state,
+                  closeTime: data.close_time ?? null,
+                  winningChoice: data.winning_choice ?? null,
+                  resolutionTime: data.resolution_time ?? null,
+                  settledStatus: settled,
+                  result: data.winning_choice ?? null,
+                  closedAt: data.resolution_time ?? null,
+                });
+                return next;
+              });
+            });
+        },
+      )
+      .subscribe();
 
     return () => {
-      channels.forEach((channel) => channel.unsubscribe());
+      channel.unsubscribe();
     };
-  }, [userId, trackedTableKey]);
+  }, [userId, tickets.length > 0]);
 
   useEffect(() => {
     if (!userId) return;
@@ -109,26 +125,35 @@ export function useTickets(userId?: string) {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'bet_participations', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const updated = payload.new as any;
-          setTickets((prev) =>
-            prev.map((t) => (t.id === updated.participation_id ? { ...t, myGuess: updated.user_guess } : t))
-          );
+        (payload: RealtimePostgresChangesPayload<BetParticipationRow>) => {
+          const updated = payload.new as Partial<BetParticipationRow>;
+          setPatches((prev) => {
+            const next = new Map(prev);
+            if (updated.participation_id) {
+              next.set(updated.participation_id, {
+                ...(prev.get(updated.participation_id) ?? {}),
+                myGuess: updated.user_guess ?? undefined,
+              });
+            }
+            return next;
+          });
         }
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'bet_participations', filter: `user_id=eq.${userId}` },
         () => {
-          void refresh();
+          void queryClient.invalidateQueries({ queryKey: ticketKeys.list(userId) });
         }
       )
       .on(
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'bet_participations', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const removed = payload.old as any;
-          setTickets((prev) => prev.filter((t) => t.id !== removed.participation_id));
+        (payload: RealtimePostgresChangesPayload<BetParticipationRow>) => {
+          const removed = payload.old as Partial<BetParticipationRow>;
+          setExtraTickets((prev) => prev.filter((t) => t.id !== removed.participation_id));
+          // Also invalidate the query so first-page data is re-fetched
+          void queryClient.invalidateQueries({ queryKey: ticketKeys.list(userId) });
         }
       )
       .subscribe();
@@ -136,18 +161,18 @@ export function useTickets(userId?: string) {
     return () => {
       channel.unsubscribe();
     };
-  }, [userId, refresh]);
+  }, [userId, queryClient]);
 
   const loadMore = useCallback(async () => {
     if (!userId || !hasMore || !nextCursor || loadingMore) return;
     setLoadingMore(true);
     try {
       const page = await fetchUserTicketsPage({ limit: 6, before: nextCursor });
-      setTickets((prev) => [...prev, ...(page.participations || []).map(mapParticipationRowToTicket)]);
+      setExtraTickets((prev) => [...prev, ...(page.participations || []).map(mapParticipationRowToTicket)]);
       setNextCursor(page.nextCursor);
       setHasMore(page.hasMore);
     } catch (e) {
-      console.warn('[useTickets] failed to load more tickets', e);
+      logger.warn('[useTickets] failed to load more tickets', e);
     } finally {
       setLoadingMore(false);
     }
@@ -171,21 +196,24 @@ export function useTickets(userId?: string) {
   }, [tickets]);
 
   const changeGuess = async (ticketId: string, newGuess: string) => {
-    try {
-      const { data: updated, error } = await supabase
-        .from('bet_participations')
-        .update({ user_guess: newGuess })
-        .eq('participation_id', ticketId)
-        .select('participation_id, user_guess')
-        .single();
-      if (error) throw error;
-      if (updated) {
-        setTickets((prev) => prev.map((t) => (t.id === updated.participation_id ? { ...t, myGuess: updated.user_guess } : t)));
-      }
-      await refresh({ silent: true });
-    } catch (e) {
-      throw e;
+    const { data: updated, error } = await supabase
+      .from('bet_participations')
+      .update({ user_guess: newGuess })
+      .eq('participation_id', ticketId)
+      .select('participation_id, user_guess')
+      .single();
+    if (error) throw error;
+    if (updated) {
+      setPatches((prev) => {
+        const next = new Map(prev);
+        next.set(updated.participation_id, {
+          ...(prev.get(updated.participation_id) ?? {}),
+          myGuess: updated.user_guess,
+        });
+        return next;
+      });
     }
+    await refresh({ silent: true });
   };
 
   return { tickets, loading, loadingMore, hasMore, counts, refresh, loadMore, changeGuess };

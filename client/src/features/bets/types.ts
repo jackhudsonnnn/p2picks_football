@@ -1,6 +1,8 @@
 import type { League } from '@shared/types/bet';
 import type { BetModeKey, BetStatus } from '@shared/types/bet';
 
+export type { League, BetModeKey, BetStatus };
+
 // Normalized bet record (subset of bet_proposals with optional per-mode config)
 export interface BetRecord {
   bet_id: string;

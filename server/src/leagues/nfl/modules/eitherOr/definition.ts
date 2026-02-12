@@ -1,12 +1,14 @@
-import type { ModeContext, LeagueModeModule } from '../../../types';
+/**
+ * NFL Either/Or Mode Definition
+ *
+ * Uses the shared factory to create the mode module.
+ */
+
+import { createEitherOrModule } from '../../../sharedUtils/modeFactories/eitherOrFactory';
 import { ALLOWED_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../utils/statConstants';
 import {
   EITHER_OR_MODE_KEY,
   EITHER_OR_LABEL,
-  EITHER_OR_CHANNEL,
-  EITHER_OR_STORE_PREFIX,
-  EITHER_OR_RESULT_EVENT,
-  EITHER_OR_BASELINE_EVENT,
 } from './constants';
 import { buildEitherOrMetadata, prepareEitherOrConfig } from './prepareConfig';
 import { eitherOrValidator } from './validator';
@@ -15,129 +17,24 @@ import { eitherOrOverview } from './overview';
 import { getEitherOrLiveInfo } from './liveInfo';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Type-safe mode functions
+// Module definition using factory
 // ─────────────────────────────────────────────────────────────────────────────
 
-function computeWinningCondition({ config }: ModeContext): string {
-  const player1 = config.player1_name || config.player1_id || 'Player 1';
-  const player2 = config.player2_name || config.player2_id || 'Player 2';
-  const progressDesc = config.progress_mode === 'cumulative' ? '— total' : '— net gain in';
-  const stat = config.stat_label || config.stat || 'stat';
-  const resolveAt = config.resolve_at || 'the selected time';
-  return `${player1} vs ${player2} ${progressDesc} ${stat} until ${resolveAt}`;
-}
-
-function computeOptions({ config }: ModeContext): string[] {
-  const opts: string[] = ['No Entry'];
-  const player1 = config.player1_name || config.player1_id;
-  const player2 = config.player2_name || config.player2_id;
-  if (player1) opts.push(String(player1));
-  if (player2) opts.push(String(player2));
-  return opts;
-}
-
-function validateConfig({ config }: ModeContext): string[] {
-  const errors: string[] = [];
-  if (!config.player1_id || !config.player2_id) {
-    errors.push('Two players required');
-  }
-  if (!config.stat) {
-    errors.push('Stat required');
-  }
-  if (!config.progress_mode) {
-    errors.push('Progress tracking selection required');
-  }
-  return errors;
-}
-
-// Step validators
-function validateStat({ config }: ModeContext): string[] {
-  return config.stat ? [] : ['Stat required'];
-}
-
-function validatePlayer1({ config }: ModeContext): string[] {
-  return config.player1_id ? [] : ['Player 1 required'];
-}
-
-function validatePlayer2({ config }: ModeContext): string[] {
-  const errors: string[] = [];
-  if (!config.player2_id) {
-    errors.push('Player 2 required');
-  }
-  if (config.player1_id && config.player2_id && String(config.player1_id) === String(config.player2_id)) {
-    errors.push('Players must differ');
-  }
-  return errors;
-}
-
-function validateResolveAt({ config }: ModeContext): string[] {
-  return config.resolve_at ? [] : ['Resolve at required'];
-}
-
-function validateProgressMode({ config }: ModeContext): string[] {
-  return config.progress_mode ? [] : ['Progress tracking selection required'];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Module definition
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const eitherOrModule: LeagueModeModule = {
-  key: EITHER_OR_MODE_KEY,
-  label: EITHER_OR_LABEL,
-  supportedLeagues: ['NFL'],
-  definition: {
-    key: EITHER_OR_MODE_KEY,
-    label: EITHER_OR_LABEL,
-    computeWinningCondition,
-    computeOptions,
-    validateConfig,
-    configSteps: [
-      {
-        key: 'stat',
-        component: 'eitherOr.stat',
-        label: 'Select Stat',
-        props: {
-          statKeyToCategory: STAT_KEY_TO_CATEGORY,
-          statKeyLabels: STAT_KEY_LABELS,
-          allowedStatKeys: Object.keys(STAT_KEY_TO_CATEGORY),
-        },
-        validate: validateStat,
-      },
-      {
-        key: 'player1',
-        component: 'eitherOr.player1',
-        label: 'Select Player 1',
-        validate: validatePlayer1,
-      },
-      {
-        key: 'player2',
-        component: 'eitherOr.player2',
-        label: 'Select Player 2',
-        validate: validatePlayer2,
-      },
-      {
-        key: 'resolve_at',
-        component: 'eitherOr.resolve',
-        label: 'Resolve At',
-        props: {
-          allowedResolveAt: ALLOWED_RESOLVE_AT,
-        },
-        validate: validateResolveAt,
-      },
-      {
-        key: 'progress_mode',
-        component: 'eitherOr.progressMode',
-        label: 'Track Progress',
-        description: 'Determine whether to compare cumulative stats or gains after betting closes.',
-        validate: validateProgressMode,
-      },
-    ],
-    metadata: buildEitherOrMetadata(),
+export const eitherOrModule = createEitherOrModule(
+  {
+    league: 'NFL',
+    modeKey: EITHER_OR_MODE_KEY,
+    modeLabel: EITHER_OR_LABEL,
+    statKeyToCategory: STAT_KEY_TO_CATEGORY,
+    statKeyLabels: STAT_KEY_LABELS,
+    allowedResolveAt: ALLOWED_RESOLVE_AT,
   },
-  overview: eitherOrOverview,
-  prepareConfig: async ({ bet, config }) => prepareEitherOrConfig({ bet, config }),
-  validator: eitherOrValidator,
-  buildUserConfig: buildEitherOrUserConfig,
-  getLiveInfo: getEitherOrLiveInfo,
-};
+  {
+    overview: eitherOrOverview,
+    validator: eitherOrValidator,
+    buildUserConfig: buildEitherOrUserConfig,
+    getLiveInfo: getEitherOrLiveInfo,
+    prepareConfig: prepareEitherOrConfig,
+    buildMetadata: buildEitherOrMetadata,
+  },
+);

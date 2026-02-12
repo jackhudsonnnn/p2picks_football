@@ -2,7 +2,6 @@ import {
   createBetProposal as createBetProposalRepo,
   pokeBet as pokeBetRepo,
   acceptBetProposal as acceptBetProposalRepo,
-  getUserTickets as getUserTicketsRepo,
   hasUserAcceptedBet as hasUserAcceptedBetRepo,
   fetchBetLiveInfo as fetchBetLiveInfoRepo,
   type BetProposalRequestPayload,
@@ -15,13 +14,8 @@ import {
   fetchModeOverviews as fetchModeOverviewsRepo,
   fetchModePreview as fetchModePreviewRepo,
 } from '@data/repositories/modesRepository';
-import type { ModePreviewPayload } from '@shared/types/modes';
 import type { League } from './types';
 import { fetchJSON } from '@data/clients/restClient';
-
-export type { BetProposalRequestPayload };
-export type { ModePreviewPayload };
-export type { BetLiveInfo };
 
 export async function createBetProposal(
   tableId: string,
@@ -45,11 +39,6 @@ export async function acceptBetProposal({
   userId: string;
 }) {
   return acceptBetProposalRepo({ betId, tableId, userId });
-}
-
-export async function getUserTickets(userId: string) {
-  console.warn('[betsService] getUserTickets is deprecated; use getUserTicketsPage');
-  return getUserTicketsRepo(userId);
 }
 
 export async function fetchUserTicketsPage(opts: { limit?: number; before?: TicketListCursor | null; after?: TicketListCursor | null } = {}): Promise<TicketListPage> {
@@ -157,7 +146,7 @@ export type BetProposalBootstrap = {
  */
 export async function fetchBetProposalBootstrap(league: League, signal?: AbortSignal): Promise<BetProposalBootstrap> {
   const url = `/api/bet-proposals/bootstrap/league/${encodeURIComponent(league)}`;
-  return fetchJSON(url, { signal });
+  return fetchJSON<BetProposalBootstrap>(url, { signal });
 }
 
 /**
@@ -184,7 +173,7 @@ export async function fetchActiveLeagues(signal?: AbortSignal): Promise<League[]
 }
 
 export async function createBetConfigSession(modeKey: string, leagueGameId: string, league: League = 'U2Pick'): Promise<BetConfigSession> {
-  return fetchJSON('/api/bet-proposals/sessions', {
+  return fetchJSON<BetConfigSession>('/api/bet-proposals/sessions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mode_key: modeKey, league_game_id: leagueGameId, league }),
@@ -196,7 +185,7 @@ export async function applyBetConfigChoice(
   stepKey: string,
   choiceId: string,
 ): Promise<BetConfigSession> {
-  return fetchJSON(`/api/bet-proposals/sessions/${encodeURIComponent(sessionId)}/choices`, {
+  return fetchJSON<BetConfigSession>(`/api/bet-proposals/sessions/${encodeURIComponent(sessionId)}/choices`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ step_key: stepKey, choice_id: choiceId }),
@@ -207,7 +196,7 @@ export async function updateBetGeneralConfig(
   sessionId: string,
   general: { wager_amount: number; time_limit_seconds: number },
 ): Promise<BetConfigSession> {
-  return fetchJSON(`/api/bet-proposals/sessions/${encodeURIComponent(sessionId)}/general`, {
+  return fetchJSON<BetConfigSession>(`/api/bet-proposals/sessions/${encodeURIComponent(sessionId)}/general`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(general),

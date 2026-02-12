@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import "./memberList.css";
+import "./MemberList.css";
 import type { TableMember, BalanceType } from "@features/table/types";
 import { UserList, type UserItem, type UserActionProps } from "@components/Social/UserList/UserList";
 import { formatSignedCurrency, normalizeToHundredth } from "@shared/utils/number";

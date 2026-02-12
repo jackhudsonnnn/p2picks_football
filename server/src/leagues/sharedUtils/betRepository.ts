@@ -1,5 +1,8 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import { getSupabaseAdmin, type BetProposal } from '../../supabaseClient';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('betRepository');
 
 export type HistoryEventType = string;
 
@@ -73,7 +76,7 @@ export class BetRepository {
   }
 
   private wrapError(message: string, error: PostgrestError, context: Record<string, unknown>) {
-    console.error(message, context, error);
+    logger.error({ ...context, error: error.message }, message);
     return Object.assign(new Error(`${message}: ${error.message}`), { cause: error });
   }
 }

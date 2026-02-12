@@ -1,4 +1,7 @@
 import type { ModeContext, ModeDefinitionDTO } from './types';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('modeUtils');
 
 export function computeModeOptions(
   mode: ModeDefinitionDTO | null | undefined,
@@ -26,7 +29,7 @@ export function computeModeOptions(
         return finalOptions;
       }
     } catch (err) {
-      console.warn('[modeOptions] computeOptions threw', { modeKey, error: err });
+      logger.warn({ modeKey, error: err }, 'computeOptions threw');
     }
   }
   
@@ -42,7 +45,7 @@ export function computeWinningCondition(
     try {
       return mode.computeWinningCondition(ctx) || '';
     } catch (err) {
-      console.warn('[modeWinningCondition] computeWinningCondition threw', { modeKey: mode.key, error: err });
+      logger.warn({ modeKey: mode.key, error: err }, 'computeWinningCondition threw');
       return '';
     }
   }

@@ -7,6 +7,9 @@ import {
 import type { League } from '../../../../types/league';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, STAT_KEY_TO_CATEGORY, STAT_KEY_LABELS } from '../../utils/statConstants';
 import { type PlayerRef } from '../../utils/playerUtils';
+import { createLogger } from '../../../../utils/logger';
+
+const logger = createLogger('eitherOr:prepareConfig');
 
 export async function prepareEitherOrConfig({
   bet,
@@ -74,12 +77,12 @@ export async function prepareEitherOrConfig({
       baseline_captured_at: new Date().toISOString(),
     };
   } catch (err) {
-    console.warn('[modes] failed to capture baselines for either_or', {
+    logger.warn({
       bet_id: bet.bet_id,
       gameId,
       statKey,
       error: (err as Error).message,
-    });
+    }, 'failed to capture baselines for either_or');
     return {
       ...normalizeConfigPayload(cfg),
       bet_id: bet.bet_id,

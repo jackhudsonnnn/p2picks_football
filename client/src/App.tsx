@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { Navbar } from '@components/Navbar/Navbar';
+import { ErrorBoundary } from '@shared/widgets/ErrorBoundary/ErrorBoundary';
 
 const HomePage = lazy(() => import('./pages/HomePage/HomePage').then(m => ({ default: m.HomePage })));
 const TablesListPage = lazy(() => import('./pages/TablesListPage/TablesListPage').then(m => ({ default: m.TablesListPage })));
@@ -14,16 +15,18 @@ function App() {
     <>
       <Navbar />
       <div className="app-container">
-        <Suspense fallback={<div>Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/tables" element={<TablesListPage />} />
-            <Route path="/tables/:tableId" element={<TableView />} />
-            <Route path="/tickets" element={<TicketsPage />} />
-            <Route path="/account" element={<AccountPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/tables" element={<TablesListPage />} />
+              <Route path="/tables/:tableId" element={<TableView />} />
+              <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </>
   );

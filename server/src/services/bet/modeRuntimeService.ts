@@ -25,6 +25,9 @@ import {
 } from '../leagueData';
 import { extractGameId, resolveGameId } from '../../utils/gameId';
 import type { League } from '../../types/league';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('modeRuntimeService');
 
 export type ModeUserConfigInput = {
   /** Canonical game ID (league-agnostic) */
@@ -188,7 +191,7 @@ async function enrichConfigWithGameContext(config: Record<string, unknown>, bet:
   // Get league from config or bet (required for proper data lookup)
   const league = (target.league as League) || (bet?.league as League);
   if (!league) {
-    console.warn('[enrichConfigWithGameContext] No league found in config or bet, skipping enrichment');
+    logger.warn({}, 'No league found in config or bet, skipping enrichment');
     return;
   }
 
@@ -252,7 +255,7 @@ function runModeValidator(
       const errors = mode.validateConfig(ctx);
       return Array.isArray(errors) ? errors.filter((e) => e.trim().length > 0) : [];
     } catch (err) {
-      console.warn('[modeValidator] validateConfig threw', { modeKey: mode.key, error: err });
+      logger.warn({ modeKey: mode.key, error: err }, 'validateConfig threw');
       return ['Validation error'];
     }
   }

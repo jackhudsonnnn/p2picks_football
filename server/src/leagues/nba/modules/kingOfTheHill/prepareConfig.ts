@@ -11,9 +11,11 @@ import {
 export async function prepareKingOfTheHillConfig({
   bet,
   config,
+  league: providedLeague,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
+  league: League;
 }): Promise<Record<string, unknown>> {
   const cfg = { ...config } as Record<string, unknown> & {
     league_game_id?: string | null;
@@ -35,7 +37,7 @@ export async function prepareKingOfTheHillConfig({
   };
 
   if (!cfg.league_game_id) cfg.league_game_id = bet.league_game_id ?? null;
-  const league: League = bet.league ?? 'NBA';
+  const league: League = providedLeague ?? bet.league ?? 'NBA';
 
   cfg.progress_mode = normalizeProgressMode(cfg.progress_mode);
 

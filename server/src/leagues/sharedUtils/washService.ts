@@ -1,5 +1,8 @@
 import { betRepository } from './betRepository';
 import { getSupabaseAdmin } from '../../supabaseClient';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('washService');
 
 export interface WashOptions {
   betId: string;
@@ -29,7 +32,7 @@ async function createWashSystemMessage(tableId: string, betId: string, explanati
     },
   ]);
   if (error) {
-    console.error('[washMessage] failed to create wash system message', { betId, tableId }, error);
+    logger.error({ betId, tableId, error: error.message }, 'failed to create wash system message');
   }
 }
 
@@ -37,7 +40,7 @@ export async function washBetWithHistory({ betId, payload, explanation, eventTyp
   try {
     const washed = await betRepository.washBet(betId);
     if (!washed) {
-      console.warn('[washService] wash skipped; bet not pending', { betId });
+      logger.warn({ betId }, 'wash skipped; bet not pending');
       return;
     }
     await betRepository.recordHistory(betId, eventType, { outcome: 'wash', mode: modeLabel, ...payload });
@@ -45,6 +48,6 @@ export async function washBetWithHistory({ betId, payload, explanation, eventTyp
       await createWashSystemMessage(washed.table_id, betId, explanation);
     }
   } catch (err) {
-    console.error('[washService] wash bet error', { betId }, err);
+    logger.error({ betId, error: err instanceof Error ? err.message : String(err) }, 'wash bet error');
   }
 }

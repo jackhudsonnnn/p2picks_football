@@ -21,9 +21,11 @@ interface TotalDisasterConfig {
 export async function prepareTotalDisasterConfig({
   bet,
   config,
+  league: _league,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
+  league: import('../../../../types/league').League;
 }): Promise<Record<string, unknown>> {
   const nextConfig = { ...config } as TotalDisasterConfig;
 

@@ -4,7 +4,7 @@
 export * from './pagination';
 export { createLogger, type Logger } from './logger';
 export { getRedisClient, closeRedisClient } from './redisClient';
-export { createMessageRateLimiter, createFriendRateLimiter } from './rateLimiter';
+// Note: Rate limiter factories are deprecated - use getters from '../infrastructure/rateLimiters' instead
 export { validateMessage, isValidUUID, validateTableMembership, MAX_MESSAGE_LENGTH } from './messageValidation';
 export { fetchModeConfig, fetchModeConfigs, storeModeConfig, ensureModeKeyMatchesBet } from './modeConfig';
 export { extractGameId, normalizeGameIdInConfig, resolveGameId, type GameContextInput } from './gameId';

@@ -37,9 +37,11 @@ const { min: LINE_MIN, max: LINE_MAX } = PROP_HUNT_LINE_RANGE;
 export async function preparePropHuntConfig({
   bet,
   config,
+  league: _league,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
+  league: League;
 }): Promise<Record<string, unknown>> {
   const next = { ...config } as PropHuntConfig;
   next.bet_id = next.bet_id ?? bet.bet_id ?? null;

@@ -1,4 +1,5 @@
 import { supabase } from '@data/clients/supabaseClient';
+import { logger } from '@shared/utils/logger';
 
 export class HttpError extends Error {
   status: number;
@@ -77,7 +78,7 @@ async function performAuthorizedFetch(url: string, options: RequestInit, attempt
   const acceptValue = headerMap.Accept ?? headerMap.accept;
   headerMap.Accept = acceptValue ?? 'application/json';
   if ('accept' in headerMap) {
-    delete (headerMap as any).accept;
+    delete headerMap['accept'];
   }
 
   const response = await fetch(url, {
@@ -93,19 +94,19 @@ async function performAuthorizedFetch(url: string, options: RequestInit, attempt
         return performAuthorizedFetch(url, { ...options, headers: originalHeaders }, attempt + 1);
       }
     } catch (refreshError) {
-      console.warn('[restClient] refreshSession failed', refreshError);
+      logger.warn('[restClient] refreshSession failed', refreshError);
     }
     try {
       await supabase.auth.signOut();
     } catch (signOutError) {
-      console.warn('[restClient] signOut after unauthorized failed', signOutError);
+      logger.warn('[restClient] signOut after unauthorized failed', signOutError);
     }
   }
 
   return response;
 }
 
-export async function fetchJSON<T = any>(url: string, opts: FetchJSONOptions = {}): Promise<T> {
+export async function fetchJSON<T>(url: string, opts: FetchJSONOptions = {}): Promise<T> {
   const { allowNonJSON = false, previewBytes = 120, softFail = false, ...rest } = opts;
   const res = await performAuthorizedFetch(url, rest);
   const status = res.status;
@@ -139,9 +140,10 @@ export async function fetchJSON<T = any>(url: string, opts: FetchJSONOptions = {
   }
   try {
     return raw ? (JSON.parse(raw) as T) : ({} as T);
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (softFail) return null as unknown as T;
-    throw new HttpError(`JSON parse error for ${url}: ${e?.message}`, {
+    const message = e instanceof Error ? e.message : 'Unknown parse error';
+    throw new HttpError(`JSON parse error for ${url}: ${message}`, {
       status,
       url,
       bodyPreview: raw?.slice(0, previewBytes),

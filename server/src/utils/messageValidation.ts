@@ -2,6 +2,10 @@
  * Message validation and sanitization utilities.
  */
 
+import { createLogger } from './logger';
+
+const logger = createLogger('messageValidation');
+
 export interface MessageValidationResult {
   valid: boolean;
   sanitized: string;
@@ -110,7 +114,7 @@ export async function validateTableMembership(
     .maybeSingle();
 
   if (error) {
-    console.error('[validateTableMembership] Query error:', error);
+    logger.error({ error: error.message }, 'Query error');
     return false;
   }
 

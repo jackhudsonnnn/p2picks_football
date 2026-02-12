@@ -151,16 +151,16 @@ export const ModeReference: React.FC<ModeReferenceProps> = ({
             <div className="mode-card__section">
               <h3>Bet configuration</h3>
               <ul>
-                {selectedOverview.proposerConfiguration.map((item, index) => (
-                  <li key={index}>{item}</li>
+                {selectedOverview.proposerConfiguration.map((item) => (
+                  <li key={item}>{item}</li>
                 ))}
               </ul>
             </div>
             <div className="mode-card__section">
               <h3>Participant choices</h3>
               <ul>
-                {selectedOverview.participantChoices.map((choice, index) => (
-                  <li key={index}>{choice}</li>
+                {selectedOverview.participantChoices.map((choice) => (
+                  <li key={choice}>{choice}</li>
                 ))}
               </ul>
             </div>
@@ -172,8 +172,8 @@ export const ModeReference: React.FC<ModeReferenceProps> = ({
               <div className="mode-card__section">
                 <h3>Notes</h3>
                 <ul>
-                  {selectedOverview.notes.map((note, index) => (
-                    <li key={index}>{note}</li>
+                  {selectedOverview.notes.map((note) => (
+                    <li key={note}>{note}</li>
                   ))}
                 </ul>
               </div>

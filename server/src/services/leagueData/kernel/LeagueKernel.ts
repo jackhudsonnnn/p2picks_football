@@ -19,6 +19,7 @@ import {
   type GameFeedEvent,
   type Unsubscribe,
 } from '../feeds';
+import { createLogger } from '../../../utils/logger';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Kernel Class
@@ -26,6 +27,7 @@ import {
 
 export class LeagueKernel {
   readonly league: League;
+  private readonly logger;
   
   private validators: ModeValidator[] = [];
   private feedUnsubscribe: Unsubscribe | null = null;
@@ -33,6 +35,7 @@ export class LeagueKernel {
 
   constructor(league: League) {
     this.league = league;
+    this.logger = createLogger(`LeagueKernel:${league}`);
   }
 
   /**
@@ -40,7 +43,7 @@ export class LeagueKernel {
    */
   async start(): Promise<void> {
     if (this.running) {
-      console.log(`[LeagueKernel:${this.league}] Already running`);
+      this.logger.info({}, 'Already running');
       return;
     }
 
@@ -48,7 +51,7 @@ export class LeagueKernel {
 
     // Get modes for this league
     const modes = listModesForLeague(this.league);
-    console.log(`[LeagueKernel:${this.league}] Found ${modes.length} modes`);
+    this.logger.info({ modeCount: modes.length }, `Found ${modes.length} modes`);
 
     // Start mode validators
     for (const mode of modes) {
@@ -57,9 +60,9 @@ export class LeagueKernel {
       try {
         mode.validator.start();
         this.validators.push(mode.validator);
-        console.log(`[LeagueKernel:${this.league}] Started validator for ${mode.key}`);
+        this.logger.info({ modeKey: mode.key }, `Started validator for ${mode.key}`);
       } catch (err) {
-        console.error(`[LeagueKernel:${this.league}] Failed to start validator for ${mode.key}`, err);
+        this.logger.error({ modeKey: mode.key, error: err instanceof Error ? err.message : String(err) }, `Failed to start validator for ${mode.key}`);
         throw err;
       }
     }
@@ -77,13 +80,13 @@ export class LeagueKernel {
         (event: GameFeedEvent) => this.onGameUpdate(event),
         true, // Emit replay of cached games
       );
-      console.log(`[LeagueKernel:${this.league}] Subscribed to game feed`);
+      this.logger.info({}, 'Subscribed to game feed');
     } else {
-      console.warn(`[LeagueKernel:${this.league}] No feed provider available`);
+      this.logger.warn({}, 'No feed provider available');
     }
 
     this.running = true;
-    console.log(`[LeagueKernel:${this.league}] Started with ${this.validators.length} validators`);
+    this.logger.info({ validatorCount: this.validators.length }, `Started with ${this.validators.length} validators`);
   }
 
   /**
@@ -91,7 +94,7 @@ export class LeagueKernel {
    */
   stop(): void {
     if (!this.running) {
-      console.log(`[LeagueKernel:${this.league}] Not running`);
+      this.logger.info({}, 'Not running');
       return;
     }
 
@@ -109,12 +112,12 @@ export class LeagueKernel {
       try {
         validator.stop();
       } catch (err) {
-        console.error(`[LeagueKernel:${this.league}] Failed to stop validator`, err);
+        this.logger.error({ error: err instanceof Error ? err.message : String(err) }, 'Failed to stop validator');
       }
     }
 
     this.running = false;
-    console.log(`[LeagueKernel:${this.league}] Stopped`);
+    this.logger.info({}, 'Stopped');
   }
 
   /**

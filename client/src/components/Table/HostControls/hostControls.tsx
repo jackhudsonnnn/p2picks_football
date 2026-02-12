@@ -4,13 +4,15 @@ import { UserList, type UserItem, type UserActionProps } from "@components/Socia
 import { CheckIcon } from "@shared/widgets/icons/CheckIcon";
 import { XIcon } from "@shared/widgets/icons/XIcon";
 import { useFriends } from "@features/social/hooks";
+import { logger } from "@shared/utils/logger";
 import {
   addTableMember,
   removeTableMember,
   settleTable,
 } from '@features/table/services/tableService';
-import "./hostControls.css";
+import "./HostControls.css";
 import { useDialog } from "@shared/hooks/useDialog";
+import { getErrorMessage } from "@shared/utils/error";
 
 interface HostControlsMember { 
   user_id: string; 
@@ -65,7 +67,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
       await refreshFriends();
       setShowAdd(false);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       await showAlert({ title: "Add Member", message: "Failed to add member." });
     } finally {
       setMutating(false);
@@ -86,7 +88,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
       await refreshFriends();
       setShowRemove(false);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       await showAlert({ title: "Remove Member", message: "Failed to remove member." });
     } finally {
       setMutating(false);
@@ -94,14 +96,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
   }, [tableId, showConfirm, showAlert, refreshFriends]);
 
   const parseSettlementError = (err: unknown): string => {
-    if (!err) return 'Failed to settle the table. Please try again.';
-    if (typeof err === 'string') return err;
-    if (err instanceof Error) return err.message || 'Failed to settle the table. Please try again.';
-    if (typeof err === 'object') {
-      const maybeMessage = (err as any)?.message ?? (err as any)?.error_description ?? (err as any)?.error;
-      if (maybeMessage && typeof maybeMessage === 'string') return maybeMessage;
-    }
-    return 'Failed to settle the table. Please try again.';
+    return getErrorMessage(err, 'Failed to settle the table. Please try again.');
   };
 
   const handleConfirmSettlement = useCallback(async () => {
@@ -128,7 +123,7 @@ export const HostControls: React.FC<HostControlsProps> = ({ tableId, members, cu
         message: 'All member balances are now zero.',
       });
     } catch (err) {
-      console.error('[HostControls] Failed to settle table', err);
+      logger.error('[HostControls] Failed to settle table', err);
       await showAlert({
         title: 'Settle Table',
         message: parseSettlementError(err),

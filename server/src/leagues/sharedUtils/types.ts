@@ -1,159 +1,35 @@
-import type { BetProposal } from '../../supabaseClient';
-
 /**
- * Shared player record type used across all mode userConfig builders.
+ * Mode Types - Re-exported from canonical location
+ *
+ * This file re-exports types from src/types/modes.ts for backward compatibility.
+ * New code should import directly from '../../types' or '../../types/modes'.
  */
-export type PlayerRecord = {
-  id: string;
-  name: string;
-  team: string;
-  position?: string | null;
-};
 
-export type ModeUserConfigInputType = 'select'; // expand as needed
+export type {
+  // Core types
+  PlayerRecord,
+  ModeUserConfigInputType,
+  ModeContext,
+  // Definition types
+  ModeConfigStepDefinition,
+  ModeDefinitionDTO,
+  // Overview types
+  ModeOverviewExample,
+  ModeOverview,
+  // User config types
+  ModeUserConfigChoice,
+  ModeUserConfigStep,
+  // Validator types
+  ModeValidator,
+  // Live info types
+  ModeLiveInfo,
+  GetLiveInfoInput,
+  // Build user config types
+  BuildUserConfigInput,
+  // Validation types
+  ValidateProposalInput,
+  ValidateProposalResult,
+  // Module types
+  ModeModule,
+} from '../../types/modes';
 
-/**
- * Context passed to mode definition functions for computing options, validation, etc.
- */
-export interface ModeContext {
-  config: Record<string, unknown>;
-  bet: BetProposal | null;
-}
-
-export type ModeConfigStepDefinition = {
-  key: string;
-  component: string;
-  label?: string;
-  description?: string;
-  inputType?: ModeUserConfigInputType;
-  props?: Record<string, unknown>;
-  optional?: boolean;
-  validate?: (ctx: ModeContext) => string[];
-};
-
-export type ModeDefinitionDTO = {
-  key: string;
-  label: string;
-  computeWinningCondition: (ctx: ModeContext) => string;
-  computeOptions: (ctx: ModeContext) => string[];
-  staticOptions?: string[];
-  configSteps: ModeConfigStepDefinition[];
-  validateConfig?: (ctx: ModeContext) => string[];
-  metadata?: Record<string, unknown>;
-};
-
-export interface ModeOverviewExample {
-  title?: string;
-  description: string;
-}
-
-export interface ModeOverview {
-  key: string;
-  label: string;
-  tagline: string;
-  description: string;
-  proposerConfiguration: string[];
-  participantChoices: string[];
-  winningCondition: string;
-  notes?: string[];
-  example?: ModeOverviewExample;
-}
-
-export interface ModeUserConfigChoice {
-  id?: string;
-  value: string;
-  label: string;
-  description?: string;
-  patch?: Record<string, unknown>;
-  clears?: string[];
-  clearSteps?: string[];
-  disabled?: boolean;
-}
-
-export interface ModeUserConfigStep {
-  key: string;
-  title: string;
-  description?: string;
-  inputType?: ModeUserConfigInputType;
-  component?: string;
-  props?: Record<string, unknown>;
-  optional?: boolean;
-  validationErrors?: string[];
-  selectedChoiceId?: string | null;
-  completed?: boolean;
-  choices: ModeUserConfigChoice[];
-}
-
-export interface ModeValidator {
-  start(): void;
-  stop(): void;
-}
-
-/**
- * Live info payload returned to the client for displaying real-time bet status.
- * Each mode can define its own fields, but common patterns include:
- * - Total Disaster: scores, total points, line
- * - King of the Hill: player names, baselines, current values, target
- */
-export interface ModeLiveInfo {
-  modeKey: string;
-  /** Human-readable label for the mode */
-  modeLabel: string;
-  /** Key-value pairs to display in the info modal */
-  fields: { label: string; value: string | number }[];
-  /** Optional message if live info is unavailable */
-  unavailableReason?: string;
-}
-import type { League } from '../../types/league';
-
-export interface GetLiveInfoInput {
-  betId: string;
-  config: Record<string, unknown>;
-  /** Canonical game ID (league-agnostic) */
-  leagueGameId: string | null;
-  league: League;
-}
-
-/**
- * Input for user config builders - league-agnostic.
- */
-export interface BuildUserConfigInput {
-  /** Canonical game ID (league-agnostic) */
-  leagueGameId?: string | null;
-  /** League identifier */
-  league?: League;
-  /** Existing config state */
-  config: Record<string, unknown>;
-}
-
-/**
- * Input for proposal validation - league-agnostic.
- */
-export interface ValidateProposalInput {
-  /** Canonical game ID (league-agnostic) */
-  leagueGameId?: string | null;
-  /** League identifier */
-  league?: League;
-  /** Mode configuration */
-  config: Record<string, unknown>;
-}
-
-export interface ValidateProposalResult {
-  valid: boolean;
-  error?: string;
-  details?: unknown;
-  configUpdates?: Record<string, unknown>;
-}
-
-export interface ModeModule {
-  definition: ModeDefinitionDTO;
-  overview?: ModeOverview;
-  prepareConfig?: (input: {
-    bet: BetProposal;
-    config: Record<string, unknown>;
-  }) => Promise<Record<string, unknown>>;
-  validator?: ModeValidator;
-  buildUserConfig?: (input: BuildUserConfigInput) => Promise<ModeUserConfigStep[]>;
-  validateProposal?: (input: ValidateProposalInput) => Promise<ValidateProposalResult>;
-  getLiveInfo?: (input: GetLiveInfoInput) => Promise<ModeLiveInfo>;
-}

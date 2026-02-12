@@ -9,7 +9,7 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { NBA_DATA_INTERVAL_SECONDS } from '../constants/environment';
+import { env } from '../config/env';
 import type {
   RefinedNbaGame,
   RefinedTeam,
@@ -17,6 +17,9 @@ import type {
   PlayerStats,
   TeamStats,
 } from '../utils/nba/nbaRefinementTransformer';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('nbaRefinedDataAccessors');
 
 // Re-export types for consumers
 export type { RefinedNbaGame, RefinedTeam, RefinedPlayer, PlayerStats, TeamStats };
@@ -56,11 +59,11 @@ export async function getAvailableGames(): Promise<Record<string, string>> {
             const b = extractTeamName(teams[1]) || '';
             results[gameId] = `${a} vs ${b}`.trim();
           } else {
-            console.warn(`Warning: Refined game file for gameId ${gameId} has fewer than 2 teams`);
+            logger.warn({ gameId }, `Refined game file for gameId ${gameId} has fewer than 2 teams`);
             results[gameId] = gameId;
           }
         } catch {
-          console.warn(`Warning: Could not load or parse refined game file for gameId ${gameId}`);
+          logger.warn({ gameId }, `Could not load or parse refined game file for gameId ${gameId}`);
           results[gameId] = gameId;
         }
       })
@@ -85,10 +88,11 @@ interface CachedDoc {
 const cache = new Map<string, CachedDoc>();
 
 /** Cache TTL in ms - data only changes every NBA_DATA_INTERVAL_SECONDS */
+const CACHE_TTL_MS = env.NBA_DATA_INTERVAL_SECONDS * 1000;
+
 function getCacheTtlMs(): number {
-  const seconds = Number(NBA_DATA_INTERVAL_SECONDS) || 20;
   // Use 90% of the interval to ensure we refresh before stale
-  return Math.max(5000, seconds * 900);
+  return Math.max(5000, CACHE_TTL_MS * 0.9);
 }
 
 /**

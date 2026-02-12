@@ -42,6 +42,9 @@ export { nbaGameFeedProvider } from './nbaFeedProvider';
 import { registerFeedProvider } from './registry';
 import { nflGameFeedProvider } from './nflFeedProvider';
 import { nbaGameFeedProvider } from './nbaFeedProvider';
+import { createLogger } from '../../../utils/logger';
+
+const logger = createLogger('GameFeeds');
 
 /**
  * Initialize all feed providers.
@@ -54,5 +57,5 @@ export function initializeFeedProviders(): void {
   // Register NBA feed provider
   registerFeedProvider(nbaGameFeedProvider);
   
-  console.log('[GameFeeds] Feed providers initialized');
+  logger.info({}, 'Feed providers initialized');
 }

@@ -15,6 +15,9 @@ import {
   isValidResolveValue,
 } from './constants';
 import { type PlayerRef } from '../../utils/playerUtils';
+import { createLogger } from '../../../../utils/logger';
+
+const logger = createLogger('kingOfTheHill:prepareConfig');
 
 type KingOfTheHillConfig = Record<string, unknown> & {
   league_game_id?: string | null;
@@ -42,9 +45,11 @@ type KingOfTheHillConfig = Record<string, unknown> & {
 export async function prepareKingOfTheHillConfig({
   bet,
   config,
+  league: _league,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
+  league: League;
 }): Promise<Record<string, unknown>> {
   const cfg = { ...config } as KingOfTheHillConfig;
 
@@ -87,10 +92,10 @@ export async function prepareKingOfTheHillConfig({
       initial_captured_at: new Date().toISOString(),
     } as Record<string, unknown>;
   } catch (err) {
-    console.warn('[kingOfTheHill] failed to prepare config', {
+    logger.warn({
       bet_id: bet.bet_id,
       error: (err as Error).message,
-    });
+    }, 'failed to prepare config');
     return normalizeConfigPayload(cfg);
   }
 }

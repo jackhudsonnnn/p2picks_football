@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@features/auth";
 import { acceptBetProposal, hasUserAcceptedBet } from '@features/bets/service';
 import type { BetProposalMessage } from '@shared/types/chat';
-import { supabase } from '@data/clients/supabaseClient';
+import { getBetParticipantCount } from '@data/repositories/betsRepository';
+import { subscribeToBetParticipants } from '@data/subscriptions/tableSubscriptions';
 import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { formatToHundredth } from '@shared/utils/number';
 import './BetProposalCard.css';
@@ -48,26 +49,14 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
     let active = true;
     const load = async () => {
       try {
-        const { count, error } = await supabase
-          .from('bet_participations')
-          .select('participation_id', { count: 'exact', head: true })
-          .eq('bet_id', message.betProposalId);
-        if (error) throw error;
-        if (active && typeof count === 'number') setParticipants(count);
-      } catch (err) {
-        console.warn('[BetProposalCard] failed to load participants', err);
+        const count = await getBetParticipantCount(message.betProposalId);
+        if (active) setParticipants(count);
+      } catch {
         if (active) setParticipants(0);
       }
     };
     void load();
-    const channel = supabase
-      .channel(`bet_participants:${message.betProposalId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'bet_participations', filter: `bet_id=eq.${message.betProposalId}` },
-        () => load()
-      )
-      .subscribe();
+    const channel = subscribeToBetParticipants(message.betProposalId, () => load());
     return () => {
       active = false;
       channel.unsubscribe();
@@ -84,10 +73,11 @@ const BetProposalCard: React.FC<BetProposalCardProps> = ({ message }) => {
       await acceptBetProposal({ betId: message.betProposalId, tableId: message.tableId, userId: user.id });
       setAccepted(true);
       navigate('/tickets');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message_ = error instanceof Error ? error.message : 'Unknown error';
       await showAlert({
         title: 'Accept Bet',
-        message: `Failed to accept bet: ${error?.message ?? 'Unknown error'}`,
+        message: `Failed to accept bet: ${message_}`,
       });
     }
   }, [user, message, navigate, showAlert]);

@@ -24,7 +24,9 @@ import {
   getStatRange,
 } from './constants';
 import { resolveGameId, type GameContextInput } from '../../../../utils/gameId';
+import { createLogger } from '../../../../utils/logger';
 
+const logger = createLogger('propHunt:userConfig');
 const DEBUG = process.env.DEBUG_PROP_HUNT === '1' || process.env.DEBUG_PROP_HUNT === 'true';
 
 export async function buildPropHuntUserConfig(input: BuildUserConfigInput): Promise<ModeUserConfigStep[]> {
@@ -42,14 +44,14 @@ export async function buildPropHuntUserConfig(input: BuildUserConfigInput): Prom
   const preparedPlayers = prepareValidPlayers(filteredPlayers);
 
   if (DEBUG) {
-    console.log('[propHunt][userConfig] building steps', {
+    logger.info({
       gameId,
       playerCount: context.players.length,
       filteredPlayerCount: preparedPlayers.length,
       statKey,
       skipResolveStep: context.skipResolveStep,
       showProgressStep: context.showProgressStep,
-    });
+    }, 'building steps');
   }
 
   const defaultProgressPatch = getDefaultProgressPatch(context.showProgressStep);

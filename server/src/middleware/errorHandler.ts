@@ -8,56 +8,12 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { createLogger } from '../utils/logger';
+import { AppError } from '../errors';
 
 const logger = createLogger('errorHandler');
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Error Types
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Base class for application errors with HTTP status codes.
- */
-export class AppError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode: number = 500,
-    public readonly code?: string,
-    public readonly details?: unknown,
-  ) {
-    super(message);
-    this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
-  }
-
-  static badRequest(message: string, details?: unknown): AppError {
-    return new AppError(message, 400, 'BAD_REQUEST', details);
-  }
-
-  static unauthorized(message: string = 'Unauthorized'): AppError {
-    return new AppError(message, 401, 'UNAUTHORIZED');
-  }
-
-  static forbidden(message: string = 'Forbidden'): AppError {
-    return new AppError(message, 403, 'FORBIDDEN');
-  }
-
-  static notFound(message: string = 'Not found'): AppError {
-    return new AppError(message, 404, 'NOT_FOUND');
-  }
-
-  static conflict(message: string, details?: unknown): AppError {
-    return new AppError(message, 409, 'CONFLICT', details);
-  }
-
-  static tooManyRequests(message: string, retryAfter?: number): AppError {
-    return new AppError(message, 429, 'RATE_LIMITED', { retryAfter });
-  }
-
-  static internal(message: string = 'Internal server error'): AppError {
-    return new AppError(message, 500, 'INTERNAL_ERROR');
-  }
-}
+// Re-export AppError for backward compatibility
+export { AppError } from '../errors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Request ID Middleware

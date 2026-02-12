@@ -1,5 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { createSupabaseClientForToken } from '../supabaseClient';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('authMiddleware');
 
 function extractBearerToken(req: Request): string | null {
 	const header = req.headers.authorization || req.headers.Authorization;
@@ -31,7 +34,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
 		next();
 	} catch (err) {
-		console.error('[authMiddleware] authentication failed', err);
+		logger.error({ error: err instanceof Error ? err.message : String(err) }, 'authentication failed');
 		res.status(401).json({ error: 'Authentication failed' });
 	}
 }

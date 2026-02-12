@@ -6,53 +6,64 @@ import * as friendController from '../controllers/friendController';
 import * as tableController from '../controllers/tableController';
 import * as ticketController from '../controllers/ticketController';
 import { requireAuth } from '../middleware/auth';
+import { asyncHandler } from '../middleware/errorHandler';
+import { getHealthStatus } from '../infrastructure/healthCheck';
 
 const router = express.Router();
 
-router.get('/health', (_req: Request, res: Response) => {
-  res.json({ ok: true });
+/**
+ * GET /health
+ *
+ * Comprehensive health check endpoint.
+ * Returns 200 if healthy, 503 if unhealthy.
+ * Includes status of all dependencies (Redis, Supabase).
+ */
+router.get('/health', async (_req: Request, res: Response) => {
+  const health = await getHealthStatus();
+  const statusCode = health.status === 'healthy' ? 200 : health.status === 'degraded' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // Bet Proposals
-router.get('/leagues/active', modeController.listActiveLeagues);
-router.get('/bet-proposals/bootstrap/league/:league', betController.getBetProposalBootstrap);
-router.post('/tables/:tableId/bets', betController.createBetProposal);
-router.post('/bets/:betId/poke', betController.pokeBet);
-router.post('/bets/:betId/validate', betController.validateBet);
-router.get('/bets/:betId/live-info', betController.getBetLiveInfo);
+router.get('/leagues/active', asyncHandler(modeController.listActiveLeagues));
+router.get('/bet-proposals/bootstrap/league/:league', asyncHandler(betController.getBetProposalBootstrap));
+router.post('/tables/:tableId/bets', asyncHandler(betController.createBetProposal));
+router.post('/bets/:betId/poke', asyncHandler(betController.pokeBet));
+router.post('/bets/:betId/validate', asyncHandler(betController.validateBet));
+router.get('/bets/:betId/live-info', asyncHandler(betController.getBetLiveInfo));
 
 // Tables
-router.get('/tables', tableController.listTables);
+router.get('/tables', asyncHandler(tableController.listTables));
 
 // Sessions
-router.post('/bet-proposals/sessions', modeController.createSession);
-router.get('/bet-proposals/sessions/:sessionId', modeController.getSession);
-router.post('/bet-proposals/sessions/:sessionId/choices', modeController.applySessionChoice);
-router.post('/bet-proposals/sessions/:sessionId/general', modeController.updateSessionGeneral);
+router.post('/bet-proposals/sessions', asyncHandler(modeController.createSession));
+router.get('/bet-proposals/sessions/:sessionId', asyncHandler(modeController.getSession));
+router.post('/bet-proposals/sessions/:sessionId/choices', asyncHandler(modeController.applySessionChoice));
+router.post('/bet-proposals/sessions/:sessionId/general', asyncHandler(modeController.updateSessionGeneral));
 
 // Modes - League-scoped endpoints
-router.get('/leagues/:league/modes', modeController.listModesForLeague);
-router.get('/leagues/:league/modes/overviews', modeController.listModeOverviewsForLeague);
-router.get('/leagues/:league/modes/:modeKey', modeController.getModeDefinitionForLeague);
-router.post('/leagues/:league/modes/:modeKey/user-config', modeController.getUserConfigStepsForLeague);
-router.post('/leagues/:league/modes/:modeKey/preview', modeController.getModePreviewForLeague);
+router.get('/leagues/:league/modes', asyncHandler(modeController.listModesForLeague));
+router.get('/leagues/:league/modes/overviews', asyncHandler(modeController.listModeOverviewsForLeague));
+router.get('/leagues/:league/modes/:modeKey', asyncHandler(modeController.getModeDefinitionForLeague));
+router.post('/leagues/:league/modes/:modeKey/user-config', asyncHandler(modeController.getUserConfigStepsForLeague));
+router.post('/leagues/:league/modes/:modeKey/preview', asyncHandler(modeController.getModePreviewForLeague));
 
 // Mode Configs
-router.post('/bets/:betId/mode-config', modeController.updateBetModeConfig);
-router.get('/bets/:betId/mode-config', modeController.getBetModeConfig);
-router.post('/mode-config/batch', modeController.getBatchModeConfigs);
+router.post('/bets/:betId/mode-config', asyncHandler(modeController.updateBetModeConfig));
+router.get('/bets/:betId/mode-config', asyncHandler(modeController.getBetModeConfig));
+router.post('/mode-config/batch', asyncHandler(modeController.getBatchModeConfigs));
 
 // Messages (rate-limited)
-router.post('/tables/:tableId/messages', requireAuth, messageController.sendMessage);
-router.get('/tables/:tableId/messages', requireAuth, messageController.listMessages);
-router.get('/tables/:tableId/messages/rate-limit-status', requireAuth, messageController.getRateLimitStatus);
+router.post('/tables/:tableId/messages', requireAuth, asyncHandler(messageController.sendMessage));
+router.get('/tables/:tableId/messages', requireAuth, asyncHandler(messageController.listMessages));
+router.get('/tables/:tableId/messages/rate-limit-status', requireAuth, asyncHandler(messageController.getRateLimitStatus));
 
 // Tickets
-router.get('/tickets', requireAuth, ticketController.listTickets);
+router.get('/tickets', requireAuth, asyncHandler(ticketController.listTickets));
 
 // Friends
-router.post('/friends', requireAuth, friendController.addFriend);
-router.get('/friend-requests', requireAuth, friendController.listFriendRequests);
-router.post('/friend-requests/:requestId/:action', requireAuth, friendController.respondToFriendRequest);
+router.post('/friends', requireAuth, asyncHandler(friendController.addFriend));
+router.get('/friend-requests', requireAuth, asyncHandler(friendController.listFriendRequests));
+router.post('/friend-requests/:requestId/:action', requireAuth, asyncHandler(friendController.respondToFriendRequest));
 
 export default router;

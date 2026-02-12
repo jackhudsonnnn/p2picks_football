@@ -1,21 +1,13 @@
 import type { Request, Response } from 'express';
-import { getRedisClient } from '../utils/redisClient';
-import { createFriendRateLimiter } from '../utils/rateLimiter';
+import { getFriendRateLimiter } from '../infrastructure/rateLimiters';
 import { setRateLimitHeaders } from '../middleware/rateLimitHeaders';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('friendController');
 
 type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled';
 
 const RATE_LIMIT_MESSAGE = 'Friend request rate limit exceeded. Please wait before adding more friends.';
-
-let friendRateLimiter: ReturnType<typeof createFriendRateLimiter> | null = null;
-
-function getFriendRateLimiter() {
-  if (!friendRateLimiter) {
-    const redis = getRedisClient();
-    friendRateLimiter = createFriendRateLimiter(redis);
-  }
-  return friendRateLimiter;
-}
 
 function normalizeUsername(raw: string): string {
   return raw.replace(/[^a-zA-Z0-9_]/g, '');
@@ -116,7 +108,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       .maybeSingle();
 
     if (findError) {
-      console.error('[friendController] Failed to lookup username', findError);
+      logger.error({ error: findError.message }, 'Failed to lookup username');
       res.status(500).json({ error: 'Unable to lookup user' });
       return;
     }
@@ -141,7 +133,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       .maybeSingle();
 
     if (relationError) {
-      console.error('[friendController] Failed to verify existing friendship', relationError);
+      logger.error({ error: relationError.message }, 'Failed to verify existing friendship');
       res.status(500).json({ error: 'Unable to verify current friendship status' });
       return;
     }
@@ -161,7 +153,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       .maybeSingle();
 
     if (existingOutgoingError) {
-      console.error('[friendController] Failed to verify existing outgoing request', existingOutgoingError);
+      logger.error({ error: existingOutgoingError.message }, 'Failed to verify existing outgoing request');
       res.status(500).json({ error: 'Unable to verify current request status' });
       return;
     }
@@ -181,7 +173,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       .maybeSingle();
 
     if (incomingError) {
-      console.error('[friendController] Failed to lookup incoming request', incomingError);
+      logger.error({ error: incomingError.message }, 'Failed to lookup incoming request');
       res.status(500).json({ error: 'Unable to verify incoming requests' });
       return;
     }
@@ -193,7 +185,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
         .eq('request_id', incomingRequest.request_id);
 
       if (acceptError) {
-        console.error('[friendController] Failed to accept existing request', acceptError);
+        logger.error({ error: acceptError.message }, 'Failed to accept existing request');
         res.status(500).json({ error: 'Failed to accept existing request' });
         return;
       }
@@ -201,7 +193,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       try {
         await ensureFriendship(supabase, authUser.id, targetUser.user_id);
       } catch (friendErr) {
-        console.error('[friendController] Failed to finalize friendship', friendErr);
+        logger.error({ error: (friendErr as Error)?.message }, 'Failed to finalize friendship');
         res.status(500).json({ error: 'Failed to finalize friendship' });
         return;
       }
@@ -229,7 +221,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       .single();
 
     if (insertError) {
-      console.error('[friendController] Failed to create friend request', insertError);
+      logger.error({ error: insertError.message }, 'Failed to create friend request');
       res.status(500).json({ error: 'Failed to create friend request' });
       return;
     }
@@ -243,7 +235,7 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
       status: 'pending',
     });
   } catch (err) {
-    console.error('[friendController] Unexpected error', err);
+    logger.error({ error: (err as Error)?.message }, 'Unexpected error');
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -264,7 +256,7 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[friendController] Failed to list friend requests', error);
+      logger.error({ error: error.message }, 'Failed to list friend requests');
       res.status(500).json({ error: 'Failed to load friend requests' });
       return;
     }
@@ -285,7 +277,7 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
       })),
     });
   } catch (err) {
-    console.error('[friendController] Unexpected error listing requests', err);
+    logger.error({ error: (err as Error)?.message }, 'Unexpected error listing requests');
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -348,7 +340,7 @@ export async function respondToFriendRequest(
       .single();
 
     if (updateError) {
-      console.error('[friendController] Failed to update friend request', updateError);
+      logger.error({ error: updateError.message }, 'Failed to update friend request');
       res.status(500).json({ error: 'Failed to update friend request' });
       return;
     }
@@ -358,7 +350,7 @@ export async function respondToFriendRequest(
       try {
         await ensureFriendship(supabase, authUser.id, otherUserId);
       } catch (friendErr) {
-        console.error('[friendController] Failed to finalize friendship after accept', friendErr);
+        logger.error({ error: (friendErr as Error)?.message }, 'Failed to finalize friendship after accept');
         res.status(500).json({ error: 'Failed to finalize friendship' });
         return;
       }
@@ -375,7 +367,7 @@ export async function respondToFriendRequest(
       status,
     });
   } catch (err) {
-    console.error('[friendController] Unexpected error updating request', err);
+    logger.error({ error: (err as Error)?.message }, 'Unexpected error updating request');
     res.status(500).json({ error: 'Internal server error' });
   }
 }

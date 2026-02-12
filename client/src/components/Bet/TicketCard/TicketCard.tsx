@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import './TicketCard.css';
 import type { Ticket } from '@features/bets/types';
-import BetStatus from '@shared/widgets/BetStatus/BetStatus';
 import { Modal } from '@shared/widgets/Modal/Modal';
 import { formatToHundredth } from '@shared/utils/number';
 import { useBetPhase } from '@shared/hooks/useBetPhase';
@@ -11,9 +10,9 @@ import { useBetLiveInfo } from '@features/bets/hooks/useBetLiveInfo';
 import { usePokeBet } from '@features/bets/hooks/usePokeBet';
 import { useValidateBet } from '@features/bets/hooks/useValidateBet';
 import { buildTicketTexts, computeTicketOutcome, getModeConfig, getModeKeyString } from '@features/bets/utils/ticketHelpers';
-import infoIcon from '@assets/information.png';
-import pokeIcon from '@assets/poke.png';
-import validateIcon from '@assets/validate.png';
+import { TicketHeader } from './TicketHeader';
+import { TicketContent } from './TicketContent';
+import { TicketFooterLeft } from './TicketFooterLeft';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -143,64 +142,26 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
   }, [canValidate, isValidating, betId, selectedWinningChoice, showAlert, showConfirm, validate, getValidateErrorMessage]);
 
   const Header = () => (
-    <div className="ticket-card-header">
-      <div className="ticket-header-left">
-        <div className="ticket-summary-row">
-          <span className="bet-details">{summaryText}</span>
-        </div>
-      </div>
-      <div className="ticket-header-right">
-        <BetStatus
-          phase={phase}
-          timeLeft={timeLeft}
-          closeTime={ticket.closeTime || undefined}
-          outcome={outcomeInfo.resolvedOutcome}
-          className="ticket-status-repl"
-        />
-      </div>
-    </div>
+    <TicketHeader
+      summaryText={summaryText}
+      phase={phase}
+      timeLeft={timeLeft}
+      closeTime={ticket.closeTime || undefined}
+      resolvedOutcome={outcomeInfo.resolvedOutcome}
+    />
   );
 
   const Content = () => (
-    <div className="ticket-card-content">
-      <div className="ticket-description-row">
-        <span className="game-context">{leagueLabel}</span>
-        <div className="ticket-description-actions">
-          <button
-            className="info-icon-btn"
-            type="button"
-            onClick={() => setIsInfoModalOpen(true)}
-            aria-label="More information"
-          >
-            <img src={infoIcon} alt="Info" className="icon" />
-          </button>
-          {canValidate ? (
-            <button
-              className="validate-icon-btn"
-              type="button"
-              onClick={handleOpenValidateModal}
-              disabled={isValidating}
-              aria-label="Validate bet"
-              title={isValidating ? 'Validating…' : 'Validate bet'}
-            >
-              <img src={validateIcon} alt="Validate" className="icon" />
-            </button>
-          ) : null}
-          {canPoke ? (
-            <button
-              className="poke-icon-btn"
-              type="button"
-              onClick={handlePoke}
-              disabled={isPoking}
-              aria-label="Poke bet"
-              title={isPoking ? 'Poking…' : 'Poke bet'}
-            >
-              <img src={pokeIcon} alt="Poke" className="icon" />
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </div>
+    <TicketContent
+      leagueLabel={leagueLabel}
+      canValidate={canValidate}
+      canPoke={canPoke}
+      isValidating={isValidating}
+      isPoking={isPoking}
+      onOpenInfo={() => setIsInfoModalOpen(true)}
+      onOpenValidate={handleOpenValidateModal}
+      onPoke={handlePoke}
+    />
   );
 
   const Actions = () => (
@@ -222,84 +183,17 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
     }
   };
 
-  const FooterLeft = () => {
-    const isActive = phase === 'active';
-    const currentValue = ticket.myGuess ?? '';
-    const containerRef = useRef<HTMLDivElement>(null);
-    const spanRef = useRef<HTMLSpanElement>(null);
-    const [isOverflowing, setIsOverflowing] = useState(false);
-    const [scrollStyle, setScrollStyle] = useState<React.CSSProperties>({});
-
-    // Pixels per second for constant velocity scrolling
-    const SCROLL_SPEED = 10;
-
-    useEffect(() => {
-      const checkOverflow = () => {
-        if (containerRef.current && spanRef.current) {
-          // Get the actual content area by subtracting padding
-          const style = getComputedStyle(containerRef.current);
-          const paddingLeft = parseFloat(style.paddingLeft) || 0;
-          const paddingRight = parseFloat(style.paddingRight) || 0;
-          const availableWidth = containerRef.current.clientWidth - paddingLeft - paddingRight;
-          const textWidth = spanRef.current.scrollWidth;
-          const overflowAmount = textWidth - availableWidth;
-          
-          if (overflowAmount > 0) {
-            setIsOverflowing(true);
-            // Calculate duration based on overflow distance for constant velocity
-            const duration = overflowAmount / SCROLL_SPEED;
-            setScrollStyle({
-              '--scroll-duration': `${duration + 2}s`, // Add 2s for pause time
-              '--scroll-distance': `-${overflowAmount}px`,
-            } as React.CSSProperties);
-          } else {
-            setIsOverflowing(false);
-            setScrollStyle({});
-          }
-        }
-      };
-      checkOverflow();
-      window.addEventListener('resize', checkOverflow);
-      return () => window.removeEventListener('resize', checkOverflow);
-    }, [currentValue]);
-
-    const readonlyClassName = ['bet-dropdown-readonly', isOverflowing && 'is-overflowing']
-      .filter(Boolean)
-      .join(' ');
-
-    return (
-      <div className="ticket-bet-options">
-        <div className={betContainerClassName}>
-          {isActive ? (
-            <select
-              className="bet-dropdown"
-              value={currentValue}
-              onChange={(e) => {
-                void handleGuessChangeDropdown(ticket.id, e.target.value);
-              }}
-            >
-              {optionList.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div
-              ref={containerRef}
-              className={readonlyClassName}
-              style={scrollStyle}
-              aria-disabled="true"
-              role="textbox"
-              tabIndex={-1}
-            >
-              <span ref={spanRef}>{currentValue || 'No guess'}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const FooterLeft = () => (
+    <TicketFooterLeft
+      isActive={phase === 'active'}
+      currentValue={ticket.myGuess ?? ''}
+      optionList={optionList}
+      betContainerClassName={betContainerClassName}
+      onGuessChange={(newGuess) => {
+        void handleGuessChangeDropdown(ticket.id, newGuess);
+      }}
+    />
+  );
 
   const FooterRight = () => (
     <button className="enter-table-btn" type="button" onClick={() => onEnterTable(ticket.tableId)}>
@@ -341,8 +235,8 @@ const TicketCardComponent: React.FC<TicketCardProps> = ({ ticket, onChangeGuess,
                 <div className="live-info-warning">{liveInfo.unavailableReason}</div>
               )}
               <div className="live-info-fields">
-                {liveInfo.fields.map((field, index) => (
-                  <div key={index} className="live-info-field">
+                {liveInfo.fields.map((field) => (
+                  <div key={field.label} className="live-info-field">
                     <span className="live-info-label">{field.label}</span>
                     <span className="live-info-value">{field.value}</span>
                   </div>

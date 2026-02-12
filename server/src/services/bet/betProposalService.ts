@@ -29,6 +29,10 @@ import {
   extractGameId,
   normalizeGameIdInConfig as normalizeGameIdUtil,
 } from '../../utils/gameId';
+import { AppError } from '../../errors';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('betProposalService');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -67,32 +71,11 @@ export interface PokeBetResult {
   modeConfig: Record<string, unknown>;
 }
 
-export class BetProposalError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode: number = 500,
-    public readonly details?: unknown,
-  ) {
-    super(message);
-    this.name = 'BetProposalError';
-  }
-
-  static badRequest(message: string, details?: unknown): BetProposalError {
-    return new BetProposalError(message, 400, details);
-  }
-
-  static forbidden(message: string): BetProposalError {
-    return new BetProposalError(message, 403);
-  }
-
-  static notFound(message: string): BetProposalError {
-    return new BetProposalError(message, 404);
-  }
-
-  static conflict(message: string): BetProposalError {
-    return new BetProposalError(message, 409);
-  }
-}
+/**
+ * @deprecated Use AppError from '../../errors' instead.
+ * This alias is kept for backward compatibility.
+ */
+export const BetProposalError = AppError;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Service Implementation
@@ -323,11 +306,11 @@ export async function pokeBet(
   try {
     await recordBetPokeLink(sourceBet.bet_id, insertedBet.bet_id);
   } catch (linkError: any) {
-    console.error('[betPoke] failed to record poke link', {
+    logger.error({
       sourceBetId: sourceBet.bet_id,
       newBetId: insertedBet.bet_id,
       error: linkError?.message || linkError,
-    });
+    }, 'failed to record poke link');
   }
 
   return {
@@ -424,11 +407,11 @@ async function createAnnouncementWithCleanup(
   try {
     return await createBetProposalAnnouncement({ bet, preview });
   } catch (announcementError) {
-    console.error('[betProposal] failed to create announcement', {
+    logger.error({
       betId: bet.bet_id,
       tableId: bet.table_id,
       error: (announcementError as any)?.message ?? announcementError,
-    });
+    }, 'failed to create announcement');
     await supabase.from('bet_proposals').delete().eq('bet_id', bet.bet_id);
     throw announcementError;
   }
@@ -447,10 +430,10 @@ async function storeModeConfigWithCleanup(
     const prepared = await prepareModeConfig(modeKey, bet, modeConfig);
     await storeModeConfig(bet.bet_id, modeKey, prepared);
   } catch (cfgError) {
-    console.error('[betProposal] failed to store mode config', {
+    logger.error({
       betId: bet.bet_id,
       error: (cfgError as any)?.message ?? cfgError,
-    });
+    }, 'failed to store mode config');
 
     // Cleanup announcement
     if (announcement?.systemMessageId) {
@@ -460,11 +443,11 @@ async function storeModeConfigWithCleanup(
           .delete()
           .eq('system_message_id', announcement.systemMessageId);
       } catch (cleanupError) {
-        console.warn('[betProposal] failed to cleanup system message', {
+        logger.warn({
           betId: bet.bet_id,
           systemMessageId: announcement.systemMessageId,
           error: (cleanupError as any)?.message ?? cleanupError,
-        });
+        }, 'failed to cleanup system message');
       }
     }
 
@@ -486,16 +469,16 @@ async function createU2PickBetProposal(
 
   // Validation
   if (!u2pickWinningCondition || u2pickWinningCondition.trim().length < 4) {
-    throw new BetProposalError('U2Pick winning condition must be at least 4 characters', 400);
+    throw AppError.badRequest('U2Pick winning condition must be at least 4 characters');
   }
 
   if (!u2pickOptions || u2pickOptions.length < 2 || u2pickOptions.length > 6) {
-    throw new BetProposalError('U2Pick requires between 2 and 6 options', 400);
+    throw AppError.badRequest('U2Pick requires between 2 and 6 options');
   }
   
   for (const opt of u2pickOptions) {
     if (!opt || opt.trim().length < 1 || opt.trim().length > 40) {
-      throw new BetProposalError('Each U2Pick option must be between 1 and 40 characters', 400);
+      throw AppError.badRequest('Each U2Pick option must be between 1 and 40 characters');
     }
   }
 
@@ -525,8 +508,8 @@ async function createU2PickBetProposal(
     .single();
 
   if (betError || !bet) {
-    console.error('[betProposal] failed to insert U2Pick bet', betError);
-    throw new BetProposalError('Failed to create U2Pick bet proposal', 500, betError);
+    logger.error({ error: betError?.message ?? betError }, 'failed to insert U2Pick bet');
+    throw AppError.internal('Failed to create U2Pick bet proposal');
   }
 
   const typedBet = bet as BetProposal;
@@ -550,10 +533,10 @@ async function createU2PickBetProposal(
   try {
     await createBetProposalAnnouncement({ bet: typedBet, preview });
   } catch (announcementError) {
-    console.error('[betProposal] failed to create U2Pick announcement', {
+    logger.error({
       betId: typedBet.bet_id,
       error: (announcementError as any)?.message ?? announcementError,
-    });
+    }, 'failed to create U2Pick announcement');
     await supabase.from('bet_proposals').delete().eq('bet_id', typedBet.bet_id);
     throw announcementError;
   }
@@ -562,10 +545,10 @@ async function createU2PickBetProposal(
   try {
     await storeModeConfig(typedBet.bet_id, 'table_talk', u2pickConfig);
   } catch (cfgError) {
-    console.error('[betProposal] failed to store U2Pick config', {
+    logger.error({
       betId: typedBet.bet_id,
       error: (cfgError as any)?.message ?? cfgError,
-    });
+    }, 'failed to store U2Pick config');
     // Cleanup bet on config failure
     await supabase.from('bet_proposals').delete().eq('bet_id', typedBet.bet_id);
     throw cfgError;

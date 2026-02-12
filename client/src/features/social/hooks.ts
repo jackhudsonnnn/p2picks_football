@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getAuthUserProfile,
   listFriends,
@@ -8,57 +9,46 @@ import {
   updateUsername,
   listFriendRequests,
   respondToFriendRequest,
-} from './service';
+} from '@data/repositories/socialRepository';
 import { supabase } from '@data/clients/supabaseClient';
 import type { Friend, FriendRequest, FriendRequestStatus, UserProfile } from './types';
+import { getErrorMessage } from '@shared/utils/error';
+import { socialKeys } from '@shared/queryKeys';
 
 export function useAuthProfile() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: profile = null, isLoading: loading, error: queryError } = useQuery<UserProfile | null>({
+    queryKey: socialKeys.profile(),
+    queryFn: async () => {
+      const p = await getAuthUserProfile();
+      return p ?? null;
+    },
+  });
+
+  const error = queryError ? getErrorMessage(queryError, 'Failed to load profile') : null;
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const p = await getAuthUserProfile();
-      setProfile(p);
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+    await queryClient.invalidateQueries({ queryKey: socialKeys.profile() });
+  }, [queryClient]);
 
   return { profile, loading, error, refresh } as const;
 }
 
 export function useFriends(currentUserId?: string) {
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: friends = [], isLoading: loading, error: queryError } = useQuery<Friend[]>({
+    queryKey: socialKeys.friends(currentUserId ?? ''),
+    queryFn: () => listFriends(currentUserId!),
+    enabled: Boolean(currentUserId),
+  });
+
+  const error = queryError ? getErrorMessage(queryError, 'Failed to load friends') : null;
 
   const fetchFriends = useCallback(async () => {
-    if (!currentUserId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listFriends(currentUserId);
-      setFriends(data);
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load friends');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUserId]);
-
-  useEffect(() => {
-    fetchFriends();
-  }, [fetchFriends]);
+    await queryClient.invalidateQueries({ queryKey: socialKeys.friends(currentUserId ?? '') });
+  }, [queryClient, currentUserId]);
 
   const actions = useMemo(
     () => ({
@@ -66,44 +56,37 @@ export function useFriends(currentUserId?: string) {
         if (!currentUserId) return;
         const result = await addFriend(currentUserId, username);
         if (result.status === 'accepted' && result.friend) {
-          setFriends((prev) => [...prev, result.friend!]);
+          void queryClient.invalidateQueries({ queryKey: socialKeys.friends(currentUserId) });
         }
         return result;
       },
       remove: async (friendUserId: string) => {
         if (!currentUserId) return;
         await removeFriend(currentUserId, friendUserId);
-        setFriends((prev) => prev.filter((f) => f.user_id !== friendUserId));
+        void queryClient.invalidateQueries({ queryKey: socialKeys.friends(currentUserId) });
       },
       refresh: fetchFriends,
     }),
-    [currentUserId, fetchFriends]
+    [currentUserId, fetchFriends, queryClient]
   );
 
   return { friends, loading, error, ...actions } as const;
 }
 
 export function useFriendRequests(currentUserId?: string) {
-  const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: requests = [], isLoading: loading, error: queryError } = useQuery<FriendRequest[]>({
+    queryKey: socialKeys.friendRequests(currentUserId ?? ''),
+    queryFn: () => listFriendRequests(),
+    enabled: Boolean(currentUserId),
+  });
+
+  const error = queryError ? getErrorMessage(queryError, 'Failed to load friend requests') : null;
 
   const fetchRequests = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listFriendRequests();
-      setRequests(data);
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load friend requests');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    await queryClient.invalidateQueries({ queryKey: socialKeys.friendRequests(currentUserId ?? '') });
+  }, [queryClient, currentUserId]);
 
   // Realtime subscription
   useEffect(() => {
@@ -119,7 +102,7 @@ export function useFriendRequests(currentUserId?: string) {
           filter: `receiver_user_id=eq.${currentUserId}`,
         },
         () => {
-          void fetchRequests();
+          void queryClient.invalidateQueries({ queryKey: socialKeys.friendRequests(currentUserId) });
         },
       )
       .subscribe();
@@ -127,18 +110,18 @@ export function useFriendRequests(currentUserId?: string) {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [currentUserId, fetchRequests]);
+  }, [currentUserId, queryClient]);
 
   const actions = useMemo(
     () => ({
       respond: async (requestId: string, action: 'accept' | 'decline' | 'cancel') => {
         const { request, status } = await respondToFriendRequest(requestId, action);
-        setRequests((prev) => prev.map((r) => (r.request_id === requestId ? request : r)));
+        void queryClient.invalidateQueries({ queryKey: socialKeys.friendRequests(currentUserId ?? '') });
         return { request, status } as { request: FriendRequest; status: FriendRequestStatus };
       },
       refresh: fetchRequests,
     }),
-    [fetchRequests],
+    [fetchRequests, queryClient, currentUserId],
   );
 
   return { requests, loading, error, ...actions } as const;
@@ -161,8 +144,8 @@ export function useUsernameUpdater(userId?: string) {
         const taken = await isUsernameTaken(cleaned, userId);
         if (taken) throw new Error('Username already taken.');
         return await updateUsername(userId, cleaned);
-      } catch (e: any) {
-        setError(e?.message ?? 'Failed to update username');
+      } catch (e: unknown) {
+        setError(getErrorMessage(e, 'Failed to update username'));
         return null;
       } finally {
         setLoading(false);

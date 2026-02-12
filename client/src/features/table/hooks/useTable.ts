@@ -1,42 +1,24 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { fetchCurrentTable } from '../services/tableService';
 import type { TableWithMembers } from '../types';
+import { tableKeys } from '@shared/queryKeys';
 
 export function useTable(tableId?: string) {
-  const [table, setTable] = useState<TableWithMembers | null>(null);
-  const [loading, setLoading] = useState<boolean>(Boolean(tableId));
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const refresh = useCallback(async (options: { silent?: boolean } = {}) => {
-    if (!tableId) {
-      setTable(null);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-    if (!options.silent) {
-      setLoading(true);
-    }
-    setError(null);
-    try {
-  const data = await fetchCurrentTable(tableId);
-  setTable(data as TableWithMembers);
-    } catch (e: unknown) {
-      const message = e instanceof Error && e.message
-        ? e.message
-        : 'Could not load table. Please try again.';
-      setError(message);
-      setTable(null);
-    } finally {
-      if (!options.silent) {
-        setLoading(false);
-      }
-    }
-  }, [tableId]);
+  const { data: table = null, isLoading: loading, error: queryError } = useQuery<TableWithMembers | null>({
+    queryKey: tableKeys.detail(tableId ?? ''),
+    queryFn: () => fetchCurrentTable(tableId!),
+    enabled: Boolean(tableId),
+  });
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Could not load table. Please try again.') : null;
+
+  const refresh = useCallback(async (_options: { silent?: boolean } = {}) => {
+    if (!tableId) return;
+    await queryClient.invalidateQueries({ queryKey: tableKeys.detail(tableId) });
+  }, [tableId, queryClient]);
 
   return { table, loading, error, refresh } as const;
 }

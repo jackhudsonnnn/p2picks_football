@@ -6,6 +6,7 @@ import type { ChatMessage } from "@shared/types/chat";
 import { useGroupedMessages } from "@features/table/chat/useGroupedMessages";
 import { useAutoScroll } from "@features/table/chat/useAutoScroll";
 import { LoadMoreButton } from "@shared/widgets/LoadMore/LoadMore";
+import { logger } from "@shared/utils/logger";
 
 interface ChatAreaProps {
   messages: ChatMessage[];
@@ -46,7 +47,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       await onSendMessage(trimmed);
       setNewMessage("");
     } catch (err) {
-      console.error("[ChatArea] Failed to send message", err);
+      logger.error("[ChatArea] Failed to send message", err);
     } finally {
       setIsSending(false);
     }

@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchModeOverviews } from '../service';
 import type { ModeOverview, League } from '../types';
+import { modeKeys } from '@shared/queryKeys';
 
 type UseModeCatalogOptions = {
   /** The league to fetch modes for (required) */
@@ -20,83 +22,28 @@ const DEFAULT_ERROR = 'Failed to load bet mode overviews.';
 
 export function useModeCatalog(options: UseModeCatalogOptions): UseModeCatalogResult {
   const { league, enabled = true } = options;
-  const [overviews, setOverviews] = useState<ModeOverview[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const { data: overviews, isLoading: loading, error: queryError, isFetched } = useQuery<ModeOverview[]>({
+    queryKey: modeKeys.catalog(league),
+    queryFn: () => fetchModeOverviews(league),
+    enabled,
+    staleTime: 60_000, // mode catalog changes rarely
+  });
 
-  const load = useCallback(
-    async (force = false) => {
-      if (!enabled) return;
-      setLoading(true);
-      try {
-        const data = await fetchModeOverviews(league, force);
-        if (!mountedRef.current) return;
-        setOverviews(data);
-        setError(null);
-      } catch (err) {
-        if (!mountedRef.current) return;
-        const message = err instanceof Error && err.message ? err.message : DEFAULT_ERROR;
-        setError(message);
-      } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
-      }
-    },
-    [enabled, league],
-  );
-
-  // Reset and refetch when league changes
-  useEffect(() => {
-    setOverviews(null);
-    setError(null);
-  }, [league]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (overviews !== null) return;
-
-    let ignore = false;
-    setLoading(true);
-
-    fetchModeOverviews(league)
-      .then((data) => {
-        if (ignore || !mountedRef.current) return;
-        setOverviews(data);
-        setError(null);
-      })
-      .catch((err) => {
-        if (ignore || !mountedRef.current) return;
-        const message = err instanceof Error && err.message ? err.message : DEFAULT_ERROR;
-        setError(message);
-      })
-      .finally(() => {
-        if (ignore || !mountedRef.current) return;
-        setLoading(false);
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [enabled, overviews, league]);
+  const error = queryError
+    ? (queryError instanceof Error && queryError.message ? queryError.message : DEFAULT_ERROR)
+    : null;
 
   const refresh = useCallback(async () => {
-    await load(true);
-  }, [load]);
+    await queryClient.invalidateQueries({ queryKey: modeKeys.catalog(league) });
+  }, [queryClient, league]);
 
   return {
     overviews: overviews ?? [],
     loading,
     error,
-    hasLoaded: overviews !== null,
+    hasLoaded: isFetched,
     refresh,
   };
 }

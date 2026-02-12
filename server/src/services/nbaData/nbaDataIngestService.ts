@@ -21,11 +21,7 @@ import {
   NBA_REFINED_DIR,
   NBA_TEST_DATA_DIR,
 } from '../../utils/nba/nbaFileStorage';
-import {
-  NBA_DATA_INTERVAL_SECONDS,
-  NBA_DATA_RAW_JITTER_PERCENT,
-  NBA_DATA_TEST_MODE,
-} from '../../constants/environment';
+import { env } from '../../config/env';
 
 const logger = createLogger('nbaDataIngest');
 
@@ -36,9 +32,9 @@ interface IngestConfig {
 }
 
 const DEFAULT_CONFIG: IngestConfig = {
-  intervalSeconds: NBA_DATA_INTERVAL_SECONDS,
-  rawJitterPercent: NBA_DATA_RAW_JITTER_PERCENT,
-  testMode: NBA_DATA_TEST_MODE,
+  intervalSeconds: env.NBA_DATA_INTERVAL_SECONDS,
+  rawJitterPercent: env.NBA_DATA_RAW_JITTER_PERCENT,
+  testMode: env.NBA_DATA_TEST_MODE,
 };
 
 const CLEANUP_CUTOFF_MINUTES = 30;

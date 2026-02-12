@@ -2,7 +2,7 @@
   "eventId": "401772838",
   "generatedAt": "2026-01-02T02:20:50.963Z",
   "source": "espn-nfl-boxscore",
-  "status": "STATUS_HALFTIME",
+  "status": "STATUS_FINAL",
   "period": 2,
   "teams": [
     {

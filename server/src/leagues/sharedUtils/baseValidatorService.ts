@@ -23,8 +23,9 @@ import { washBetWithHistory } from './washService';
 import { RedisJsonStore } from './redisJsonStore';
 import { getRedisClient } from '../../utils/redisClient';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
-import { USE_RESOLUTION_QUEUE } from '../../constants/environment';
+import { env } from '../../config/env';
 import type { GameFeedEvent } from './gameFeedTypes';
+import { createLogger } from '../../utils/logger';
 
 export interface BaseValidatorConfig {
   /** The league this validator handles (NFL, NBA, etc.) */
@@ -54,11 +55,13 @@ export abstract class BaseValidatorService<TConfig, TStore> {
   protected readonly store: RedisJsonStore<TStore>;
   protected readonly config: BaseValidatorConfig;
   protected readonly useQueue: boolean;
+  protected readonly logger: ReturnType<typeof createLogger>;
 
   constructor(config: BaseValidatorConfig) {
     this.config = config;
+    this.logger = createLogger(config.modeKey);
     // Default to using queue unless explicitly disabled
-    this.useQueue = config.useResolutionQueue ?? (USE_RESOLUTION_QUEUE !== '0');
+    this.useQueue = config.useResolutionQueue ?? env.USE_RESOLUTION_QUEUE;
 
     const redis = getRedisClient();
     this.store = new RedisJsonStore<TStore>(
@@ -133,7 +136,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       if (!record || record.mode_key !== this.config.modeKey) return null;
       return record.data as TConfig;
     } catch (err) {
-      console.error(`[${this.config.modeKey}] fetch config error`, { betId }, err);
+      this.logger.error({ betId, error: err instanceof Error ? err.message : String(err) }, 'fetch config error');
       return null;
     }
   }
@@ -254,11 +257,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
    * Log a warning message.
    */
   protected logWarn(message: string, context?: Record<string, unknown>): void {
-    if (context) {
-      console.warn(`[${this.config.modeKey}] ${message}`, context);
-    } else {
-      console.warn(`[${this.config.modeKey}] ${message}`);
-    }
+    this.logger.warn(context ?? {}, message);
   }
 
   /**
@@ -266,11 +265,9 @@ export abstract class BaseValidatorService<TConfig, TStore> {
    */
   protected logError(message: string, context?: Record<string, unknown>, error?: unknown): void {
     if (error) {
-      console.error(`[${this.config.modeKey}] ${message}`, context ?? {}, error);
-    } else if (context) {
-      console.error(`[${this.config.modeKey}] ${message}`, context);
+      this.logger.error({ ...context, error: error instanceof Error ? error.message : String(error) }, message);
     } else {
-      console.error(`[${this.config.modeKey}] ${message}`);
+      this.logger.error(context ?? {}, message);
     }
   }
 

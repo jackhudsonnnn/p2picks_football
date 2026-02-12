@@ -25,12 +25,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error getting session:', error.message);
+          // Silently handle session retrieval errors — onAuthStateChange will recover
         }
         setSession(session);
         setUser(session?.user ?? null);
-      } catch (e: any) {
-        console.error('Exception in getSession:', e.message);
+      } catch (e: unknown) {
+        // Session retrieval failed — will be retried by onAuthStateChange
       } finally {
         setLoading(false);
       }
@@ -55,21 +55,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const redirectTo = window.location.origin;
-      console.info('Starting Google sign-in, redirectTo:', redirectTo);
       const res = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
         },
       });
-      console.info('signInWithOAuth response:', res);
       const { error } = res;
       if (error) {
-        console.error('Google sign-in error:', error.message);
         await showAlert({ title: 'Sign In', message: 'Error signing in with Google: ' + error.message });
       }
-    } catch (error: any) {
-      console.error('Exception during Google sign-in:', error.message);
+    } catch (error: unknown) {
       await showAlert({ title: 'Sign In', message: 'An unexpected error occurred during sign-in.' });
       setLoading(false);
     }
@@ -80,11 +76,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Sign-out error:', error.message);
         await showAlert({ title: 'Sign Out', message: 'Error signing out: ' + error.message });
       }
-    } catch (error: any) {
-      console.error('Exception during sign-out:', error.message);
+    } catch (error: unknown) {
       await showAlert({ title: 'Sign Out', message: 'An unexpected error occurred during sign-out.' });
     } finally {
       // setLoading(false); // onAuthStateChange will handle this

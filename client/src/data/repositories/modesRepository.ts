@@ -6,8 +6,9 @@ import type { League } from '@features/bets/types';
 
 const previewCache = new Map<string, ModePreviewPayload>();
 
-// Cache per league
-const overviewsCache = new Map<League, ModeOverview[]>();
+// Cache per league with TTL
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const overviewsCache = new Map<League, { data: ModeOverview[]; fetchedAt: number }>();
 const inflightOverviews = new Map<League, Promise<ModeOverview[]>>();
 
 function getStatsServerBase(): string {
@@ -23,8 +24,11 @@ function getStatsServerBase(): string {
  * Fetch mode overviews for a specific league.
  */
 export async function fetchModeOverviews(league: League, force = false): Promise<ModeOverview[]> {
-  if (!force && overviewsCache.has(league)) {
-    return overviewsCache.get(league)!;
+  if (!force) {
+    const cached = overviewsCache.get(league);
+    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+      return cached.data;
+    }
   }
   if (!force && inflightOverviews.has(league)) {
     return inflightOverviews.get(league)!;
@@ -32,8 +36,9 @@ export async function fetchModeOverviews(league: League, force = false): Promise
 
   const promise = fetchJSON<ModeOverview[]>(`/api/leagues/${encodeURIComponent(league)}/modes/overviews`)
     .then((data) => {
-      overviewsCache.set(league, data ?? []);
-      return overviewsCache.get(league)!;
+      const resolved = data ?? [];
+      overviewsCache.set(league, { data: resolved, fetchedAt: Date.now() });
+      return resolved;
     })
     .finally(() => {
       inflightOverviews.delete(league);

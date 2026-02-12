@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express';
-import { getRedisClient } from '../utils/redisClient';
-import { createMessageRateLimiter } from '../utils/rateLimiter';
+import { getMessageRateLimiter } from '../infrastructure/rateLimiters';
 import {
   validateMessage,
   isValidUUID,
@@ -17,17 +16,9 @@ import {
   MAX_PAGE_SIZE,
   type MessageCursor,
 } from '../utils/pagination';
+import { createLogger } from '../utils/logger';
 
-// Lazy-initialize the rate limiter
-let messageRateLimiter: ReturnType<typeof createMessageRateLimiter> | null = null;
-
-function getMessageRateLimiter() {
-  if (!messageRateLimiter) {
-    const redis = getRedisClient();
-    messageRateLimiter = createMessageRateLimiter(redis);
-  }
-  return messageRateLimiter;
-}
+const logger = createLogger('messageController');
 
 /**
  * POST /tables/:tableId/messages
@@ -117,7 +108,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
       .single();
 
     if (insertError) {
-      console.error('[messageController] Insert error:', insertError);
+      logger.error({ error: insertError.message }, 'Insert error');
       res.status(500).json({ error: 'Failed to send message' });
       return;
     }
@@ -128,7 +119,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
       postedAt: textMsg.posted_at,
     });
   } catch (err) {
-    console.error('[messageController] Unexpected error:', err);
+    logger.error({ error: (err as Error)?.message }, 'Unexpected error');
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -166,7 +157,7 @@ export async function getRateLimitStatus(req: Request, res: Response): Promise<v
       allowed: status.allowed,
     });
   } catch (err) {
-    console.error('[messageController] Rate limit status error:', err);
+    logger.error({ error: (err as Error)?.message }, 'Rate limit status error');
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -287,7 +278,7 @@ export async function listMessages(req: Request, res: Response): Promise<void> {
 
     const { data, error } = await query;
     if (error) {
-      console.error('[messageController] listMessages query error:', error);
+      logger.error({ error: error.message }, 'listMessages query error');
       res.status(500).json({ error: 'Failed to fetch messages' });
       return;
     }
@@ -376,7 +367,7 @@ export async function listMessages(req: Request, res: Response): Promise<void> {
       limit,
     });
   } catch (err) {
-    console.error('[messageController] listMessages unexpected error:', err);
+    logger.error({ error: (err as Error)?.message }, 'listMessages unexpected error');
     res.status(500).json({ error: 'Internal server error' });
   }
 }

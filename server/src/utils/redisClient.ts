@@ -6,19 +6,20 @@
  */
 
 import Redis from 'ioredis';
-import { REDIS_URL } from '../constants/environment';
+import { env } from '../config/env';
+import { createLogger } from './logger';
+
+const logger = createLogger('redis');
 
 let sharedRedis: Redis | null = null;
 
 function buildRedis(): Redis {
-  if (!REDIS_URL) {
-    throw new Error('[redis] REDIS_URL not configured; Redis is required');
-  }
-  const client = new Redis(REDIS_URL);
+  // Validation handled by Zod schema in config/env.ts
+  const client = new Redis(env.REDIS_URL);
   client.on('error', (err: unknown) => {
-    console.error('[redis] connection error', err);
+    logger.error({ error: err instanceof Error ? (err as Error).message : String(err) }, 'connection error');
   });
-  console.log('[redis] client initialized');
+  logger.info({}, 'client initialized');
   return client;
 }
 
@@ -40,7 +41,7 @@ export function getRedisClient(): Redis {
 export function closeRedisClient(): void {
   if (!sharedRedis) return;
   sharedRedis.quit().catch((err: unknown) => {
-    console.error('[redis] quit error', err);
+    logger.error({ error: err instanceof Error ? (err as Error).message : String(err) }, 'quit error');
   });
   sharedRedis = null;
 }

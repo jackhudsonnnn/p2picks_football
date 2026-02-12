@@ -8,6 +8,7 @@ import { LoadMoreButton } from "@shared/widgets/LoadMore/LoadMore";
 import { useTickets } from "@features/bets/hooks/useTickets";
 import { useIsMobile } from "@shared/hooks/useIsMobile";
 import { useDialog } from "@shared/hooks/useDialog";
+import { getErrorCode } from "@shared/utils/error";
 
 const STATUS_FILTER_OPTIONS = [
   { id: "active", label: "Active" },
@@ -27,15 +28,16 @@ export const TicketsPage: React.FC = () => {
   const handleGuessChange = async (ticketId: string, newGuess: string) => {
     try {
       await changeGuess(ticketId, newGuess);
-    } catch (e: any) {
-      if (e && e.code === "PGRST116") {
+    } catch (e: unknown) {
+      const code = getErrorCode(e);
+      if (code === "PGRST116") {
         await showAlert({
           title: "Update Guess",
           message: "Guesses can no longer be changed for this ticket.",
         });
         return;
       }
-      const message = `Failed to update your guess. ${e?.code ?? ''}`.trim();
+      const message = `Failed to update your guess. ${code ?? ''}`.trim();
       await showAlert({ title: "Update Guess", message });
     }
   };

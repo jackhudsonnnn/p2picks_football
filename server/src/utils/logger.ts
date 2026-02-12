@@ -2,7 +2,7 @@
  * Shared logger utility for data services.
  */
 
-import { NODE_ENV } from '../constants/environment';
+import { env } from '../config/env';
 
 export type LogPayload = Record<string, unknown>;
 
@@ -24,7 +24,7 @@ export function createLogger(prefix: string): Logger {
       }
     },
     debug(payload: LogPayload | string, message?: string) {
-      if (NODE_ENV === 'production') return;
+      if (env.NODE_ENV === 'production') return;
       if (typeof payload === 'string') {
         console.debug(tag, payload);
       } else {

@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
-import { fetchBetLiveInfo, type BetLiveInfo } from '../service';
+import { useQuery } from '@tanstack/react-query';
+import { fetchBetLiveInfo } from '../service';
+import type { BetLiveInfo } from '@data/repositories/betsRepository';
+import { betKeys } from '@shared/queryKeys';
 
 export type UseBetLiveInfoArgs = {
   betId?: string | null;
@@ -13,43 +15,19 @@ export type UseBetLiveInfoState = {
 };
 
 export function useBetLiveInfo({ betId, enabled = true }: UseBetLiveInfoArgs): UseBetLiveInfoState {
-  const [liveInfo, setLiveInfo] = useState<BetLiveInfo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: liveInfo = null, isLoading: loading, error: queryError } = useQuery<BetLiveInfo>({
+    queryKey: betKeys.liveInfo(betId ?? ''),
+    queryFn: () => fetchBetLiveInfo(betId!),
+    enabled: enabled && Boolean(betId),
+  });
 
-  useEffect(() => {
-    if (!enabled) return;
-    if (!betId) {
-      setError('Unable to locate this bet');
-      setLiveInfo(null);
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    fetchBetLiveInfo(betId)
-      .then((data) => {
-        if (!cancelled) {
-          setLiveInfo(data);
-          setLoading(false);
-        }
-      })
-      .catch((err: Error) => {
-        if (!cancelled) {
-          setLiveInfo(null);
-          setError(err.message || 'Failed to load live info');
-          setLoading(false);
-          console.warn('[useBetLiveInfo] failed', err);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [betId, enabled]);
+  const error = !enabled
+    ? null
+    : !betId
+      ? 'Unable to locate this bet'
+      : queryError
+        ? (queryError instanceof Error ? queryError.message : 'Failed to load live info')
+        : null;
 
   return { liveInfo, loading, error };
 }

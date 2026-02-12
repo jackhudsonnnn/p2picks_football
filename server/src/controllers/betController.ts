@@ -14,24 +14,15 @@ import { GENERAL_CONFIG_SCHEMA } from '../services/bet/configSessionService';
 import {
   createBetProposal as createBetProposalService,
   pokeBet as pokeBetService,
-  BetProposalError,
 } from '../services/bet/betProposalService';
 import { fetchModeConfig } from '../utils/modeConfig';
-import { getRedisClient } from '../utils/redisClient';
-import { createMessageRateLimiter } from '../utils/rateLimiter';
+import { getBetRateLimiter } from '../infrastructure/rateLimiters';
 import { normalizeLeague } from '../types/league';
 import { setRateLimitHeaders } from '../middleware/rateLimitHeaders';
+import { AppError } from '../errors';
+import { createLogger } from '../utils/logger';
 
-// Lazy-initialize the rate limiter (shared with messages)
-let sharedRateLimiter: ReturnType<typeof createMessageRateLimiter> | null = null;
-
-function getSharedRateLimiter() {
-  if (!sharedRateLimiter) {
-    const redis = getRedisClient();
-    sharedRateLimiter = createMessageRateLimiter(redis);
-  }
-  return sharedRateLimiter;
-}
+const logger = createLogger('betController');
 
 /**
  * POST /api/tables/:tableId/bets
@@ -71,8 +62,8 @@ export async function createBetProposal(req: Request, res: Response) {
     return;
   }
 
-  // Check rate limit (shared with messages - bets count as messages)
-  const rateLimiter = getSharedRateLimiter();
+  // Check rate limit
+  const rateLimiter = getBetRateLimiter();
   const rateLimitKey = `${authUser.id}:${tableId}`;
   const rateLimitResult = await rateLimiter.check(rateLimitKey);
 
@@ -175,8 +166,8 @@ export async function pokeBet(req: Request, res: Response) {
       return;
     }
 
-    // Check rate limit (shared with messages - pokes count as messages)
-    const rateLimiter = getSharedRateLimiter();
+    // Check rate limit
+    const rateLimiter = getBetRateLimiter();
     const rateLimitKey = `${authUser.id}:${betRow.table_id}`;
     const rateLimitResult = await rateLimiter.check(rateLimitKey);
 
@@ -282,9 +273,10 @@ export async function getBetLiveInfo(req: Request, res: Response) {
     }
 
     res.json(liveInfo);
-  } catch (e: any) {
-    console.error('[betController] getBetLiveInfo error', { betId, error: e?.message });
-    res.status(500).json({ error: e?.message || 'failed to fetch live info' });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'failed to fetch live info';
+    logger.error({ betId, error: message }, 'getBetLiveInfo error');
+    res.status(500).json({ error: message });
   }
 }
 
@@ -411,10 +403,7 @@ export async function validateBet(req: Request, res: Response) {
       });
     } catch (historyError) {
       // Log but don't fail the request
-      console.warn('[betController] failed to record validation history', { 
-        betId, 
-        error: (historyError as any)?.message 
-      });
+      logger.warn({ betId, error: (historyError as Error)?.message }, 'failed to record validation history');
     }
 
     res.json({ 
@@ -423,9 +412,10 @@ export async function validateBet(req: Request, res: Response) {
       winning_choice: winningChoice,
       message: 'Bet validated successfully',
     });
-  } catch (e: any) {
-    console.error('[betController] validateBet error', { betId, error: e?.message });
-    res.status(500).json({ error: e?.message || 'failed to validate bet' });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'failed to validate bet';
+    logger.error({ betId, error: message }, 'validateBet error');
+    res.status(500).json({ error: message });
   }
 }
 
@@ -509,11 +499,7 @@ async function validateTableMembership(
   );
 
   if (membershipError) {
-    console.error('[betController] membership check failed', {
-      tableId,
-      userId,
-      error: membershipError.message,
-    });
+    logger.error({ tableId, userId, error: membershipError.message }, 'membership check failed');
     return { status: 500, message: 'failed to validate table membership' };
   }
 
@@ -524,8 +510,8 @@ async function validateTableMembership(
   return null;
 }
 
-function handleBetError(res: Response, error: any, fallbackMessage: string): void {
-  if (error instanceof BetProposalError) {
+function handleBetError(res: Response, error: unknown, fallbackMessage: string): void {
+  if (AppError.isAppError(error)) {
     res.status(error.statusCode).json({
       error: error.message,
       ...(error.details ? { details: error.details } : {}),
@@ -533,7 +519,7 @@ function handleBetError(res: Response, error: any, fallbackMessage: string): voi
     return;
   }
 
-  const message = error?.message || fallbackMessage;
+  const message = error instanceof Error ? error.message : fallbackMessage;
   let status = 500;
 
   if (/invalid mode config/i.test(message)) {
@@ -542,6 +528,6 @@ function handleBetError(res: Response, error: any, fallbackMessage: string): voi
     status = 404;
   }
 
-  console.error('[betController] error', { error: message });
+  logger.error({ error: message }, 'bet operation failed');
   res.status(status).json({ error: message });
 }

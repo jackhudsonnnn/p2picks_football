@@ -22,6 +22,9 @@ import { fetchModeConfig, fetchModeConfigs, storeModeConfig, ensureModeKeyMatche
 import { BetProposal } from '../supabaseClient';
 import { normalizeGameIdInConfig } from '../utils/gameId';
 import { normalizeLeague } from '../types/league';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('modeController');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // League-scoped Mode Endpoints
@@ -201,11 +204,7 @@ export async function getModePreviewForLeague(req: Request, res: Response) {
       try {
         bet = await ensureModeKeyMatchesBet(betId, modeKey, req.supabase);
       } catch (err: any) {
-        console.warn('[modePreview] failed to ensure bet/mode alignment', {
-          betId,
-          modeKey,
-          error: err?.message || String(err),
-        });
+        logger.warn({ betId, modeKey, error: err?.message || String(err) }, 'failed to ensure bet/mode alignment');
       }
       if (!config.player1_id || !config.player2_id) {
         try {
@@ -214,11 +213,7 @@ export async function getModePreviewForLeague(req: Request, res: Response) {
             Object.assign(config, { ...stored.data, ...config });
           }
         } catch (err: any) {
-          console.warn('[modePreview] failed to hydrate config from store', {
-            betId,
-            modeKey,
-            error: err?.message || String(err),
-          });
+          logger.warn({ betId, modeKey, error: err?.message || String(err) }, 'failed to hydrate config from store');
         }
       }
     }
@@ -417,11 +412,7 @@ export async function getModePreview(req: Request, res: Response) {
       try {
         bet = await ensureModeKeyMatchesBet(betId, modeKey, req.supabase);
       } catch (err: any) {
-        console.warn('[modePreview] failed to ensure bet/mode alignment', {
-          betId,
-          modeKey,
-          error: err?.message || String(err),
-        });
+        logger.warn({ betId, modeKey, error: err?.message || String(err) }, 'failed to ensure bet/mode alignment');
       }
       if (!config.player1_id || !config.player2_id) {
         try {
@@ -430,11 +421,7 @@ export async function getModePreview(req: Request, res: Response) {
             Object.assign(config, { ...stored.data, ...config });
           }
         } catch (err: any) {
-          console.warn('[modePreview] failed to hydrate config from store', {
-            betId,
-            modeKey,
-            error: err?.message || String(err),
-          });
+          logger.warn({ betId, modeKey, error: err?.message || String(err) }, 'failed to hydrate config from store');
         }
       }
     }
@@ -534,7 +521,7 @@ export async function getBatchModeConfigs(req: Request, res: Response) {
       .select('bet_id')
       .in('bet_id', ids);
     if (error) {
-      console.error('[modeConfigBatch] failed to list accessible bets', error.message);
+      logger.error({ error: error.message }, 'modeConfigBatch failed to list accessible bets');
       res.status(500).json({ error: 'failed to validate bet access' });
       return;
     }

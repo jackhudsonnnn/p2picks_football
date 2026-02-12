@@ -9,16 +9,17 @@ import {
 import type { League } from '../../../../types/league';
 import type { NbaScoreSorcererConfig } from './evaluator';
 
-const league: League = 'NBA';
-
 export async function prepareNbaScoreSorcererConfig({
   bet,
   config,
+  league: providedLeague,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
+  league: League;
 }): Promise<Record<string, unknown>> {
   const nextConfig = { ...config } as NbaScoreSorcererConfig;
+  const league: League = providedLeague ?? bet.league ?? 'NBA';
 
   if (!nextConfig.league_game_id) {
     nextConfig.league_game_id = bet.league_game_id ?? null;

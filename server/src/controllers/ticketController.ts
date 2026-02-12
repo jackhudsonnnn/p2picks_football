@@ -3,8 +3,11 @@ import {
   parseTicketCursor,
   buildTicketCursor,
   parsePageSize,
-  type TicketCursor,
 } from '../utils/pagination';
+import { createLogger } from '../utils/logger';
+import { TicketRepository } from '../repositories';
+
+const logger = createLogger('ticketController');
 
 /**
  * GET /tickets
@@ -53,76 +56,41 @@ export async function listTickets(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    let query = supabase
-      .from('bet_participations')
-      .select(
-        `
-        participation_id,
-        bet_id,
-        table_id,
-        user_id,
-        user_guess,
-        participation_time,
-        bet_proposals:bet_id (
-          bet_id,
-          table_id,
-          league,
-          league_game_id,
-          mode_key,
-          description,
-          wager_amount,
-          time_limit_seconds,
-          proposal_time,
-          bet_status,
-          close_time,
-          winning_choice,
-          resolution_time,
-          tables:table_id (table_name)
-        )
-      `,
-      )
-      .eq('user_id', user.id)
-      // Matches index: bet_participations_user_time_id_desc (user_id, participation_time DESC, participation_id DESC)
-      .order('participation_time', { ascending: false })
-      .order('participation_id', { ascending: false })
-      .limit(limit + 1);
+    // Use repository for data access
+    const ticketRepo = new TicketRepository(supabase);
+    const { data: tickets, hasMore } = await ticketRepo.listTickets({
+      userId: user.id,
+      limit,
+      before: before ?? undefined,
+      after: after ?? undefined,
+    });
 
-    if (before) {
-      const participatedAtIso = before.participatedAt;
-      query = query.or(
-        `and(participation_time.lt.${participatedAtIso}),and(participation_time.eq.${participatedAtIso},participation_id.lt.${before.participationId})`,
-      );
-    }
+    // Transform to API response format (matching legacy structure)
+    const participations = tickets.map((ticket) => ({
+      participation_id: ticket.participation_id,
+      bet_id: ticket.bet_id,
+      table_id: ticket.table_id,
+      user_id: ticket.user_id,
+      user_guess: ticket.user_guess,
+      participation_time: ticket.participation_time,
+      bet_proposals: ticket.bet,
+    }));
 
-    if (after) {
-      const participatedAtIso = after.participatedAt;
-      query = query.or(
-        `and(participation_time.gt.${participatedAtIso}),and(participation_time.eq.${participatedAtIso},participation_id.gt.${after.participationId})`,
-      );
-    }
-
-    const { data, error } = await query;
-    if (error) {
-      console.error('[ticketController] listTickets query error:', error);
-      res.status(500).json({ error: 'Failed to fetch tickets' });
-      return;
-    }
-
-    let rows = (data ?? []) as any[];
-    const hasMore = rows.length > limit;
-    if (hasMore) {
-      rows = rows.slice(0, limit);
-    }
+    // Build cursor from raw data
+    const cursorData = participations.map((p) => ({
+      participation_id: p.participation_id,
+      participation_time: p.participation_time,
+    }));
 
     res.json({
-      participations: rows,
-      nextCursor: hasMore ? buildTicketCursor(rows) : null,
+      participations,
+      nextCursor: hasMore ? buildTicketCursor(cursorData) : null,
       hasMore,
       limit,
       serverTime: new Date().toISOString(),
     });
   } catch (err) {
-    console.error('[ticketController] listTickets unexpected error:', err);
+    logger.error({ error: err instanceof Error ? err.message : String(err) }, 'listTickets unexpected error');
     res.status(500).json({ error: 'Internal server error' });
   }
 }

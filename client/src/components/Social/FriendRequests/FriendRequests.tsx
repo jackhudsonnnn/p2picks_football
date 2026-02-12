@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useDeferredValue, useState, useCallback } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriendRequests, useFriends } from "@features/social/hooks";
 import { SearchBar } from "@shared/widgets/SearchBar/SearchBar";
@@ -48,11 +48,12 @@ export const FriendRequests: React.FC = () => {
   const { refresh: refreshFriends } = useFriends(profile?.user_id || undefined);
   const { requests, loading, respond } = useFriendRequests(profile?.user_id);
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearch = useDeferredValue(searchTerm);
   const [busyRequest, setBusyRequest] = useState<string | null>(null);
   const { showConfirm, dialogNode } = useDialog();
 
   const filtered: UserItem[] = useMemo(() => {
-    const term = searchTerm.toLowerCase();
+    const term = deferredSearch.toLowerCase();
     return requests
       .filter((r) => r.receiver_user_id === profile?.user_id) // incoming only
       .filter((r) => r.status === "pending")
@@ -61,7 +62,7 @@ export const FriendRequests: React.FC = () => {
         username: r.sender.username ?? "Unknown",
       }))
       .filter((r) => r.username.toLowerCase().includes(term));
-  }, [requests, profile?.user_id, searchTerm]);
+  }, [requests, profile?.user_id, deferredSearch]);
 
   const handleAction = useCallback(async (requestId: string, action: RequestAction) => {
     setBusyRequest(requestId);

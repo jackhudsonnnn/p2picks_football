@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useDeferredValue, useMemo, useCallback } from "react";
 import { useAuth } from "@features/auth";
 import { useAuthProfile, useFriends } from "@features/social/hooks";
 import { SearchBar } from "@shared/widgets/SearchBar/SearchBar";
@@ -49,14 +49,15 @@ export const FriendsManager: React.FC = () => {
   const { friends, loading, add, remove } = useFriends(profile?.user_id || undefined);
   const [friendUsernameToAdd, setFriendUsernameToAdd] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearch = useDeferredValue(searchTerm);
   const [busy, setBusy] = useState(false);
   const { showAlert, showConfirm, dialogNode } = useDialog();
 
   const filteredFriends: UserItem[] = useMemo(
     () => friends
-      .filter((f) => f.username.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter((f) => f.username.toLowerCase().includes(deferredSearch.toLowerCase()))
       .map((f) => ({ id: f.user_id, username: f.username })),
-    [friends, searchTerm]
+    [friends, deferredSearch]
   );
 
   const handleRemoveFriend = useCallback(async (friend: UserItem) => {

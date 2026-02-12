@@ -1,4 +1,7 @@
 import type Redis from 'ioredis';
+import { createLogger } from './logger';
+
+const logger = createLogger('RateLimiter');
 
 export interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */
@@ -59,7 +62,7 @@ export class RateLimiter {
     const results = await pipeline.exec();
     if (!results) {
       // Redis error, fail open (allow the request)
-      console.warn('[RateLimiter] Pipeline returned null, failing open');
+      logger.warn({}, 'Pipeline returned null, failing open');
       return {
         allowed: true,
         remaining: this.config.maxRequests - 1,

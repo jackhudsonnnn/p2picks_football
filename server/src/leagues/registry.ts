@@ -27,6 +27,9 @@ import type {
   ValidateProposalInput,
   ValidateProposalResult,
 } from './types';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ModeRegistry');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Registry State
@@ -51,7 +54,7 @@ export function registerMode(module: LeagueModeModule): void {
   }
   
   if (registry.has(key)) {
-    console.warn(`[ModeRegistry] Overwriting existing module: ${key}`);
+    logger.warn({ modeKey: key }, `Overwriting existing module: ${key}`);
   }
 
   // Build league set for fast lookup
@@ -63,7 +66,7 @@ export function registerMode(module: LeagueModeModule): void {
   }
 
   registry.set(key, { module, leagueSet });
-  console.log(`[ModeRegistry] Registered mode: ${key} (leagues: ${leagueSet === 'all' ? 'all' : Array.from(leagueSet).join(', ')})`);
+  logger.info({ modeKey: key, leagues: leagueSet === 'all' ? 'all' : Array.from(leagueSet) }, `Registered mode: ${key}`);
 }
 
 /**
@@ -246,7 +249,7 @@ export async function prepareModeConfig(
   const result = getMode(modeKey, league);
   if (!result.found || !result.module!.prepareConfig) {
     if (!result.found) {
-      console.warn('[ModeRegistry] prepareModeConfig: mode not found or not supported', { modeKey, league });
+      logger.warn({ modeKey, league }, 'prepareModeConfig: mode not found or not supported');
     }
     return config;
   }
@@ -366,7 +369,7 @@ export async function initializeRegistry(): Promise<void> {
   // Future: Import and register MLB, NHL, etc. modes here
   
   initialized = true;
-  console.log(`[ModeRegistry] Initialized with ${registry.size} modes`);
+  logger.info({ modeCount: registry.size }, `Initialized with ${registry.size} modes`);
 }
 
 /**

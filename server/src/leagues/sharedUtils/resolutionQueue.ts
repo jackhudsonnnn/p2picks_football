@@ -12,7 +12,10 @@ import { Queue, Worker, Job } from 'bullmq';
 import type { ConnectionOptions } from 'bullmq';
 import { betRepository } from './betRepository';
 import { washBetWithHistory, type WashOptions } from './washService';
-import { REDIS_URL, RESOLUTION_QUEUE_CONCURRENCY } from '../../constants/environment';
+import { env } from '../../config/env';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('resolutionQueue');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -73,12 +76,11 @@ const DEFAULT_RETRY_ATTEMPTS = 3;
 const BACKOFF_DELAY_MS = 1000;
 
 function getRedisConnection(): ConnectionOptions {
-  if (!REDIS_URL) {
-    throw new Error('[resolutionQueue] REDIS_URL not configured');
-  }
+  // Validation handled by Zod schema in config/env.ts
+  const redisUrl = env.REDIS_URL;
   
   // Parse Redis URL for BullMQ connection options
-  const parsed = new URL(REDIS_URL);
+  const parsed = new URL(redisUrl);
   return {
     host: parsed.hostname,
     port: parseInt(parsed.port || '6379', 10),
@@ -90,9 +92,7 @@ function getRedisConnection(): ConnectionOptions {
 }
 
 function getConcurrency(): number {
-  if (!RESOLUTION_QUEUE_CONCURRENCY) return DEFAULT_CONCURRENCY;
-  const parsed = parseInt(RESOLUTION_QUEUE_CONCURRENCY, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_CONCURRENCY;
+  return env.RESOLUTION_QUEUE_CONCURRENCY;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ async function processJob(job: Job<ResolutionJob, ResolutionResult>): Promise<Re
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[resolutionQueue] job failed', { jobId: job.id, data, error: message });
+    logger.error({ jobId: job.id, data, error: message }, 'job failed');
     throw err; // Re-throw to trigger retry
   }
 }
@@ -154,7 +154,7 @@ async function processJob(job: Job<ResolutionJob, ResolutionResult>): Promise<Re
  */
 export function startResolutionQueue(): void {
   if (queue && worker) {
-    console.warn('[resolutionQueue] already started');
+    logger.warn({}, 'already started');
     return;
   }
   
@@ -187,25 +187,25 @@ export function startResolutionQueue(): void {
   
   worker.on('completed', (job, result) => {
     if (process.env.DEBUG_RESOLUTION_QUEUE === '1') {
-      console.log('[resolutionQueue] job completed', { jobId: job.id, result });
+      logger.info({ jobId: job.id, result }, 'job completed');
     }
   });
   
   worker.on('failed', (job, err) => {
-    console.error('[resolutionQueue] job permanently failed', { 
+    logger.error({ 
       jobId: job?.id, 
       betId: job?.data?.betId,
       type: job?.data?.type,
       error: err.message,
       attempts: job?.attemptsMade,
-    });
+    }, 'job permanently failed');
   });
   
   worker.on('error', (err) => {
-    console.error('[resolutionQueue] worker error', err);
+    logger.error({ error: err.message }, 'worker error');
   });
   
-  console.log(`[resolutionQueue] started with concurrency=${concurrency}`);
+  logger.info({ concurrency }, `started with concurrency=${concurrency}`);
 }
 
 /**
@@ -226,7 +226,7 @@ export async function stopResolutionQueue(): Promise<void> {
   
   if (closePromises.length > 0) {
     await Promise.all(closePromises);
-    console.log('[resolutionQueue] stopped');
+    logger.info({}, 'stopped');
   }
 }
 

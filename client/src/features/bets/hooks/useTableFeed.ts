@@ -6,6 +6,7 @@ import {
   type TableFeedCursor,
 } from '@features/table/services/tableService';
 import type { ChatMessage } from '@shared/types/chat';
+import { logger } from '@shared/utils/logger';
 
 export function useTableFeed(tableId?: string, enabled: boolean = true) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -41,7 +42,7 @@ export function useTableFeed(tableId?: string, enabled: boolean = true) {
       setCursor((prevCursor) => (hasLoadedOlderRef.current ? prevCursor : page.nextCursor));
       setHasMore((prevHasMore) => (hasLoadedOlderRef.current ? prevHasMore : page.hasMore));
     } catch (error) {
-      console.warn('[useTableFeed] failed to load messages', error);
+      logger.warn('[useTableFeed] failed to load messages', error);
       if (!hasLoadedOlderRef.current) {
         setMessages([]);
         setCursor(null);
@@ -69,7 +70,7 @@ export function useTableFeed(tableId?: string, enabled: boolean = true) {
       setCursor(page.nextCursor ?? null);
       setHasMore(page.hasMore);
     } catch (error) {
-      console.warn('[useTableFeed] failed to load older messages', error);
+      logger.warn('[useTableFeed] failed to load older messages', error);
     } finally {
       setLoadingMore(false);
     }
@@ -91,8 +92,28 @@ export function useTableFeed(tableId?: string, enabled: boolean = true) {
     }
 
     hasLoadedOlderRef.current = false;
-    void loadLatest();
-  }, [enabled, tableId, loadLatest]);
+    let cancelled = false;
+    setInitialLoading(true);
+    loadTableFeed(tableId)
+      .then((page) => {
+        if (!cancelled) {
+          setMessages(page.messages);
+          setCursor(page.nextCursor);
+          setHasMore(page.hasMore);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMessages([]);
+          setCursor(null);
+          setHasMore(false);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setInitialLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [enabled, tableId]);
 
   useEffect(() => {
     if (!tableId || !enabled) return;

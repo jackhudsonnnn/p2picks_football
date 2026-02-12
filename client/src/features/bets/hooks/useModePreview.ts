@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { fetchModePreview, type ModePreviewPayload } from '../service';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchModePreview } from '../service';
+import type { ModePreviewPayload } from '@shared/types/modes';
+import { modeKeys } from '@shared/queryKeys';
 
 export type UseModePreviewArgs = {
   modeKey: string;
@@ -16,44 +19,20 @@ export type UseModePreviewState = {
 };
 
 export function useModePreview({ modeKey, modeConfig, leagueGameId, league = 'U2Pick', betId }: UseModePreviewArgs): UseModePreviewState {
-  const [preview, setPreview] = useState<ModePreviewPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const configSignature = useMemo(() => JSON.stringify(modeConfig || {}), [modeConfig]);
 
-  useEffect(() => {
-    if (!modeKey) {
-      setPreview(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+  const { data: preview = null, isLoading: loading, error: queryError } = useQuery<ModePreviewPayload | null>({
+    queryKey: modeKeys.preview(modeKey, configSignature, leagueGameId, league, betId),
+    queryFn: async () => {
+      const result = await fetchModePreview(modeKey, modeConfig || {}, leagueGameId ?? null, betId ?? null, league);
+      return result ?? null;
+    },
+    enabled: Boolean(modeKey),
+  });
 
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    fetchModePreview(modeKey, modeConfig || {}, leagueGameId ?? null, betId ?? null, league)
-      .then((data) => {
-        if (!cancelled) {
-          setPreview(data);
-          setLoading(false);
-        }
-      })
-      .catch((err: Error) => {
-        if (!cancelled) {
-          setPreview(null);
-          setError(err.message);
-          setLoading(false);
-          console.warn('[useModePreview] failed to load mode preview', err);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [modeKey, configSignature, leagueGameId, league, betId]);
+  const error = queryError
+    ? (queryError instanceof Error ? queryError.message : 'Failed to load mode preview')
+    : null;
 
   return { preview, error, loading };
 }

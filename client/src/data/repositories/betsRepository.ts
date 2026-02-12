@@ -2,6 +2,7 @@ import { supabase } from '@data/clients/supabaseClient';
 import { fetchJSON } from '@data/clients/restClient';
 import { fetchModeConfigs } from '@data/repositories/modesRepository';
 import type { League } from '@shared/types/bet';
+import { logger } from '@shared/utils/logger';
 
 export interface BetProposalRequestPayload {
   config_session_id?: string;
@@ -22,7 +23,7 @@ export async function createBetProposal(
   payload: BetProposalRequestPayload & { preview?: unknown },
 ) {
   const { preview: _preview, ...rest } = payload;
-  return fetchJSON(`/api/tables/${encodeURIComponent(tableId)}/bets`, {
+  return fetchJSON<{ bet_id: string }>(`/api/tables/${encodeURIComponent(tableId)}/bets`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ proposer_user_id: proposerUserId, ...rest }),
@@ -30,7 +31,7 @@ export async function createBetProposal(
 }
 
 export async function pokeBet(betId: string) {
-  return fetchJSON(`/api/bets/${encodeURIComponent(betId)}/poke`, {
+  return fetchJSON<{ success: boolean }>(`/api/bets/${encodeURIComponent(betId)}/poke`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({}),
@@ -83,8 +84,39 @@ export type TicketListCursor = {
   participationId: string;
 };
 
+/** A participation row as returned by the /api/tickets endpoint. */
+export interface ParticipationRow {
+  participation_id: string;
+  bet_id: string;
+  table_id: string;
+  user_id: string;
+  user_guess: string | null;
+  participation_time: string;
+  bet_proposals?: BetProposalPayload | null;
+}
+
+/** Nested bet_proposals shape within a participation row from the server. */
+interface BetProposalPayload {
+  bet_id: string;
+  table_id: string;
+  proposer_user_id: string;
+  league_game_id?: string | null;
+  league?: string | null;
+  mode_key?: string | null;
+  description?: string | null;
+  wager_amount?: number | null;
+  time_limit_seconds?: number | null;
+  proposal_time?: string | null;
+  bet_status?: string | null;
+  close_time?: string | null;
+  winning_choice?: string | null;
+  resolution_time?: string | null;
+  mode_config?: Record<string, unknown> | null;
+  tables?: { table_name?: string } | null;
+}
+
 export type TicketListPage = {
-  participations: any[];
+  participations: ParticipationRow[];
   nextCursor: TicketListCursor | null;
   hasMore: boolean;
   limit: number;
@@ -118,20 +150,20 @@ export async function getUserTicketsPage(opts: { limit?: number; before?: Ticket
   const page = await fetchJSON<TicketListPage>(`/api/tickets${qs}`);
 
   const rows = page?.participations ?? [];
-  const betIds = Array.from(new Set(rows.map((row: any) => row.bet_id).filter(Boolean))) as string[];
+  const betIds = Array.from(new Set(rows.map((row) => row.bet_id).filter(Boolean)));
   if (betIds.length) {
     try {
       const configs = await fetchModeConfigs(betIds);
-      rows.forEach((row: any) => {
+      rows.forEach((row) => {
         const bet = row?.bet_proposals;
         if (!bet) return;
         const record = configs[bet.bet_id];
         if (record && (!bet.mode_key || record.mode_key === bet.mode_key)) {
-          (bet as any).mode_config = record.data;
+          bet.mode_config = record.data;
         }
       });
     } catch (cfgErr) {
-      console.warn('[getUserTicketsPage] failed to hydrate mode config', cfgErr);
+      logger.warn('[getUserTicketsPage] failed to hydrate mode config', cfgErr);
     }
   }
 
@@ -143,12 +175,6 @@ export async function getUserTicketsPage(opts: { limit?: number; before?: Ticket
   };
 }
 
-// Backward-compatible helper used by legacy call sites
-export async function getUserTickets(_userId: string) {
-  const page = await getUserTicketsPage({ limit: 50 });
-  return page.participations;
-}
-
 export async function hasUserAcceptedBet(betId: string, userId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from('bet_participations')
@@ -158,6 +184,15 @@ export async function hasUserAcceptedBet(betId: string, userId: string): Promise
     .maybeSingle();
   if (error) throw error;
   return !!data;
+}
+
+export async function getBetParticipantCount(betId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('bet_participations')
+    .select('participation_id', { count: 'exact', head: true })
+    .eq('bet_id', betId);
+  if (error) throw error;
+  return typeof count === 'number' ? count : 0;
 }
 
 export interface BetLiveInfoField {

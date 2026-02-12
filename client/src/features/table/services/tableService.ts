@@ -39,9 +39,9 @@ export async function fetchCurrentTable(tableId: string): Promise<TableWithMembe
 export async function fetchUserTables(userId: string): Promise<TableListItem[]> {
   if (!userId) return [];
   const raw = await getUserTablesRepo(userId);
-  const hostIds = Array.from(new Set(raw.map((t: any) => t.host_user_id)));
+  const hostIds = Array.from(new Set(raw.map((t) => t.host_user_id)));
   const idToUsername = await getUsernamesByIds(hostIds);
-  return raw.map((t: any) => mapToListItem(t, idToUsername[t.host_user_id] ?? null));
+  return raw.map((t) => mapToListItem(t, idToUsername[t.host_user_id] ?? null));
 }
 
 export async function fetchUserTablesPage(options: {
@@ -80,14 +80,23 @@ export async function sendTextMessage(tableId: string, userId: string, messageTe
   return sendTextMessageRepo(tableId, userId, messageText);
 }
 
-function mapToListItem(table: any, hostUsername: string | null, memberCount?: number): TableListItem {
+interface TableLike {
+  table_id: string;
+  table_name: string;
+  host_user_id: string;
+  created_at: string | null;
+  last_activity_at: string | null;
+  table_members?: unknown[] | null;
+}
+
+function mapToListItem(table: TableLike, hostUsername: string | null, memberCount?: number): TableListItem {
   const count = typeof memberCount === 'number' ? memberCount : (table.table_members || []).length;
   return {
     table_id: table.table_id,
     table_name: table.table_name,
     host_user_id: table.host_user_id,
-    created_at: table.created_at,
-    last_activity_at: table.last_activity_at ?? table.created_at,
+    created_at: table.created_at ?? '',
+    last_activity_at: table.last_activity_at ?? table.created_at ?? '',
     host_username: hostUsername,
     memberCount: count,
   };

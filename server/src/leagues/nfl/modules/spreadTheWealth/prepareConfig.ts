@@ -21,11 +21,14 @@ interface SpreadTheWealthConfig {
 export async function prepareSpreadTheWealthConfig({
   bet,
   config,
+  league: providedLeague,
 }: {
   bet: BetProposal;
   config: Record<string, unknown>;
+  league: League;
 }): Promise<Record<string, unknown>> {
   const nextConfig = { ...config } as SpreadTheWealthConfig;
+  const league: League = providedLeague ?? bet.league ?? 'NFL';
 
   if (!nextConfig.league_game_id) {
 		nextConfig.league_game_id = bet.league_game_id ?? null;
@@ -53,8 +56,6 @@ export async function prepareSpreadTheWealthConfig({
   if (!gameId) {
     return nextConfig as Record<string, unknown>;
   }
-
-  const league: League = bet.league ?? 'NFL';
 
   try {
     const [homeTeam, awayTeam] = await Promise.all([getHomeTeam(league, gameId), getAwayTeam(league, gameId)]);

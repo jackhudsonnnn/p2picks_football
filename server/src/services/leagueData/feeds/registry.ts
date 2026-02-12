@@ -12,6 +12,9 @@ import type {
   GameFeedListener,
   Unsubscribe,
 } from './types';
+import { createLogger } from '../../../utils/logger';
+
+const logger = createLogger('GameFeedRegistry');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Registry Implementation
@@ -22,10 +25,10 @@ class GameFeedRegistryImpl implements LeagueGameFeedRegistry {
 
   register(provider: LeagueGameFeedProvider): void {
     if (this.providers.has(provider.league)) {
-      console.warn(`[GameFeedRegistry] Overwriting existing provider for ${provider.league}`);
+      logger.warn({ league: provider.league }, `Overwriting existing provider for ${provider.league}`);
     }
     this.providers.set(provider.league, provider);
-    console.log(`[GameFeedRegistry] Registered feed provider for ${provider.league}`);
+    logger.info({ league: provider.league }, `Registered feed provider for ${provider.league}`);
   }
 
   get(league: League): LeagueGameFeedProvider | undefined {
@@ -44,7 +47,7 @@ class GameFeedRegistryImpl implements LeagueGameFeedRegistry {
     for (const provider of this.providers.values()) {
       if (!provider.isRunning()) {
         provider.start();
-        console.log(`[GameFeedRegistry] Started ${provider.league} feed`);
+        logger.info({ league: provider.league }, `Started ${provider.league} feed`);
       }
     }
   }
@@ -53,7 +56,7 @@ class GameFeedRegistryImpl implements LeagueGameFeedRegistry {
     for (const provider of this.providers.values()) {
       if (provider.isRunning()) {
         provider.stop();
-        console.log(`[GameFeedRegistry] Stopped ${provider.league} feed`);
+        logger.info({ league: provider.league }, `Stopped ${provider.league} feed`);
       }
     }
   }
@@ -63,9 +66,9 @@ class GameFeedRegistryImpl implements LeagueGameFeedRegistry {
       const provider = this.providers.get(league);
       if (provider && !provider.isRunning()) {
         provider.start();
-        console.log(`[GameFeedRegistry] Started ${league} feed`);
+        logger.info({ league }, `Started ${league} feed`);
       } else if (!provider) {
-        console.warn(`[GameFeedRegistry] No feed provider registered for ${league}`);
+        logger.warn({ league }, `No feed provider registered for ${league}`);
       }
     }
   }
@@ -75,7 +78,7 @@ class GameFeedRegistryImpl implements LeagueGameFeedRegistry {
       const provider = this.providers.get(league);
       if (provider && provider.isRunning()) {
         provider.stop();
-        console.log(`[GameFeedRegistry] Stopped ${league} feed`);
+        logger.info({ league }, `Stopped ${league} feed`);
       }
     }
   }
@@ -158,7 +161,7 @@ export function subscribeToLeagueFeed(
 ): Unsubscribe | null {
   const provider = feedRegistry.get(league);
   if (!provider) {
-    console.warn(`[GameFeedRegistry] No feed provider for ${league}`);
+    logger.warn({ league }, `No feed provider for ${league}`);
     return null;
   }
   return provider.subscribe(listener, emitReplay);

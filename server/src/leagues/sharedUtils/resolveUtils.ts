@@ -7,6 +7,9 @@
 
 import { getGameStatus, getGamePeriod } from '../../services/leagueData';
 import type { League } from '../../types/league';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('resolveUtils');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -43,11 +46,7 @@ export async function shouldSkipResolveStep(
     return (status === 'STATUS_HALFTIME') || (typeof period === 'number' && Number.isFinite(period) && period >= 3);
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    console.warn('[sharedUtils/resolveUtils] shouldSkipResolveStep error', {
-      league,
-      gameId,
-      error: errorMessage,
-    });
+    logger.warn({ league, gameId, error: errorMessage }, 'shouldSkipResolveStep error');
     return false;
   }
 }

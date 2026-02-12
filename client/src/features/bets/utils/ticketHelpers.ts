@@ -1,6 +1,6 @@
 import { extractModeConfig } from '../mappers';
 import type { Ticket } from '../types';
-import type { ModePreviewPayload } from '../service';
+import type { ModePreviewPayload } from '@shared/types/modes';
 
 export function getModeKeyString(ticket: Ticket): string {
   return ticket.modeKey ? String(ticket.modeKey) : '';

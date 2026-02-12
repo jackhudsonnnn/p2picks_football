@@ -1,531 +1,230 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  applyBetConfigChoice,
-  createBetConfigSession,
-  fetchActiveLeagues,
-  fetchBetProposalBootstrap,
-  fetchGamesForLeague,
-  updateBetGeneralConfig,
-  type BetConfigSession,
-  type BetGeneralConfigSchema,
-  type BetModePreview,
-  type BetModeUserConfigStep,
-} from '../service';
+import { type SetStateAction, useCallback, useEffect, useMemo, useReducer } from 'react';
 import type { League } from '@shared/types/bet';
+import type { BetModeUserConfigStep } from '../service';
+import {
+  type BetProposalFormValues,
+  STAGE_ORDER,
+  computeModeAvailability,
+  mapStatusToStage,
+} from './betSessionTypes';
+import { betSessionReducer, INITIAL_STATE, syncGeneralFromSession } from './betSessionReducer';
+import { useBootstrapData } from './useBootstrapData';
+import { useModeConfig } from './useModeConfig';
+import { useGeneralConfig } from './useGeneralConfig';
 
-export type BetProposalFormValues = {
-  config_session_id?: string;
-  league_game_id?: string;
-  league?: League;
-  mode_key?: string;
-  mode_config?: Record<string, unknown>;
-  wager_amount?: number;
-  time_limit_seconds?: number;
-  preview?: BetModePreview | null;
-  // U2Pick-specific
-  u2pick_winning_condition?: string;
-  u2pick_options?: string[];
-};
-
-type ConfigSessionStage =
-  | 'league'
-  | 'start'
-  | 'mode'
-  | 'general'
-  | 'summary'
-  | 'u2pick_condition'
-  | 'u2pick_options';
-
-const STAGE_ORDER: Record<ConfigSessionStage, number> = {
-  league: 0,
-  start: 1,
-  u2pick_condition: 1.5,
-  u2pick_options: 1.6,
-  mode: 2,
-  general: 3,
-  summary: 4,
-};
-
-const DEFAULT_U2PICK_VALIDATION = {
-  conditionMin: 1,
-  conditionMax: 999,
-  optionMin: 1,
-  optionMax: 999,
-  optionsMinCount: 2,
-  optionsMaxCount: 99,
-} as const;
-
-const DEFAULT_GENERAL_VALUES = {
-  wager_amount: '0.25',
-  time_limit_seconds: '30',
-};
-
-type ModeEntry = {
-  key: string;
-  label: string;
-  available?: boolean;
-  supportedLeagues?: League[];
-};
+export type { BetProposalFormValues };
 
 export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) => void) {
-  const [bootstrapLoading, setBootstrapLoading] = useState(false);
-  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
-  const [games, setGames] = useState<{ id: string; label: string }[]>([]);
-  const [gamesLoading, setGamesLoading] = useState(false);
-  const [modes, setModes] = useState<ModeEntry[]>([]);
-  const [generalSchema, setGeneralSchema] = useState<BetGeneralConfigSchema | null>(null);
-  const [activeLeagues, setActiveLeagues] = useState<League[]>([]);
+  const [state, dispatch] = useReducer(betSessionReducer, INITIAL_STATE);
 
-  const [gameId, setGameId] = useState('');
-  const [league, setLeague] = useState<'U2Pick' | 'NFL' | 'NBA' | 'MLB' | 'NHL' | 'NCAAF'>('U2Pick');
-  const [modeKey, setModeKey] = useState('');
+  // ── Sub-hooks for data fetching / server calls ─────────────────────
+  useBootstrapData(state, dispatch);
+  const { initializeSession, handleChoiceChange } = useModeConfig(state, dispatch);
+  const { handleGeneralSubmit } = useGeneralConfig(state, dispatch);
 
-  const [stage, setStage] = useState<ConfigSessionStage>('league');
-  const [manualStageOverride, setManualStageOverride] = useState(false);
-  const [modeStepIndex, setModeStepIndex] = useState(0);
+  // ── Destructure for readability ────────────────────────────────────
+  const {
+    stage,
+    manualStageOverride,
+    modeStepIndex,
+    league,
+    gameId,
+    modeKey,
+    session,
+    modes,
+    generalSchema,
+    activeLeagues,
+    u2pickCondition,
+    u2pickOptions,
+    u2pickValidation,
+    generalValues,
+    bootstrapLoading,
+    bootstrapError,
+    gamesLoading,
+    sessionLoading,
+    sessionUpdating,
+    sessionError,
+    generalSaving,
+    generalError,
+    games,
+  } = state;
 
-  const [session, setSession] = useState<BetConfigSession | null>(null);
-  const [sessionLoading, setSessionLoading] = useState(false);
-  const [sessionUpdating, setSessionUpdating] = useState(false);
-  const [sessionError, setSessionError] = useState<string | null>(null);
-
-  const [generalValues, setGeneralValues] = useState(DEFAULT_GENERAL_VALUES);
-  const [generalSaving, setGeneralSaving] = useState(false);
-  const [generalError, setGeneralError] = useState<string | null>(null);
-
-  // U2Pick-specific state
-  const [u2pickCondition, setU2pickCondition] = useState('');
-  const [u2pickOptions, setU2pickOptions] = useState<string[]>(['', '']);
-  type U2PickValidation = {
-    conditionMin: number;
-    conditionMax: number;
-    optionMin: number;
-    optionMax: number;
-    optionsMinCount: number;
-    optionsMaxCount: number;
-  };
-  const [u2pickValidation, setU2pickValidation] = useState<U2PickValidation>({
-    conditionMin: DEFAULT_U2PICK_VALIDATION.conditionMin,
-    conditionMax: DEFAULT_U2PICK_VALIDATION.conditionMax,
-    optionMin: DEFAULT_U2PICK_VALIDATION.optionMin,
-    optionMax: DEFAULT_U2PICK_VALIDATION.optionMax,
-    optionsMinCount: DEFAULT_U2PICK_VALIDATION.optionsMinCount,
-    optionsMaxCount: DEFAULT_U2PICK_VALIDATION.optionsMaxCount,
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-
-    (async () => {
-      try {
-        const leagues = await fetchActiveLeagues(controller.signal);
-        if (cancelled) return;
-        if (Array.isArray(leagues) && leagues.length > 0) {
-          setActiveLeagues(leagues as League[]);
-        }
-      } catch (err) {
-        // Keep defaults on failure
-        if (!cancelled) {
-          console.warn('[useBetProposalSession] Failed to fetch active leagues', err);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, []);
-
-  // Bootstrap fetch - query server for league-specific metadata, including U2Pick
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-    (async () => {
-      try {
-        setBootstrapLoading(true);
-        setBootstrapError(null);
-
-        // Fetch bootstrap data (league required) and active leagues in parallel
-        const [payload, leagues] = await Promise.all([
-          fetchBetProposalBootstrap(league, controller.signal),
-          fetchActiveLeagues(controller.signal).catch(() => []),
-        ]);
-
-        if (cancelled) return;
-
-        // Set active leagues from server
-        setActiveLeagues(leagues.length > 0 ? leagues : []);
-
-        // Parse mode entries with supportedLeagues metadata
-        const modeEntries = Array.isArray(payload?.modes)
-          ? payload.modes
-              .map((item: any) => {
-                const supportedLeaguesRaw = item?.supportedLeagues ?? item?.metadata?.supportedLeagues;
-                const supportedLeagues = Array.isArray(supportedLeaguesRaw)
-                  ? supportedLeaguesRaw
-                      .map((value: any) => (typeof value === 'string' ? value.trim() : ''))
-                      .filter((value: any): value is League => typeof value === 'string')
-                  : undefined;
-
-                const available = item?.available ?? item?.enabled ?? item?.isAvailable ?? item?.metadata?.available ?? true;
-
-                return {
-                  key: String(item?.key ?? ''),
-                  label: String(item?.label ?? item?.key ?? ''),
-                  available: available !== false,
-                  supportedLeagues,
-                } satisfies ModeEntry;
-              })
-              .filter((entry) => entry.key && entry.label)
-          : [];
-
-        setModes(modeEntries);
-        if (payload?.general_config_schema) {
-          setGeneralSchema(payload.general_config_schema as BetGeneralConfigSchema);
-          setGeneralValues({
-            wager_amount: String(payload.general_config_schema?.wager_amount?.defaultValue ?? DEFAULT_GENERAL_VALUES.wager_amount),
-            time_limit_seconds: String(payload.general_config_schema?.time_limit_seconds?.defaultValue ?? DEFAULT_GENERAL_VALUES.time_limit_seconds),
-          });
-        }
-
-        // If server provided validation metadata for U2Pick, use it
-        if (league === 'U2Pick') {
-          const validation = (payload as any)?.validation ?? (payload as any)?.u2pick_validation ?? (payload as any)?.mode_validation ?? null;
-          if (validation && typeof validation === 'object') {
-            setU2pickValidation({
-              conditionMin: Number((validation.conditionMin ?? validation.condition_min) ?? DEFAULT_U2PICK_VALIDATION.conditionMin),
-              conditionMax: Number((validation.conditionMax ?? validation.condition_max) ?? DEFAULT_U2PICK_VALIDATION.conditionMax),
-              optionMin: Number((validation.optionMin ?? validation.option_min) ?? DEFAULT_U2PICK_VALIDATION.optionMin),
-              optionMax: Number((validation.optionMax ?? validation.option_max) ?? DEFAULT_U2PICK_VALIDATION.optionMax),
-              optionsMinCount: Number((validation.optionsMinCount ?? validation.options_min_count) ?? DEFAULT_U2PICK_VALIDATION.optionsMinCount),
-              optionsMaxCount: Number((validation.optionsMaxCount ?? validation.options_max_count) ?? DEFAULT_U2PICK_VALIDATION.optionsMaxCount),
-            });
-          }
-
-          const gamesList = Array.isArray(payload?.games) && payload.games.length ? payload.games : [];
-          setGames(gamesList as { id: string; label: string }[]);
-          setGameId((prev) => (prev ? prev : String((gamesList[0] as any)?.id ?? '')));
-          setModeKey((prev) => (prev ? prev : (modeEntries[0]?.key ?? '')));
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setBootstrapError(err?.message || 'Unable to load bet proposal setup');
-        }
-      } finally {
-        if (!cancelled) setBootstrapLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [league]);
-
-  // Stage synchronization with session status
+  // ── Stage sync with session status ─────────────────────────────────
   useEffect(() => {
     if (!session || manualStageOverride) return;
     const derivedStage = mapStatusToStage(session.status);
     const noModeSteps = (session.steps?.length ?? 0) === 0;
     if (noModeSteps) {
-      if (stage !== derivedStage) setStage(derivedStage);
+      if (stage !== derivedStage) dispatch({ type: 'SET_STAGE', stage: derivedStage });
       return;
     }
     if (stage === 'mode' && STAGE_ORDER[derivedStage] > STAGE_ORDER[stage]) return;
-    if (STAGE_ORDER[derivedStage] > STAGE_ORDER[stage]) setStage(derivedStage);
+    if (STAGE_ORDER[derivedStage] > STAGE_ORDER[stage]) {
+      dispatch({ type: 'SET_STAGE', stage: derivedStage });
+    }
   }, [session, stage, manualStageOverride]);
 
-  // Keep general values in sync with session
+  // ── Sync general values from session ───────────────────────────────
   useEffect(() => {
     if (!session) {
-      if (stage !== 'league' && stage !== 'start') setStage('start');
+      if (stage !== 'league' && stage !== 'start') {
+        dispatch({ type: 'SET_STAGE', stage: 'start' });
+      }
       return;
     }
-    setGeneralValues({
-      wager_amount: String(session.general.wager_amount),
-      time_limit_seconds: String(session.general.time_limit_seconds),
-    });
+    const synced = syncGeneralFromSession(session);
+    if (synced) dispatch({ type: 'SET_GENERAL_VALUES', values: synced });
   }, [session?.general.wager_amount, session?.general.time_limit_seconds]);
 
-  const resetSession = useCallback(() => {
-    setSession(null);
-    setSessionError(null);
-    setGeneralError(null);
-    setManualStageOverride(false);
-    setGeneralValues((prev) => ({
-      wager_amount: generalSchema ? String(generalSchema.wager_amount.defaultValue) : prev.wager_amount,
-      time_limit_seconds: generalSchema ? String(generalSchema.time_limit_seconds.defaultValue) : prev.time_limit_seconds,
-    }));
-    setModeStepIndex(0);
-  }, [generalSchema]);
-
-  // Clear session when identifiers change
+  // ── Clear session when selection changes ───────────────────────────
   useEffect(() => {
     if (!session) return;
     if (!gameId || !modeKey) {
-      resetSession();
+      dispatch({ type: 'RESET_SESSION' });
       return;
     }
     if (session.mode_key !== modeKey || session.league_game_id !== gameId || session.league !== league) {
-      resetSession();
+      dispatch({ type: 'RESET_SESSION' });
     }
-  }, [gameId, league, modeKey, session, resetSession]);
+  }, [gameId, league, modeKey, session]);
 
-  // League-specific defaults/placeholders
+  // ── U2Pick defaults on league change ───────────────────────────────
   useEffect(() => {
     if (league === 'U2Pick') {
-      setGames([]);
-      setGameId((prev) => (prev ? prev : ''));
-      setModeKey((prev) => (prev ? prev : ''));
-      return;
+      dispatch({ type: 'SET_GAMES', games: [] });
     }
-
-    // Clear games while loading new ones for the selected league
-    setGames([]);
   }, [league]);
 
-  // Fetch games when league changes (for non-U2Pick leagues)
-  useEffect(() => {
-    if (league === 'U2Pick') return;
-    if (!activeLeagues.includes(league)) return;
-    
-    let cancelled = false;
-    const controller = new AbortController();
-    
-    (async () => {
-      try {
-        setGamesLoading(true);
-        const gameEntries = await fetchGamesForLeague(league, controller.signal);
-        if (cancelled) return;
-        setGames(gameEntries);
-      } catch (err) {
-        if (!cancelled) {
-          console.error('[useBetProposalSession] Failed to fetch games for league', league, err);
-          setGames([]);
-        }
-      } finally {
-        if (!cancelled) setGamesLoading(false);
-      }
-    })();
-    
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [league, activeLeagues]);
-
-  // Clear mode selection if it becomes unavailable for the current league
+  // ── Clear unavailable mode selection ───────────────────────────────
   useEffect(() => {
     if (!modeKey) return;
-    const selectedMode = modes.find((mode) => mode.key === modeKey);
+    const selectedMode = modes.find((m) => m.key === modeKey);
     if (!computeModeAvailability(selectedMode, league)) {
-      setModeKey('');
+      dispatch({ type: 'SET_MODE_KEY', modeKey: '' });
     }
   }, [league, modeKey, modes]);
 
-  // Clamp step index
+  // ── Clamp step index ───────────────────────────────────────────────
   useEffect(() => {
     if (!session) {
-      setModeStepIndex(0);
+      if (modeStepIndex !== 0) dispatch({ type: 'SET_MODE_STEP_INDEX', index: 0 });
       return;
     }
-    setModeStepIndex((prev) => {
-      const lastIndex = Math.max(session.steps.length - 1, 0);
-      if (prev > lastIndex) return lastIndex;
-      if (prev < 0) return 0;
-      return prev;
-    });
-  }, [session?.steps.length]);
+    const lastIndex = Math.max(session.steps.length - 1, 0);
+    if (modeStepIndex > lastIndex) dispatch({ type: 'SET_MODE_STEP_INDEX', index: lastIndex });
+  }, [session?.steps.length, modeStepIndex]);
 
-  // Reset step index on new session
+  // ── Reset step index on new session ────────────────────────────────
   useEffect(() => {
     if (!session) return;
-    setModeStepIndex(0);
+    dispatch({ type: 'SET_MODE_STEP_INDEX', index: 0 });
   }, [session?.session_id]);
 
-  const initializeSession = useCallback(async () => {
-    if (!gameId || !modeKey) return;
-    setSessionLoading(true);
-    setSessionError(null);
-    setManualStageOverride(false);
-    try {
-      const dto = await createBetConfigSession(modeKey, gameId, league);
-      setSession(dto);
-      setStage('mode');
-    } catch (err) {
-      setSessionError(extractErrorMessage(err, 'Unable to start configuration'));
-    } finally {
-      setSessionLoading(false);
-    }
-  }, [gameId, league, modeKey]);
-
-  const handleChoiceChange = useCallback(
-    async (stepKey: string, choiceId: string) => {
-      if (!session || !choiceId || sessionUpdating) return;
-      const current = session.steps.find((step) => step.key === stepKey);
-      if (current?.selectedChoiceId === choiceId) return;
-      setSessionUpdating(true);
-      setSessionError(null);
-      setManualStageOverride(false);
-      try {
-        const dto = await applyBetConfigChoice(session.session_id, stepKey, choiceId);
-        setSession(dto);
-      } catch (err) {
-        setSessionError(extractErrorMessage(err, 'Unable to update selection'));
-      } finally {
-        setSessionUpdating(false);
-      }
-    },
-    [session, sessionUpdating],
-  );
-
-  const handleGeneralSubmit = useCallback(async () => {
-    if (!session) return;
-    setGeneralSaving(true);
-    setGeneralError(null);
-    setManualStageOverride(false);
-    try {
-      const dto = await updateBetGeneralConfig(session.session_id, {
-        wager_amount: Number(generalValues.wager_amount),
-        time_limit_seconds: Number(generalValues.time_limit_seconds),
-      });
-      setSession(dto);
-    } catch (err) {
-      setGeneralError(extractErrorMessage(err, 'Unable to update wager or time limit'));
-    } finally {
-      setGeneralSaving(false);
-    }
-  }, [session, generalValues]);
-
+  // ── Navigation: Back ───────────────────────────────────────────────
   const handleBack = useCallback(() => {
     if (stage === 'league') return;
     if (stage === 'start') {
-      setStage('league');
+      dispatch({ type: 'SET_STAGE', stage: 'league' });
       return;
     }
-    setManualStageOverride(true);
+    dispatch({ type: 'SET_MANUAL_OVERRIDE', override: true });
 
-    // U2Pick-specific back navigation
     if (stage === 'u2pick_condition') {
-      setStage('league');
+      dispatch({ type: 'SET_STAGE', stage: 'league' });
       return;
     }
     if (stage === 'u2pick_options') {
-      setStage('u2pick_condition');
+      dispatch({ type: 'SET_STAGE', stage: 'u2pick_condition' });
       return;
     }
-
     if (stage === 'mode') {
       if (modeStepIndex > 0) {
-        setModeStepIndex((prev) => Math.max(prev - 1, 0));
+        dispatch({ type: 'SET_MODE_STEP_INDEX', index: modeStepIndex - 1 });
       } else {
-        resetSession();
+        dispatch({ type: 'RESET_SESSION' });
       }
     } else if (stage === 'general') {
       if (league === 'U2Pick') {
-        setStage('u2pick_options');
+        dispatch({ type: 'SET_STAGE', stage: 'u2pick_options' });
       } else if (session?.steps.length) {
-        setModeStepIndex(session.steps.length - 1);
-        setStage('mode');
+        dispatch({ type: 'SET_MODE_STEP_INDEX', index: session.steps.length - 1 });
+        dispatch({ type: 'SET_STAGE', stage: 'mode' });
       } else {
-        // If there were no mode-specific steps, the previous logical stage is start
-        setStage('start');
+        dispatch({ type: 'SET_STAGE', stage: 'start' });
       }
     } else if (stage === 'summary') {
-      setStage('general');
+      dispatch({ type: 'SET_STAGE', stage: 'general' });
     }
-  }, [stage, modeStepIndex, resetSession, session?.steps.length, league]);
+  }, [stage, modeStepIndex, session?.steps.length, league]);
 
-  const selectedMode = useMemo(() => modes.find((mode) => mode.key === modeKey) || null, [modes, modeKey]);
-  const selectedModeAvailable = useMemo(
-    () => computeModeAvailability(selectedMode, league),
-    [selectedMode, league],
-  );
-
+  // ── Navigation: Next ───────────────────────────────────────────────
   const handleNext = useCallback(() => {
     if (stage === 'league') {
       if (!activeLeagues.includes(league)) return;
-      // U2Pick has its own flow
-      if (league === 'U2Pick') {
-        setStage('u2pick_condition');
-        return;
-      }
-      setStage('start');
+      dispatch({ type: 'SET_STAGE', stage: league === 'U2Pick' ? 'u2pick_condition' : 'start' });
       return;
     }
-
-    // U2Pick-specific forward navigation
     if (stage === 'u2pick_condition') {
       const trimmed = u2pickCondition.trim();
       if (trimmed.length < u2pickValidation.conditionMin || trimmed.length > u2pickValidation.conditionMax) return;
-      setStage('u2pick_options');
+      dispatch({ type: 'SET_STAGE', stage: 'u2pick_options' });
       return;
     }
     if (stage === 'u2pick_options') {
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
-      if (validOptions.length < u2pickValidation.optionsMinCount) return;
-      setStage('general');
+      const valid = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      if (valid.length < u2pickValidation.optionsMinCount) return;
+      dispatch({ type: 'SET_STAGE', stage: 'general' });
       return;
     }
-
     if (stage === 'start') {
-      if (!computeModeAvailability(modes.find((mode) => mode.key === modeKey), league)) return;
+      if (!computeModeAvailability(modes.find((m) => m.key === modeKey), league)) return;
       void initializeSession();
       return;
     }
     if (stage === 'mode') {
       if (!session) return;
       if (!session.steps.length) {
-        setManualStageOverride(false);
-        setStage('general');
+        dispatch({ type: 'SET_MANUAL_OVERRIDE', override: false });
+        dispatch({ type: 'SET_STAGE', stage: 'general' });
         return;
       }
       const lastIndex = session.steps.length - 1;
       if (modeStepIndex < lastIndex) {
-        setModeStepIndex((prev) => Math.min(prev + 1, lastIndex));
+        dispatch({ type: 'SET_MODE_STEP_INDEX', index: modeStepIndex + 1 });
         return;
       }
       if (session.status !== 'mode_config') {
-        setManualStageOverride(false);
-        setStage('general');
+        dispatch({ type: 'SET_MANUAL_OVERRIDE', override: false });
+        dispatch({ type: 'SET_STAGE', stage: 'general' });
       }
       return;
     }
     if (stage === 'general') {
-      // For U2Pick, go directly to summary
       if (league === 'U2Pick') {
-        setStage('summary');
+        dispatch({ type: 'SET_STAGE', stage: 'summary' });
         return;
       }
       void handleGeneralSubmit();
     }
-  }, [stage, league, activeLeagues, u2pickCondition, u2pickOptions, modes, modeKey, initializeSession, session, modeStepIndex, handleGeneralSubmit]);
+  }, [stage, league, activeLeagues, u2pickCondition, u2pickOptions, u2pickValidation, modes, modeKey, initializeSession, session, modeStepIndex, handleGeneralSubmit]);
 
+  // ── Submit ─────────────────────────────────────────────────────────
   const handleSubmit = useCallback(() => {
-    // U2Pick direct submission
     if (league === 'U2Pick') {
-      const trimmedCondition = u2pickCondition.trim();
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
-      if (trimmedCondition.length < u2pickValidation.conditionMin || validOptions.length < u2pickValidation.optionsMinCount) return;
+      const trimmed = u2pickCondition.trim();
+      const valid = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      if (trimmed.length < u2pickValidation.conditionMin || valid.length < u2pickValidation.optionsMinCount) return;
       onSubmit({
         league: 'U2Pick',
         mode_key: 'u2pick',
         wager_amount: Number(generalValues.wager_amount),
         time_limit_seconds: Number(generalValues.time_limit_seconds),
-        u2pick_winning_condition: trimmedCondition,
-        u2pick_options: validOptions,
-        preview: {
-          summary: trimmedCondition,
-          description: trimmedCondition,
-          options: validOptions,
-          winningCondition: trimmedCondition,
-        },
+        u2pick_winning_condition: trimmed,
+        u2pick_options: valid,
+        preview: { summary: trimmed, description: trimmed, options: valid, winningCondition: trimmed },
       });
       return;
     }
-
     if (!session || session.status !== 'summary' || !session.preview) return;
     if (session.preview.errors && session.preview.errors.length) return;
     onSubmit({
@@ -537,75 +236,77 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
       time_limit_seconds: session.general.time_limit_seconds,
       preview: session.preview,
     });
-  }, [session, onSubmit, league, u2pickCondition, u2pickOptions, generalValues]);
+  }, [session, onSubmit, league, u2pickCondition, u2pickOptions, u2pickValidation, generalValues]);
 
+  // ── Derived values ─────────────────────────────────────────────────
   const effectiveGeneralSchema = session?.general_schema || generalSchema;
+
   const activeModeStep: BetModeUserConfigStep | null = useMemo(() => {
     if (!session || !session.steps.length) return null;
-    const clampedIndex = Math.min(Math.max(modeStepIndex, 0), session.steps.length - 1);
-    return session.steps[clampedIndex];
+    const idx = Math.min(Math.max(modeStepIndex, 0), session.steps.length - 1);
+    return session.steps[idx];
   }, [session, modeStepIndex]);
 
   const hasModeSteps = Boolean(session && session.steps.length > 0);
 
+  const selectedMode = useMemo(() => modes.find((m) => m.key === modeKey) || null, [modes, modeKey]);
+  const selectedModeAvailable = useMemo(
+    () => computeModeAvailability(selectedMode, league),
+    [selectedMode, league],
+  );
+
   const canProceed = useMemo(() => {
-    if (stage === 'league') {
-      return Boolean(activeLeagues.includes(league) && !sessionLoading);
-    }
+    if (stage === 'league') return Boolean(activeLeagues.includes(league) && !sessionLoading);
     if (stage === 'u2pick_condition') {
-      const trimmed = u2pickCondition.trim();
-      return trimmed.length >= u2pickValidation.conditionMin && trimmed.length <= u2pickValidation.conditionMax;
+      const t = u2pickCondition.trim();
+      return t.length >= u2pickValidation.conditionMin && t.length <= u2pickValidation.conditionMax;
     }
     if (stage === 'u2pick_options') {
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
-      return validOptions.length >= u2pickValidation.optionsMinCount;
+      const v = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      return v.length >= u2pickValidation.optionsMinCount;
     }
-    if (stage === 'start') {
-      return Boolean(gameId && modeKey && league && !sessionLoading && selectedModeAvailable);
-    }
+    if (stage === 'start') return Boolean(gameId && modeKey && league && !sessionLoading && selectedModeAvailable);
     if (stage === 'mode') {
       if (!session || sessionUpdating) return false;
       if (!hasModeSteps) return true;
       return Boolean(activeModeStep && activeModeStep.selectedChoiceId);
     }
-    if (stage === 'general') {
-      // U2Pick uses local general values, not a session
-      if (league === 'U2Pick') {
-        return !generalSaving;
-      }
-      return Boolean(session && !generalSaving);
-    }
+    if (stage === 'general') return league === 'U2Pick' ? !generalSaving : Boolean(session && !generalSaving);
     return false;
-  }, [
-    stage,
-    gameId,
-    modeKey,
-    league,
-    activeLeagues,
-    sessionLoading,
-    session,
-    sessionUpdating,
-    generalSaving,
-    hasModeSteps,
-    activeModeStep,
-    selectedModeAvailable,
-    u2pickCondition,
-    u2pickOptions,
-  ]);
+  }, [stage, gameId, modeKey, league, activeLeagues, sessionLoading, session, sessionUpdating, generalSaving, hasModeSteps, activeModeStep, selectedModeAvailable, u2pickCondition, u2pickOptions, u2pickValidation]);
 
   const canSubmit = useMemo(() => {
-    // U2Pick direct submission
     if (league === 'U2Pick' && stage === 'summary') {
-      const trimmed = u2pickCondition.trim();
-      const validOptions = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
-      return trimmed.length >= u2pickValidation.conditionMin && validOptions.length >= u2pickValidation.optionsMinCount && !generalSaving;
+      const t = u2pickCondition.trim();
+      const v = u2pickOptions.map((o) => o.trim()).filter((o) => o.length >= u2pickValidation.optionMin && o.length <= u2pickValidation.optionMax);
+      return t.length >= u2pickValidation.conditionMin && v.length >= u2pickValidation.optionsMinCount && !generalSaving;
     }
     if (!session || session.status !== 'summary' || !session.preview) return false;
     return (session.preview.errors?.length ?? 0) === 0 && !generalSaving && !sessionUpdating;
-  }, [session, generalSaving, sessionUpdating, league, stage, u2pickCondition, u2pickOptions]);
+  }, [session, generalSaving, sessionUpdating, league, stage, u2pickCondition, u2pickOptions, u2pickValidation]);
 
   const disableBack = stage === 'league' || sessionLoading;
   const disableNext = stage === 'summary' || !canProceed || sessionLoading || sessionUpdating || generalSaving;
+
+  // ── Wrapped setters ────────────────────────────────────────────────
+  const setLeague = useCallback((l: League) => dispatch({ type: 'SET_LEAGUE', league: l }), [dispatch]);
+  const setGameId = useCallback((id: string) => dispatch({ type: 'SET_GAME_ID', gameId: id }), [dispatch]);
+  const setModeKey = useCallback((k: string) => dispatch({ type: 'SET_MODE_KEY', modeKey: k }), [dispatch]);
+  const setGeneralValues = useCallback(
+    (v: SetStateAction<{ wager_amount: string; time_limit_seconds: string }>) => {
+      const resolved = typeof v === 'function' ? v(state.generalValues) : v;
+      dispatch({ type: 'SET_GENERAL_VALUES', values: resolved });
+    },
+    [state.generalValues],
+  );
+  const setU2pickCondition = useCallback((c: string) => dispatch({ type: 'SET_U2PICK_CONDITION', condition: c }), [dispatch]);
+  const setU2pickOptions = useCallback(
+    (o: SetStateAction<string[]>) => {
+      const resolved = typeof o === 'function' ? o(state.u2pickOptions) : o;
+      dispatch({ type: 'SET_U2PICK_OPTIONS', options: resolved });
+    },
+    [state.u2pickOptions],
+  );
 
   return {
     // data
@@ -638,7 +339,7 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     // availability
     selectedModeAvailable,
     isModeAvailable: (key: string, currentLeague: League = league) =>
-      computeModeAvailability(modes.find((mode) => mode.key === key), currentLeague),
+      computeModeAvailability(modes.find((m) => m.key === key), currentLeague),
 
     // flags
     stage,
@@ -661,24 +362,4 @@ export function useBetProposalSession(onSubmit: (values: BetProposalFormValues) 
     handleChoiceChange,
     handleSubmit,
   } as const;
-}
-
-function computeModeAvailability(mode: ModeEntry | null | undefined, league: League): boolean {
-  if (!mode) return false;
-  if (Array.isArray(mode.supportedLeagues) && mode.supportedLeagues.length) {
-    return mode.supportedLeagues.includes(league);
-  }
-  return mode.available !== false;
-}
-
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === 'string' && error.length) return error;
-  return fallback;
-}
-
-function mapStatusToStage(status: 'mode_config' | 'general' | 'summary'): ConfigSessionStage {
-  if (status === 'summary') return 'summary';
-  if (status === 'general') return 'general';
-  return 'mode';
 }

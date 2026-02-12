@@ -24,11 +24,7 @@ import {
   TEST_DATA_DIR,
   ROSTERS_DIR,
 } from '../../utils/nfl/fileStorage';
-import {
-  NFL_DATA_INTERVAL_SECONDS,
-  NFL_DATA_RAW_JITTER_PERCENT,
-  NFL_DATA_TEST_MODE,
-} from '../../constants/environment';
+import { env } from '../../config/env';
 
 const logger = createLogger('nflDataIngest');
 
@@ -39,9 +35,9 @@ interface IngestConfig {
 }
 
 const DEFAULT_CONFIG: IngestConfig = {
-  intervalSeconds: NFL_DATA_INTERVAL_SECONDS,
-  rawJitterPercent: NFL_DATA_RAW_JITTER_PERCENT,
-  testMode: NFL_DATA_TEST_MODE,
+  intervalSeconds: env.NFL_DATA_INTERVAL_SECONDS,
+  rawJitterPercent: env.NFL_DATA_RAW_JITTER_PERCENT,
+  testMode: env.NFL_DATA_TEST_MODE,
 };
 
 const CLEANUP_CUTOFF_MINUTES = 30;
