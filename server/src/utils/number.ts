@@ -1,9 +1,17 @@
 /**
  * Round a number to the nearest hundredth (2 decimal places).
+ *
+ * Uses Number.EPSILON compensation to avoid IEEE-754 rounding artifacts.
+ * Example: Math.round(1.005 * 100) / 100 = 1.00 (wrong!)
+ *          Math.round((1.005 + Number.EPSILON) * 100) / 100 = 1.01 (correct)
  */
 export function normalizeToHundredth(value: number): number {
-  const rounded = Math.round((Number(value) || 0) * 100) / 100;
-  return Number.isFinite(rounded) ? rounded : 0;
+  const num = Number(value) || 0;
+  if (!Number.isFinite(num)) return 0;
+  // Add EPSILON before multiplying to compensate for floating-point representation errors
+  const rounded = Math.round((num + Number.EPSILON) * 100) / 100;
+  // Eliminate negative zero
+  return rounded === 0 ? 0 : rounded;
 }
 
 /**

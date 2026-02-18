@@ -442,15 +442,15 @@
   {
     "table_name": "table_members",
     "column_name": "bust_balance",
-    "data_type": "double precision",
+    "data_type": "numeric",
     "is_nullable": "NO",
-    "column_default": "'0'::double precision",
+    "column_default": "0",
     "key_info": ""
   },
   {
     "table_name": "table_members",
     "column_name": "push_balance",
-    "data_type": "double precision",
+    "data_type": "numeric",
     "is_nullable": "NO",
     "column_default": "0",
     "key_info": ""
@@ -458,7 +458,7 @@
   {
     "table_name": "table_members",
     "column_name": "sweep_balance",
-    "data_type": "double precision",
+    "data_type": "numeric",
     "is_nullable": "NO",
     "column_default": "0",
     "key_info": ""

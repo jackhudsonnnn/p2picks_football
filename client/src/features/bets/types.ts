@@ -19,6 +19,7 @@ export interface BetRecord {
   close_time?: string | null;
   winning_choice?: string | null;
   resolution_time?: string | null;
+  table_name?: string | null;
   mode_config?: Record<string, unknown> | null;
   tables?: { table_name?: string } | null;
 }

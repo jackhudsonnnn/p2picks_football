@@ -1,6 +1,5 @@
 import { getPlayerStat } from '../../../../services/leagueData';
-import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../../types';
-import type { LeaguePlayer } from '../../../../services/leagueData/types';
+import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep, PlayerRecord } from '../../../sharedUtils/types';
 import { resolveGameId, type GameContextInput } from '../../../../utils/gameId';
 import { formatNumber } from '../../../../utils/number';
 import {
@@ -25,13 +24,13 @@ export async function buildNbaPropHuntUserConfig(input: BuildUserConfigInput): P
     clears: ['player_id', 'player_name', 'line', 'line_value', 'line_label'],
   }));
 
-  const players: LeaguePlayer[] = context.players;
-  const playerChoices: ModeUserConfigChoice[] = players.map((p: LeaguePlayer) => ({
-    id: p.playerId,
-    value: p.playerId,
-    label: p.fullName,
-    description: p.position,
-    patch: { player_id: p.playerId, player_name: p.fullName },
+  const players: PlayerRecord[] = context.players;
+  const playerChoices: ModeUserConfigChoice[] = players.map((p: PlayerRecord) => ({
+    id: p.id,
+    value: p.id,
+    label: p.name,
+    description: p.position ?? undefined,
+    patch: { player_id: p.id, player_name: p.name },
   }));
 
   const resolveChoices: ModeUserConfigChoice[] = NBA_PROP_HUNT_ALLOWED_RESOLVE_AT.map((v) => ({

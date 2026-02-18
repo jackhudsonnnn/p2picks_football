@@ -22,8 +22,26 @@ import {
   NBA_TEST_DATA_DIR,
 } from '../../utils/nba/nbaFileStorage';
 import { env } from '../../config/env';
+import { CircuitBreaker } from '../../utils/circuitBreaker';
 
 const logger = createLogger('nbaDataIngest');
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Circuit breaker for NBA.com API
+// ─────────────────────────────────────────────────────────────────────────────
+
+const nbaBreaker = new CircuitBreaker({
+  name: 'nba-api',
+  failureThreshold: 5,
+  cooldownMs: 60_000,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Adaptive backoff state
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MAX_BACKOFF_MULTIPLIER = 16; // 16× base
+let consecutiveTickFailures = 0;
 
 interface IngestConfig {
   intervalSeconds: number;
@@ -74,16 +92,32 @@ export async function stopNbaDataIngestService(): Promise<void> {
 async function scheduleDataTick(firstTick = false): Promise<void> {
   if (shuttingDown) return;
 
+  // Adaptive backoff: multiply base interval by 2^failures, capped
+  const baseMs = DEFAULT_CONFIG.intervalSeconds * 1000;
+  const multiplier = Math.min(
+    Math.pow(2, consecutiveTickFailures),
+    MAX_BACKOFF_MULTIPLIER,
+  );
   const delayMs = firstTick
     ? 0
-    : jitterDelay(DEFAULT_CONFIG.intervalSeconds * 1000, DEFAULT_CONFIG.rawJitterPercent);
+    : jitterDelay(baseMs * multiplier, DEFAULT_CONFIG.rawJitterPercent);
+
+  if (consecutiveTickFailures > 0) {
+    logger.warn(
+      { consecutiveTickFailures, delayMs },
+      'backing off after consecutive failures',
+    );
+  }
 
   dataTimer = setTimeout(async () => {
     try {
       await runRawFlow(firstTick);
       await runRefineCycle();
+      // Reset backoff on success
+      consecutiveTickFailures = 0;
     } catch (err) {
-      logger.error({ err }, 'NBA data tick failed');
+      consecutiveTickFailures++;
+      logger.error({ err, consecutiveTickFailures }, 'NBA data tick failed');
     } finally {
       scheduleDataTick(false).catch((error) => {
         logger.error({ error }, 'Failed to reschedule NBA data tick');
@@ -93,14 +127,14 @@ async function scheduleDataTick(firstTick = false): Promise<void> {
 }
 
 async function runRawTick(firstTick: boolean): Promise<void> {
-  logger.info({ firstTick }, 'Starting NBA raw data tick');
+  logger.info({ firstTick, circuitState: nbaBreaker.getState() }, 'Starting NBA raw data tick');
   if (firstTick) {
     await purgeInitialRaw();
   }
 
-  const games = await getLiveGames();
-  if (!games.length) {
-    logger.info('No live NBA games');
+  const games = await nbaBreaker.call(() => getLiveGames());
+  if (!games || !games.length) {
+    logger.info('No live NBA games (or circuit open)');
     await cleanupOldGames();
     return;
   }
@@ -112,7 +146,7 @@ async function runRawTick(firstTick: boolean): Promise<void> {
       const gameId = game.gameId;
       if (!gameId) continue;
       
-      const box = await fetchBoxscore(gameId);
+      const box = await nbaBreaker.call(() => fetchBoxscore(gameId));
       if (!box) {
         continue;
       }

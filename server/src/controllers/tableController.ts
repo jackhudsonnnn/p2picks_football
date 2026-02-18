@@ -6,6 +6,7 @@ import {
 } from '../utils/pagination';
 import { createLogger } from '../utils/logger';
 import { TableRepository } from '../repositories';
+import { settleTable } from '../services/table/tableSettlementService';
 
 const logger = createLogger('tableController');
 
@@ -82,4 +83,25 @@ export async function listTables(req: Request, res: Response): Promise<void> {
     logger.error({ error: err instanceof Error ? err.message : String(err) }, 'listTables unexpected error');
     res.status(500).json({ error: 'Internal server error' });
   }
+}
+
+/**
+ * POST /tables/:tableId/settle
+ *
+ * Settle the table — zero all member balances and record a settlement event.
+ * Only the table host may call this endpoint.
+ */
+export async function settle(req: Request, res: Response): Promise<void> {
+  const supabase = req.supabase;
+  const user = req.authUser;
+
+  if (!supabase || !user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  const { tableId } = req.params;
+
+  const result = await settleTable(tableId, user.id, supabase);
+  res.json(result);
 }

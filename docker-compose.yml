@@ -1,0 +1,42 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# P2Picks — Docker Compose (local development)
+# ──────────────────────────────────────────────────────────────────────────────
+# Usage:
+#   docker compose up -d redis     # just Redis (use with local ts-node-dev)
+#   docker compose up              # full stack (server + Redis)
+#
+# The server reads its .env file from ./server/.env
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./server/.env
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis-data:

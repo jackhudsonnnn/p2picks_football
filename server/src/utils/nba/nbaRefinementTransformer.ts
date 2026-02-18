@@ -113,7 +113,7 @@ function mapGameStatus(gameStatus: number, statusText: string): string {
   switch (gameStatus) {
     case 1:
       return 'STATUS_SCHEDULED';
-    case 2:
+    case 2: {
       // Check for halftime or end of period
       const lowerText = statusText.toLowerCase();
       if (lowerText.includes('half')) {
@@ -123,6 +123,7 @@ function mapGameStatus(gameStatus: number, statusText: string): string {
         return 'STATUS_END_PERIOD';
       }
       return 'STATUS_IN_PROGRESS';
+    }
     case 3:
       return 'STATUS_FINAL';
     default:

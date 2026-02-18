@@ -99,6 +99,7 @@ export interface ParticipationRow {
 interface BetProposalPayload {
   bet_id: string;
   table_id: string;
+  table_name?: string | null;
   proposer_user_id: string;
   league_game_id?: string | null;
   league?: string | null;

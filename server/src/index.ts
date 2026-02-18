@@ -3,15 +3,18 @@ import cors, { CorsOptions } from 'cors';
 import 'dotenv/config';
 import apiRouter from './routes/api';
 import { startModeRuntime, stopModeRuntime } from './services/leagueData';
-import { startNflDataIngestService } from './services/nflData/nflDataIngestService';
-import { startNbaDataIngestService } from './services/nbaData/nbaDataIngestService';
-import { startBetLifecycleService } from './services/bet/betLifecycleService';
+import { startNflDataIngestService, stopNflDataIngestService } from './services/nflData/nflDataIngestService';
+import { startNbaDataIngestService, stopNbaDataIngestService } from './services/nbaData/nbaDataIngestService';
+import { startBetLifecycleService, stopBetLifecycleService } from './services/bet/betLifecycleService';
 import { startResolutionQueue, stopResolutionQueue } from './leagues/sharedUtils/resolutionQueue';
 import { requireAuth } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { requestIdMiddleware } from './middleware/requestId';
 import { env } from './config/env';
 import { createLogger } from './utils/logger';
+import { closeRedisClient } from './utils/redisClient';
+import { httpMetricsMiddleware } from './middleware/httpMetrics';
+import { renderMetrics } from './infrastructure/metrics';
 
 const logger = createLogger('server');
 
@@ -21,16 +24,27 @@ const app = express();
 
 const corsOptions: CorsOptions = buildCorsOptions();
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 app.use(requestIdMiddleware);
+app.use(httpMetricsMiddleware);
 
-app.use('/api', requireAuth, apiRouter);
+// Prometheus metrics endpoint (no auth — lightweight, no sensitive data)
+app.get('/metrics', (_req, res) => {
+  res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+  res.send(renderMetrics());
+});
+
+app.use('/api/v1', requireAuth, apiRouter);
+app.use('/api', requireAuth, apiRouter); // backward-compatible alias
 
 // Global error handler - must be last middleware
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  startResolutionQueue();
+const server = app.listen(env.PORT, () => {
+  startResolutionQueue().catch((err) => {
+    logger.error({ error: err instanceof Error ? err.message : String(err) }, 'Failed to start resolution queue');
+    process.exit(1);
+  });
   startModeRuntime().catch((err) => {
     logger.error({ error: err instanceof Error ? err.message : String(err) }, 'Failed to start mode runtime');
     process.exit(1);
@@ -41,19 +55,32 @@ app.listen(env.PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info({}, 'SIGTERM received, shutting down...');
-  stopModeRuntime();
-  await stopResolutionQueue();
-  process.exit(0);
-});
+async function shutdown(signal: string): Promise<void> {
+  logger.info({ signal }, 'Shutdown signal received, draining…');
 
-process.on('SIGINT', async () => {
-  logger.info({}, 'SIGINT received, shutting down...');
+  // 1. Stop accepting new connections & drain in-flight HTTP requests
+  server.close(() => {
+    logger.info({}, 'HTTP server closed');
+  });
+
+  // 2. Stop services
   stopModeRuntime();
-  await stopResolutionQueue();
+  await Promise.all([
+    stopBetLifecycleService(),
+    stopResolutionQueue(),
+    stopNflDataIngestService(),
+    stopNbaDataIngestService(),
+  ]);
+
+  // 3. Close shared Redis (after queues are done)
+  closeRedisClient();
+
+  logger.info({}, 'Graceful shutdown complete');
   process.exit(0);
-});
+}
+
+process.on('SIGTERM', () => { shutdown('SIGTERM'); });
+process.on('SIGINT', () => { shutdown('SIGINT'); });
 
 function assertRequiredEnv(): void {
   // Validation now handled by Zod schema in config/env.ts

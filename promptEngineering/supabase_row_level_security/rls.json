@@ -127,13 +127,6 @@
   },
   {
     "table_name": "system_messages",
-    "policy_name": "System notifications inserts are restricted",
-    "command": "INSERT",
-    "using_expression": null,
-    "check_expression": "false"
-  },
-  {
-    "table_name": "system_messages",
     "policy_name": "System notifications updates are restricted",
     "command": "UPDATE",
     "using_expression": "false",
@@ -141,10 +134,10 @@
   },
   {
     "table_name": "system_messages",
-    "policy_name": "system_messages_insert",
+    "policy_name": "system_messages_insert_service_role_only",
     "command": "INSERT",
     "using_expression": null,
-    "check_expression": "true"
+    "check_expression": "((current_setting('request.jwt.claim.role'::text, true) = 'service_role'::text) OR (CURRENT_USER = 'postgres'::name))"
   },
   {
     "table_name": "system_messages",

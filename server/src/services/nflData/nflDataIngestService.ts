@@ -25,8 +25,26 @@ import {
   ROSTERS_DIR,
 } from '../../utils/nfl/fileStorage';
 import { env } from '../../config/env';
+import { CircuitBreaker } from '../../utils/circuitBreaker';
 
 const logger = createLogger('nflDataIngest');
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Circuit breaker for ESPN NFL API
+// ─────────────────────────────────────────────────────────────────────────────
+
+const espnBreaker = new CircuitBreaker({
+  name: 'espn-nfl',
+  failureThreshold: 5,
+  cooldownMs: 60_000,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Adaptive backoff state
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MAX_BACKOFF_MULTIPLIER = 16; // 16× base → ~5 min at 20s base
+let consecutiveTickFailures = 0;
 
 interface IngestConfig {
   intervalSeconds: number;
@@ -77,16 +95,32 @@ export async function stopNflDataIngestService(): Promise<void> {
 async function scheduleDataTick(firstTick = false): Promise<void> {
   if (shuttingDown) return;
 
+  // Adaptive backoff: multiply base interval by 2^failures, capped
+  const baseMs = DEFAULT_CONFIG.intervalSeconds * 1000;
+  const multiplier = Math.min(
+    Math.pow(2, consecutiveTickFailures),
+    MAX_BACKOFF_MULTIPLIER,
+  );
   const delayMs = firstTick
     ? 0
-    : jitterDelay(DEFAULT_CONFIG.intervalSeconds * 1000, DEFAULT_CONFIG.rawJitterPercent);
+    : jitterDelay(baseMs * multiplier, DEFAULT_CONFIG.rawJitterPercent);
+
+  if (consecutiveTickFailures > 0) {
+    logger.warn(
+      { consecutiveTickFailures, delayMs },
+      'backing off after consecutive failures',
+    );
+  }
 
   dataTimer = setTimeout(async () => {
     try {
       await runRawFlow(firstTick);
       await runRefineCycle();
+      // Reset backoff on success
+      consecutiveTickFailures = 0;
     } catch (err) {
-      logger.error({ err }, 'Data tick failed');
+      consecutiveTickFailures++;
+      logger.error({ err, consecutiveTickFailures }, 'Data tick failed');
     } finally {
       scheduleDataTick(false).catch((error) => {
         logger.error({ error }, 'Failed to reschedule data tick');
@@ -96,14 +130,14 @@ async function scheduleDataTick(firstTick = false): Promise<void> {
 }
 
 async function runRawTick(firstTick: boolean): Promise<void> {
-  logger.info({ firstTick }, 'Starting raw data tick');
+  logger.info({ firstTick, circuitState: espnBreaker.getState() }, 'Starting raw data tick');
   if (firstTick) {
     await purgeInitialRaw();
   }
 
-  const events = await getLiveEvents();
-  if (!events.length) {
-    logger.info('No live NFL games');
+  const events = await espnBreaker.call(() => getLiveEvents());
+  if (!events || !events.length) {
+    logger.info('No live NFL games (or circuit open)');
     await cleanupOldGames();
     return;
   }
@@ -115,9 +149,9 @@ async function runRawTick(firstTick: boolean): Promise<void> {
     try {
       const eventId = String(event.id || event.uid || '');
       if (!eventId) continue;
-      const box = await fetchBoxscore(eventId);
+      const box = await espnBreaker.call(() => fetchBoxscore(eventId));
       if (!box) {
-        logger.warn({ eventId }, 'Skipping game: boxscore unavailable');
+        logger.warn({ eventId }, 'Skipping game: boxscore unavailable (or circuit open)');
         continue;
       }
       await writeJsonAtomic(box, RAW_DIR, `${eventId}.json`);

@@ -152,7 +152,7 @@ async function processJob(job: Job<ResolutionJob, ResolutionResult>): Promise<Re
 /**
  * Start the resolution queue and worker.
  */
-export function startResolutionQueue(): void {
+export async function startResolutionQueue(): Promise<void> {
   if (queue && worker) {
     logger.warn({}, 'already started');
     return;
@@ -178,6 +178,18 @@ export function startResolutionQueue(): void {
       },
     },
   });
+
+  // Startup health probe — verifies Redis is reachable before creating worker
+  try {
+    await queue.getWaitingCount();
+    logger.info({}, 'startup health probe passed');
+  } catch (err) {
+    logger.error(
+      { error: err instanceof Error ? err.message : String(err) },
+      'startup health probe FAILED — Redis may be unreachable',
+    );
+    throw err;
+  }
   
   worker = new Worker<ResolutionJob, ResolutionResult>(
     QUEUE_NAME,
@@ -192,13 +204,33 @@ export function startResolutionQueue(): void {
   });
   
   worker.on('failed', (job, err) => {
+    const exhausted = (job?.attemptsMade ?? 0) >= DEFAULT_RETRY_ATTEMPTS;
+
     logger.error({ 
       jobId: job?.id, 
       betId: job?.data?.betId,
       type: job?.data?.type,
       error: err.message,
       attempts: job?.attemptsMade,
-    }, 'job permanently failed');
+      dlq: exhausted,
+    }, exhausted ? 'job moved to DLQ — all retries exhausted' : 'job permanently failed');
+
+    // DLQ alerting: record failure in bet history so dashboards can surface it
+    if (exhausted && job?.data?.betId) {
+      betRepository
+        .recordHistory(job.data.betId, 'resolution_failed', {
+          jobId: job.id,
+          type: job.data.type,
+          error: err.message,
+          attempts: job.attemptsMade,
+        })
+        .catch((histErr) => {
+          logger.error(
+            { error: histErr instanceof Error ? histErr.message : String(histErr) },
+            'failed to record DLQ history entry',
+          );
+        });
+    }
   });
   
   worker.on('error', (err) => {
@@ -322,4 +354,11 @@ export async function getQueueStatus(): Promise<QueueStatus | null> {
   ]);
   
   return { waiting, active, completed, failed, delayed };
+}
+
+/**
+ * Check whether the resolution queue worker is alive.
+ */
+export function isResolutionWorkerRunning(): boolean {
+  return worker !== null && !worker.closing;
 }

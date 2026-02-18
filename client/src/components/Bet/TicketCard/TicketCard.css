@@ -491,17 +491,17 @@
 .validate-choice-select {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--input-bg);
-  border: var(--input-border);
-  border-radius: var(--radius-md);
-  color: var(--text-light);
+  background-color: var(--form-bg);
+  border: var(--form-border);
+  border-radius: var(--form-radius);
+  color: var(--form-text);
   font-size: var(--font-size-md);
   cursor: pointer;
 }
 
 .validate-choice-select:focus {
+  border-color: var(--form-active-border);
   outline: none;
-  border-color: var(--btn-primary-bg);
 }
 
 .validate-warning {
@@ -513,24 +513,26 @@
 
 .validate-modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--spacing-sm);
+  width: 100%;
 }
 
 .validate-cancel-btn {
   padding: var(--spacing-sm) var(--spacing-md);
-  background-color: transparent;
-  border: var(--btn-secondary-border);
-  border-radius: var(--radius-md);
-  color: var(--text-light);
+  background-color: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  border-radius: var(--btn-primary-radius);
+  color: var(--btn-primary-text);
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition);
 }
 
 .validate-cancel-btn:hover {
-  background-color: var(--btn-secondary-hover);
-}
+  background-color: var(--btn-primary-hover-bg);
+  border-color: var(--btn-primary-hover-border);}
 
 .validate-confirm-btn {
   padding: var(--spacing-sm) var(--spacing-md);
@@ -545,7 +547,7 @@
 }
 
 .validate-confirm-btn:hover {
-  background-color: var(--btn-primary-hover);
+  background-color: var(--btn-primary-hover-bg);
 }
 
 .validate-confirm-btn:disabled {

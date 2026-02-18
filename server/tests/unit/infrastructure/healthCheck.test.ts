@@ -15,6 +15,14 @@ vi.mock('../../../src/supabaseClient', () => ({
   getSupabaseAdmin: vi.fn(),
 }));
 
+vi.mock('../../../src/leagues/sharedUtils/resolutionQueue', () => ({
+  isResolutionWorkerRunning: vi.fn(() => true),
+}));
+
+vi.mock('../../../src/services/bet/betLifecycleQueue', () => ({
+  isLifecycleWorkerRunning: vi.fn(() => true),
+}));
+
 import {
   checkRedisHealth,
   checkSupabaseHealth,
@@ -22,6 +30,8 @@ import {
 } from '../../../src/infrastructure/healthCheck';
 import { getRedisClient } from '../../../src/utils/redisClient';
 import { getSupabaseAdmin } from '../../../src/supabaseClient';
+import { isResolutionWorkerRunning } from '../../../src/leagues/sharedUtils/resolutionQueue';
+import { isLifecycleWorkerRunning } from '../../../src/services/bet/betLifecycleQueue';
 
 describe('healthCheck', () => {
   beforeEach(() => {
@@ -142,6 +152,8 @@ describe('healthCheck', () => {
       expect(status.status).toBe('healthy');
       expect(status.checks.redis.ok).toBe(true);
       expect(status.checks.supabase.ok).toBe(true);
+      expect(status.checks.bullmq.resolutionWorker).toBe(true);
+      expect(status.checks.bullmq.lifecycleWorker).toBe(true);
       expect(status.timestamp).toBeDefined();
       expect(status.uptime).toBeGreaterThanOrEqual(0);
     });
@@ -169,6 +181,28 @@ describe('healthCheck', () => {
       expect(status.checks.supabase.ok).toBe(false);
     });
 
+    it('should return degraded when BullMQ workers are down but Redis/Supabase ok', async () => {
+      const mockRedis = { ping: vi.fn().mockResolvedValue('PONG') };
+      vi.mocked(getRedisClient).mockReturnValue(mockRedis as any);
+
+      const mockSupabase = {
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        }),
+      };
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockSupabase as any);
+      vi.mocked(isResolutionWorkerRunning).mockReturnValue(false);
+      vi.mocked(isLifecycleWorkerRunning).mockReturnValue(false);
+
+      const status = await getHealthStatus();
+      
+      expect(status.status).toBe('degraded');
+      expect(status.checks.bullmq.resolutionWorker).toBe(false);
+      expect(status.checks.bullmq.lifecycleWorker).toBe(false);
+    });
+
     it('should return unhealthy when all checks fail', async () => {
       const mockRedis = { ping: vi.fn().mockRejectedValue(new Error('Failed')) };
       vi.mocked(getRedisClient).mockReturnValue(mockRedis as any);
@@ -184,6 +218,8 @@ describe('healthCheck', () => {
         }),
       };
       vi.mocked(getSupabaseAdmin).mockReturnValue(mockSupabase as any);
+      vi.mocked(isResolutionWorkerRunning).mockReturnValue(false);
+      vi.mocked(isLifecycleWorkerRunning).mockReturnValue(false);
 
       const status = await getHealthStatus();
       

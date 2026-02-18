@@ -102,7 +102,7 @@ export async function createBetProposal(
 
   if (input.configSessionId) {
     try {
-      consumedSession = consumeModeConfigSession(input.configSessionId);
+      consumedSession = await consumeModeConfigSession(input.configSessionId);
       modeKey = consumedSession.modeKey;
       leagueGameId = consumedSession.leagueGameId;
       league = consumedSession.league;
@@ -180,15 +180,13 @@ export async function createBetProposal(
   const typedBet = bet as BetProposal;
 
   // Post-creation steps with cleanup on failure
-  try {
-    const announcement = await createAnnouncementWithCleanup(typedBet, preview, supabase);
-    await storeModeConfigWithCleanup(typedBet, modeKey, modeConfig, announcement, supabase);
-  } catch (err) {
-    // Cleanup is handled in the helper functions
-    throw err;
-  }
+  // IMPORTANT: storeModeConfig MUST complete before registerBetLifecycle,
+  // otherwise the validator service may see the bet transition to pending
+  // before the mode config is available (getConfigForBet returns null).
+  const announcement = await createAnnouncementWithCleanup(typedBet, preview, supabase);
+  await storeModeConfigWithCleanup(typedBet, modeKey, modeConfig, announcement, supabase);
 
-  // Register lifecycle
+  // Register lifecycle AFTER mode config is persisted
   const closeTime = (bet as any)?.close_time ?? null;
   registerBetLifecycle(typedBet.bet_id, closeTime);
 
@@ -286,20 +284,17 @@ export async function pokeBet(
   const insertedBet = newBet as BetProposal;
 
   // Post-creation steps with cleanup
-  try {
-    const announcement = await createAnnouncementWithCleanup(insertedBet, preview, supabase);
-    await storeModeConfigWithCleanup(
-      insertedBet,
-      insertedBet.mode_key,
-      modeConfig,
-      announcement,
-      supabase,
-    );
-  } catch (err) {
-    throw err;
-  }
+  // IMPORTANT: storeModeConfig MUST complete before registerBetLifecycle
+  const announcement = await createAnnouncementWithCleanup(insertedBet, preview, supabase);
+  await storeModeConfigWithCleanup(
+    insertedBet,
+    insertedBet.mode_key,
+    modeConfig,
+    announcement,
+    supabase,
+  );
 
-  // Register lifecycle and record link
+  // Register lifecycle AFTER mode config is persisted, then record link
   const closeTime = (insertedBet as any)?.close_time ?? null;
   registerBetLifecycle(insertedBet.bet_id, closeTime);
 

@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+coverage
+tests
+.env
+.git
+.gitignore
+.vscode
+dist
+vitest.config.ts

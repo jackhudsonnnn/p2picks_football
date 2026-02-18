@@ -4,6 +4,7 @@
  */
 
 import { createLogger } from '../logger';
+import { externalApiDurationMs } from '../../infrastructure/metrics';
 
 const logger = createLogger('espnClient');
 
@@ -27,19 +28,26 @@ export interface ESPNEvent {
  * Fetch JSON from a URL with standard headers.
  */
 async function fetchJson(url: string): Promise<unknown | null> {
+  const start = Date.now();
   try {
     const res = await fetch(url, {
       headers: {
         'User-Agent': 'p2picks-nfl-data/1.0',
       },
     });
+    const latencyMs = Date.now() - start;
     if (!res.ok) {
-      logger.debug({ url, status: res.status }, 'Fetch failed');
+      externalApiDurationMs.observe({ provider: 'espn', status: 'error' }, latencyMs);
+      logger.debug({ url, status: res.status, latencyMs }, 'Fetch failed');
       return null;
     }
+    externalApiDurationMs.observe({ provider: 'espn', status: 'ok' }, latencyMs);
+    logger.debug({ url, latencyMs }, 'ESPN fetch completed');
     return res.json();
   } catch (err) {
-    logger.debug({ url, err }, 'HTTP error');
+    const latencyMs = Date.now() - start;
+    externalApiDurationMs.observe({ provider: 'espn', status: 'error' }, latencyMs);
+    logger.debug({ url, err, latencyMs }, 'HTTP error');
     return null;
   }
 }

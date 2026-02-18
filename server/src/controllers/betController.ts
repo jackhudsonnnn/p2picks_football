@@ -314,7 +314,7 @@ export async function validateBet(req: Request, res: Response) {
     // Fetch the bet
     const { data: betRow, error: betError } = await supabaseAdmin
       .from('bet_proposals')
-      .select('bet_id, table_id, mode_key, league, bet_status, winning_choice')
+      .select('bet_id, table_id, mode_key, league, bet_status, winning_choice, close_time, proposer_user_id')
       .eq('bet_id', betId)
       .maybeSingle();
 
@@ -330,33 +330,51 @@ export async function validateBet(req: Request, res: Response) {
       return;
     }
 
-    // Check bet status
-    if (betRow.bet_status !== 'pending') {
-      res.status(400).json({ 
-        error: 'Bet cannot be validated',
-        details: betRow.bet_status === 'active' 
-          ? 'Bet is still active. Wait for the betting window to close.'
-          : `Bet is already ${betRow.bet_status}.`
-      });
-      return;
-    }
-
     // Check if already resolved
     if (betRow.winning_choice) {
       res.status(400).json({ error: 'Bet has already been validated' });
       return;
     }
 
-    // Check if user is a participant in this bet
-    const { data: participation, error: participationError } = await supabaseAdmin
-      .from('bet_participations')
-      .select('user_id')
-      .eq('bet_id', betId)
-      .eq('user_id', authUser.id)
-      .maybeSingle();
+    // Check bet status — allow 'pending' directly, or 'active' if the close
+    // time has already passed (the lifecycle queue may not have transitioned
+    // the row yet).
+    const closeTime = betRow.close_time ? new Date(betRow.close_time).getTime() : null;
+    const isCloseTimePassed = closeTime !== null && Date.now() >= closeTime;
 
-    if (participationError) throw participationError;
-    if (!participation) {
+    if (betRow.bet_status === 'active' && !isCloseTimePassed) {
+      res.status(400).json({
+        error: 'Bet cannot be validated',
+        details: 'Bet is still active. Wait for the betting window to close.',
+      });
+      return;
+    }
+
+    if (betRow.bet_status !== 'pending' && betRow.bet_status !== 'active') {
+      res.status(400).json({
+        error: 'Bet cannot be validated',
+        details: `Bet is already ${betRow.bet_status}.`,
+      });
+      return;
+    }
+
+    // Check if user is a participant or the proposer of this bet
+    const isProposer = betRow.proposer_user_id === authUser.id;
+    let isParticipant = false;
+
+    if (!isProposer) {
+      const { data: participation, error: participationError } = await supabaseAdmin
+        .from('bet_participations')
+        .select('user_id')
+        .eq('bet_id', betId)
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+
+      if (participationError) throw participationError;
+      isParticipant = !!participation;
+    }
+
+    if (!isProposer && !isParticipant) {
       res.status(403).json({ error: 'Only participants can validate this bet' });
       return;
     }
@@ -380,12 +398,14 @@ export async function validateBet(req: Request, res: Response) {
       return;
     }
 
-    // Set the winning choice - the DB trigger will handle the rest
+    // Set the winning choice - the DB trigger will handle the rest.
+    // Accept both 'pending' and 'active' (close-time expired) to avoid a race
+    // with the lifecycle queue.
     const { error: updateError } = await supabaseAdmin
       .from('bet_proposals')
       .update({ winning_choice: winningChoice })
       .eq('bet_id', betId)
-      .eq('bet_status', 'pending')
+      .in('bet_status', ['pending', 'active'])
       .is('winning_choice', null);
 
     if (updateError) throw updateError;

@@ -9,6 +9,7 @@ import path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { createLogger } from '../logger';
+import { externalApiDurationMs } from '../../infrastructure/metrics';
 
 const logger = createLogger('nbaClient');
 
@@ -45,18 +46,24 @@ export interface ScoreboardResponse {
  * Run the Python nba-data helper and parse JSON output.
  */
 async function runPythonJson<T>(args: string[]): Promise<T | null> {
+  const start = Date.now();
   try {
     const { stdout, stderr } = await execFileAsync(PYTHON_EXEC, [PYTHON_SCRIPT, ...args], {
       timeout: 15000,
       maxBuffer: 10 * 1024 * 1024,
     });
 
+    const latencyMs = Date.now() - start;
+
     if (stderr) {
-      logger.warn({ stderr: stderr.trim() }, 'NBA python helper emitted stderr');
+      logger.warn({ stderr: stderr.trim(), latencyMs }, 'NBA python helper emitted stderr');
     }
 
+    logger.debug({ args, latencyMs }, 'NBA python helper completed');
+    externalApiDurationMs.observe({ provider: 'nba', status: 'ok' }, latencyMs);
     return JSON.parse(stdout) as T;
   } catch (err) {
+    const latencyMs = Date.now() - start;
     // If the python helper returned a structured error on stderr we may be able
     // to detect a known condition (like a missing boxscore) and handle it
     // gracefully. The python helper prints JSON to stderr on failure.
@@ -79,7 +86,8 @@ async function runPythonJson<T>(args: string[]): Promise<T | null> {
       logger.debug({ parseErr }, 'Failed to parse python helper stderr');
     }
 
-    logger.error({ err, args }, 'NBA python helper failed');
+    logger.error({ err, args, latencyMs }, 'NBA python helper failed');
+    externalApiDurationMs.observe({ provider: 'nba', status: 'error' }, latencyMs);
     return null;
   }
 }

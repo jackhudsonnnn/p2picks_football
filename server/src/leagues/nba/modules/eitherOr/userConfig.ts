@@ -1,5 +1,4 @@
-import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep } from '../../../types';
-import type { LeaguePlayer } from '../../../../services/leagueData/types';
+import type { BuildUserConfigInput, ModeUserConfigChoice, ModeUserConfigStep, PlayerRecord } from '../../../sharedUtils/types';
 import { resolveGameId, type GameContextInput } from '../../../../utils/gameId';
 import { ALLOWED_RESOLVE_AT, DEFAULT_RESOLVE_AT, NBA_STAT_KEY_LABELS } from '../../utils/statConstants';
 import { buildProgressModeStep, getDefaultProgressPatch, loadGameContext } from '../../utils/userConfigBuilder';
@@ -18,22 +17,22 @@ export async function buildEitherOrUserConfig(input: BuildUserConfigInput): Prom
     clears: ['player1_id', 'player1_name', 'player2_id', 'player2_name'],
   }));
 
-  const players: LeaguePlayer[] = context.players;
+  const players: PlayerRecord[] = context.players;
 
   const player1Choices: ModeUserConfigChoice[] = players.map((p) => ({
-    id: p.playerId,
-    value: p.playerId,
-    label: p.fullName,
-    description: p.position,
-    patch: { player1_id: p.playerId, player1_name: p.fullName },
+    id: p.id,
+    value: p.id,
+    label: p.name,
+    description: p.position ?? undefined,
+    patch: { player1_id: p.id, player1_name: p.name },
   }));
 
   const player2Choices: ModeUserConfigChoice[] = players.map((p) => ({
-    id: p.playerId,
-    value: p.playerId,
-    label: p.fullName,
-    description: p.position,
-    patch: { player2_id: p.playerId, player2_name: p.fullName },
+    id: p.id,
+    value: p.id,
+    label: p.name,
+    description: p.position ?? undefined,
+    patch: { player2_id: p.id, player2_name: p.name },
   }));
 
   const resolveChoices: ModeUserConfigChoice[] = ALLOWED_RESOLVE_AT.map((v) => ({

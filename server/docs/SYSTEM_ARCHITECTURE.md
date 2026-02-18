@@ -1,8 +1,5 @@
 # P2Picks — System Architecture
 
-> **Last updated:** 2025-07  
-> **Status:** Living document — update when subsystems change.
-
 ---
 
 ## Table of Contents
@@ -20,7 +17,8 @@
 11. [Authentication & Authorization](#11-authentication--authorization)
 12. [Infrastructure Services](#12-infrastructure-services)
 13. [Data Flow Walkthrough](#13-data-flow-walkthrough)
-14. [Directory Reference](#14-directory-reference)
+14. [DevOps & Deployment](#14-devops--deployment)
+15. [Directory Reference](#15-directory-reference)
 
 ---
 
@@ -76,7 +74,8 @@ P2Picks is a peer-to-peer sports-betting prediction platform where users create 
 | Realtime | Supabase Realtime (PostgreSQL changes) |
 | Job Queue | BullMQ on Redis |
 | Rate Limiting | Redis-backed sliding window counters |
-| Logging | Structured `logger` utility (server); `createLogger` (client) |
+| Logging | pino ^10.3 structured JSON logger (server); `createLogger` (client) |
+| Metrics | Lightweight Prometheus registry (server); exposed at `/metrics` |
 
 ---
 
@@ -98,8 +97,8 @@ P2Picks is a peer-to-peer sports-betting prediction platform where users create 
 ┌──────────────────────────────────────────────────────────────────┐
 │                       SERVER (Express)                           │
 │                                                                  │
-│  Middleware: requestId → auth → rateLimitHeaders → errorHandler  │
-│  Routes:    /api/bet-proposals, /api/tables, /api/modes, ...     │
+│  Middleware: requestId → auth → validateParams/Body → idempotency → rateLimitHeaders → errorHandler  │
+│  Routes:    /api/v1/* (canonical), /api/* (backward-compat alias) │
 │  Controllers → Services → Repositories → Supabase (PostgreSQL)   │
 │                                                                  │
 │  Background:                                                     │
@@ -144,9 +143,9 @@ table_members
  ├── table_id (FK → tables)
  ├── user_id (FK → users)
  ├── joined_at
- ├── bust_balance (float8, default 0)
- ├── push_balance (float8, default 0)
- ├── sweep_balance (float8, default 0)
+ ├── bust_balance (numeric(12,2), default 0, CHECK >= 0)
+ ├── push_balance (numeric(12,2), default 0)
+ ├── sweep_balance (numeric(12,2), default 0)
 
 bet_proposals
  ├── bet_id (PK, UUID)
@@ -224,6 +223,7 @@ resolution_history
 | `handle_new_user()` | Trigger on `auth.users` INSERT → creates row in `public.users`. |
 | `is_user_member_of_table(table_id, user_id)` | Stable helper for RLS policies. |
 | `is_bet_open(bet_id)` | Returns true if bet is active and before close_time. |
+| `wash_bet_with_history(bet_id, event_type, payload)` | Atomically washes a pending bet and records a resolution_history entry in a single transaction. Used by `washService`. |
 | `enforce_immutable_bet_participation_fields()` | Prevents modification of bet_id, table_id, user_id on participations. |
 
 ### 4.4 Trigger Chain
@@ -275,7 +275,7 @@ All tables have RLS enabled. Key policies:
 | `friend_requests` | Sender or receiver | Sender only (no self-request) | — |
 | `users` | Any authenticated user | Own profile only | — |
 | `resolution_history` | Bet proposer or table members | — | — |
-| `system_messages` | All (true) | Service role only (restricted to client false, but service_role insert true) | None (false) |
+| `system_messages` | Table members (scoped via `is_user_member_of_table`) | Service role only | None (false) |
 
 ---
 
@@ -287,32 +287,44 @@ All tables have RLS enabled. Key policies:
 
 ```
 1. Express app creation
-2. Middleware registration (CORS, JSON, requestId)
-3. Route mounting (/api/*)
-4. Error handler (tail middleware)
-5. Server listen on PORT (default 5001)
-6. Post-listen startup:
-   a. startResolutionQueue()     — BullMQ worker
+2. Middleware registration (CORS, JSON with 100kb body limit, requestId, httpMetrics)
+3. Metrics endpoint (GET /metrics — Prometheus text format, unauthenticated)
+4. Route mounting (/api/v1/* — canonical; /api/* — backward-compatible alias)
+5. Error handler (tail middleware)
+6. Server listen on PORT (default 5001)
+7. Post-listen startup:
+   a. startResolutionQueue()     — BullMQ worker (async, with startup health probe)
    b. startModeRuntime()         — all mode validators
-   c. startBetLifecycleService() — Active→Pending timers
-   d. startNflDataIngestService()— ESPN NFL polling
-   e. startNbaDataIngestService()— ESPN NBA polling
-7. Graceful shutdown (SIGTERM/SIGINT)
+   c. startBetLifecycleService() — Active→Pending timers (async, with startup health probe)
+   d. startNflDataIngestService()— ESPN NFL polling (circuit breaker + adaptive backoff)
+   e. startNbaDataIngestService()— NBA.com polling (circuit breaker + adaptive backoff)
+8. Graceful shutdown (SIGTERM/SIGINT):
+   a. server.close()              — stop accepting HTTP connections, drain in-flight requests
+   b. stopModeRuntime()           — halt mode validators
+   c. stopBetLifecycleService()   — close lifecycle BullMQ queue + worker
+   d. stopResolutionQueue()       — close resolution BullMQ queue + worker
+   e. stopNflDataIngestService()  — cancel NFL polling timer
+   f. stopNbaDataIngestService()  — cancel NBA polling timer
+   g. closeRedisClient()          — quit shared Redis connection
 ```
 
 ### 5.2 Middleware Stack
 
 | Middleware | File | Purpose |
 |---|---|---|
-| `requestId` | `middleware/requestId.ts` | Attaches UUID to each request for log correlation |
+| `requestId` | `middleware/requestId.ts` | Attaches UUID to each request for log correlation; wraps downstream handlers in `AsyncLocalStorage` so all logger calls auto-include `requestId` |
+| `httpMetrics` | `middleware/httpMetrics.ts` | Records per-request Prometheus metrics: `http_requests_total` (counter) and `http_request_duration_ms` (histogram). Normalizes paths (UUIDs → `:id`) to prevent high-cardinality labels. |
 | `requireAuth` | `middleware/auth.ts` | Extracts Bearer token, calls `supabase.auth.getUser()`, attaches `req.authUser` and a user-scoped `req.supabase` client |
+| `validateParams` | `middleware/validateRequest.ts` | Validates `req.params` against a Zod schema (UUID format enforcement on path parameters). Returns 400 with structured errors on failure. |
+| `validateBody` | `middleware/validateRequest.ts` | Validates `req.body` against a Zod schema. Replaces `req.body` with parsed/coerced data on success, returns 400 on failure. All write-endpoint schemas live in `controllers/schemas.ts`. |
+| `idempotency` | `middleware/idempotency.ts` | Ensures repeated POSTs with the same `Idempotency-Key` header return the cached first-execution response. Redis-backed (SET NX, 24 h TTL). Returns 409 for concurrent in-flight duplicates. Currently wired to `POST /tables/:tableId/bets`. |
 | `rateLimitHeaders` | `middleware/rateLimitHeaders.ts` | Adds rate-limit response headers |
 | `errorHandler` | `middleware/errorHandler.ts` | Catches `AppError` instances, returns structured JSON errors |
 | `asyncHandler` | `middleware/errorHandler.ts` | Wraps async route handlers to forward thrown errors |
 
 ### 5.3 API Routes
 
-All routes are under `/api` and protected by `requireAuth`:
+All routes are under `/api/v1` (canonical) and `/api` (backward-compatible alias), protected by `requireAuth`:
 
 | Method | Path | Controller | Purpose |
 |---|---|---|---|
@@ -321,6 +333,7 @@ All routes are under `/api` and protected by `requireAuth`:
 | PUT | `/bet-proposals/:betId/participations` | `betController.upsertParticipation` | Submit/update a user's guess |
 | GET | `/tables` | `tableController.getUserTables` | List tables for the authenticated user |
 | POST | `/tables` | `tableController.createTable` | Create a new table |
+| POST | `/tables/:tableId/settle` | `tableController.settle` | Settle a table (host only — zeros balances, records audit event) |
 | DELETE | `/tables/:tableId` | `tableController.deleteTable` | Delete a table (host only) |
 | GET | `/tables/:tableId/members` | `tableController.getTableMembers` | List members of a table |
 | POST | `/tables/:tableId/members` | `tableController.addTableMember` | Add a member (host only) |
@@ -380,6 +393,15 @@ The global `errorHandler` middleware catches these and returns:
 ```
 
 Non-AppError exceptions are logged and returned as 500 Internal Server Error.
+
+**Validation errors** from `validateBody`/`validateParams` are returned before the handler executes:
+```json
+{
+  "error": "Validation failed",
+  "code": "VALIDATION_ERROR",
+  "details": [{ "field": "proposer_user_id", "message": "Must be a valid UUID" }]
+}
+```
 
 ### 5.6 Environment Configuration
 
@@ -567,12 +589,17 @@ The bet lifecycle is a state machine managed across three systems: the database 
 
 ### 7.2 BetLifecycleService
 
-`server/src/services/bet/betLifecycleService.ts`
+`server/src/services/bet/betLifecycleService.ts` → delegates to `betLifecycleQueue.ts`
 
-- **On startup:** Queries all active bets, schedules a `setTimeout` for each based on `close_time - now()`.
-- **On timer fire:** Calls `transition_bet_to_pending(bet_id)` RPC.
-- **Catchup cycle:** Every `BET_LIFECYCLE_CATCHUP_INTERVAL_MS` (default 60s), queries for any active bets past their close_time that were missed by mistake and transitions them.
-- **New bet registration:** When a bet is created via the API, the service schedules a timer for it immediately.
+Uses a dedicated **BullMQ delayed-job queue** (`bet-lifecycle`) instead of in-process `setTimeout`/`setInterval`.  This ensures:
+- **Replica-safe:** Only one worker fires each transition, even with multiple server instances.
+- **Crash-resilient:** Jobs survive process restarts (persisted in Redis).
+- **Deduplication:** Each bet gets a single job (keyed by `lifecycle-{betId}`).
+
+- **On startup:** Queries all active bets and enqueues a delayed job for each based on `close_time - now()`.
+- **On job fire:** Calls `transition_bet_to_pending(bet_id)` RPC with automatic retry (3 attempts, exponential backoff).
+- **Catchup cycle:** A repeatable BullMQ job fires every `BET_LIFECYCLE_CATCHUP_MS` (default 60s) to catch any missed transitions.
+- **New bet registration:** `registerBetLifecycle(betId, closeTime)` enqueues a delayed job immediately.
 
 ### 7.3 Balance Mechanics
 
@@ -762,6 +789,10 @@ Both NFL and NBA data ingest services:
 3. Store current game state in Redis for fast access.
 4. Emit game feed events that `ModeRuntimeKernel` instances consume.
 
+**Resilience features:**
+- **Circuit breaker** (`utils/circuitBreaker.ts`) wraps all upstream API calls (ESPN / NBA.com). After 5 consecutive failures the circuit opens and short-circuits calls for 60 s, then allows a single probe (HALF_OPEN). Success closes the circuit; failure reopens it.
+- **Adaptive backoff** on the polling timer: delay is `baseInterval × min(2^consecutiveFailures, 16)`. Resets to base on the first successful tick.
+
 **Data flow:**
 ```
 ESPN API (HTTP poll)
@@ -895,14 +926,16 @@ A BullMQ queue named `bet-resolution` processes bet outcomes:
 
 **Configuration:**
 - Concurrency: configurable via `RESOLUTION_QUEUE_CONCURRENCY` (default 5)
-- Retries: exponential backoff
+- Retries: exponential backoff (3 attempts, 1 s base)
 - Connection: shared Redis instance
+- **Startup health probe:** `queue.getWaitingCount()` is called immediately after creation to verify Redis connectivity. Throws on failure, preventing the server from starting in a broken state.
+- **DLQ alerting:** When a job exhausts all retry attempts, the `worker.on('failed')` handler writes a `resolution_failed` event to `resolution_history` for the affected bet, making failures visible in dashboards.
 
 ### 12.2 Rate Limiting
 
 `server/src/infrastructure/rateLimiters.ts`
 
-Redis-backed sliding-window rate limiters (singleton instances):
+Redis-backed sliding-window rate limiters (singleton instances).  The `check()` method uses a **single Lua script** executed atomically inside Redis (ZREMRANGEBYSCORE + ZCARD + ZADD in one round-trip), preventing the race condition where concurrent requests could all read "under limit" before any of them records an entry.
 
 | Limiter | Window | Max Requests | Applied To |
 |---|---|---|---|
@@ -914,19 +947,54 @@ When a limit is exceeded, an `AppError.tooManyRequests()` is thrown (429 status)
 
 ### 12.3 Redis Usage Summary
 
+**Connection resilience:** The shared Redis client (`utils/redisClient.ts`) uses an explicit `retryStrategy` with exponential backoff (500 ms base, 30 s cap) for up to 20 reconnect attempts. After exhausting retries the client gives up and logs a fatal error.
+
 | Use Case | Key Pattern | Description |
 |---|---|---|
 | Game state cache | `nfl:game:{gameId}`, `nba:game:{gameId}` | Cached ESPN data for fast validator access |
 | Validator store | `{storeKeyPrefix}:{betId}` | JSON blobs for baselines, progress, intermediate state |
-| Rate limiters | `rl:{type}:{userId}` | Sliding-window counters |
-| BullMQ | `bull:bet-resolution:*` | Job queue data structures |
+| Config sessions | `config-session:{sessionId}` | Mode configuration wizard sessions (TTL = SESSION_TTL_MS) |
+| Rate limiters | `ratelimit:{type}:{key}` | Atomic sliding-window counters (Lua script) |
+| BullMQ – resolution | `bull:bet-resolution:*` | Bet resolution job queue |
+| BullMQ – lifecycle | `bull:bet-lifecycle:*` | Bet lifecycle delayed-job queue (active→pending transitions) |
 
-### 12.4 Logging
+### 12.4 Logging & Observability
 
-**Server:** Structured `logger` utility with context-aware log methods:
+**Server:** Structured JSON logging via **pino** (`utils/logger.ts`). A root pino instance is configured with a `mixin()` function that reads the current `requestId` from an `AsyncLocalStorage` context (`utils/requestContext.ts`), so every log line in a request scope automatically includes the originating `requestId`. Child loggers are created per service via `createLogger(prefix)`:
+
 ```typescript
-logger.info('Bet transitioned', { betId, from: 'active', to: 'pending' });
-logger.error('Resolution failed', { betId, error });
+const logger = createLogger('betService');
+logger.info({ betId, from: 'active', to: 'pending' }, 'Bet transitioned');
+logger.error({ betId, err }, 'Resolution failed');
+```
+
+Log level: `debug` in development, `info` in production. Output is newline-delimited JSON (ndjson), ready for aggregation in Datadog, Loki, or CloudWatch.
+
+**Request context propagation:** The `requestIdMiddleware` wraps each request in `requestContext.run({ requestId })` using Node.js `AsyncLocalStorage`. All downstream code — controllers, services, repositories, BullMQ workers — automatically inherits the `requestId` in pino log output without any explicit parameter passing.
+
+**Metrics:** A lightweight Prometheus-compatible metrics system (`infrastructure/metrics.ts`) exposes three metric types:
+
+| Type | Metric | Labels | Purpose |
+|---|---|---|---|
+| Counter | `http_requests_total` | `method`, `path`, `status` | Total HTTP requests |
+| Histogram | `http_request_duration_ms` | `method`, `path`, `status` | Request latency (ms) |
+| Histogram | `external_api_duration_ms` | `provider`, `status` | ESPN/NBA upstream latency |
+| Gauge | `resolution_queue_depth` | — | Resolution queue waiting jobs |
+| Gauge | `lifecycle_queue_depth` | — | Lifecycle queue waiting jobs |
+| Gauge | `circuit_breaker_state` | `name` | Circuit breaker state (0=closed, 1=open, 2=half-open) |
+
+Metrics are served at `GET /metrics` in Prometheus text exposition format (`text/plain; version=0.0.4`), ready for scraping by Prometheus or Grafana Agent.
+
+**Health checks:** `GET /api/health` includes Redis, Supabase, and BullMQ worker status:
+```json
+{
+  "status": "healthy | degraded | unhealthy",
+  "checks": {
+    "redis": { "ok": true, "latencyMs": 2 },
+    "supabase": { "ok": true, "latencyMs": 15 },
+    "bullmq": { "resolutionWorker": true, "lifecycleWorker": true }
+  }
+}
 ```
 
 **Client:** `createLogger(tag)` factory that produces scoped loggers:
@@ -961,7 +1029,7 @@ Production builds suppress debug-level output.
                touch_table_last_activity()
 
 5. BetLifecycleService.registerBet(betId, closeTime)
-   └─ Schedules setTimeout for (closeTime - now) ms
+   └─ Enqueues a delayed BullMQ job (fires at closeTime + 250ms grace)
 
 6. Client receives 201 Created
    └─ TanStack Query invalidates bets.byTable(tableId)
@@ -974,7 +1042,7 @@ Production builds suppress debug-level output.
 ### 13.2 Bet Resolution (End-to-End)
 
 ```
-1. close_time reached → BetLifecycleService timer fires
+1. close_time reached → BullMQ lifecycle job fires
 
 2. Calls transition_bet_to_pending(betId) RPC
    └─ Checks ≥2 distinct guesses → moves to PENDING
@@ -1009,161 +1077,75 @@ Production builds suppress debug-level output.
 
 ---
 
-## 14. Directory Reference
+## 14. DevOps & Deployment
 
-### Server (`server/src/`)
+### 14.1 CI Pipeline (GitHub Actions)
 
-```
-index.ts                          Express app entry point
-supabaseClient.ts                 Admin + per-request Supabase clients
-config/
-  env.ts                          Zod-validated environment config
-constants/
-  betting.ts                      Bet-related constants
-  environment.ts                  Environment detection
-  errorMessages.ts                Standardized error message strings
-controllers/
-  betController.ts                Bet proposal + participation endpoints
-  friendController.ts             Friend request endpoints
-  messageController.ts            Chat message endpoints
-  modeController.ts               Mode listing + preview endpoints
-  tableController.ts              Table CRUD + member management
-  ticketController.ts             Ticket/history endpoints
-data/
-  nflRefinedDataAccessors.ts      NFL stat extraction from ESPN data
-  nbaRefinedDataAccessors.ts      NBA stat extraction from ESPN data
-  nfl_data/                       NFL data schemas/files
-  nba_data/                       NBA data schemas/files
-infrastructure/
-  rateLimiters.ts                 Redis rate limiter singletons
-leagues/
-  registry.ts                     Central mode registry
-  types.ts                        Mode/league type definitions
-  nfl/                            NFL mode modules (7 modes)
-  nba/                            NBA mode modules (6 modes)
-  u2pick/                         U2Pick mode modules (1 mode)
-  sharedUtils/
-    baseValidatorService.ts       Abstract validator base class
-    modeRuntimeKernel.ts          Per-mode runtime (feeds + realtime)
-    resolutionQueue.ts            BullMQ queue for bet resolution
-    washService.ts                Wash detection logic
-    betRepository.ts              Bet data access
-    redisJsonStore.ts             Redis JSON storage helper
-    resolveUtils.ts               Common resolution logic
-    *Factory.ts                   Mode pattern factories (6 factories)
-    spreadEvaluator.ts            Spread evaluation logic
-    userConfigBuilder.ts          User-facing config generation
-middleware/
-  auth.ts                         Bearer token auth + user scoping
-  errorHandler.ts                 AppError handling + asyncHandler
-  requestId.ts                    Request ID generation
-  rateLimitHeaders.ts             Rate limit response headers
-routes/
-  api.ts                          All API route definitions
-services/
-  bet/
-    betLifecycleService.ts        Active→Pending timer management
-  leagueData/
-    index.ts                      Unified league data accessor
-    registry.ts                   League data provider registration
-    feeds/                        Game feed auto-registration
-    kernel/                       Per-league data orchestration
-  nflData/                        NFL ESPN polling service
-  nbaData/                        NBA ESPN polling service
-  dataIngest/                     Shared ingest utilities
-types/
-  express.d.ts                    Express request augmentation (authUser, supabase)
-  league.ts                       League union type + normalizeLeague()
-utils/
-  gameId.ts                       Game ID parsing/generation
-  logger.ts                       Structured logging utility
-repositories/
-  BaseRepository.ts               Abstract repository with pagination
-  TableRepository.ts
-  TicketRepository.ts
-  MessageRepository.ts
-  FriendRepository.ts
-  UserRepository.ts
-errors/
-  AppError.ts                     Unified error class with static factories
-tests/
-  unit/                           Unit tests
-  integration/                    Integration tests
-  fixtures/                       Test data
-  helpers/                        Test utilities
-```
-
-### Client (`client/src/`)
+`.github/workflows/ci.yml` runs on every push/PR to `main` that touches `server/**`:
 
 ```
-main.tsx                          React DOM entry point
-App.tsx                           Route definitions (lazy-loaded)
-vite-env.d.ts                     Vite type declarations
-assets/
-  global.css                      Global styles (Tailwind)
-  *.png                           Static image assets
-components/
-  Bet/                            Bet-related presentational components
-  Navbar/                         Navigation bar
-  Social/                         Social/friend components
-  Table/                          Table-related presentational components
-data/
-  clients/
-    restClient.ts                 HTTP client with auth header injection
-    supabaseClient.ts             Supabase browser client (anon key)
-  repositories/
-    betsRepository.ts             Bet REST API calls
-    modesRepository.ts            Mode REST API calls
-    tablesRepository.ts           Table REST API calls
-    socialRepository.ts           Social REST API calls
-    usersRepository.ts            User REST API calls
-  subscriptions/
-    tableSubscriptions.ts         Supabase Realtime channel management
-  types/
-    supabase.ts                   Generated Supabase database types
-features/
-  auth/                           AuthProvider, useAuth, auth types
-  bets/
-    hooks/                        TanStack Query hooks for bets
-    service.ts                    Bet business logic
-    mappers.ts                    Data transformation
-    types.ts                      Bet domain types
-    utils/                        Bet utilities
-  table/
-    hooks/                        TanStack Query hooks for tables
-    hooks.ts                      Additional table hooks
-    services/                     Table service layer
-    chat/                         Chat feature
-    types.ts                      Table domain types
-  social/                         Friend hooks and types
-pages/
-  index.tsx                       Page barrel exports
-  HomePage/
-  TablesListPage/
-  TableView/
-  TicketsPage/
-  AccountPage/
-  NotFoundPage/
-shared/
-  hooks/
-    useBetPhase.ts                Bet phase derivation
-    useDialog.ts                  Dialog state management
-    useDomTimer.ts                Countdown timer
-    useIsMobile.ts                Responsive breakpoint
-  types/                          Shared type definitions
-  utils/
-    dateTime.ts                   Date formatting
-    error.ts                      Error utilities
-    logger.ts                     Client logging factory
-    number.ts                     Number formatting
-  widgets/
-    ErrorBoundary/                React error boundary
-    FilterBar/                    Reusable filter component
-  providers/
-    QueryProvider.tsx             TanStack Query provider
-  queryKeys.ts                    Centralized query key factories
+1. Checkout + Node.js 20 setup (npm cache from package-lock.json)
+2. npm ci
+3. ESLint — src/**/*.ts (0 errors enforced; warnings allowed)
+4. tsc --noEmit — full type-check
+5. vitest run --coverage — all unit + integration tests
+6. Coverage gate — statement coverage ≥ 70% (fails the build if below)
+7. Upload coverage artifacts (14-day retention)
 ```
+
+A Redis 7 Alpine service container is spun up for integration tests that need it.
+
+### 14.2 Docker
+
+**Multi-stage Dockerfile** (`server/Dockerfile`):
+
+| Stage | Base Image | Purpose |
+|---|---|---|
+| `builder` | `node:20-alpine` | Install all deps, compile TypeScript via `tsc -p .` → `dist/` |
+| `runner` | `node:20-alpine` | Production deps only, copy compiled JS, non-root user |
+
+**Security:** Runs as `appuser` (non-root). `HEALTHCHECK` pings `GET /metrics`.
+
+**docker-compose.yml** (repo root) provides a local development stack:
+- `redis` — Redis 7 Alpine with health check and persistent volume
+- `server` — Builds from `server/Dockerfile`, reads `server/.env`, depends on Redis healthy
+
+```bash
+# Local dev — just Redis (use with ts-node-dev)
+docker compose up -d redis
+
+# Full stack
+docker compose up --build
+```
+
+### 14.3 Environment Configuration
+
+All environment variables are validated at startup by a Zod schema (`src/config/env.ts`).
+Full documentation with types, defaults, and descriptions is in `server/.env.example`.
+
+### 14.4 Load Testing
+
+A [k6](https://grafana.com/docs/k6/) smoke test is available at `server/tests/load/k6-smoke.js`:
+
+```bash
+k6 run server/tests/load/k6-smoke.js \
+  --env K6_AUTH_TOKEN="eyJ..." \
+  --env K6_TABLE_ID="abc-123"
+```
+
+**Stages:** Ramp-up (0→20 VUs, 30s) → Sustained (20 VUs, 2m) → Spike (50 VUs, 45s) → Ramp-down.
+**Thresholds:** p95 latency < 500ms, p99 < 1000ms, error rate < 5%.
+
+### 14.5 Redis Key Namespaces
+
+Full reference in `server/docs/REDIS_KEYS.md`. Key subsystems:
+
+| Prefix Pattern | Subsystem |
+|---|---|
+| `bull:bet-resolution:*` | BullMQ resolution queue |
+| `bull:bet-lifecycle:*` | BullMQ lifecycle queue |
+| `ratelimit:{type}:{userId}` | Sliding-window rate limiters |
+| `config-session:{sessionId}` | Mode config wizard sessions |
+| `{modePrefix}:{betId}` | Validator baseline/progress stores (13 modes) |
 
 ---
-
-*This document is generated from source analysis. For database-specific details, see `promptEngineering/supabase_schema/`, `supabase_functions/`, `supabase_row_level_security/`, and `supbase_triggers/`.*

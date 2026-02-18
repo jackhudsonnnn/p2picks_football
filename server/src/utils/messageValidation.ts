@@ -22,6 +22,7 @@ export const MIN_MESSAGE_LENGTH = 1;
  * Patterns to strip from messages (potential XSS vectors, invisible characters, etc.)
  */
 const STRIP_PATTERNS = [
+  // eslint-disable-next-line no-control-regex
   /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, // Control characters (except \t, \n, \r)
   /\u200B/g, // Zero-width space
   /\u200C/g, // Zero-width non-joiner

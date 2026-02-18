@@ -5,7 +5,9 @@ export interface FormatHundredthOptions {
 export function normalizeToHundredth(value: unknown): number {
   const numeric = Number(value ?? 0);
   if (!Number.isFinite(numeric)) return 0;
-  const rounded = Math.round(numeric * 100) / 100;
+  // Add EPSILON before multiplying to compensate for IEEE-754 representation errors
+  // e.g. 1.005 * 100 = 100.49999… → rounds to 100 (wrong). With EPSILON → 100.50… → 101 (correct)
+  const rounded = Math.round((numeric + Number.EPSILON) * 100) / 100;
   return Object.is(rounded, -0) ? 0 : rounded;
 }
 

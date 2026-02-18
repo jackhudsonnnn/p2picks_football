@@ -19,9 +19,57 @@ export interface RateLimitResult {
   retryAfterSeconds: number | null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Lua script — executed atomically inside Redis
+//
+// KEYS[1] = the sorted-set key
+// ARGV[1] = window start timestamp (ms)
+// ARGV[2] = current timestamp (ms)
+// ARGV[3] = maxRequests
+// ARGV[4] = TTL seconds for the key
+// ARGV[5] = unique entry id (timestamp:random)
+//
+// Returns { allowed (0|1), currentCount, oldestScore }
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RATE_LIMIT_LUA = `
+local key         = KEYS[1]
+local windowStart = tonumber(ARGV[1])
+local now         = tonumber(ARGV[2])
+local maxReqs     = tonumber(ARGV[3])
+local ttl         = tonumber(ARGV[4])
+local entryId     = ARGV[5]
+
+-- 1. Remove entries outside the window
+redis.call('ZREMRANGEBYSCORE', key, 0, windowStart)
+
+-- 2. Count current entries
+local count = redis.call('ZCARD', key)
+
+if count >= maxReqs then
+  -- Over limit — find the oldest entry's score for retry-after calculation
+  local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
+  local oldestScore = 0
+  if oldest and #oldest >= 2 then
+    oldestScore = tonumber(oldest[2])
+  end
+  return {0, count, oldestScore}
+end
+
+-- 3. Under limit — add the entry and set expiry
+redis.call('ZADD', key, now, entryId)
+redis.call('EXPIRE', key, ttl)
+
+return {1, count + 1, 0}
+`;
+
 /**
  * Sliding window rate limiter using Redis sorted sets.
- * Provides per-key rate limiting with configurable windows.
+ *
+ * The `check()` method is fully atomic — a single Lua script performs
+ * cleanup, count, and insertion in one round-trip, preventing the race
+ * where concurrent requests can all read "under limit" before any of
+ * them records its entry.
  */
 export class RateLimiter {
   private redis: Redis;
@@ -38,50 +86,43 @@ export class RateLimiter {
 
   /**
    * Check if a request is allowed and record it if so.
-   * @param key - Unique identifier for the rate limit bucket (e.g., `user:${userId}:table:${tableId}`)
-   * @returns Rate limit result with remaining count and reset time
+   * Fully atomic via a Redis Lua script.
    */
   async check(key: string): Promise<RateLimitResult> {
     const now = Date.now();
     const windowMs = this.config.windowSeconds * 1000;
     const windowStart = now - windowMs;
     const redisKey = `${this.config.keyPrefix}:${key}`;
+    const entryId = `${now}:${Math.random().toString(36).slice(2, 8)}`;
+    const ttl = this.config.windowSeconds + 1;
 
-    // Use a transaction to atomically:
-    // 1. Remove expired entries
-    // 2. Count current entries
-    // 3. Add new entry if allowed
-    const pipeline = this.redis.pipeline();
-    
-    // Remove entries older than the window
-    pipeline.zremrangebyscore(redisKey, 0, windowStart);
-    
-    // Count current entries in window
-    pipeline.zcard(redisKey);
-    
-    const results = await pipeline.exec();
-    if (!results) {
-      // Redis error, fail open (allow the request)
-      logger.warn({}, 'Pipeline returned null, failing open');
-      return {
-        allowed: true,
-        remaining: this.config.maxRequests - 1,
-        resetInSeconds: this.config.windowSeconds,
-        retryAfterSeconds: null,
-      };
-    }
+    try {
+      const result = await this.redis.eval(
+        RATE_LIMIT_LUA,
+        1,
+        redisKey,
+        String(windowStart),
+        String(now),
+        String(this.config.maxRequests),
+        String(ttl),
+        entryId,
+      ) as [number, number, number];
 
-    const [, zcardResult] = results;
-    const currentCount = (zcardResult?.[1] as number) ?? 0;
+      const [allowed, currentCount, oldestScore] = result;
 
-    if (currentCount >= this.config.maxRequests) {
-      // Rate limited - find when the oldest entry expires
-      const oldestEntries = await this.redis.zrange(redisKey, 0, 0, 'WITHSCORES');
+      if (allowed) {
+        return {
+          allowed: true,
+          remaining: this.config.maxRequests - currentCount,
+          resetInSeconds: this.config.windowSeconds,
+          retryAfterSeconds: null,
+        };
+      }
+
+      // Rate limited
       let retryAfterSeconds = this.config.windowSeconds;
-      
-      if (oldestEntries.length >= 2) {
-        const oldestTimestamp = parseInt(oldestEntries[1], 10);
-        const expiresAt = oldestTimestamp + windowMs;
+      if (oldestScore > 0) {
+        const expiresAt = oldestScore + windowMs;
         retryAfterSeconds = Math.max(1, Math.ceil((expiresAt - now) / 1000));
       }
 
@@ -91,23 +132,16 @@ export class RateLimiter {
         resetInSeconds: retryAfterSeconds,
         retryAfterSeconds,
       };
+    } catch (err) {
+      // Redis error — fail open (allow the request)
+      logger.warn({ error: err instanceof Error ? err.message : String(err) }, 'Lua eval failed, failing open');
+      return {
+        allowed: true,
+        remaining: this.config.maxRequests - 1,
+        resetInSeconds: this.config.windowSeconds,
+        retryAfterSeconds: null,
+      };
     }
-
-    // Request allowed - add entry with current timestamp as score
-    // Use timestamp + random suffix for uniqueness
-    const entryId = `${now}:${Math.random().toString(36).slice(2, 8)}`;
-    await this.redis
-      .pipeline()
-      .zadd(redisKey, now, entryId)
-      .expire(redisKey, this.config.windowSeconds + 1)
-      .exec();
-
-    return {
-      allowed: true,
-      remaining: this.config.maxRequests - currentCount - 1,
-      resetInSeconds: this.config.windowSeconds,
-      retryAfterSeconds: null,
-    };
   }
 
   /**

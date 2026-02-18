@@ -1,0 +1,115 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# P2Picks Server — Continuous Integration
+# ──────────────────────────────────────────────────────────────────────────────
+# Runs on every push/PR to main:
+#   1. Lint (ESLint)
+#   2. Type-check (tsc --noEmit)
+#   3. Unit / integration tests (vitest)
+#   4. Coverage gate (fail if below threshold)
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: CI — Server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/ci.yml'
+
+# Cancel in-progress runs on the same branch
+concurrency:
+  group: ci-server-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  # Dummy values — tests mock external services
+  SUPABASE_URL: https://placeholder.supabase.co
+  SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+  SUPABASE_ANON_KEY: placeholder-anon-key
+  REDIS_URL: redis://localhost:6379
+
+jobs:
+  ci:
+    name: Lint → Typecheck → Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: server
+        run: npm ci
+
+      # ── Step 1: Lint ──────────────────────────────────────────────────────
+      - name: Lint
+        working-directory: server
+        run: npx eslint 'src/**/*.ts'
+
+      # ── Step 2: Type-check ────────────────────────────────────────────────
+      - name: Type-check
+        working-directory: server
+        run: npx tsc --noEmit
+
+      # ── Step 3: Test + Coverage ───────────────────────────────────────────
+      - name: Test with coverage
+        working-directory: server
+        run: npx vitest run --coverage
+
+      # ── Step 4: Coverage gate ─────────────────────────────────────────────
+      - name: Enforce coverage thresholds
+        working-directory: server
+        run: |
+          node -e "
+            const report = require('./coverage/coverage-final.json');
+            let totalStmts = 0, coveredStmts = 0;
+            for (const file of Object.values(report)) {
+              const s = file.s;
+              for (const [key, count] of Object.entries(s)) {
+                totalStmts++;
+                if (count > 0) coveredStmts++;
+              }
+            }
+            const pct = totalStmts > 0 ? ((coveredStmts / totalStmts) * 100).toFixed(2) : 0;
+            console.log('Statement coverage: ' + pct + '% (' + coveredStmts + '/' + totalStmts + ')');
+            if (pct < 70) {
+              console.error('❌ Coverage ' + pct + '% is below the 70% threshold');
+              process.exit(1);
+            }
+            console.log('✅ Coverage gate passed');
+          "
+
+      # ── Artifacts ─────────────────────────────────────────────────────────
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: server/coverage/
+          retention-days: 14

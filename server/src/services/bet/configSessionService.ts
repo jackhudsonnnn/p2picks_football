@@ -19,6 +19,11 @@ import {
   DEFAULT_TIME_LIMIT,
 } from '../../constants/betting';
 import { normalizeLeague, type League } from '../../types/league';
+import { getRedisClient } from '../../utils/redisClient';
+import { createLogger } from '../../utils/logger';
+import { preWarmGameData } from './gameDataPreWarmer';
+
+const logger = createLogger('configSessionService');
 
 export type ModeConfigSessionStatus = 'mode_config' | 'general' | 'summary';
 
@@ -110,6 +115,67 @@ export interface ConsumedModeConfigSession {
 
 const sessions = new Map<string, ModeConfigSession>();
 
+const REDIS_SESSION_PREFIX = 'config-session';
+const REDIS_SESSION_TTL_SECONDS = Math.ceil(SESSION_TTL_MS / 1000);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Redis-backed session storage
+//
+// Sessions are stored as JSON strings in Redis with a TTL.  The in-memory Map
+// is kept as a write-through cache for the current process to avoid an extra
+// round-trip on sequential calls within the same request.  Redis is the source
+// of truth — if a session is missing from the Map it will be fetched from Redis.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function sessionRedisKey(sessionId: string): string {
+  return `${REDIS_SESSION_PREFIX}:${sessionId}`;
+}
+
+async function persistSession(session: ModeConfigSession): Promise<void> {
+  try {
+    const redis = getRedisClient();
+    await redis.set(
+      sessionRedisKey(session.id),
+      JSON.stringify(session),
+      'EX',
+      REDIS_SESSION_TTL_SECONDS,
+    );
+    sessions.set(session.id, session);
+  } catch (err) {
+    logger.error({ sessionId: session.id, error: err instanceof Error ? err.message : String(err) }, 'failed to persist session to Redis');
+    // Fall back to in-memory only
+    sessions.set(session.id, session);
+  }
+}
+
+async function loadSession(sessionId: string): Promise<ModeConfigSession | null> {
+  // Check local cache first
+  const cached = sessions.get(sessionId);
+  if (cached) return cached;
+
+  try {
+    const redis = getRedisClient();
+    const raw = await redis.get(sessionRedisKey(sessionId));
+    if (!raw) return null;
+    const session = JSON.parse(raw) as ModeConfigSession;
+    sessions.set(sessionId, session); // warm local cache
+    return session;
+  } catch (err) {
+    logger.error({ sessionId, error: err instanceof Error ? err.message : String(err) }, 'failed to load session from Redis');
+    return null;
+  }
+}
+
+async function deleteSession(sessionId: string): Promise<void> {
+  sessions.delete(sessionId);
+  try {
+    const redis = getRedisClient();
+    await redis.del(sessionRedisKey(sessionId));
+  } catch (err) {
+    logger.error({ sessionId, error: err instanceof Error ? err.message : String(err) }, 'failed to delete session from Redis');
+  }
+}
+
 export function normalizeWagerAmount(value: number): number {
   if (!Number.isFinite(value)) {
     return DEFAULT_WAGER;
@@ -153,7 +219,12 @@ export async function createModeConfigSession(params: {
     updatedAt: Date.now(),
     consumed: false,
   };
-  sessions.set(id, session);
+  await persistSession(session);
+
+  // Fire-and-forget: pre-warm game data into the league provider cache
+  // so that subsequent buildModePreview calls are faster.
+  preWarmGameData(league, params.leagueGameId);
+
   return hydrateSessionDTO(session);
 }
 
@@ -161,7 +232,7 @@ export async function applyModeConfigChoice(sessionId: string, payload: {
   stepKey: string;
   choiceId: string;
 }): Promise<ModeConfigSessionDTO> {
-  const session = requireSession(sessionId);
+  const session = await requireSessionAsync(sessionId);
   const view = await computeSteps(session);
   const targetStep = view.steps.find((step) => step.key === payload.stepKey);
   if (!targetStep) {
@@ -176,11 +247,12 @@ export async function applyModeConfigChoice(sessionId: string, payload: {
   session.preview = null;
   session.status = 'mode_config';
   session.updatedAt = Date.now();
+  await persistSession(session);
   return hydrateSessionDTO(session);
 }
 
 export async function setModeConfigGeneral(sessionId: string, input: Partial<GeneralConfigValues>): Promise<ModeConfigSessionDTO> {
-  const session = requireSession(sessionId);
+  const session = await requireSessionAsync(sessionId);
   if (session.status === 'mode_config') {
     throw new Error('Complete mode configuration before setting wager or time limit');
   }
@@ -193,17 +265,18 @@ export async function setModeConfigGeneral(sessionId: string, input: Partial<Gen
   session.preview = await buildModePreview(session.modeKey, session.config, null);
   session.status = 'summary';
   session.updatedAt = Date.now();
+  await persistSession(session);
   return hydrateSessionDTO(session);
 }
 
 export async function getModeConfigSession(sessionId: string): Promise<ModeConfigSessionDTO> {
-  const session = requireSession(sessionId);
+  const session = await requireSessionAsync(sessionId);
   return hydrateSessionDTO(session);
 }
 
-export function consumeModeConfigSession(sessionId: string): ConsumedModeConfigSession {
+export async function consumeModeConfigSession(sessionId: string): Promise<ConsumedModeConfigSession> {
   pruneSessions();
-  const session = sessions.get(sessionId);
+  const session = await loadSession(sessionId);
   if (!session) {
     throw new Error('Configuration session not found');
   }
@@ -217,7 +290,7 @@ export function consumeModeConfigSession(sessionId: string): ConsumedModeConfigS
     throw new Error('Configuration preview must be error free before submission');
   }
   session.consumed = true;
-  sessions.delete(sessionId);
+  await deleteSession(sessionId);
   return {
     id: session.id,
     modeKey: session.modeKey,
@@ -338,6 +411,21 @@ function requireSession(sessionId: string): ModeConfigSession {
   const expired = Date.now() - session.updatedAt > SESSION_TTL_MS;
   if (expired) {
     sessions.delete(sessionId);
+    throw new Error('Configuration session expired');
+  }
+  return session;
+}
+
+async function requireSessionAsync(sessionId: string): Promise<ModeConfigSession> {
+  pruneSessions();
+  // Try local cache first, then fall back to Redis
+  const session = await loadSession(sessionId);
+  if (!session) {
+    throw new Error('Configuration session not found');
+  }
+  const expired = Date.now() - session.updatedAt > SESSION_TTL_MS;
+  if (expired) {
+    await deleteSession(sessionId);
     throw new Error('Configuration session expired');
   }
   return session;

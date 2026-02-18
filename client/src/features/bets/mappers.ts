@@ -58,7 +58,7 @@ export function mapParticipationRowToTicket(row: ParticipationRow): Ticket {
     betId: bet?.bet_id,
     id: row.participation_id,
     tableId: row.table_id,
-    tableName: bet?.tables?.table_name || '',
+    tableName: bet?.table_name || bet?.tables?.table_name || '',
     createdAt: bet?.proposal_time || row.participation_time,
     closedAt: bet?.resolution_time ?? null,
     state: betStatus,

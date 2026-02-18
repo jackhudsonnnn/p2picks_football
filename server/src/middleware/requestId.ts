@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import { requestContext } from '../utils/requestContext';
 
 /**
  * Header name for the request ID.
@@ -16,6 +17,7 @@ export const REQUEST_ID_KEY = 'requestId';
  * Extends Express Request type to include requestId.
  */
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       requestId: string;
@@ -66,7 +68,11 @@ export function requestIdMiddleware(
   // Add to response headers for client correlation
   res.setHeader(REQUEST_ID_HEADER, requestId);
 
-  next();
+  // Run the remainder of the request inside AsyncLocalStorage so that
+  // every downstream `createLogger` call auto-includes the requestId.
+  requestContext.run({ requestId }, () => {
+    next();
+  });
 }
 
 /**

@@ -18,7 +18,7 @@ import type {
   ModeLiveInfo,
 } from '../../../types/modes';
 import type { BetProposal } from '../../../supabaseClient';
-import { normalizeSpread } from '../spreadEvaluator';
+import { normalizeSpread } from '../../sharedUtils/spreadEvaluator';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Factory configuration type
@@ -80,7 +80,12 @@ export function createSpreadTheWealthModule(
     const home = config.home_team_name || config.home_team_id || 'Home Team';
     const away = config.away_team_name || config.away_team_id || 'Away Team';
     const spread = config.spread_label || config.spread || 'adjusted';
-    return `Highest score between ${home} (${spread} points) and ${away}`;
+    const resolveAtRaw =
+      (typeof config.resolve_at === 'string' && config.resolve_at.trim()) ||
+      cfg.defaultResolveAt ||
+      'End of Game';
+    const resolveAt = resolveAtRaw === 'Halftime' ? 'at halftime' : 'by end of game';
+    return `Highest score ${resolveAt} between ${home} (${spread} points) and ${away}`;
   }
 
   function computeOptions({ config }: ModeContext): string[] {
@@ -117,8 +122,12 @@ export function createSpreadTheWealthModule(
   function validateConfig({ config }: ModeContext): string[] {
     const errors: string[] = [];
     errors.push(...validateSpread(config));
-    if (cfg.requiresResolveAt && !config.resolve_at) {
+    const resolveAtRaw = typeof config.resolve_at === 'string' ? config.resolve_at.trim() : '';
+    if (cfg.requiresResolveAt && !resolveAtRaw) {
       errors.push('Resolve at required');
+    }
+    if (resolveAtRaw && cfg.allowedResolveAt && !cfg.allowedResolveAt.includes(resolveAtRaw)) {
+      errors.push(`Resolve at must be one of: ${cfg.allowedResolveAt.join(', ')}`);
     }
     return errors;
   }

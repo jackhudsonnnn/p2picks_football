@@ -26,6 +26,9 @@ export const ModeStage: React.FC<ModeStageProps> = ({
     return <div className="form-step centered-step">Loading configuration options...</div>;
   }
 
+  const choices = step.choices ?? [];
+  const hasChoices = choices.length > 0;
+
   return (
     <div className="form-step">
       <div className="form-group">
@@ -36,15 +39,18 @@ export const ModeStage: React.FC<ModeStageProps> = ({
           id={`step-${step.key}`}
           className="form-select"
           value={step.selectedChoiceId ?? ''}
-          disabled={sessionUpdating}
+          disabled={sessionUpdating || !hasChoices}
           onChange={(e) => onChoiceChange(step.key, e.target.value)}
         >
-          <option value="">Select option</option>
-          {step.choices.map((choice) => (
-            <option key={choice.id} value={choice.id} disabled={choice.disabled}>
-              {choice.label}
-            </option>
-          ))}
+          <option value="">{hasChoices ? 'Select option' : 'No options available'}</option>
+          {choices.map((choice, idx) => {
+            const key = choice.id ?? choice.value ?? choice.label ?? String(idx);
+            return (
+              <option key={key} value={choice.id ?? choice.value ?? ''} disabled={choice.disabled}>
+                {choice.label}
+              </option>
+            );
+          })}
         </select>
       </div>
     </div>

@@ -9,6 +9,18 @@ type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled';
 
 const RATE_LIMIT_MESSAGE = 'Friend request rate limit exceeded. Please wait before adding more friends.';
 
+/**
+ * Strict UUID format guard.
+ * Prevents PostgREST filter injection when interpolating into `.or()` strings.
+ */
+const SAFE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function assertUuid(value: string, label: string): void {
+  if (!SAFE_UUID.test(value)) {
+    throw new Error(`${label} is not a valid UUID`);
+  }
+}
+
 function normalizeUsername(raw: string): string {
   return raw.replace(/[^a-zA-Z0-9_]/g, '');
 }
@@ -25,6 +37,8 @@ async function fetchUserMap(supabase: NonNullable<Request['supabase']>, userIds:
 }
 
 async function ensureFriendship(supabase: NonNullable<Request['supabase']>, userIdA: string, userIdB: string) {
+  assertUuid(userIdA, 'userIdA');
+  assertUuid(userIdB, 'userIdB');
   const { data: existing, error: existingError } = await supabase
     .from('friends')
     .select('user_id1, user_id2')
@@ -124,6 +138,8 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
     }
 
     // Already friends?
+    assertUuid(authUser.id, 'authUser.id');
+    assertUuid(targetUser.user_id, 'targetUser.user_id');
     const { data: existingRelation, error: relationError } = await supabase
       .from('friends')
       .select('user_id1, user_id2')
@@ -248,6 +264,8 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
       res.status(401).json({ error: 'Authentication required' });
       return;
     }
+
+    assertUuid(authUser.id, 'authUser.id');
 
     const { data, error } = await supabase
       .from('friend_requests')

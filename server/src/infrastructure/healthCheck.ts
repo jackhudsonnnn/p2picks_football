@@ -8,6 +8,8 @@
 import { getRedisClient } from '../utils/redisClient';
 import { getSupabaseAdmin } from '../supabaseClient';
 import { createLogger } from '../utils/logger';
+import { isResolutionWorkerRunning } from '../leagues/sharedUtils/resolutionQueue';
+import { isLifecycleWorkerRunning } from '../services/bet/betLifecycleQueue';
 
 const logger = createLogger('healthCheck');
 
@@ -28,6 +30,10 @@ export interface HealthStatus {
   checks: {
     redis: HealthCheckResult;
     supabase: HealthCheckResult;
+    bullmq: {
+      resolutionWorker: boolean;
+      lifecycleWorker: boolean;
+    };
   };
 }
 
@@ -106,7 +112,12 @@ export async function getHealthStatus(): Promise<HealthStatus> {
     checkSupabaseHealth(),
   ]);
 
-  const allOk = redis.ok && supabase.ok;
+  const bullmq = {
+    resolutionWorker: isResolutionWorkerRunning(),
+    lifecycleWorker: isLifecycleWorkerRunning(),
+  };
+
+  const allOk = redis.ok && supabase.ok && bullmq.resolutionWorker && bullmq.lifecycleWorker;
   const anyOk = redis.ok || supabase.ok;
 
   let status: HealthStatus['status'];
@@ -125,6 +136,7 @@ export async function getHealthStatus(): Promise<HealthStatus> {
     checks: {
       redis,
       supabase,
+      bullmq,
     },
   };
 }

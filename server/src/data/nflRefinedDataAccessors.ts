@@ -380,15 +380,15 @@ export async function getTeamScoreStats(
     return { score: -1, touchdowns: -1, fieldGoals: -1, safeties: -1 };
   }
 
-  let score: number = team.score || -1;
+  const score: number = team.score || -1;
 
   if (!team.scoring) {
     return { score, touchdowns: -1, fieldGoals: -1, safeties: -1 };
   }
 
-  let touchdowns: number = team.scoring.touchdowns || -1;
-  let fieldGoals: number = team.scoring.fieldGoals || -1;
-  let safeties: number = team.scoring.safeties || -1;
+  const touchdowns: number = team.scoring.touchdowns || -1;
+  const fieldGoals: number = team.scoring.fieldGoals || -1;
+  const safeties: number = team.scoring.safeties || -1;
 
   return { score, touchdowns, fieldGoals, safeties };
 }
