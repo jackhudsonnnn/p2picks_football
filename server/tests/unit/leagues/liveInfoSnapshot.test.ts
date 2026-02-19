@@ -107,7 +107,10 @@ describe('captureLiveInfoSnapshot', () => {
     expect(eventType).toBe(LIVE_INFO_SNAPSHOT_EVENT);
     expect(payload.modeKey).toBe('either_or');
     expect(payload.modeLabel).toBe('Either Or');
-    expect(payload.fields).toEqual(MOCK_LIVE_INFO.fields);
+    expect(payload.fields).toEqual([
+      ...MOCK_LIVE_INFO.fields,
+      { label: 'Winning Choice', value: 'Player 1' },
+    ]);
     expect(payload.trigger).toBe('resolved');
     expect(payload.outcomeDetail).toBe('Player 1');
     expect(payload.capturedAt).toBeTruthy();
@@ -126,6 +129,10 @@ describe('captureLiveInfoSnapshot', () => {
     const [, , payload] = mockRecordHistory.mock.calls[0];
     expect(payload.trigger).toBe('washed');
     expect(payload.outcomeDetail).toBe('Game already final');
+    expect(payload.fields).toEqual([
+      ...MOCK_LIVE_INFO.fields,
+      { label: 'Wash Reason', value: 'Game already final' },
+    ]);
   });
 
   it('should use fallback values when getModeLiveInfo returns null', async () => {
@@ -137,7 +144,9 @@ describe('captureLiveInfoSnapshot', () => {
     const [, , payload] = mockRecordHistory.mock.calls[0];
     expect(payload.modeKey).toBe('either_or');
     expect(payload.modeLabel).toBe('either_or');
-    expect(payload.fields).toEqual([]);
+    expect(payload.fields).toEqual([
+      { label: 'Winning Choice', value: 'Player 1' },
+    ]);
     expect(payload.unavailableReason).toBeNull();
   });
 

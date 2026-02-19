@@ -4603,7 +4603,7 @@
           }
         }
       ],
-      "possession": true,
+      "possession": false,
       "homeAway": "away"
     },
     {
@@ -9122,7 +9122,7 @@
           }
         }
       ],
-      "possession": false,
+      "possession": true,
       "homeAway": "home"
     }
   ]

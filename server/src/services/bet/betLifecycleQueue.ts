@@ -12,6 +12,8 @@ import type { ConnectionOptions } from 'bullmq';
 import { getSupabaseAdmin } from '../../supabaseClient';
 import { env } from '../../config/env';
 import { createLogger } from '../../utils/logger';
+import { captureLiveInfoSnapshot } from '../../leagues/sharedUtils/liveInfoSnapshot';
+import type { League } from '../../types/league';
 
 const logger = createLogger('betLifecycleQueue');
 
@@ -99,7 +101,50 @@ async function transitionBetToPending(betId: string): Promise<string> {
   if (result !== 'pending') {
     logger.debug({ betId, result }, 'transition result');
   }
+
+  // The RPC washes the bet directly in SQL when there aren't enough
+  // distinct guesses. Capture a live-info snapshot so the Information
+  // Modal can still display historical data for these washed bets.
+  if (result === 'washed_insufficient_participation') {
+    captureLiveInfoSnapshotForInsufficientParticipation(betId);
+  }
+
   return result;
+}
+
+/**
+ * Fire-and-forget: capture a live-info snapshot for a bet that was washed
+ * inside the `transition_bet_to_pending` RPC due to insufficient participation.
+ */
+function captureLiveInfoSnapshotForInsufficientParticipation(betId: string): void {
+  (async () => {
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data: betRow } = await supabase
+        .from('bet_proposals')
+        .select('mode_key, league, league_game_id')
+        .eq('bet_id', betId)
+        .maybeSingle();
+
+      const modeKey = (betRow?.mode_key as string) ?? 'unknown';
+      const league = ((betRow?.league as string) ?? 'U2Pick') as League;
+      const leagueGameId = (betRow?.league_game_id as string | null) ?? null;
+
+      await captureLiveInfoSnapshot({
+        betId,
+        modeKey,
+        leagueGameId,
+        league,
+        trigger: 'washed',
+        outcomeDetail: 'Not enough unique participant choices',
+      });
+    } catch (err) {
+      logger.warn(
+        { betId, error: err instanceof Error ? err.message : String(err) },
+        'insufficient-participation snapshot capture failed',
+      );
+    }
+  })();
 }
 
 async function runCatchupCycle(): Promise<number> {

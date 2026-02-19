@@ -47,10 +47,18 @@ export async function captureLiveInfoSnapshot(input: CaptureSnapshotInput): Prom
       league: input.league,
     });
 
+    const fields = liveInfo?.fields ? [...liveInfo.fields] : [];
+
+    // Surface the resolved outcome or wash reason directly in the fields list
+    // so the Information Modal can display it alongside other live info rows.
+    if (input.outcomeDetail && input.trigger !== 'washed') {
+      fields.push({ label: 'Winning Choice', value: input.outcomeDetail });
+    }
+
     const payload: Record<string, unknown> = {
       modeKey: liveInfo?.modeKey ?? input.modeKey,
       modeLabel: liveInfo?.modeLabel ?? input.modeKey,
-      fields: liveInfo?.fields ?? [],
+      fields,
       unavailableReason: liveInfo?.unavailableReason ?? null,
       capturedAt: new Date().toISOString(),
       trigger: input.trigger,
