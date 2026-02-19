@@ -133,6 +133,12 @@ export interface ModeLiveInfo {
   fields: { label: string; value: string | number }[];
   /** Optional message if live info is unavailable */
   unavailableReason?: string;
+  /** ISO timestamp — present only when this is a persisted snapshot */
+  capturedAt?: string;
+  /** Whether this snapshot was taken at resolve or wash time */
+  trigger?: 'resolved' | 'washed';
+  /** Winning choice (resolved) or wash reason (washed) */
+  outcomeDetail?: string | null;
 }
 
 export interface GetLiveInfoInput {

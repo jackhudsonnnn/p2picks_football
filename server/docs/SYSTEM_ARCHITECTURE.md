@@ -196,10 +196,29 @@ system_messages
 resolution_history
  ├── resolution_history_id (PK, UUID)
  ├── bet_id (FK → bet_proposals)
- ├── event_type (text: payout | wash_refund | status_transition | washed)
+ ├── event_type (text: payout | wash_refund | status_transition | washed
+ │                     | resolve_or_wash_live_info | bet_poke_spawned
+ │                     | bet_poke_origin | manual_validation | resolution_failed
+ │                     | <mode>_baseline | <mode>_result)
  ├── payload (jsonb)
  ├── created_at
 ```
+
+#### Event Types Reference
+
+| `event_type` | When written | Payload highlights |
+|---|---|---|
+| `payout` | Trigger: `apply_bet_payouts()` on resolve | Payout distribution details |
+| `wash_refund` | Trigger: `refund_bet_points_on_wash()` | Refund amounts |
+| `status_transition` | Bet lifecycle transitions | Previous/new status |
+| `washed` | `washBetWithHistory` RPC | Wash reason, mode label |
+| `resolve_or_wash_live_info` | `captureLiveInfoSnapshot()` on resolve/wash | `{ modeKey, modeLabel, fields[], capturedAt, trigger, outcomeDetail }` — frozen snapshot of the Information Modal data |
+| `bet_poke_spawned` | `recordBetPokeLink()` | `{ new_bet_id }` |
+| `bet_poke_origin` | `recordBetPokeLink()` | `{ source_bet_id }` |
+| `manual_validation` | `betController.validateBet()` | `{ validated_by, winning_choice }` |
+| `resolution_failed` | DLQ handler in `resolutionQueue` | `{ jobId, type, error, attempts }` |
+| `<mode>_baseline` | Validator baseline capture | Mode-specific baseline data |
+| `<mode>_result` | Validator resolution | Mode-specific evaluation data |
 
 ### 4.2 Custom Enum Types
 
@@ -569,6 +588,10 @@ The bet lifecycle is a state machine managed across three systems: the database 
          (set_winning_choice via
           Resolution Queue)
                   │
+                  ├──► captureLiveInfoSnapshot()
+                  │    → resolve_or_wash_live_info logged
+                  │      (frozen info-modal data)
+                  │
                   ▼
            ┌──────────┐
            │ RESOLVED │  set_bet_resolved_on_winning_choice() trigger
@@ -930,6 +953,17 @@ A BullMQ queue named `bet-resolution` processes bet outcomes:
 - Connection: shared Redis instance
 - **Startup health probe:** `queue.getWaitingCount()` is called immediately after creation to verify Redis connectivity. Throws on failure, preventing the server from starting in a broken state.
 - **DLQ alerting:** When a job exhausts all retry attempts, the `worker.on('failed')` handler writes a `resolution_failed` event to `resolution_history` for the affected bet, making failures visible in dashboards.
+
+### 12.1.1 Live Info Snapshot on Resolve / Wash
+
+`server/src/leagues/sharedUtils/liveInfoSnapshot.ts`
+
+When a bet is resolved or washed, `captureLiveInfoSnapshot()` is called (fire-and-forget) to freeze the current live-info data as a `resolve_or_wash_live_info` event in `resolution_history`. This allows the client's Information Modal to display meaningful data for historical bets even after Redis baselines expire and game feeds go offline.
+
+- **Trigger points:** `BaseValidatorService.resolveWithWinner()`, `BaseValidatorService.washBet()`, `betController.validateBet()`, `washBetWithHistory()`.
+- **Reuses existing `getModeLiveInfo()`** — each mode's live-info logic produces the snapshot; no per-mode code is needed.
+- **Payload shape:** `{ modeKey, modeLabel, fields[], capturedAt, trigger, outcomeDetail }` — identical to `ModeLiveInfo` with metadata.
+- **Client impact:** `GET /api/bets/:betId/live-info` checks bet status first; for settled bets it returns the snapshot from history instead of querying live data.
 
 ### 12.2 Rate Limiting
 

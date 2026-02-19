@@ -21,6 +21,7 @@ import { normalizeLeague } from '../types/league';
 import { setRateLimitHeaders } from '../middleware/rateLimitHeaders';
 import { AppError } from '../errors';
 import { createLogger } from '../utils/logger';
+import { captureLiveInfoSnapshot, LIVE_INFO_SNAPSHOT_EVENT } from '../leagues/sharedUtils/liveInfoSnapshot';
 
 const logger = createLogger('betController');
 
@@ -224,7 +225,7 @@ export async function getBetLiveInfo(req: Request, res: Response) {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: betRow, error: betError } = await supabaseAdmin
       .from('bet_proposals')
-      .select('bet_id, table_id, mode_key, league_game_id, league')
+      .select('bet_id, table_id, mode_key, league_game_id, league, bet_status')
       .eq('bet_id', betId)
       .maybeSingle();
 
@@ -243,6 +244,25 @@ export async function getBetLiveInfo(req: Request, res: Response) {
     if (membershipError) {
       res.status(membershipError.status).json({ error: membershipError.message });
       return;
+    }
+
+    // For settled bets, prefer the persisted snapshot from resolution_history
+    if (betRow.bet_status === 'resolved' || betRow.bet_status === 'washed') {
+      const { data: snapshot } = await supabaseAdmin
+        .from('resolution_history')
+        .select('payload')
+        .eq('bet_id', betId)
+        .eq('event_type', LIVE_INFO_SNAPSHOT_EVENT)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (snapshot?.payload && typeof snapshot.payload === 'object') {
+        res.json(snapshot.payload);
+        return;
+      }
+      // Fall through to live data path as graceful degradation for
+      // bets settled before this feature was deployed
     }
 
     const modeKey = betRow.mode_key as string | null;
@@ -425,6 +445,19 @@ export async function validateBet(req: Request, res: Response) {
       // Log but don't fail the request
       logger.warn({ betId, error: (historyError as Error)?.message }, 'failed to record validation history');
     }
+
+    // Fire-and-forget: capture live-info snapshot for the validated bet
+    const betLeague = (betRow.league as string) ?? 'U2Pick';
+    captureLiveInfoSnapshot({
+      betId,
+      modeKey: (betRow.mode_key as string) ?? 'table_talk',
+      leagueGameId: null,
+      league: betLeague as any,
+      trigger: 'resolved',
+      outcomeDetail: winningChoice,
+    }).catch((err) => {
+      logger.warn({ betId, error: (err as Error)?.message }, 'failed to capture validation snapshot');
+    });
 
     res.json({ 
       success: true, 

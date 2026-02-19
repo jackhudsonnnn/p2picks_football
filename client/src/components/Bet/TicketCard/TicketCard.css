@@ -371,6 +371,15 @@
   margin-bottom: var(--spacing-md);
 }
 
+.live-info-snapshot-badge {
+  color: var(--text-tertiary, var(--text-secondary));
+  font-size: var(--font-size-xs, 0.7rem);
+  padding: var(--spacing-xs, 2px) var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.75;
+  text-align: right;
+}
+
 .live-info-fields {
   display: flex;
   flex-direction: column;

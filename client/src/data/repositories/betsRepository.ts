@@ -206,6 +206,12 @@ export interface BetLiveInfo {
   modeLabel: string;
   fields: BetLiveInfoField[];
   unavailableReason?: string;
+  /** ISO timestamp — present only when this is a persisted snapshot */
+  capturedAt?: string;
+  /** Whether this snapshot was taken at resolve or wash time */
+  trigger?: 'resolved' | 'washed';
+  /** Winning choice (resolved) or wash reason (washed) */
+  outcomeDetail?: string | null;
 }
 
 export async function fetchBetLiveInfo(betId: string): Promise<BetLiveInfo> {

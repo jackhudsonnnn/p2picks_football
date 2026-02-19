@@ -41,6 +41,7 @@ export {
 
 // Services
 export { washBetWithHistory, type WashOptions } from './washService';
+export { captureLiveInfoSnapshot, LIVE_INFO_SNAPSHOT_EVENT, type CaptureSnapshotInput } from './liveInfoSnapshot';
 
 // Utilities
 export { computeModeOptions, computeWinningCondition } from './utils';

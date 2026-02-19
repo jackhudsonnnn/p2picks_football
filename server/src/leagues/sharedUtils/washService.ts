@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '../../supabaseClient';
 import { createLogger } from '../../utils/logger';
+import { captureLiveInfoSnapshot } from './liveInfoSnapshot';
 
 const logger = createLogger('washService');
 
@@ -68,7 +69,48 @@ export async function washBetWithHistory({ betId, payload, explanation, eventTyp
     if (tableId && typeof tableId === 'string') {
       await createWashSystemMessage(tableId, betId, explanation);
     }
+
+    // Fire-and-forget: capture a live-info snapshot for the washed bet.
+    // Uses the mode label from the payload; the snapshot fn will fetch
+    // the full bet row to determine modeKey and league.
+    captureLiveInfoSnapshotForWash(betId, fullPayload.mode, explanation);
   } catch (err) {
     logger.error({ betId, error: err instanceof Error ? err.message : String(err) }, 'wash bet error');
   }
+}
+
+/**
+ * Best-effort snapshot capture for the standalone wash path.
+ * Fetches the bet row to determine modeKey and league, then delegates
+ * to the shared captureLiveInfoSnapshot utility.
+ */
+function captureLiveInfoSnapshotForWash(betId: string, modeLabel: string | undefined, explanation: string): void {
+  (async () => {
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data: betRow } = await supabase
+        .from('bet_proposals')
+        .select('mode_key, league, league_game_id')
+        .eq('bet_id', betId)
+        .maybeSingle();
+
+      const modeKey = (betRow?.mode_key as string) ?? modeLabel ?? 'unknown';
+      const league = (betRow?.league as string) ?? 'NFL';
+      const leagueGameId = (betRow?.league_game_id as string | null) ?? null;
+
+      await captureLiveInfoSnapshot({
+        betId,
+        modeKey,
+        leagueGameId,
+        league: league as any,
+        trigger: 'washed',
+        outcomeDetail: explanation,
+      });
+    } catch (err) {
+      logger.warn(
+        { betId, error: err instanceof Error ? err.message : String(err) },
+        'wash snapshot capture failed',
+      );
+    }
+  })();
 }

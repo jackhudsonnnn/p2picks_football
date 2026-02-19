@@ -23,6 +23,7 @@ import { washBetWithHistory } from './washService';
 import { RedisJsonStore } from './redisJsonStore';
 import { getRedisClient } from '../../utils/redisClient';
 import { enqueueSetWinningChoice, enqueueWashBet } from './resolutionQueue';
+import { captureLiveInfoSnapshot } from './liveInfoSnapshot';
 import { env } from '../../config/env';
 import type { GameFeedEvent } from './gameFeedTypes';
 import { createLogger } from '../../utils/logger';
@@ -196,6 +197,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
     if (this.useQueue) {
       await enqueueSetWinningChoice(betId, winningChoice, history);
       await this.store.delete(betId);
+      this.captureLiveInfoSnapshotSafe(betId, 'resolved', winningChoice);
       return true; // Assume success; failures will be retried by queue
     }
 
@@ -204,6 +206,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
     if (updated) {
       await betRepository.recordHistory(betId, history.eventType, history.payload);
       await this.store.delete(betId);
+      this.captureLiveInfoSnapshotSafe(betId, 'resolved', winningChoice);
     }
     return updated;
   }
@@ -239,6 +242,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
         modeLabel: this.config.modeLabel,
       });
       await this.store.delete(betId);
+      this.captureLiveInfoSnapshotSafe(betId, 'washed', explanation);
       return;
     }
 
@@ -251,6 +255,7 @@ export abstract class BaseValidatorService<TConfig, TStore> {
       modeLabel: this.config.modeLabel,
     });
     await this.store.delete(betId);
+    this.captureLiveInfoSnapshotSafe(betId, 'washed', explanation);
   }
 
   /**
@@ -284,6 +289,27 @@ export abstract class BaseValidatorService<TConfig, TStore> {
   // ─────────────────────────────────────────────────────────────────────────────
   // Private Methods - Internal implementation
   // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Fire-and-forget: capture a live-info snapshot to resolution_history.
+   * Failures are logged but never block the caller.
+   */
+  private captureLiveInfoSnapshotSafe(
+    betId: string,
+    trigger: 'resolved' | 'washed',
+    outcomeDetail?: string | null,
+  ): void {
+    captureLiveInfoSnapshot({
+      betId,
+      modeKey: this.config.modeKey,
+      leagueGameId: null,
+      league: this.config.league,
+      trigger,
+      outcomeDetail: outcomeDetail ?? null,
+    }).catch((err) => {
+      this.logError('live info snapshot failed', { betId }, err);
+    });
+  }
 
   private async handleBetProposalUpdate(
     payload: RealtimePostgresChangesPayload<Record<string, unknown>>
