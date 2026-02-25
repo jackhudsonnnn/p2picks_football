@@ -186,3 +186,42 @@ export const legacyModePreviewBody = z.object({
   league: nonEmptyString,
   bet_id: z.string().optional(),
 });
+
+// ── Table creation ──────────────────────────────────────────────────────────
+
+export const createTableBody = z.object({
+  table_name: z.string().min(1).max(50),
+});
+
+// ── Table member management ──────────────────────────────────────────────────
+
+export const tableAndMemberParams = z.object({
+  tableId: uuidString,
+  userId: uuidString,
+});
+
+export const addMemberBody = z.object({
+  user_id: uuidString,
+});
+
+// ── Bet accept / guess ──────────────────────────────────────────────────────
+
+export const changeGuessBody = z.object({
+  user_guess: z.string().min(1),
+});
+
+// ── Friend removal ───────────────────────────────────────────────────────────
+
+export const friendUserIdParams = z.object({
+  friendUserId: uuidString,
+});
+
+// ── Username update ──────────────────────────────────────────────────────────
+
+export const updateUsernameBody = z.object({
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(15, 'Username must be at most 15 characters')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username may only contain letters, numbers, and underscores'),
+});

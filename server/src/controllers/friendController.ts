@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
 import { getFriendRateLimiter } from '../infrastructure/rateLimiters';
 import { setRateLimitHeaders } from '../middleware/rateLimitHeaders';
+import { getSupabaseAdmin } from '../supabaseClient';
 import { createLogger } from '../utils/logger';
-
 const logger = createLogger('friendController');
 
 type FriendRequestStatus = 'pending' | 'accepted' | 'declined' | 'canceled';
@@ -34,28 +34,6 @@ async function fetchUserMap(supabase: NonNullable<Request['supabase']>, userIds:
     .in('user_id', uniqueIds);
   if (error) throw error;
   return new Map((data ?? []).map((u) => [u.user_id, u as { user_id: string; username: string | null }]));
-}
-
-async function ensureFriendship(supabase: NonNullable<Request['supabase']>, userIdA: string, userIdB: string) {
-  assertUuid(userIdA, 'userIdA');
-  assertUuid(userIdB, 'userIdB');
-  const { data: existing, error: existingError } = await supabase
-    .from('friends')
-    .select('user_id1, user_id2')
-    .or(
-      `and(user_id1.eq.${userIdA},user_id2.eq.${userIdB}),and(user_id1.eq.${userIdB},user_id2.eq.${userIdA})`,
-    )
-    .maybeSingle();
-  if (existingError) throw existingError;
-  if (existing) return existing;
-  const { error: insertError } = await supabase.from('friends').insert([
-    {
-      user_id1: userIdA,
-      user_id2: userIdB,
-    },
-  ]);
-  if (insertError) throw insertError;
-  return { user_id1: userIdA, user_id2: userIdB };
 }
 
 async function loadFriendRequest(
@@ -195,22 +173,16 @@ export async function addFriend(req: Request, res: Response): Promise<void> {
     }
 
     if (incomingRequest) {
-      const { error: acceptError } = await supabase
-        .from('friend_requests')
-        .update({ status: 'accepted', responded_at: new Date().toISOString() })
-        .eq('request_id', incomingRequest.request_id);
+      // Use the atomic RPC to accept + create friendship in one transaction
+      const adminClient = getSupabaseAdmin();
+      const { error: rpcError } = await adminClient.rpc('accept_friend_request', {
+        p_request_id: incomingRequest.request_id,
+        p_user_id: authUser.id,
+      });
 
-      if (acceptError) {
-        logger.error({ error: acceptError.message }, 'Failed to accept existing request');
+      if (rpcError) {
+        logger.error({ error: rpcError.message }, 'Failed to accept existing request via RPC');
         res.status(500).json({ error: 'Failed to accept existing request' });
-        return;
-      }
-
-      try {
-        await ensureFriendship(supabase, authUser.id, targetUser.user_id);
-      } catch (friendErr) {
-        logger.error({ error: (friendErr as Error)?.message }, 'Failed to finalize friendship');
-        res.status(500).json({ error: 'Failed to finalize friendship' });
         return;
       }
 
@@ -350,6 +322,39 @@ export async function respondToFriendRequest(
     const status: FriendRequestStatus =
       action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'canceled';
 
+    if (status === 'accepted') {
+      // Use the atomic RPC for accept — updates request + inserts friendship in one transaction
+      const adminClient = getSupabaseAdmin();
+      const { data: rpcResult, error: rpcError } = await adminClient.rpc('accept_friend_request', {
+        p_request_id: requestId,
+        p_user_id: authUser.id,
+      });
+
+      if (rpcError) {
+        const msg = rpcError.message ?? '';
+        if (msg.includes('no longer pending')) {
+          res.status(400).json({ error: 'Request is no longer pending' });
+          return;
+        }
+        logger.error({ error: rpcError.message }, 'accept_friend_request RPC failed');
+        res.status(500).json({ error: 'Failed to accept friend request' });
+        return;
+      }
+
+      const userMap = await fetchUserMap(supabase, [request.sender_user_id, request.receiver_user_id]);
+
+      res.json({
+        request: {
+          ...(rpcResult as Record<string, unknown>),
+          sender: userMap.get(request.sender_user_id) ?? { user_id: request.sender_user_id, username: null },
+          receiver: userMap.get(request.receiver_user_id) ?? { user_id: request.receiver_user_id, username: null },
+        },
+        status: 'accepted',
+      });
+      return;
+    }
+
+    // decline / cancel — simple update, no friendship row needed
     const { data: updated, error: updateError } = await supabase
       .from('friend_requests')
       .update({ status, responded_at: new Date().toISOString() })
@@ -361,17 +366,6 @@ export async function respondToFriendRequest(
       logger.error({ error: updateError.message }, 'Failed to update friend request');
       res.status(500).json({ error: 'Failed to update friend request' });
       return;
-    }
-
-    if (status === 'accepted') {
-      const otherUserId = authUser.id === request.sender_user_id ? request.receiver_user_id : request.sender_user_id;
-      try {
-        await ensureFriendship(supabase, authUser.id, otherUserId);
-      } catch (friendErr) {
-        logger.error({ error: (friendErr as Error)?.message }, 'Failed to finalize friendship after accept');
-        res.status(500).json({ error: 'Failed to finalize friendship' });
-        return;
-      }
     }
 
     const userMap = await fetchUserMap(supabase, [request.sender_user_id, request.receiver_user_id]);
@@ -386,6 +380,74 @@ export async function respondToFriendRequest(
     });
   } catch (err) {
     logger.error({ error: (err as Error)?.message }, 'Unexpected error updating request');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
+ * DELETE /friends/:friendUserId
+ *
+ * Remove a friendship. Both the (currentUser, friendUser) and (friendUser, currentUser)
+ * rows in the `friends` table are deleted atomically.
+ */
+export async function removeFriend(req: Request, res: Response): Promise<void> {
+  try {
+    const supabase = req.supabase;
+    const authUser = req.authUser;
+    if (!supabase || !authUser) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const { friendUserId } = req.params;
+
+    // Prevent self-removal (shouldn't exist, but guard anyway)
+    if (friendUserId === authUser.id) {
+      res.status(400).json({ error: 'Cannot remove yourself as a friend' });
+      return;
+    }
+
+    // Verify friendship exists before deleting (safe UUIDs already validated by validateParams)
+    assertUuid(authUser.id, 'authUser.id');
+    assertUuid(friendUserId, 'friendUserId');
+
+    const { data: existing, error: checkError } = await supabase
+      .from('friends')
+      .select('user_id1, user_id2')
+      .or(
+        `and(user_id1.eq.${authUser.id},user_id2.eq.${friendUserId}),and(user_id1.eq.${friendUserId},user_id2.eq.${authUser.id})`,
+      )
+      .maybeSingle();
+
+    if (checkError) {
+      logger.error({ error: checkError.message }, 'removeFriend lookup failed');
+      res.status(500).json({ error: 'Failed to verify friendship' });
+      return;
+    }
+
+    if (!existing) {
+      res.status(404).json({ error: 'Friendship not found' });
+      return;
+    }
+
+    // Delete both rows via admin client to avoid RLS ordering edge cases
+    const adminClient = getSupabaseAdmin();
+    const { error: deleteError } = await adminClient
+      .from('friends')
+      .delete()
+      .or(
+        `and(user_id1.eq.${authUser.id},user_id2.eq.${friendUserId}),and(user_id1.eq.${friendUserId},user_id2.eq.${authUser.id})`,
+      );
+
+    if (deleteError) {
+      logger.error({ error: deleteError.message }, 'removeFriend delete failed');
+      res.status(500).json({ error: 'Failed to remove friend' });
+      return;
+    }
+
+    res.status(200).json({ removed: true, friend_user_id: friendUserId });
+  } catch (err) {
+    logger.error({ error: (err as Error)?.message }, 'Unexpected error removing friend');
     res.status(500).json({ error: 'Internal server error' });
   }
 }

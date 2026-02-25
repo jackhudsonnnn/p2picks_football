@@ -1,18 +1,19 @@
 /**
  * Table Settlement Service
  *
- * Handles the "settle" workflow for a betting table:
+ * Handles the "settle" workflow for a betting table via the atomic
+ * `settle_table` RPC. The RPC runs entirely in a single PostgreSQL
+ * transaction so balances are either all settled or none are.
  *
  * 1. Only the table host may initiate settlement.
  * 2. All active (non-resolved, non-washed) bets on the table must be
  *    resolved before settlement can proceed.
- * 3. Settlement zeroes every member's running balance and records a
+ * 3. Settlement adjusts every member's running balance and records a
  *    settlement event in `table_settlements` for auditability.
  * 4. After settlement the table remains open for future bets.
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { TableRepository } from '../../repositories/TableRepository';
+import { getSupabaseAdmin } from '../../supabaseClient';
 import { AppError } from '../../errors';
 import { createLogger } from '../../utils/logger';
 
@@ -32,7 +33,9 @@ export interface SettlementResult {
 
 export interface MemberBalanceSnapshot {
   userId: string;
-  balanceBefore: number;
+  bustBalanceBefore: number;
+  pushBalanceBefore: number;
+  sweepBalanceBefore: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,7 +43,10 @@ export interface MemberBalanceSnapshot {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Settle a table — zero all member balances and record the event.
+ * Settle a table — adjust all member balances and record the event.
+ *
+ * Delegates entirely to the `settle_table` PL/pgSQL RPC which runs
+ * atomically inside a single database transaction.
  *
  * @throws AppError 403 if the requesting user is not the host
  * @throws AppError 409 if there are unresolved bets on the table
@@ -49,89 +55,40 @@ export interface MemberBalanceSnapshot {
 export async function settleTable(
   tableId: string,
   requestingUserId: string,
-  supabase: SupabaseClient,
 ): Promise<SettlementResult> {
-  const tableRepo = new TableRepository(supabase);
+  const supabase = getSupabaseAdmin();
 
-  // 1. Verify table exists
-  const table = await tableRepo.findById(tableId);
-  if (!table) {
-    throw AppError.notFound('Table not found');
+  const { data, error } = await supabase.rpc('settle_table', {
+    p_table_id: tableId,
+    p_user_id: requestingUserId,
+  });
+
+  if (error) {
+    // Map PG error codes from the RPC to AppError status codes
+    const msg = error.message ?? 'Settlement failed';
+
+    if (msg.includes('Table not found')) {
+      throw AppError.notFound('Table not found');
+    }
+    if (msg.includes('Only the table host')) {
+      throw AppError.forbidden('Only the table host can settle the table');
+    }
+    if (msg.includes('still active or pending')) {
+      throw AppError.conflict(msg);
+    }
+
+    logger.error({ tableId, error: msg }, 'settle_table RPC failed');
+    throw AppError.internal('Settlement failed');
   }
 
-  // 2. Only the host may settle
-  if (table.host_user_id !== requestingUserId) {
-    throw AppError.forbidden('Only the table host can settle the table');
-  }
-
-  // 3. Ensure no active (unresolved) bets remain
-  const { count: activeBetCount, error: countErr } = await supabase
-    .from('bet_proposals')
-    .select('*', { count: 'exact', head: true })
-    .eq('table_id', tableId)
-    .in('bet_status', ['active', 'pending']);
-
-  if (countErr) {
-    logger.error({ tableId, error: countErr.message }, 'failed to count active bets');
-    throw AppError.internal('Unable to verify bet status');
-  }
-
-  if (activeBetCount && activeBetCount > 0) {
-    throw AppError.conflict(
-      `Cannot settle table: ${activeBetCount} bet(s) are still active or pending`,
-      { activeBetCount },
-    );
-  }
-
-  // 4. Snapshot current member balances
-  const { data: members, error: membersErr } = await supabase
-    .from('table_members')
-    .select('user_id, balance')
-    .eq('table_id', tableId);
-
-  if (membersErr) {
-    logger.error({ tableId, error: membersErr.message }, 'failed to fetch members');
-    throw AppError.internal('Unable to fetch table members');
-  }
-
-  const balances: MemberBalanceSnapshot[] = (members ?? []).map((m: any) => ({
-    userId: m.user_id,
-    balanceBefore: Number(m.balance ?? 0),
-  }));
-
-  // 5. Zero all balances
-  const { error: zeroErr } = await supabase
-    .from('table_members')
-    .update({ balance: 0 })
-    .eq('table_id', tableId);
-
-  if (zeroErr) {
-    logger.error({ tableId, error: zeroErr.message }, 'failed to zero balances');
-    throw AppError.internal('Settlement failed while zeroing balances');
-  }
-
-  // 6. Record settlement event
-  const settledAt = new Date().toISOString();
-  const { error: insertErr } = await supabase
-    .from('table_settlements')
-    .insert({
-      table_id: tableId,
-      settled_by: requestingUserId,
-      settled_at: settledAt,
-      balance_snapshot: balances,
-    });
-
-  if (insertErr) {
-    // Non-fatal — the balances are already zeroed. Log and continue.
-    logger.error({ tableId, error: insertErr.message }, 'failed to record settlement event (balances already zeroed)');
-  }
-
-  logger.info({ tableId, memberCount: balances.length }, 'table settled');
-
-  return {
-    tableId,
-    settledAt,
-    memberCount: balances.length,
-    balances,
+  const result = data as {
+    tableId: string;
+    settledAt: string;
+    memberCount: number;
+    balances: MemberBalanceSnapshot[];
   };
+
+  logger.info({ tableId, memberCount: result.memberCount }, 'table settled');
+
+  return result;
 }

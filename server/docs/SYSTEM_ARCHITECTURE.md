@@ -17,8 +17,9 @@
 11. [Authentication & Authorization](#11-authentication--authorization)
 12. [Infrastructure Services](#12-infrastructure-services)
 13. [Data Flow Walkthrough](#13-data-flow-walkthrough)
-14. [DevOps & Deployment](#14-devops--deployment)
-15. [Directory Reference](#15-directory-reference)
+14. [Database Migrations](#14-database-migrations)
+15. [DevOps & Deployment](#15-devops--deployment)
+16. [Directory Reference](#16-directory-reference)
 
 ---
 
@@ -231,19 +232,33 @@ resolution_history
 
 ### 4.3 Key RPC Functions
 
-| Function | Purpose |
-|---|---|
-| `transition_bet_to_pending(p_bet_id)` | Atomically moves an active bet to pending. Validates close_time has passed, checks for sufficient participation diversity (≥ 2 distinct guesses), washes if not. Adjusts bust/sweep balances. Service-role only. |
-| `set_bets_pending()` | Bulk catchup: iterates all overdue active bets and calls `transition_bet_to_pending` for each. |
-| `apply_bet_payouts()` | **Trigger function** — fires on `bet_proposals` UPDATE when status transitions to `resolved`. Distributes loser pot to winners, handles fractional-cent remainder via random assignment. |
-| `refund_bet_points_on_wash()` | **Trigger function** — fires when `pending → washed`. Reverses the bust/sweep escrow set during the pending transition. |
-| `resolution_enforce_no_winner_wash()` | **Trigger function** — BEFORE UPDATE. If a resolved bet has `winning_choice` that no participant guessed, force-washes the bet. |
-| `set_bet_resolved_on_winning_choice()` | **Trigger function** — BEFORE UPDATE. When `winning_choice` is set (non-null), automatically flips status to `resolved`. |
-| `handle_new_user()` | Trigger on `auth.users` INSERT → creates row in `public.users`. |
-| `is_user_member_of_table(table_id, user_id)` | Stable helper for RLS policies. |
-| `is_bet_open(bet_id)` | Returns true if bet is active and before close_time. |
-| `wash_bet_with_history(bet_id, event_type, payload)` | Atomically washes a pending bet and records a resolution_history entry in a single transaction. Used by `washService`. |
-| `enforce_immutable_bet_participation_fields()` | Prevents modification of bet_id, table_id, user_id on participations. |
+| Function | Security | Purpose |
+|---|---|---|
+| `transition_bet_to_pending(p_bet_id)` | `SECURITY DEFINER`, service-role only | **Phase 1 escrow** — atomically moves active→pending. Validates close_time elapsed and ≥2 distinct guesses; washes immediately if not. Debits `bust_balance` (wager) and credits `sweep_balance` (contingent payout share) per participant. |
+| `set_bets_pending()` | `SECURITY DEFINER` | Bulk catchup: iterates all overdue active bets and calls `transition_bet_to_pending` for each. |
+| `apply_bet_payouts()` | `SECURITY DEFINER` | **Phase 2 escrow** — trigger on `bet_proposals` UPDATE when status → `resolved`. Restores winners' `bust_balance` + `push_balance`; clears losers' `sweep_balance` contingent. Remainder cents distributed randomly. |
+| `refund_bet_points_on_wash()` | `SECURITY DEFINER` | Trigger on `pending → washed`. Reverses Phase 1 escrow: returns wager to `bust_balance`, clears `sweep_balance`. |
+| `resolution_enforce_no_winner_wash()` | `SECURITY DEFINER` | BEFORE UPDATE. If `resolved` bet has no participants on `winning_choice`, force-washes the bet instead. |
+| `set_bet_resolved_on_winning_choice()` | `SECURITY DEFINER` | BEFORE UPDATE. When `winning_choice` set (non-null), auto-flips status to `resolved`. |
+| `handle_new_user()` | `SECURITY DEFINER` | Trigger on `auth.users` INSERT → creates row in `public.users`. |
+| `is_user_member_of_table(table_id, user_id)` | `STABLE SECURITY DEFINER` | Canonical membership helper used by all RLS policies. (Replaces the removed `is_table_member` which lacked `SECURITY DEFINER`.) |
+| `is_bet_open(bet_id)` | `STABLE SECURITY DEFINER` | Returns true if bet is active and before `close_time`. |
+| `set_bet_close_time()` | `SECURITY DEFINER` | Trigger function — computes `close_time = proposal_time + time_limit_seconds`. |
+| `wash_bet_with_history(bet_id, event_type, payload)` | `SECURITY DEFINER` | Atomically washes a pending bet and records a `resolution_history` entry in one transaction. Used by `washService.ts`. |
+| `enforce_immutable_bet_participation_fields()` | `SECURITY DEFINER` | Prevents modification of `bet_id`, `table_id`, `user_id` on participations. |
+
+#### Two-Phase Escrow Model
+
+Virtual currency is managed across two phases to ensure balances are always consistent mid-bet:
+
+| Phase | Trigger | bust_balance | sweep_balance | push_balance |
+|---|---|---|---|---|
+| **Phase 1** (active → pending) | `transition_bet_to_pending` | `−= wager` | `+= (payout_share − wager)` | unchanged |
+| **Phase 2 — win** (pending → resolved) | `apply_bet_payouts` | `+= payout_share` | small rounding correction | `+= profit` |
+| **Phase 2 — lose** (pending → resolved) | `apply_bet_payouts` | unchanged | `−= payout_share` | `−= wager` |
+| **Wash** (pending → washed) | `refund_bet_points_on_wash` | `+= wager` | `−= (payout_share − wager)` | unchanged |
+
+At any point: `bust_balance` = spendable holdings; `sweep_balance` = contingent escrow; `push_balance` = cumulative net profit/loss.
 
 ### 4.4 Trigger Chain
 
@@ -251,22 +266,24 @@ The trigger chain on `bet_proposals` is critical and order-sensitive:
 
 ```
 bet_proposals INSERT:
-  BEFORE: set_bet_close_time()
+  BEFORE: set_bet_close_time()          ← computes close_time (SECURITY DEFINER)
   AFTER:  messages_sync_from_bet_proposals()
           touch_table_last_activity()
 
 bet_proposals UPDATE:
-  BEFORE: set_bet_close_time()
-          set_bet_resolved_on_winning_choice()
-          resolution_enforce_no_winner_wash()
-  AFTER:  apply_bet_payouts()                        [resolved]
-          refund_bet_points_on_wash()                 [pending → washed]
+  BEFORE: set_bet_close_time()          ← recomputes close_time if time_limit changed
+          set_bet_resolved_on_winning_choice()   ← auto-resolve on winning_choice set
+          resolution_enforce_no_winner_wash()    ← force-wash if no winners
+  AFTER:  apply_bet_payouts()                    [resolved — Phase 2 payouts]
+          refund_bet_points_on_wash()             [pending → washed — Phase 1 reversal]
           create_system_message_on_bet_status_change() [any status change]
-          create_system_message_on_bet_washed()        [washed]
+          create_system_message_on_bet_washed()        [washed — single source of truth]
           log_bet_status_transition()
           messages_sync_from_bet_proposals()
           touch_table_last_activity()
 ```
+
+> **Wash message source of truth:** `create_system_message_on_bet_washed()` (DB trigger) is the single writer of "Bet #xxx washed" system messages. `washService.ts` does **not** insert system messages — doing so would produce duplicates.
 
 ### 4.5 Message Sync Pattern
 
@@ -286,15 +303,19 @@ All tables have RLS enabled. Key policies:
 |---|---|---|---|
 | `tables` | Host or member | Host only (insert if `host_user_id = auth.uid()`) | Host only |
 | `table_members` | Own membership or co-member | Host only (add) | Host or self (leave) |
+| `table_members` (UPDATE) | — | Host only via `allow_table_settlement_updates`; `table_id` + `user_id` are immutable (trigger-enforced) | — |
 | `bet_proposals` | Table members | Proposer who is a member; must be active, no winning_choice | None (no delete) |
 | `bet_participations` | Own rows always; others' after bet closes | Own participation in active open bets | None |
 | `messages` | Table members or service_role | Table members or service_role | — |
-| `text_messages` | Table members | Own messages as member | Own messages |
+| `text_messages` | Table members | Own messages as member | **Denied** (explicit deny policy — editing/deletion not an app feature) |
 | `friends` | Own friendships | Own (user_id1 = self, no self-friendship) | Own |
-| `friend_requests` | Sender or receiver | Sender only (no self-request) | — |
-| `users` | Any authenticated user | Own profile only | — |
-| `resolution_history` | Bet proposer or table members | — | — |
+| `friend_requests` | Sender or receiver | Sender only (no self-request) | Sender may delete own **pending** requests only |
+| `users` | Any authenticated user (own row: all cols via table; other users: `user_id`+`username` via `user_profiles` view) | Own profile only | **Denied** (explicit deny — provisioning via trigger only) |
+| `users` (INSERT) | — | — | **Denied** (explicit deny — provisioning via `handle_new_user()` trigger) |
+| `resolution_history` | Bet proposer or table members | **Denied** (explicit deny) | **Denied** (explicit deny) |
 | `system_messages` | Table members (scoped via `is_user_member_of_table`) | Service role only | None (false) |
+
+**`user_profiles` view** (`public.user_profiles`): A `SECURITY DEFINER` view exposing only `(user_id, username)` from `public.users`. Used by `getUsernamesByIds()` and `listFriends()` on the client for cross-user lookups where `email`, `updated_at`, etc. must not be visible. `getAuthUserProfile()` still queries `public.users` directly (own row, all columns).
 
 ---
 
@@ -355,8 +376,8 @@ All routes are under `/api/v1` (canonical) and `/api` (backward-compatible alias
 | POST | `/tables/:tableId/settle` | `tableController.settle` | Settle a table (host only — zeros balances, records audit event) |
 | DELETE | `/tables/:tableId` | `tableController.deleteTable` | Delete a table (host only) |
 | GET | `/tables/:tableId/members` | `tableController.getTableMembers` | List members of a table |
-| POST | `/tables/:tableId/members` | `tableController.addTableMember` | Add a member (host only) |
-| DELETE | `/tables/:tableId/members` | `tableController.removeTableMember` | Remove a member |
+| POST | `/tables/:tableId/members` | `tableController.addTableMember` | Add a member (host only; validates user exists, prevents duplicates) |
+| DELETE | `/tables/:tableId/members/:userId` | `tableController.removeTableMember` | Remove a member (host removes anyone; member removes self; host cannot self-remove) |
 | GET | `/tables/:tableId/sessions` | `tableController.getTableSessions` | Get bet sessions for a table |
 | GET | `/tables/:tableId/bet-proposals` | `betController.getTableBets` | Get all bets for a table |
 | GET | `/modes` | `modeController.getModes` | List all registered modes |
@@ -366,7 +387,9 @@ All routes are under `/api/v1` (canonical) and `/api` (backward-compatible alias
 | GET | `/tickets` | `ticketController.getUserTickets` | Get user's bet history (tickets) |
 | GET | `/friends` | `friendController.getFriends` | List friends |
 | POST | `/friends/requests` | `friendController.sendFriendRequest` | Send a friend request |
+| DELETE | `/friends/:friendUserId` | `friendController.removeFriend` | Remove a friendship (validates existence, deletes both FK rows via admin client) |
 | PUT | `/friends/requests/:requestId` | `friendController.respondToFriendRequest` | Accept/reject |
+| PATCH | `/users/me/username` | `userController.updateUsername` | Update authenticated user's username (case-insensitive uniqueness check, 3–15 chars) |
 
 ### 5.4 Controller → Service → Repository
 
@@ -1111,9 +1134,50 @@ Production builds suppress debug-level output.
 
 ---
 
-## 14. DevOps & Deployment
+## 14. Database Migrations
 
-### 14.1 CI Pipeline (GitHub Actions)
+### 14.1 Supabase CLI
+
+Database schema is managed via the [Supabase CLI](https://supabase.com/docs/guides/cli) migration system. The `supabase/` directory lives at the repository root.
+
+```
+supabase/
+├── config.toml                          # CLI config (project_id: p2picks_football)
+├── seed.sql                             # Local dev seeding template
+└── migrations/
+    ├── 20260225000000_baseline.sql       # Full baseline: 11 tables, 4 enums, 22 functions, 18 triggers, all RLS
+    ├── 20260225000001_create_table_settlements.sql  # table_settlements table + RLS + index
+    ├── 20260225000002_atomic_rpcs_and_cascades.sql  # settle_table, create_table_with_host, accept_friend_request RPCs + 6 CASCADE FKs
+    ├── 20260225000003_rls_hardening.sql             # 7 RLS changes: deny policies, user_profiles view, text_messages lock, table_members immutable trigger
+    └── 20260225000004_trigger_function_cleanup.sql  # Phase 6: drop redundant trigger, consolidate helper fns, SECURITY DEFINER hardening, escrow comments
+```
+
+**Migration 20260225000004 summary (Phase 6):**
+- **Dropped** `trg_set_bet_close_time_before_insert` — redundant with `trg_set_bet_close_time` (INSERT OR UPDATE)
+- **Consolidated** `is_table_member` → `is_user_member_of_table`: rewrote three `bet_participations` RLS policies to call the canonical `SECURITY DEFINER` function; dropped the orphan `is_table_member`
+- **Hardened** four functions with `SECURITY DEFINER` + `SET search_path TO 'public'`: `set_bet_close_time`, `set_bet_resolved_on_winning_choice`, `enforce_immutable_bet_participation_fields`, `is_bet_open`
+- **Documented** two-phase escrow model as inline comments in `transition_bet_to_pending` and `apply_bet_payouts`
+- **Server** (`washService.ts`): removed `createWashSystemMessage()` — wash messages are now exclusively generated by the `trg_bet_proposals_washed_msg` DB trigger (prevents duplicate messages)
+
+### 14.2 Migration Workflow
+
+| Command | Purpose |
+|---|---|
+| `npx supabase migration list` | Show applied/pending migrations (local vs remote) |
+| `npx supabase migration new <name>` | Create a new timestamped migration file |
+| `npx supabase db push` | Apply pending migrations to the linked remote project |
+| `npx supabase db reset` | Reset local database and re-apply all migrations + seed |
+
+**Rules:**
+- All schema changes go through migration files — never edit production via the Dashboard SQL editor.
+- Migrations are append-only (never edit an applied migration).
+- Baseline migration captures the full schema as of Phase 1; subsequent changes are incremental.
+
+---
+
+## 15. DevOps & Deployment
+
+### 15.1 CI Pipeline (GitHub Actions)
 
 `.github/workflows/ci.yml` runs on every push/PR to `main` that touches `server/**`:
 
@@ -1129,7 +1193,7 @@ Production builds suppress debug-level output.
 
 A Redis 7 Alpine service container is spun up for integration tests that need it.
 
-### 14.2 Docker
+### 15.2 Docker
 
 **Multi-stage Dockerfile** (`server/Dockerfile`):
 
@@ -1152,12 +1216,12 @@ docker compose up -d redis
 docker compose up --build
 ```
 
-### 14.3 Environment Configuration
+### 15.3 Environment Configuration
 
 All environment variables are validated at startup by a Zod schema (`src/config/env.ts`).
 Full documentation with types, defaults, and descriptions is in `server/.env.example`.
 
-### 14.4 Load Testing
+### 15.4 Load Testing
 
 A [k6](https://grafana.com/docs/k6/) smoke test is available at `server/tests/load/k6-smoke.js`:
 
@@ -1170,7 +1234,7 @@ k6 run server/tests/load/k6-smoke.js \
 **Stages:** Ramp-up (0→20 VUs, 30s) → Sustained (20 VUs, 2m) → Spike (50 VUs, 45s) → Ramp-down.
 **Thresholds:** p95 latency < 500ms, p99 < 1000ms, error rate < 5%.
 
-### 14.5 Redis Key Namespaces
+### 15.5 Redis Key Namespaces
 
 Full reference in `server/docs/REDIS_KEYS.md`. Key subsystems:
 

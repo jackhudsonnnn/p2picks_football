@@ -134,7 +134,7 @@
     "table_name": "messages",
     "trigger_schema": "public",
     "trigger_name": "trg_touch_tables_on_messages",
-    "event": "UPDATE,INSERT",
+    "event": "INSERT,UPDATE",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION touch_table_last_activity()"
@@ -144,7 +144,7 @@
     "table_name": "system_messages",
     "trigger_schema": "public",
     "trigger_name": "trg_messages_from_system",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION messages_sync_from_system_messages()"
@@ -154,7 +154,7 @@
     "table_name": "system_messages",
     "trigger_schema": "public",
     "trigger_name": "trg_touch_tables_on_system_messages",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION touch_table_last_activity()"
@@ -164,7 +164,7 @@
     "table_name": "table_members",
     "trigger_schema": "public",
     "trigger_name": "trg_touch_tables_on_table_members",
-    "event": "UPDATE,DELETE,INSERT",
+    "event": "DELETE,INSERT,UPDATE",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION touch_table_last_activity()"
@@ -194,7 +194,7 @@
     "table_name": "subscription",
     "trigger_schema": "realtime",
     "trigger_name": "tr_check_filters",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION realtime.subscription_check_filters()"
@@ -211,33 +211,23 @@
   },
   {
     "table_schema": "storage",
-    "table_name": "objects",
+    "table_name": "buckets",
     "trigger_schema": "storage",
-    "trigger_name": "objects_delete_delete_prefix",
+    "trigger_name": "protect_buckets_delete",
     "event": "DELETE",
-    "activation": "AFTER",
+    "activation": "BEFORE",
     "condition": null,
-    "definition": "EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger()"
+    "definition": "EXECUTE FUNCTION storage.protect_delete()"
   },
   {
     "table_schema": "storage",
     "table_name": "objects",
     "trigger_schema": "storage",
-    "trigger_name": "objects_insert_create_prefix",
-    "event": "INSERT",
+    "trigger_name": "protect_objects_delete",
+    "event": "DELETE",
     "activation": "BEFORE",
     "condition": null,
-    "definition": "EXECUTE FUNCTION storage.objects_insert_prefix_trigger()"
-  },
-  {
-    "table_schema": "storage",
-    "table_name": "objects",
-    "trigger_schema": "storage",
-    "trigger_name": "objects_update_create_prefix",
-    "event": "UPDATE",
-    "activation": "BEFORE",
-    "condition": null,
-    "definition": "EXECUTE FUNCTION storage.objects_update_prefix_trigger()"
+    "definition": "EXECUTE FUNCTION storage.protect_delete()"
   },
   {
     "table_schema": "storage",
@@ -248,25 +238,5 @@
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION storage.update_updated_at_column()"
-  },
-  {
-    "table_schema": "storage",
-    "table_name": "prefixes",
-    "trigger_schema": "storage",
-    "trigger_name": "prefixes_create_hierarchy",
-    "event": "INSERT",
-    "activation": "BEFORE",
-    "condition": null,
-    "definition": "EXECUTE FUNCTION storage.prefixes_insert_trigger()"
-  },
-  {
-    "table_schema": "storage",
-    "table_name": "prefixes",
-    "trigger_schema": "storage",
-    "trigger_name": "prefixes_delete_hierarchy",
-    "event": "DELETE",
-    "activation": "AFTER",
-    "condition": null,
-    "definition": "EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger()"
   }
 ]

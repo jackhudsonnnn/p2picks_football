@@ -595,6 +595,69 @@
     "check_clause": null
   },
   {
+    "table_name": "table_settlements",
+    "constraint_name": "2200_248706_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "settlement_id IS NOT NULL"
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "2200_248706_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "2200_248706_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "settled_by IS NOT NULL"
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "2200_248706_4_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "settled_at IS NOT NULL"
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "2200_248706_5_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "balance_snapshot IS NOT NULL"
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "2200_248706_6_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "table_settlements_settled_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "settled_by",
+    "check_clause": null
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "table_settlements_table_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "table_settlements",
+    "constraint_name": "table_settlements_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "settlement_id",
+    "check_clause": null
+  },
+  {
     "table_name": "tables",
     "constraint_name": "2200_17581_1_not_null",
     "constraint_type": "CHECK",
@@ -634,69 +697,6 @@
     "constraint_name": "private_tables_pkey",
     "constraint_type": "PRIMARY KEY",
     "columns": "table_id",
-    "check_clause": null
-  },
-  {
-    "table_name": "tables",
-    "constraint_name": "tables_table_id_key",
-    "constraint_type": "UNIQUE",
-    "columns": "table_id",
-    "check_clause": null
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "2200_17604_1_not_null",
-    "constraint_type": "CHECK",
-    "columns": null,
-    "check_clause": "text_message_id IS NOT NULL"
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "2200_17604_2_not_null",
-    "constraint_type": "CHECK",
-    "columns": null,
-    "check_clause": "user_id IS NOT NULL"
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "2200_17604_3_not_null",
-    "constraint_type": "CHECK",
-    "columns": null,
-    "check_clause": "message_text IS NOT NULL"
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "2200_17604_6_not_null",
-    "constraint_type": "CHECK",
-    "columns": null,
-    "check_clause": "table_id IS NOT NULL"
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "text_messages_table_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "columns": "table_id",
-    "check_clause": null
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "text_messages_user_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "columns": "user_id",
-    "check_clause": null
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "text_messages_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "columns": "text_message_id",
-    "check_clause": null
-  },
-  {
-    "table_name": "text_messages",
-    "constraint_name": "text_messages_text_message_id_key",
-    "constraint_type": "UNIQUE",
-    "columns": "text_message_id",
     "check_clause": null
   }
 ]

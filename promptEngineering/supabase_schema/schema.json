@@ -23,25 +23,25 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
+    "is_unique": "YES"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
+    "is_unique": "YES"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
     "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
-    "is_unique": "YES"
-  },
-  {
-    "table_name": "bet_participations",
-    "column_name": "bet_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
-    "is_unique": "YES"
-  },
-  {
-    "table_name": "bet_participations",
-    "column_name": "bet_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
     "is_unique": "YES"
   },
   {
@@ -79,24 +79,6 @@
     "column_default": null,
     "key_info": "FOREIGN KEY -> users(user_id)",
     "is_unique": "YES"
-  },
-  {
-    "table_name": "bet_participations",
-    "column_name": "table_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
-    "is_unique": "NO"
-  },
-  {
-    "table_name": "bet_participations",
-    "column_name": "table_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
-    "is_unique": "NO"
   },
   {
     "table_name": "bet_participations",
@@ -105,6 +87,24 @@
     "is_nullable": "NO",
     "column_default": null,
     "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
     "is_unique": "NO"
   },
   {
@@ -554,6 +554,60 @@
     "data_type": "numeric",
     "is_nullable": "NO",
     "column_default": "0",
+    "key_info": "",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "table_settlements",
+    "column_name": "settlement_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "table_settlements",
+    "column_name": "table_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "table_settlements",
+    "column_name": "settled_by",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "table_settlements",
+    "column_name": "settled_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "key_info": "",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "table_settlements",
+    "column_name": "balance_snapshot",
+    "data_type": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "key_info": "",
+    "is_unique": "NO"
+  },
+  {
+    "table_name": "table_settlements",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
     "key_info": "",
     "is_unique": "NO"
   },

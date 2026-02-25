@@ -473,6 +473,211 @@ export async function validateBet(req: Request, res: Response) {
 }
 
 /**
+ * POST /api/bets/:betId/accept
+ * Accept (join) a bet proposal. Creates a bet_participation row.
+ */
+export async function acceptBet(req: Request, res: Response) {
+  const { betId } = req.params as any;
+  if (!betId || typeof betId !== 'string') {
+    res.status(400).json({ error: 'betId required' });
+    return;
+  }
+
+  const supabase = req.supabase;
+  const authUser = req.authUser;
+  if (!supabase || !authUser) {
+    res.status(500).json({ error: 'Authentication context missing' });
+    return;
+  }
+
+  try {
+    const { getSupabaseAdmin } = await import('../supabaseClient');
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // 1. Fetch the bet to validate it exists and is joinable
+    const { data: betRow, error: betError } = await supabaseAdmin
+      .from('bet_proposals')
+      .select('bet_id, table_id, bet_status')
+      .eq('bet_id', betId)
+      .single();
+
+    if (betError || !betRow) {
+      res.status(404).json({ error: 'Bet not found' });
+      return;
+    }
+
+    // 2. Validate membership
+    const membershipError = await validateTableMembership(supabase, betRow.table_id, authUser.id);
+    if (membershipError) {
+      res.status(membershipError.status).json({ error: membershipError.message });
+      return;
+    }
+
+    // 3. Check bet is still open (pending or active)
+    if (!['pending', 'active'].includes(betRow.bet_status)) {
+      res.status(409).json({ error: `Bet is ${betRow.bet_status} and cannot be joined` });
+      return;
+    }
+
+    // 4. Check if user already accepted
+    const { data: existing } = await supabaseAdmin
+      .from('bet_participations')
+      .select('participation_id')
+      .eq('bet_id', betId)
+      .eq('user_id', authUser.id)
+      .maybeSingle();
+
+    if (existing) {
+      res.status(409).json({ error: 'You have already accepted this bet' });
+      return;
+    }
+
+    // 5. Rate limit
+    const rateLimiter = getBetRateLimiter();
+    const rateLimitKey = `${authUser.id}:${betRow.table_id}`;
+    const rateLimitResult = await rateLimiter.check(rateLimitKey);
+    setRateLimitHeaders(res, rateLimitResult);
+
+    if (!rateLimitResult.allowed) {
+      res.status(429).json({
+        error: 'Rate limit exceeded',
+        retryAfter: rateLimitResult.retryAfterSeconds,
+      });
+      return;
+    }
+
+    // 6. Insert participation (server-side timestamp)
+    const { data: participation, error: insertError } = await supabaseAdmin
+      .from('bet_participations')
+      .insert({
+        bet_id: betId,
+        table_id: betRow.table_id,
+        user_id: authUser.id,
+        user_guess: 'No Entry',
+        participation_time: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      logger.error({ betId, userId: authUser.id, error: insertError.message }, 'acceptBet insert failed');
+      throw insertError;
+    }
+
+    res.status(201).json(participation);
+  } catch (e: unknown) {
+    handleBetError(res, e, 'failed to accept bet');
+  }
+}
+
+/**
+ * PATCH /api/bets/:betId/guess
+ * Change the user's guess on an active bet participation.
+ */
+export async function changeGuess(req: Request, res: Response) {
+  const { betId } = req.params as any;
+  if (!betId || typeof betId !== 'string') {
+    res.status(400).json({ error: 'betId required' });
+    return;
+  }
+
+  const supabase = req.supabase;
+  const authUser = req.authUser;
+  if (!supabase || !authUser) {
+    res.status(500).json({ error: 'Authentication context missing' });
+    return;
+  }
+
+  const { user_guess } = req.body ?? {};
+  if (!user_guess || typeof user_guess !== 'string') {
+    res.status(400).json({ error: 'user_guess is required and must be a string' });
+    return;
+  }
+
+  try {
+    const { getSupabaseAdmin } = await import('../supabaseClient');
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // 1. Fetch the bet to validate status
+    const { data: betRow, error: betError } = await supabaseAdmin
+      .from('bet_proposals')
+      .select('bet_id, table_id, bet_status')
+      .eq('bet_id', betId)
+      .single();
+
+    if (betError || !betRow) {
+      res.status(404).json({ error: 'Bet not found' });
+      return;
+    }
+
+    // 2. Bet must still be open
+    if (!['pending', 'active'].includes(betRow.bet_status)) {
+      res.status(409).json({ error: `Bet is ${betRow.bet_status} — guess cannot be changed` });
+      return;
+    }
+
+    // 3. Validate membership
+    const membershipError = await validateTableMembership(supabase, betRow.table_id, authUser.id);
+    if (membershipError) {
+      res.status(membershipError.status).json({ error: membershipError.message });
+      return;
+    }
+
+    // 4. Validate guess against mode config options
+    const modeConfig = await fetchModeConfig(betId);
+    const config = modeConfig?.data as Record<string, unknown> | null;
+    const validOptions = config?.options as string[] | undefined;
+
+    if (validOptions && Array.isArray(validOptions) && validOptions.length > 0) {
+      if (!validOptions.includes(user_guess)) {
+        res.status(400).json({
+          error: 'Invalid guess',
+          valid_options: validOptions,
+        });
+        return;
+      }
+    }
+
+    // 5. Rate limit
+    const rateLimiter = getBetRateLimiter();
+    const rateLimitKey = `${authUser.id}:${betRow.table_id}`;
+    const rateLimitResult = await rateLimiter.check(rateLimitKey);
+    setRateLimitHeaders(res, rateLimitResult);
+
+    if (!rateLimitResult.allowed) {
+      res.status(429).json({
+        error: 'Rate limit exceeded',
+        retryAfter: rateLimitResult.retryAfterSeconds,
+      });
+      return;
+    }
+
+    // 6. Update the participation
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('bet_participations')
+      .update({ user_guess })
+      .eq('bet_id', betId)
+      .eq('user_id', authUser.id)
+      .select('participation_id, user_guess')
+      .single();
+
+    if (updateError) {
+      logger.error({ betId, userId: authUser.id, error: updateError.message }, 'changeGuess update failed');
+      throw updateError;
+    }
+
+    if (!updated) {
+      res.status(404).json({ error: 'No participation found for this bet' });
+      return;
+    }
+
+    res.json(updated);
+  } catch (e: unknown) {
+    handleBetError(res, e, 'failed to change guess');
+  }
+}
+
+/**
  * GET /api/bet-proposals/bootstrap/league/:league
  * Get bootstrap data for bet proposal form.
  */

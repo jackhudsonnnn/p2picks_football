@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@data/clients/supabaseClient';
+import { fetchJSON } from '@data/clients/restClient';
 import type { Database } from '@data/types/database.types';
 import { fetchUserTicketsPage, type TicketListCursor } from '../service';
 import { mapParticipationRowToTicket } from '../mappers';
@@ -196,13 +197,20 @@ export function useTickets(userId?: string) {
   }, [tickets]);
 
   const changeGuess = async (ticketId: string, newGuess: string) => {
-    const { data: updated, error } = await supabase
-      .from('bet_participations')
-      .update({ user_guess: newGuess })
-      .eq('participation_id', ticketId)
-      .select('participation_id, user_guess')
-      .single();
-    if (error) throw error;
+    // Find the betId from the ticket so we can call the server endpoint
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (!ticket?.betId) {
+      throw new Error('Could not find bet for this ticket');
+    }
+
+    const updated = await fetchJSON<{ participation_id: string; user_guess: string }>(
+      `/api/bets/${encodeURIComponent(ticket.betId)}/guess`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ user_guess: newGuess }),
+      },
+    );
+
     if (updated) {
       setPatches((prev) => {
         const next = new Map(prev);

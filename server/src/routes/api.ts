@@ -5,17 +5,20 @@ import * as messageController from '../controllers/messageController';
 import * as friendController from '../controllers/friendController';
 import * as tableController from '../controllers/tableController';
 import * as ticketController from '../controllers/ticketController';
+import * as userController from '../controllers/userController';
 import { requireAuth } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { validateBody, validateParams } from '../middleware/validateRequest';
 import { idempotency } from '../middleware/idempotency';
 import {
   tableIdParams,
+  tableAndMemberParams,
   betIdParams,
   sessionIdParams,
   leagueModeKeyParams,
   leagueParams,
   friendRequestActionParams,
+  friendUserIdParams,
   betProposalBootstrapParams,
   createBetProposalBody,
   validateBetBody,
@@ -28,6 +31,10 @@ import {
   batchModeConfigBody,
   modeUserConfigBody,
   modePreviewBody,
+  createTableBody,
+  addMemberBody,
+  changeGuessBody,
+  updateUsernameBody,
 } from '../controllers/schemas';
 import { getHealthStatus } from '../infrastructure/healthCheck';
 
@@ -53,10 +60,15 @@ router.post('/tables/:tableId/bets', validateParams(tableIdParams), validateBody
 router.post('/bets/:betId/poke', validateParams(betIdParams), asyncHandler(betController.pokeBet));
 router.post('/bets/:betId/validate', validateParams(betIdParams), validateBody(validateBetBody), asyncHandler(betController.validateBet));
 router.get('/bets/:betId/live-info', validateParams(betIdParams), asyncHandler(betController.getBetLiveInfo));
+router.post('/bets/:betId/accept', validateParams(betIdParams), asyncHandler(betController.acceptBet));
+router.patch('/bets/:betId/guess', validateParams(betIdParams), validateBody(changeGuessBody), asyncHandler(betController.changeGuess));
 
 // Tables
 router.get('/tables', asyncHandler(tableController.listTables));
+router.post('/tables', validateBody(createTableBody), asyncHandler(tableController.create));
 router.post('/tables/:tableId/settle', validateParams(tableIdParams), asyncHandler(tableController.settle));
+router.post('/tables/:tableId/members', validateParams(tableIdParams), validateBody(addMemberBody), asyncHandler(tableController.addTableMember));
+router.delete('/tables/:tableId/members/:userId', validateParams(tableAndMemberParams), asyncHandler(tableController.removeTableMember));
 
 // Sessions
 router.post('/bet-proposals/sessions', validateBody(createSessionBody), asyncHandler(modeController.createSession));
@@ -86,7 +98,11 @@ router.get('/tickets', requireAuth, asyncHandler(ticketController.listTickets));
 
 // Friends
 router.post('/friends', requireAuth, validateBody(addFriendBody), asyncHandler(friendController.addFriend));
+router.delete('/friends/:friendUserId', requireAuth, validateParams(friendUserIdParams), asyncHandler(friendController.removeFriend));
 router.get('/friend-requests', requireAuth, asyncHandler(friendController.listFriendRequests));
 router.post('/friend-requests/:requestId/:action', requireAuth, validateParams(friendRequestActionParams), asyncHandler(friendController.respondToFriendRequest));
+
+// Users
+router.patch('/users/me/username', requireAuth, validateBody(updateUsernameBody), asyncHandler(userController.updateUsername));
 
 export default router;

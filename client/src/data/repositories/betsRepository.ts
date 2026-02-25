@@ -55,27 +55,14 @@ export async function validateBet(betId: string, winningChoice: string): Promise
 
 export async function acceptBetProposal({
   betId,
-  tableId,
-  userId,
 }: {
   betId: string;
   tableId: string;
   userId: string;
 }) {
-  const { data, error } = await supabase
-    .from('bet_participations')
-    .insert([
-      {
-        bet_id: betId,
-        table_id: tableId,
-        user_id: userId,
-        user_guess: 'No Entry',
-        participation_time: new Date().toISOString(),
-      },
-    ])
-    .select()
-    .single();
-  if (error) throw error;
+  const data = await fetchJSON(`/api/bets/${encodeURIComponent(betId)}/accept`, {
+    method: 'POST',
+  });
   return data;
 }
 

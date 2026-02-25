@@ -182,6 +182,34 @@
     "check_expression": null
   },
   {
+    "table_name": "table_settlements",
+    "policy_name": "table_settlements_delete_none",
+    "command": "DELETE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
+    "table_name": "table_settlements",
+    "policy_name": "table_settlements_insert_service_role_only",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "((current_setting('request.jwt.claim.role'::text, true) = 'service_role'::text) OR (CURRENT_USER = 'postgres'::name))"
+  },
+  {
+    "table_name": "table_settlements",
+    "policy_name": "table_settlements_select_for_members",
+    "command": "SELECT",
+    "using_expression": "(is_user_member_of_table(table_id, auth.uid()) OR is_user_host_of_table(table_id, auth.uid()))",
+    "check_expression": null
+  },
+  {
+    "table_name": "table_settlements",
+    "policy_name": "table_settlements_update_none",
+    "command": "UPDATE",
+    "using_expression": "false",
+    "check_expression": "false"
+  },
+  {
     "table_name": "tables",
     "policy_name": "Allow authenticated insert for tables",
     "command": "INSERT",

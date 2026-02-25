@@ -26,15 +26,13 @@ export async function getAuthUserProfile(): Promise<UserProfile | null> {
   return data as UserProfile;
 }
 
-export async function updateUsername(userId: string, username: string): Promise<UserProfile> {
-  const { data, error } = await supabase
-    .from('users')
-    .update({ username, updated_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .select('user_id, username, email, updated_at')
-    .single();
-  if (error) throw error;
-  return data as UserProfile;
+export async function updateUsername(_userId: string, username: string): Promise<UserProfile> {
+  const data = await fetchJSON<UserProfile>('/api/users/me/username', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username }),
+  });
+  return data;
 }
 
 export async function isUsernameTaken(username: string, excludeUserId?: string): Promise<boolean> {
@@ -61,8 +59,9 @@ export async function listFriends(currentUserId: string): Promise<Friend[]> {
     .map((r) => (r.user_id1 === currentUserId ? r.user_id2 : r.user_id1))
     .filter((id) => id !== currentUserId);
   if (friendIds.length === 0) return [];
+  // Reads from the user_profiles view (user_id + username only) — see Phase 5 migration
   const { data, error } = await supabase
-    .from('users')
+    .from('user_profiles' as 'users')
     .select('user_id, username')
     .in('user_id', friendIds);
   if (error) throw error;
@@ -91,14 +90,11 @@ export async function addFriend(_currentUserId: string, targetUsername: string):
   throw new Error('Unexpected response creating friend request');
 }
 
-export async function removeFriend(currentUserId: string, friendUserId: string): Promise<void> {
-  const { error } = await supabase
-    .from('friends')
-    .delete()
-    .or(
-      `and(user_id1.eq.${currentUserId},user_id2.eq.${friendUserId}),and(user_id1.eq.${friendUserId},user_id2.eq.${currentUserId})`,
-    );
-  if (error) throw error;
+export async function removeFriend(_currentUserId: string, friendUserId: string): Promise<void> {
+  await fetchJSON<{ removed: boolean }>(
+    `/api/friends/${encodeURIComponent(friendUserId)}`,
+    { method: 'DELETE' },
+  );
 }
 
 export async function listFriendRequests(): Promise<FriendRequest[]> {

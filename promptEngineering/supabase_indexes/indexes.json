@@ -1,0 +1,232 @@
+[
+  {
+    "tablename": "bet_participations",
+    "indexname": "bet_participations_bet_id_user_id_key",
+    "indexdef": "CREATE UNIQUE INDEX bet_participations_bet_id_user_id_key ON public.bet_participations USING btree (bet_id, user_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "bet_participations_one_per_user",
+    "indexdef": "CREATE UNIQUE INDEX bet_participations_one_per_user ON public.bet_participations USING btree (bet_id, user_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "bet_participations_participation_id_key",
+    "indexdef": "CREATE UNIQUE INDEX bet_participations_participation_id_key ON public.bet_participations USING btree (participation_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "bet_participations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bet_participations_pkey ON public.bet_participations USING btree (participation_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "bet_participations_unique_user_per_bet",
+    "indexdef": "CREATE UNIQUE INDEX bet_participations_unique_user_per_bet ON public.bet_participations USING btree (bet_id, user_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "bet_participations_user_time_id_desc",
+    "indexdef": "CREATE INDEX bet_participations_user_time_id_desc ON public.bet_participations USING btree (user_id, participation_time DESC, participation_id DESC)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "idx_bet_participations_bet_id",
+    "indexdef": "CREATE INDEX idx_bet_participations_bet_id ON public.bet_participations USING btree (bet_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "idx_bet_participations_bet_id_guess",
+    "indexdef": "CREATE INDEX idx_bet_participations_bet_id_guess ON public.bet_participations USING btree (bet_id, user_guess)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "idx_bet_participations_bet_user_unique",
+    "indexdef": "CREATE UNIQUE INDEX idx_bet_participations_bet_user_unique ON public.bet_participations USING btree (bet_id, user_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "idx_bet_participations_table_id",
+    "indexdef": "CREATE INDEX idx_bet_participations_table_id ON public.bet_participations USING btree (table_id)"
+  },
+  {
+    "tablename": "bet_participations",
+    "indexname": "idx_bet_participations_user_id",
+    "indexdef": "CREATE INDEX idx_bet_participations_user_id ON public.bet_participations USING btree (user_id)"
+  },
+  {
+    "tablename": "bet_proposals",
+    "indexname": "bet_proposals_bet_id_key",
+    "indexdef": "CREATE UNIQUE INDEX bet_proposals_bet_id_key ON public.bet_proposals USING btree (bet_id)"
+  },
+  {
+    "tablename": "bet_proposals",
+    "indexname": "bet_proposals_bet_table_uniq",
+    "indexdef": "CREATE UNIQUE INDEX bet_proposals_bet_table_uniq ON public.bet_proposals USING btree (bet_id, table_id)"
+  },
+  {
+    "tablename": "bet_proposals",
+    "indexname": "bet_proposals_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bet_proposals_pkey ON public.bet_proposals USING btree (bet_id)"
+  },
+  {
+    "tablename": "bet_proposals",
+    "indexname": "idx_bet_proposals_close_time",
+    "indexdef": "CREATE INDEX idx_bet_proposals_close_time ON public.bet_proposals USING btree (close_time)"
+  },
+  {
+    "tablename": "bet_proposals",
+    "indexname": "idx_bet_proposals_proposer_user_id",
+    "indexdef": "CREATE INDEX idx_bet_proposals_proposer_user_id ON public.bet_proposals USING btree (proposer_user_id)"
+  },
+  {
+    "tablename": "bet_proposals",
+    "indexname": "idx_bet_proposals_status",
+    "indexdef": "CREATE INDEX idx_bet_proposals_status ON public.bet_proposals USING btree (bet_status)"
+  },
+  {
+    "tablename": "bet_proposals",
+    "indexname": "idx_bet_proposals_table_id",
+    "indexdef": "CREATE INDEX idx_bet_proposals_table_id ON public.bet_proposals USING btree (table_id)"
+  },
+  {
+    "tablename": "friend_requests",
+    "indexname": "friend_requests_pkey",
+    "indexdef": "CREATE UNIQUE INDEX friend_requests_pkey ON public.friend_requests USING btree (request_id)"
+  },
+  {
+    "tablename": "friends",
+    "indexname": "friends_pkey",
+    "indexdef": "CREATE UNIQUE INDEX friends_pkey ON public.friends USING btree (user_id1, user_id2)"
+  },
+  {
+    "tablename": "messages",
+    "indexname": "idx_messages_table_posted_at",
+    "indexdef": "CREATE INDEX idx_messages_table_posted_at ON public.messages USING btree (table_id, posted_at DESC, message_id DESC)"
+  },
+  {
+    "tablename": "messages",
+    "indexname": "idx_messages_type",
+    "indexdef": "CREATE INDEX idx_messages_type ON public.messages USING btree (message_type)"
+  },
+  {
+    "tablename": "messages",
+    "indexname": "messages_bet_id_key",
+    "indexdef": "CREATE UNIQUE INDEX messages_bet_id_key ON public.messages USING btree (bet_id)"
+  },
+  {
+    "tablename": "messages",
+    "indexname": "messages_pkey",
+    "indexdef": "CREATE UNIQUE INDEX messages_pkey ON public.messages USING btree (message_id)"
+  },
+  {
+    "tablename": "messages",
+    "indexname": "messages_system_message_id_key",
+    "indexdef": "CREATE UNIQUE INDEX messages_system_message_id_key ON public.messages USING btree (system_message_id)"
+  },
+  {
+    "tablename": "messages",
+    "indexname": "messages_table_posted_id_desc",
+    "indexdef": "CREATE INDEX messages_table_posted_id_desc ON public.messages USING btree (table_id, posted_at DESC, message_id DESC)"
+  },
+  {
+    "tablename": "messages",
+    "indexname": "messages_text_message_id_key",
+    "indexdef": "CREATE UNIQUE INDEX messages_text_message_id_key ON public.messages USING btree (text_message_id)"
+  },
+  {
+    "tablename": "resolution_history",
+    "indexname": "idx_resolution_history_bet_id_created_at",
+    "indexdef": "CREATE INDEX idx_resolution_history_bet_id_created_at ON public.resolution_history USING btree (bet_id, created_at DESC)"
+  },
+  {
+    "tablename": "resolution_history",
+    "indexname": "resolution_history_pkey",
+    "indexdef": "CREATE UNIQUE INDEX resolution_history_pkey ON public.resolution_history USING btree (resolution_history_id)"
+  },
+  {
+    "tablename": "system_messages",
+    "indexname": "system_notifications_pkey",
+    "indexdef": "CREATE UNIQUE INDEX system_notifications_pkey ON public.system_messages USING btree (system_message_id)"
+  },
+  {
+    "tablename": "table_members",
+    "indexname": "idx_table_members_table_id",
+    "indexdef": "CREATE INDEX idx_table_members_table_id ON public.table_members USING btree (table_id)"
+  },
+  {
+    "tablename": "table_members",
+    "indexname": "idx_table_members_user_id",
+    "indexdef": "CREATE INDEX idx_table_members_user_id ON public.table_members USING btree (user_id)"
+  },
+  {
+    "tablename": "table_members",
+    "indexname": "table_members_pkey",
+    "indexdef": "CREATE UNIQUE INDEX table_members_pkey ON public.table_members USING btree (member_id)"
+  },
+  {
+    "tablename": "table_members",
+    "indexname": "unique_table_user",
+    "indexdef": "CREATE UNIQUE INDEX unique_table_user ON public.table_members USING btree (table_id, user_id)"
+  },
+  {
+    "tablename": "table_settlements",
+    "indexname": "idx_table_settlements_table_id",
+    "indexdef": "CREATE INDEX idx_table_settlements_table_id ON public.table_settlements USING btree (table_id)"
+  },
+  {
+    "tablename": "table_settlements",
+    "indexname": "table_settlements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX table_settlements_pkey ON public.table_settlements USING btree (settlement_id)"
+  },
+  {
+    "tablename": "tables",
+    "indexname": "idx_host_user_id",
+    "indexdef": "CREATE INDEX idx_host_user_id ON public.tables USING btree (host_user_id)"
+  },
+  {
+    "tablename": "tables",
+    "indexname": "private_tables_pkey",
+    "indexdef": "CREATE UNIQUE INDEX private_tables_pkey ON public.tables USING btree (table_id)"
+  },
+  {
+    "tablename": "tables",
+    "indexname": "tables_last_activity_desc",
+    "indexdef": "CREATE INDEX tables_last_activity_desc ON public.tables USING btree (last_activity_at DESC, table_id DESC)"
+  },
+  {
+    "tablename": "tables",
+    "indexname": "tables_table_id_key",
+    "indexdef": "CREATE UNIQUE INDEX tables_table_id_key ON public.tables USING btree (table_id)"
+  },
+  {
+    "tablename": "text_messages",
+    "indexname": "text_messages_pkey",
+    "indexdef": "CREATE UNIQUE INDEX text_messages_pkey ON public.text_messages USING btree (text_message_id)"
+  },
+  {
+    "tablename": "text_messages",
+    "indexname": "text_messages_text_message_id_key",
+    "indexdef": "CREATE UNIQUE INDEX text_messages_text_message_id_key ON public.text_messages USING btree (text_message_id)"
+  },
+  {
+    "tablename": "users",
+    "indexname": "users_email_key",
+    "indexdef": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)"
+  },
+  {
+    "tablename": "users",
+    "indexname": "users_pkey",
+    "indexdef": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (user_id)"
+  },
+  {
+    "tablename": "users",
+    "indexname": "users_user_id_key",
+    "indexdef": "CREATE UNIQUE INDEX users_user_id_key ON public.users USING btree (user_id)"
+  },
+  {
+    "tablename": "users",
+    "indexname": "users_username_key",
+    "indexdef": "CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username)"
+  }
+]

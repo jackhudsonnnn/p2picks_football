@@ -5,7 +5,6 @@ import {
   listFriends,
   addFriend,
   removeFriend,
-  isUsernameTaken,
   updateUsername,
   listFriendRequests,
   respondToFriendRequest,
@@ -141,8 +140,7 @@ export function useUsernameUpdater(userId?: string) {
         if (cleaned.length < 3 || cleaned.length > 15) {
           throw new Error('Username must be 3-15 characters and use letters, numbers, underscores.');
         }
-        const taken = await isUsernameTaken(cleaned, userId);
-        if (taken) throw new Error('Username already taken.');
+        // Server performs case-insensitive uniqueness check — no client-side pre-check needed
         return await updateUsername(userId, cleaned);
       } catch (e: unknown) {
         setError(getErrorMessage(e, 'Failed to update username'));

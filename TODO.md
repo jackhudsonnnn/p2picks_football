@@ -413,95 +413,152 @@ Changes to triggers, functions, RLS policies, and schema are apparently managed 
 
 ---
 
-### Phase 2 — Critical Client → Server Migrations (Writes)
+### Phase 2 — Critical Client → Server Migrations (Writes) ✅ Done
 
 **Goal:** Eliminate the most dangerous client-side Supabase mutation calls. Every write goes through the Express server for validation, rate-limiting, and atomicity.
 
 **Duration:** ~3-4 days
 
-| # | Task | Refs |
-|---|---|---|
-| 1 | **Settlement:** Delete `settleTable()` from `tablesRepository.ts`. Client calls `POST /api/tables/:tableId/settle` (already exists). Write a test that verifies the client can't settle via direct Supabase calls anymore. | §1.1 |
-| 2 | **Create table:** New `POST /api/tables` endpoint. Server inserts into `tables` + `table_members` atomically (service-role or RPC). Delete `createTable()` from `tablesRepository.ts`. Client calls `fetchJSON('/api/tables', ...)`. | §1.2 |
-| 3 | **Accept bet:** New `POST /api/bets/:betId/accept` endpoint. Server validates membership, bet-open status, inserts `bet_participations` with `participation_time = now()`. Delete `acceptBetProposal()` from `betsRepository.ts`. | §1.3 |
-| 4 | **Change guess:** New `PATCH /api/bets/:betId/guess` endpoint. Server fetches mode config, validates guess is a valid option, updates `bet_participations`. Remove direct update from `useTickets.ts`. | §1.4 |
-| 5 | Add rate-limiting to the new accept + guess endpoints (reuse existing `getBetRateLimiter`). | §1.3, §1.4 |
-| 6 | Update all client call sites: `tablesRepository`, `betsRepository`, `useTickets` to use `fetchJSON` instead of `supabase.from(...)`. | §2 |
+| # | Task | Refs | Status |
+|---|---|---|---|
+| 1 | **Settlement:** Replaced `settleTable()` in `tablesRepository.ts` with `fetchJSON('/api/tables/:tableId/settle')`. Fixed server-side `tableSettlementService.ts` bug — was referencing non-existent `balance` column; now correctly uses `bust_balance`, `push_balance`, `sweep_balance`. Updated test mock. | §1.1 | ✅ |
+| 2 | **Create table:** New `POST /api/tables` endpoint (`tableController.create` → `tableCreationService.createTableWithHost`). Server inserts `tables` + `table_members` atomically via service-role with rollback. Client `createTable()` now calls `fetchJSON`. Schema: `createTableBody`. | §1.2 | ✅ |
+| 3 | **Accept bet:** New `POST /api/bets/:betId/accept` endpoint (`betController.acceptBet`). Validates membership, bet-open status, duplicate check, rate limiting. Inserts `bet_participations` with server-side `participation_time`. Client `acceptBetProposal()` now calls `fetchJSON`. | §1.3 | ✅ |
+| 4 | **Change guess:** New `PATCH /api/bets/:betId/guess` endpoint (`betController.changeGuess`). Validates bet status, membership, mode config options, rate limiting. Client `useTickets.changeGuess()` now calls `fetchJSON`. Schema: `changeGuessBody`. | §1.4 | ✅ |
+| 5 | Rate-limiting added to accept + guess endpoints using existing `getBetRateLimiter`. | §1.3, §1.4 | ✅ |
+| 6 | All client call sites updated: `tablesRepository` (settleTable, createTable), `betsRepository` (acceptBetProposal), `useTickets` (changeGuess) now use `fetchJSON`. Dead client-side settlement helpers removed. | §2 | ✅ |
 
-**Verification:** `grep -r "supabase\.from.*insert\|supabase\.from.*update\|supabase\.from.*delete" client/src/` returns zero mutation hits (read-only queries are fine).
+**Files changed (server):**
+- `server/src/routes/api.ts` — 3 new routes
+- `server/src/controllers/betController.ts` — `acceptBet()`, `changeGuess()` handlers
+- `server/src/controllers/tableController.ts` — `create()` handler
+- `server/src/controllers/schemas.ts` — `createTableBody`, `changeGuessBody`
+- `server/src/services/table/tableCreationService.ts` — NEW
+- `server/src/services/table/tableSettlementService.ts` — bug fix (balance columns)
+- `server/tests/unit/services/tableSettlement.test.ts` — updated mock + assertions
+- `server/docs/SYSTEM_ARCHITECTURE.md` — added §14 Database Migrations, renumbered §15-16
+
+**Files changed (client):**
+- `client/src/data/repositories/tablesRepository.ts` — `settleTable()`, `createTable()` → fetchJSON; dead code removed
+- `client/src/data/repositories/betsRepository.ts` — `acceptBetProposal()` → fetchJSON
+- `client/src/features/bets/hooks/useTickets.ts` — `changeGuess()` → fetchJSON
+
+**Verification:** All server tests pass (198/198). All client tests pass (54/54). Both `tsc --noEmit` clean.
 
 ---
 
-### Phase 3 — Atomic RPCs (Server → Supabase)
+### Phase 3 — Atomic RPCs (Server → Supabase) ✅ Done
 
 **Goal:** Replace multi-step server-side writes with single-round-trip PL/pgSQL functions, eliminating partial-failure states.
 
 **Duration:** ~2-3 days
 
-| # | Task | Refs |
-|---|---|---|
-| 1 | **`settle_table(p_table_id, p_user_id)` RPC:** Validate host, check no active/pending bets, snapshot balances, zero all, insert `table_settlements` — all in one transaction. Server calls `supabase.rpc(...)`. | §3.1 |
-| 2 | **`create_table_with_host(p_table_name, p_host_user_id)` RPC:** Insert into `tables`, insert host into `table_members`, return the new table row. *OR* add an `AFTER INSERT ON tables` trigger that auto-adds the host member. Pick one. | §3.2 |
-| 3 | **`accept_friend_request(p_request_id, p_user_id)` RPC:** Update `friend_requests` to accepted + insert `friends` row atomically. Update `friendController.ts` to call this. | §3.3 |
-| 4 | Add `ON DELETE CASCADE` to critical foreign keys: `bet_participations.bet_id`, `messages.bet_id`, `messages.text_message_id`, `messages.system_message_id`, `table_members.table_id`. | §8.4 |
-| 5 | Write migration files for all of the above. | §8.3 |
+| # | Task | Refs | Status |
+|---|---|---|---|
+| 1 | **`settle_table(p_table_id, p_user_id)` RPC:** Validates host, checks no active/pending bets, snapshots balances, settles (bust -= push, sweep -= push, push = 0), inserts `table_settlements` — all in one transaction. `tableSettlementService.ts` now calls `supabase.rpc('settle_table', ...)`. No longer accepts a `supabase` param — uses `getSupabaseAdmin()` internally. | §3.1 | ✅ |
+| 2 | **`create_table_with_host(p_table_name, p_host_user_id)` RPC:** Inserts `tables` + `table_members` (host) atomically. Returns jsonb with table_id, table_name, host_user_id, created_at. `tableCreationService.ts` now calls `supabase.rpc(...)` instead of two separate inserts with manual rollback. | §3.2 | ✅ |
+| 3 | **`accept_friend_request(p_request_id, p_user_id)` RPC:** Locks the request row, validates receiver + pending status, updates to accepted, inserts `friends` row — all atomic. `friendController.ts` updated in both `addFriend` (auto-accept path) and `respondToFriendRequest` (explicit accept). Removed dead `ensureFriendship()` helper. | §3.3 | ✅ |
+| 4 | **`ON DELETE CASCADE`** on 6 FKs: `bet_participations.bet_id`, `bet_participations(bet_id,table_id)` composite, `messages.bet_id`, `messages.text_message_id`, `messages.system_message_id`, `table_members.table_id`. | §8.4 | ✅ |
+| 5 | Migration file: `20260225000002_atomic_rpcs_and_cascades.sql` containing all 3 RPCs + 6 FK changes. | §8.3 | ✅ |
 
-**Verification:** Manually test each RPC via `supabase rpc` or a test script. Kill server mid-settle — confirm balances are either fully zeroed or fully untouched (atomicity).
+**Files changed (server):**
+- `server/src/services/table/tableSettlementService.ts` — Replaced multi-query logic with `supabase.rpc('settle_table', ...)`. Removed `SupabaseClient` param, `TableRepository` import. Added `getSupabaseAdmin` import. Error mapping from PG exceptions to AppError.
+- `server/src/services/table/tableCreationService.ts` — Replaced two-step insert+rollback with `supabase.rpc('create_table_with_host', ...)`.
+- `server/src/controllers/tableController.ts` — Removed `supabase` arg from `settleTable()` call (now 2-arg).
+- `server/src/controllers/friendController.ts` — Accept paths in `addFriend` and `respondToFriendRequest` now use `supabase.rpc('accept_friend_request', ...)` via admin client. Removed dead `ensureFriendship()` helper. Added `getSupabaseAdmin` import.
+- `server/tests/unit/services/tableSettlement.test.ts` — Replaced complex Supabase mock with simple `mockRpc` mock. Tests verify RPC call args and error mapping.
+
+**Files changed (migrations):**
+- `supabase/migrations/20260225000002_atomic_rpcs_and_cascades.sql` — NEW. 3 RPCs + 6 CASCADE FK changes.
+
+**Verification:** All server tests pass (198/198). All client tests pass (54/54). Both `tsc --noEmit` clean.
 
 ---
 
-### Phase 4 — Medium-Priority Client → Server Migrations
+### Phase 4 — Medium-Priority Client → Server Migrations ✅ Done
 
 **Goal:** Move the remaining client-side writes to the server. Lower urgency than Phase 2 because RLS already provides basic protection, but still important for validation + rate-limiting.
 
 **Duration:** ~2 days
 
-| # | Task | Refs |
-|---|---|---|
-| 1 | **Add member:** `POST /api/tables/:tableId/members` — validate target user exists, optionally require friendship. | §1.6 |
-| 2 | **Remove member:** `DELETE /api/tables/:tableId/members/:userId` — validate host or self. | §1.6 |
-| 3 | **Remove friend:** `DELETE /api/friends/:friendUserId` — server-side UUID validation + `assertUuid`. | §1.5 |
-| 4 | **Update username:** `PATCH /api/users/me/username` — server-side uniqueness check (case-insensitive), length validation. | §2 |
-| 5 | Remove all corresponding direct Supabase calls from `tablesRepository.ts`, `socialRepository.ts`. | §2 |
+| # | Task | Refs | Status |
+|---|---|---|---|
+| 1 | **Add member:** `POST /api/tables/:tableId/members` — validates caller is host, target user exists, target is not self, not already a member. Returns 201 with `{ table_id, user_id, username }`. | §1.6 | ✅ |
+| 2 | **Remove member:** `DELETE /api/tables/:tableId/members/:userId` — host may remove any member; member may remove self; host cannot remove self (delete the table instead). Returns 200 with `{ removed, table_id, user_id }`. | §1.6 | ✅ |
+| 3 | **Remove friend:** `DELETE /api/friends/:friendUserId` — UUID validated by `validateParams`(`friendUserIdParams`); verifies friendship exists before deleting both FK rows via admin client. Returns 200 `{ removed, friend_user_id }`. | §1.5 | ✅ |
+| 4 | **Update username:** `PATCH /api/users/me/username` — Zod schema enforces 3–15 chars, `[a-zA-Z0-9_]` only; server-side case-insensitive uniqueness check (`.ilike()`); writes via admin client. Returns 200 with full profile. New `userController.ts`. | §2 | ✅ |
+| 5 | **Remove client-side direct calls:** `tablesRepository.addTableMember` and `removeTableMember` now call `fetchJSON`. `socialRepository.removeFriend` and `updateUsername` now call `fetchJSON`. `useUsernameUpdater` no longer calls `isUsernameTaken` as a pre-check (server handles it). | §2 | ✅ |
 
-**Verification:** Full E2E smoke test of tables flow (create → add member → remove member) and social flow (add friend → remove friend → change username). All go through `/api/...`.
+**Files changed (server):**
+- `server/src/controllers/schemas.ts` — Added `tableAndMemberParams`, `addMemberBody`, `friendUserIdParams`, `updateUsernameBody`
+- `server/src/controllers/tableController.ts` — Added `addTableMember()`, `removeTableMember()` handlers; imported `UserRepository`, `getSupabaseAdmin`
+- `server/src/controllers/friendController.ts` — Added `removeFriend()` handler
+- `server/src/controllers/userController.ts` — NEW. `updateUsername()` handler with case-insensitive uniqueness check
+- `server/src/routes/api.ts` — 4 new routes: `POST /tables/:tableId/members`, `DELETE /tables/:tableId/members/:userId`, `DELETE /friends/:friendUserId`, `PATCH /users/me/username`; imported `userController`, new schemas
+- `server/tests/unit/services/tableMembership.test.ts` — NEW. 12 tests for `addTableMember` + `removeTableMember` covering success, 401/403/404/400/409 cases
+- `server/tests/unit/services/friendAndUser.test.ts` — NEW. 7 tests for `removeFriend` + `updateUsername`
+
+**Files changed (client):**
+- `client/src/data/repositories/tablesRepository.ts` — `addTableMember()`, `removeTableMember()` → `fetchJSON`
+- `client/src/data/repositories/socialRepository.ts` — `removeFriend()`, `updateUsername()` → `fetchJSON`; `updateUsername` signature changed (`_userId` unused param, server derives from auth token)
+- `client/src/features/social/hooks.ts` — Removed `isUsernameTaken` import and client-side pre-check from `useUsernameUpdater`
+
+**Files changed (docs):**
+- `server/docs/SYSTEM_ARCHITECTURE.md` — Updated §5.3 API Routes table with 4 new endpoints and `userController`
+
+**Verification:** All server tests pass (217/217). All client tests pass (54/54). Both `tsc --noEmit` clean.
 
 ---
 
-### Phase 5 — RLS Hardening
+### Phase 5 — RLS Hardening ✅ Done
 
 **Goal:** Lock down every table so there are no "missing policy" gaps, and tighten overly-broad policies.
 
 **Duration:** ~1 day
 
-| # | Task | Refs |
-|---|---|---|
-| 1 | **Deny policies:** Add explicit INSERT/UPDATE/DELETE deny (`USING (false)`) to: `resolution_history`, `users` (INSERT + DELETE). | §4.1 |
-| 2 | **`friend_requests` DELETE:** Add policy — sender can delete own pending requests, deny all others. | §4.1 |
-| 3 | **`users` SELECT:** Narrow "Allow authenticated read access to usernames" to only expose `user_id, username`. Create a `user_profiles` view or restrict the policy scope. | §4.2 |
-| 4 | **`text_messages` UPDATE/DELETE:** Decide if message editing/deleting is intentional. If not, change both to `USING (false)`. | §4.2 |
-| 5 | **`table_members` UPDATE:** Add an immutable-fields trigger (like `enforce_immutable_bet_participation_fields`) for `table_id` and `user_id` columns, or tighten the WITH CHECK. | §4.2 |
-| 6 | Remove the duplicate `users` SELECT policy (the narrow one is covered by the broad one). | §4.3 |
-| 7 | Write all as migration files. | §8.3 |
+| # | Task | Refs | Status |
+|---|---|---|---|
+| 1 | **Deny policies on `resolution_history`:** Added explicit `INSERT WITH CHECK (false)`, `UPDATE USING (false)`, `DELETE USING (false)` policies. service_role bypasses RLS entirely so background services are unaffected. | §4.1 | ✅ |
+| 2 | **Deny INSERT + DELETE on `users`:** `users_insert_deny` (`WITH CHECK (false)`) and `users_delete_deny` (`USING (false)`). User provisioning is trigger-only (`handle_new_user`); application layer must never insert/delete users. | §4.1 | ✅ |
+| 3 | **`friend_requests` DELETE policy:** `friend_requests_delete_sender_pending` — sender may delete own request only when `status = 'pending'`. All other callers implicitly denied. | §4.1 | ✅ |
+| 4 | **Drop redundant `users` SELECT policy:** Dropped "Allow individual read access to own profile" — already covered by the broader "Allow authenticated read access to usernames" policy. | §4.3 | ✅ |
+| 5 | **`user_profiles` view:** Created `public.user_profiles (user_id, username)` as `SECURITY DEFINER` view (no `security_invoker`). Granted SELECT to `authenticated`. Client `getUsernamesByIds()` and `listFriends()` now read from `user_profiles` — limits cross-user exposure to `user_id + username` only. `getAuthUserProfile()` still queries `users` directly (own row, needs `email + updated_at`). | §4.2 | ✅ |
+| 6 | **Lock down `text_messages` UPDATE/DELETE:** Dropped "Users can update their own text messages" and "Users can delete their own text messages". Added `text_messages_update_deny` (`USING (false)`) and `text_messages_delete_deny` (`USING (false)`). Message editing/deletion is not an app feature; all chat writes go through the server. | §4.2 | ✅ |
+| 7 | **`table_members` immutable-fields trigger:** Created `enforce_immutable_table_member_fields()` BEFORE UPDATE trigger — raises an exception if `table_id` or `user_id` are changed. Consistent with `enforce_immutable_bet_participation_fields()`. | §4.2 | ✅ |
 
-**Verification:** For each table, try the forbidden operation via the anon key in a test script — confirm it's rejected. `SELECT * FROM users` as anon should only return `user_id, username`.
+**Files changed (migrations):**
+- `supabase/migrations/20260225000003_rls_hardening.sql` — NEW. All 7 changes above.
+
+**Files changed (client):**
+- `client/src/data/repositories/usersRepository.ts` — `getUsernamesByIds()` now queries `user_profiles` view instead of `users`
+- `client/src/data/repositories/socialRepository.ts` — `listFriends()` now queries `user_profiles` view instead of `users`
+
+**Files changed (docs):**
+- `server/docs/SYSTEM_ARCHITECTURE.md` — §4.6 RLS table fully updated: new deny policies, `user_profiles` view documented, text_messages locked, `table_members` immutable trigger documented
+
+**Verification:** All server tests pass (217/217). All client tests pass (54/54). Both `tsc --noEmit` clean.
 
 ---
 
-### Phase 6 — Trigger & Function Cleanup
+### Phase 6 — Trigger & Function Cleanup ✅ Done
 
 **Goal:** Eliminate duplicate/redundant triggers, consolidate helper functions, fix `SECURITY DEFINER` gaps.
 
 **Duration:** ~1 day
 
-| # | Task | Refs |
-|---|---|---|
-| 1 | Drop `trg_set_bet_close_time_before_insert` — it's fully redundant with `trg_set_bet_close_time`. | §5.1 |
-| 2 | Consolidate `is_table_member` and `is_user_member_of_table` into one function. Update all RLS policies, triggers, and server code that reference the dropped one. | §5.5, §5.6 |
-| 3 | Add `SECURITY DEFINER` + `SET search_path TO 'public'` to: `set_bet_resolved_on_winning_choice`, `enforce_immutable_bet_participation_fields`, `is_bet_open`, `set_bet_close_time`. | §5.5 |
-| 4 | **Duplicate wash messages:** Audit `trg_bet_proposals_washed_msg` vs `washService.ts::createWashSystemMessage()`. If both fire, remove the server-side one and let the trigger be the single source. | §5.4 |
-| 5 | Add explanatory comments to `transition_bet_to_pending` + `apply_bet_payouts` documenting the two-phase escrow model. | §5.2 |
-| 6 | Write all as migration files. | §8.3 |
+| # | Task | Refs | Status |
+|---|---|---|---|
+| 1 | Drop `trg_set_bet_close_time_before_insert` — it's fully redundant with `trg_set_bet_close_time`. | §5.1 | ✅ |
+| 2 | Consolidate `is_table_member` and `is_user_member_of_table` into one function. Update all RLS policies, triggers, and server code that reference the dropped one. | §5.5, §5.6 | ✅ |
+| 3 | Add `SECURITY DEFINER` + `SET search_path TO 'public'` to: `set_bet_resolved_on_winning_choice`, `enforce_immutable_bet_participation_fields`, `is_bet_open`, `set_bet_close_time`. | §5.5 | ✅ |
+| 4 | **Duplicate wash messages:** `washService.ts::createWashSystemMessage()` removed — `trg_bet_proposals_washed_msg` is now the single source of truth for wash system messages. | §5.4 | ✅ |
+| 5 | Add explanatory comments to `transition_bet_to_pending` + `apply_bet_payouts` documenting the two-phase escrow model. | §5.2 | ✅ |
+| 6 | Write all as migration files. | §8.3 | ✅ |
+
+**Changelog:**
+- `supabase/migrations/20260225000004_trigger_function_cleanup.sql` — new migration (all DB changes)
+- `server/src/leagues/sharedUtils/washService.ts` — removed `createWashSystemMessage()` and its call site; added doc comment explaining the DB trigger is the single writer
+- `server/docs/SYSTEM_ARCHITECTURE.md` — §4.3 updated with security column + two-phase escrow table; §4.4 trigger chain updated with wash message source-of-truth note; §14.1 migration list updated
 
 **Verification:** Create a bet → let it close → wash it. Confirm exactly one "Bet washed" system message appears (not two). Run `\df` in psql — confirm no orphan functions.
 

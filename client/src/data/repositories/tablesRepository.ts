@@ -2,7 +2,6 @@ import { supabase } from '@data/clients/supabaseClient';
 import { fetchJSON } from '@data/clients/restClient';
 import type { Tables } from '@data/types/database.types';
 import type { ChatMessage } from '@shared/types/chat';
-import { normalizeToHundredth, formatSignedCurrency } from '@shared/utils/number';
 
 export type TableRow = Tables<'tables'>;
 type TableMemberRow = Tables<'table_members'>;
@@ -70,20 +69,12 @@ function normalizeMembers(members: RawMember[] | null | undefined): TableMemberW
     }));
 }
 
-export async function createTable(tableName: string, hostUserId: string): Promise<TableRow> {
-  const { data: table, error } = await supabase
-    .from('tables')
-    .insert([{ table_name: tableName, host_user_id: hostUserId }])
-    .select()
-    .single();
-  if (error) throw error;
-  if (!table) {
-    throw new Error('Failed to create table');
-  }
-  await supabase.from('table_members').insert([
-    { table_id: table.table_id, user_id: hostUserId },
-  ]);
-  return table as TableRow;
+export async function createTable(tableName: string, _hostUserId: string): Promise<TableRow> {
+  const result = await fetchJSON<TableRow>('/api/tables', {
+    method: 'POST',
+    body: JSON.stringify({ table_name: tableName }),
+  });
+  return result;
 }
 
 export async function getUserTables(userId: string): Promise<TableWithMembers[]> {
@@ -138,26 +129,21 @@ export async function getTable(tableId: string): Promise<TableWithMembers | null
   };
 }
 
-export async function addTableMember(tableId: string, userId: string) {
-  const { error } = await supabase
-    .from('table_members')
-    .insert([{ table_id: tableId, user_id: userId }]);
-  if (error) throw error;
+export async function addTableMember(tableId: string, userId: string): Promise<void> {
+  await fetchJSON<{ table_id: string; user_id: string; username: string | null }>(
+    `/api/tables/${encodeURIComponent(tableId)}/members`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    },
+  );
 }
 
-export async function removeTableMember(tableId: string, userId: string) {
-  const { error } = await supabase
-    .from('table_members')
-    .delete()
-    .eq('table_id', tableId)
-    .eq('user_id', userId);
-  if (error) throw error;
-}
-
-interface SettlementMemberRecord {
-  user_id: string;
-  username: string;
-  push_balance: number;
+export async function removeTableMember(tableId: string, userId: string): Promise<void> {
+  await fetchJSON<{ removed: boolean }>(
+    `/api/tables/${encodeURIComponent(tableId)}/members/${encodeURIComponent(userId)}`,
+    { method: 'DELETE' },
+  );
 }
 
 export interface TableSettlementResult {
@@ -182,149 +168,27 @@ export interface TableFeedPage {
   hasMore: boolean;
 }
 
-function formatPointsDisplay(value: number): string {
-  return formatSignedCurrency(value);
-}
-
-function buildSettlementSummary(
-  tableName: string | null,
-  host: SettlementMemberRecord,
-  others: SettlementMemberRecord[],
-): string {
-  const winners = others
-    .filter((member) => member.push_balance > 0)
-    .sort((a, b) => b.push_balance - a.push_balance);
-  const losers = others
-    .filter((member) => member.push_balance < 0)
-    .sort((a, b) => a.push_balance - b.push_balance);
-
-  const lines: string[] = [];
-  lines.push(`${tableName ?? 'Table'} Settlement Summary`);
-  lines.push(`${new Date().toLocaleString()}`);
-  lines.push('');
-
-  lines.push('Host');
-  lines.push(`${host.username}: ${formatPointsDisplay(host.push_balance)}`);
-  lines.push('');
-
-  lines.push('Winners');
-  if (winners.length) {
-    winners.forEach((member) => {
-      lines.push(`${member.username}: ${formatPointsDisplay(member.push_balance)}`);
-    });
-  } else {
-    lines.push('None');
-  }
-  lines.push('');
-
-  lines.push('Losers');
-  if (losers.length) {
-    losers.forEach((member) => {
-      lines.push(`${member.username}: ${formatPointsDisplay(member.push_balance)}`);
-    });
-  } else {
-    lines.push('None');
-  }
-
-  return lines.join('\n');
-}
-
 export async function settleTable(tableId: string): Promise<TableSettlementResult> {
   if (!tableId) {
     throw new Error('tableId is required to settle a table');
   }
 
-  const { data: tableRecord, error: tableError } = await supabase
-    .from('tables')
-    .select('table_id, table_name, host_user_id, table_members(user_id, bust_balance, push_balance, sweep_balance, users(username))')
-    .eq('table_id', tableId)
-    .single();
-
-  if (tableError) throw tableError;
-  if (!tableRecord) throw new Error('Table not found');
-
-  const normalized = normalizeMembers((tableRecord as TableRow & { table_members: RawMember[] | null }).table_members);
-
-  const members: SettlementMemberRecord[] = normalized.map((member) => ({
-    user_id: member.user_id,
-    username: member.users?.username ?? member.user_id,
-    push_balance: normalizeToHundredth(member.push_balance ?? 0),
-  }));
-
-  if (!members.length) {
-    throw new Error('Cannot settle a table with no members');
-  }
-
-  const hostMember = members.find((member) => member.user_id === tableRecord.host_user_id);
-  if (!hostMember) {
-    throw new Error('Host record missing from table members');
-  }
-
-  const nonHostMembers = members.filter((member) => member.user_id !== hostMember.user_id);
-  const summary = buildSettlementSummary(tableRecord.table_name ?? null, hostMember, nonHostMembers);
-
-  // Store original balances for rollback
-  const originalBalances = normalized.map((member) => ({
-    user_id: member.user_id,
-    bust_balance: member.bust_balance ?? 0,
-    push_balance: member.push_balance ?? 0,
-    sweep_balance: member.sweep_balance ?? 0,
-  }));
-
-  // Settlement: subtract each member's push_balance from all three balances
-  // This makes push_balance become 0, and adjusts bust/sweep relative to it
-  const updatePromises = originalBalances.map(async ({ user_id, bust_balance, push_balance, sweep_balance }) => {
-    const { error } = await supabase
-      .from('table_members')
-      .update({
-        bust_balance: bust_balance - push_balance,
-        push_balance: 0,
-        sweep_balance: sweep_balance - push_balance,
-      })
-      .eq('table_id', tableId)
-      .eq('user_id', user_id);
-    if (error) throw error;
-  });
-
-  try {
-    await Promise.all(updatePromises);
-  } catch (balanceError) {
-    throw balanceError;
-  }
-
-  const { error: fetchUpdatedError } = await supabase
-    .from('table_members')
-    .select('user_id, bust_balance, push_balance, sweep_balance')
-    .eq('table_id', tableId);
-
-  if (fetchUpdatedError) throw fetchUpdatedError;
-
-  const { data: messageData, error: messageError } = await supabase
-    .from('system_messages')
-    .insert([{ table_id: tableId, message_text: summary }])
-    .select('system_message_id, generated_at')
-    .single();
-
-  if (messageError) {
-    await Promise.all(
-      originalBalances.map(async ({ user_id, bust_balance, push_balance, sweep_balance }) => {
-        const { error: rollbackError } = await supabase
-          .from('table_members')
-          .update({ bust_balance, push_balance, sweep_balance })
-          .eq('table_id', tableId)
-          .eq('user_id', user_id);
-        if (rollbackError) {
-          // Rollback failure is non-recoverable; let the outer throw propagate
-        }
-      }),
-    );
-    throw messageError;
-  }
+  const result = await fetchJSON<{
+    tableId: string;
+    settledAt: string;
+    memberCount: number;
+    balances: Array<{
+      userId: string;
+      bustBalanceBefore: number;
+      pushBalanceBefore: number;
+      sweepBalanceBefore: number;
+    }>;
+  }>(`/api/tables/${encodeURIComponent(tableId)}/settle`, { method: 'POST' });
 
   return {
-    summary,
-    messageId: messageData?.system_message_id ?? '',
-    generatedAt: messageData?.generated_at ?? new Date().toISOString(),
+    summary: `Table settled. ${result.memberCount} member(s) reset.`,
+    messageId: '',
+    generatedAt: result.settledAt,
   };
 }
 
