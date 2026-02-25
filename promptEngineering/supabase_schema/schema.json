@@ -5,7 +5,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "YES"
   },
   {
     "table_name": "bet_participations",
@@ -13,7 +14,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "bet_participations",
@@ -21,7 +23,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(table_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "bet_participations",
@@ -29,7 +32,35 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
+    "is_unique": "YES"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
+    "is_unique": "YES"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
+    "is_unique": "YES"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "bet_participations",
@@ -37,7 +68,17 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> users(user_id)"
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "YES"
+  },
+  {
+    "table_name": "bet_participations",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "bet_participations",
@@ -45,7 +86,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_participations",
@@ -53,7 +95,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> tables(table_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(table_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_participations",
@@ -61,7 +104,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(table_id)"
+    "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_participations",
@@ -69,7 +113,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": "'No Entry'::text",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_participations",
@@ -77,7 +122,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -85,7 +131,17 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "YES"
+  },
+  {
+    "table_name": "bet_proposals",
+    "column_name": "bet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "key_info": "PRIMARY KEY",
+    "is_unique": "YES"
   },
   {
     "table_name": "bet_proposals",
@@ -93,7 +149,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> tables(table_id)"
+    "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "bet_proposals",
@@ -101,7 +158,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> users(user_id)"
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -109,7 +167,8 @@
     "data_type": "numeric",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -117,7 +176,8 @@
     "data_type": "integer",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -125,7 +185,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -133,7 +194,8 @@
     "data_type": "USER-DEFINED",
     "is_nullable": "NO",
     "column_default": "'active'::bet_lifecycle_status",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -141,7 +203,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -149,7 +212,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -157,7 +221,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -165,7 +230,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -173,7 +239,8 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -181,7 +248,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "bet_proposals",
@@ -189,7 +257,8 @@
     "data_type": "USER-DEFINED",
     "is_nullable": "NO",
     "column_default": "'U2Pick'::league",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "friend_requests",
@@ -197,7 +266,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
   },
   {
     "table_name": "friend_requests",
@@ -205,7 +275,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> users(user_id)"
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "friend_requests",
@@ -213,7 +284,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> users(user_id)"
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "friend_requests",
@@ -221,7 +293,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "friend_requests",
@@ -229,7 +302,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "friend_requests",
@@ -237,7 +311,8 @@
     "data_type": "USER-DEFINED",
     "is_nullable": "NO",
     "column_default": "'pending'::friend_request_status",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "friends",
@@ -245,7 +320,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
   },
   {
     "table_name": "friends",
@@ -253,7 +329,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
   },
   {
     "table_name": "friends",
@@ -261,7 +338,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "messages",
@@ -269,15 +347,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "messages",
-    "column_name": "message_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
   },
   {
     "table_name": "messages",
@@ -285,7 +356,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> tables(table_id)"
+    "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "messages",
@@ -293,7 +365,8 @@
     "data_type": "USER-DEFINED",
     "is_nullable": "NO",
     "column_default": "'chat'::message_type",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "messages",
@@ -301,7 +374,8 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> text_messages(text_message_id)"
+    "key_info": "FOREIGN KEY -> text_messages(text_message_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "messages",
@@ -309,7 +383,8 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> system_messages(system_message_id)"
+    "key_info": "FOREIGN KEY -> system_messages(system_message_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "messages",
@@ -317,7 +392,8 @@
     "data_type": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "messages",
@@ -325,7 +401,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "timezone('utc'::text, now())",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "messages",
@@ -333,7 +410,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "timezone('utc'::text, now())",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "resolution_history",
@@ -341,7 +419,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
   },
   {
     "table_name": "resolution_history",
@@ -349,7 +428,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)"
+    "key_info": "FOREIGN KEY -> bet_proposals(bet_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "resolution_history",
@@ -357,7 +437,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "resolution_history",
@@ -365,7 +446,8 @@
     "data_type": "jsonb",
     "is_nullable": "NO",
     "column_default": "'{}'::jsonb",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "resolution_history",
@@ -373,7 +455,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "system_messages",
@@ -381,7 +464,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
   },
   {
     "table_name": "system_messages",
@@ -389,7 +473,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "system_messages",
@@ -397,7 +482,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "system_messages",
@@ -405,7 +491,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> tables(table_id)"
+    "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "table_members",
@@ -413,7 +500,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "NO"
   },
   {
     "table_name": "table_members",
@@ -421,7 +509,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "FOREIGN KEY -> tables(table_id)"
+    "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "table_members",
@@ -429,7 +518,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "FOREIGN KEY -> users(user_id)"
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "YES"
   },
   {
     "table_name": "table_members",
@@ -437,7 +527,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "table_members",
@@ -445,7 +536,8 @@
     "data_type": "numeric",
     "is_nullable": "NO",
     "column_default": "0",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "table_members",
@@ -453,7 +545,8 @@
     "data_type": "numeric",
     "is_nullable": "NO",
     "column_default": "0",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "table_members",
@@ -461,7 +554,8 @@
     "data_type": "numeric",
     "is_nullable": "NO",
     "column_default": "0",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "tables",
@@ -469,7 +563,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "YES"
   },
   {
     "table_name": "tables",
@@ -477,7 +572,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "tables",
@@ -485,7 +581,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> users(user_id)"
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "tables",
@@ -493,7 +590,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "tables",
@@ -501,7 +599,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "timezone('utc'::text, now())",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "text_messages",
@@ -509,7 +608,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "YES"
   },
   {
     "table_name": "text_messages",
@@ -517,7 +617,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> users(user_id)"
+    "key_info": "FOREIGN KEY -> users(user_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "text_messages",
@@ -525,7 +626,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "text_messages",
@@ -533,7 +635,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "YES",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "text_messages",
@@ -541,7 +644,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": "FOREIGN KEY -> tables(table_id)"
+    "key_info": "FOREIGN KEY -> tables(table_id)",
+    "is_unique": "NO"
   },
   {
     "table_name": "users",
@@ -549,15 +653,8 @@
     "data_type": "uuid",
     "is_nullable": "NO",
     "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
-  },
-  {
-    "table_name": "users",
-    "column_name": "user_id",
-    "data_type": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "key_info": "PRIMARY KEY"
+    "key_info": "PRIMARY KEY",
+    "is_unique": "YES"
   },
   {
     "table_name": "users",
@@ -565,7 +662,8 @@
     "data_type": "text",
     "is_nullable": "YES",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "YES"
   },
   {
     "table_name": "users",
@@ -573,7 +671,8 @@
     "data_type": "text",
     "is_nullable": "NO",
     "column_default": null,
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "YES"
   },
   {
     "table_name": "users",
@@ -581,7 +680,8 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   },
   {
     "table_name": "users",
@@ -589,6 +689,7 @@
     "data_type": "timestamp with time zone",
     "is_nullable": "NO",
     "column_default": "now()",
-    "key_info": ""
+    "key_info": "",
+    "is_unique": "NO"
   }
 ]

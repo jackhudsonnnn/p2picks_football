@@ -131,7 +131,6 @@ describe('captureLiveInfoSnapshot', () => {
     expect(payload.outcomeDetail).toBe('Game already final');
     expect(payload.fields).toEqual([
       ...MOCK_LIVE_INFO.fields,
-      { label: 'Wash Reason', value: 'Game already final' },
     ]);
   });
 

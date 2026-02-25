@@ -1,0 +1,702 @@
+[
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "2200_17546_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "participation_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "2200_17546_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "bet_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "2200_17546_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "user_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "2200_17546_4_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "2200_17546_5_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "user_guess IS NOT NULL"
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "2200_17546_9_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "participation_time IS NOT NULL"
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_bet_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "bet_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_bet_table_fk",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "bet_id, table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_table_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "participation_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_bet_id_user_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "bet_id, user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_one_per_user",
+    "constraint_type": "UNIQUE",
+    "columns": "bet_id, user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_participations",
+    "constraint_name": "bet_participations_participation_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "participation_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_10_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "time_limit_seconds IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_11_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "proposal_time IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_12_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "bet_status IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_19_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "mode_key IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "bet_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_20_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "close_time IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_21_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "description IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_25_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "league_game_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_26_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "league IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "proposer_user_id IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "2200_17555_9_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "wager_amount IS NOT NULL"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_time_limit_seconds_check",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "(((time_limit_seconds >= 15) AND (time_limit_seconds <= 120)))"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_wager_amount_check",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "(((wager_amount % 0.01) = (0)::numeric))"
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_proposer_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "proposer_user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_table_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "bet_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_bet_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "bet_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_bet_table_uniq",
+    "constraint_type": "UNIQUE",
+    "columns": "bet_id, table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "2200_178223_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "request_id IS NOT NULL"
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "2200_178223_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "sender_user_id IS NOT NULL"
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "2200_178223_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "receiver_user_id IS NOT NULL"
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "2200_178223_5_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "2200_178223_7_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "status IS NOT NULL"
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "friend_requests_receiver_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "receiver_user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "friend_requests_sender_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "sender_user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "friend_requests_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "request_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "friends",
+    "constraint_name": "2200_17574_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "user_id1 IS NOT NULL"
+  },
+  {
+    "table_name": "friends",
+    "constraint_name": "2200_17574_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "user_id2 IS NOT NULL"
+  },
+  {
+    "table_name": "friends",
+    "constraint_name": "2200_17574_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_name": "friends",
+    "constraint_name": "check_different_users",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "((user_id1 <> user_id2))"
+  },
+  {
+    "table_name": "friends",
+    "constraint_name": "friends_user_id1_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "user_id1",
+    "check_clause": null
+  },
+  {
+    "table_name": "friends",
+    "constraint_name": "friends_user_id2_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "user_id2",
+    "check_clause": null
+  },
+  {
+    "table_name": "friends",
+    "constraint_name": "friends_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "user_id1, user_id2",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "2200_108821_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "message_id IS NOT NULL"
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "2200_108821_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "2200_108821_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "message_type IS NOT NULL"
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "2200_108821_7_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "posted_at IS NOT NULL"
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "2200_108821_8_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_type_match",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "((((message_type = 'chat'::message_type) AND (text_message_id IS NOT NULL) AND (system_message_id IS NULL) AND (bet_id IS NULL)) OR ((message_type = 'system'::message_type) AND (system_message_id IS NOT NULL) AND (text_message_id IS NULL) AND (bet_id IS NULL)) OR ((message_type = 'bet_proposal'::message_type) AND (bet_id IS NOT NULL) AND (text_message_id IS NULL) AND (system_message_id IS NULL))))"
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_bet_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "bet_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_system_message_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "system_message_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_table_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_text_message_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "text_message_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "message_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_bet_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "bet_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_system_message_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "system_message_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "messages",
+    "constraint_name": "messages_text_message_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "text_message_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "resolution_history",
+    "constraint_name": "2200_87558_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "resolution_history_id IS NOT NULL"
+  },
+  {
+    "table_name": "resolution_history",
+    "constraint_name": "2200_87558_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "bet_id IS NOT NULL"
+  },
+  {
+    "table_name": "resolution_history",
+    "constraint_name": "2200_87558_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "event_type IS NOT NULL"
+  },
+  {
+    "table_name": "resolution_history",
+    "constraint_name": "2200_87558_4_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "payload IS NOT NULL"
+  },
+  {
+    "table_name": "resolution_history",
+    "constraint_name": "2200_87558_5_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "created_at IS NOT NULL"
+  },
+  {
+    "table_name": "resolution_history",
+    "constraint_name": "resolution_history_bet_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "bet_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "resolution_history",
+    "constraint_name": "resolution_history_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "resolution_history_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "system_messages",
+    "constraint_name": "2200_17589_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "system_message_id IS NOT NULL"
+  },
+  {
+    "table_name": "system_messages",
+    "constraint_name": "2200_17589_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "message_text IS NOT NULL"
+  },
+  {
+    "table_name": "system_messages",
+    "constraint_name": "2200_17589_5_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "system_messages",
+    "constraint_name": "system_messages_table_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "system_messages",
+    "constraint_name": "system_notifications_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "system_message_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "2200_17596_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "member_id IS NOT NULL"
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "2200_17596_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "2200_17596_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "user_id IS NOT NULL"
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "2200_17596_6_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "bust_balance IS NOT NULL"
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "2200_17596_7_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "push_balance IS NOT NULL"
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "2200_17596_8_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "sweep_balance IS NOT NULL"
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "table_members_balance_check",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "((((bust_balance)::numeric % 0.01) = (0)::numeric))"
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "table_members_table_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "table_members_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "table_members_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "member_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "table_members",
+    "constraint_name": "unique_table_user",
+    "constraint_type": "UNIQUE",
+    "columns": "table_id, user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "tables",
+    "constraint_name": "2200_17581_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "tables",
+    "constraint_name": "2200_17581_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_name IS NOT NULL"
+  },
+  {
+    "table_name": "tables",
+    "constraint_name": "2200_17581_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "host_user_id IS NOT NULL"
+  },
+  {
+    "table_name": "tables",
+    "constraint_name": "tables_table_name_check",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "((length(table_name) <= 10))"
+  },
+  {
+    "table_name": "tables",
+    "constraint_name": "private_tables_host_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "host_user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "tables",
+    "constraint_name": "private_tables_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "tables",
+    "constraint_name": "tables_table_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "2200_17604_1_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "text_message_id IS NOT NULL"
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "2200_17604_2_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "user_id IS NOT NULL"
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "2200_17604_3_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "message_text IS NOT NULL"
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "2200_17604_6_not_null",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "table_id IS NOT NULL"
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "text_messages_table_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "table_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "text_messages_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "columns": "user_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "text_messages_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "columns": "text_message_id",
+    "check_clause": null
+  },
+  {
+    "table_name": "text_messages",
+    "constraint_name": "text_messages_text_message_id_key",
+    "constraint_type": "UNIQUE",
+    "columns": "text_message_id",
+    "check_clause": null
+  }
+]

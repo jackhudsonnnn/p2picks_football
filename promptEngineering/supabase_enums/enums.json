@@ -1,0 +1,18 @@
+[
+  {
+    "enum_name": "bet_lifecycle_status",
+    "enum_values": "active, pending, resolved, washed"
+  },
+  {
+    "enum_name": "friend_request_status",
+    "enum_values": "pending, accepted, declined"
+  },
+  {
+    "enum_name": "league",
+    "enum_values": "NFL, NBA, MLB, NHL, NCAAF, U2Pick"
+  },
+  {
+    "enum_name": "message_type",
+    "enum_values": "chat, system, bet_proposal"
+  }
+]

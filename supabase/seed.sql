@@ -1,0 +1,21 @@
+-- ============================================================================
+-- SEED DATA
+-- ============================================================================
+-- This file is run during `supabase db reset` to populate the local
+-- development database with test data.
+--
+-- Add test users, tables, bets, etc. here for local development.
+-- This file is NOT run in production.
+-- ============================================================================
+
+-- Example: (uncomment and customize when needed)
+--
+-- INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, role, aud)
+-- VALUES
+--   ('00000000-0000-0000-0000-000000000001', 'alice@test.com', crypt('password123', gen_salt('bf')), now(), 'authenticated', 'authenticated'),
+--   ('00000000-0000-0000-0000-000000000002', 'bob@test.com',   crypt('password123', gen_salt('bf')), now(), 'authenticated', 'authenticated');
+--
+-- The handle_new_user() trigger will auto-create rows in public.users.
+--
+-- UPDATE public.users SET username = 'alice' WHERE user_id = '00000000-0000-0000-0000-000000000001';
+-- UPDATE public.users SET username = 'bob'   WHERE user_id = '00000000-0000-0000-0000-000000000002';

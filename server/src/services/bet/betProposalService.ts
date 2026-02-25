@@ -308,6 +308,33 @@ export async function pokeBet(
     }, 'failed to record poke link');
   }
 
+    // Auto-accept the poked bet for the user who poked it
+    try {
+      const { error: participationError } = await supabase
+        .from('bet_participations')
+        .insert([
+          {
+            bet_id: insertedBet.bet_id,
+            table_id: insertedBet.table_id,
+            user_id: input.proposerUserId,
+            user_guess: 'No Entry',
+            participation_time: new Date().toISOString(),
+          },
+        ]);
+
+      if (participationError) {
+        throw participationError;
+      }
+    } catch (participationError: any) {
+      logger.error({
+        newBetId: insertedBet.bet_id,
+        tableId: insertedBet.table_id,
+        userId: input.proposerUserId,
+        error: participationError?.message || participationError,
+      }, 'failed to auto-accept poked bet');
+      throw BetProposalError.internal('Failed to accept poked bet for user');
+    }
+
   return {
     bet: insertedBet,
     preview,
