@@ -13,6 +13,7 @@ import { supabase } from '@data/clients/supabaseClient';
 import type { Friend, FriendRequest, FriendRequestStatus, UserProfile } from './types';
 import { getErrorMessage } from '@shared/utils/error';
 import { socialKeys } from '@shared/queryKeys';
+import { SESSION_ID } from '@shared/utils/sessionId';
 
 export function useAuthProfile() {
   const queryClient = useQueryClient();
@@ -91,7 +92,7 @@ export function useFriendRequests(currentUserId?: string) {
   useEffect(() => {
     if (!currentUserId) return;
     const channel = supabase
-      .channel(`friend_requests_${currentUserId}`)
+      .channel(`friend_requests_${currentUserId}_${SESSION_ID}`)
       .on(
         'postgres_changes',
         {

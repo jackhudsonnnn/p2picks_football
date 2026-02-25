@@ -90,9 +90,24 @@
     "indexdef": "CREATE INDEX idx_bet_proposals_table_id ON public.bet_proposals USING btree (table_id)"
   },
   {
+    "tablename": "bet_proposals",
+    "indexname": "idx_bet_proposals_table_id_status",
+    "indexdef": "CREATE INDEX idx_bet_proposals_table_id_status ON public.bet_proposals USING btree (table_id, bet_status)"
+  },
+  {
     "tablename": "friend_requests",
     "indexname": "friend_requests_pkey",
     "indexdef": "CREATE UNIQUE INDEX friend_requests_pkey ON public.friend_requests USING btree (request_id)"
+  },
+  {
+    "tablename": "friend_requests",
+    "indexname": "idx_friend_requests_receiver_status",
+    "indexdef": "CREATE INDEX idx_friend_requests_receiver_status ON public.friend_requests USING btree (receiver_user_id, status)"
+  },
+  {
+    "tablename": "friend_requests",
+    "indexname": "idx_friend_requests_sender_status",
+    "indexdef": "CREATE INDEX idx_friend_requests_sender_status ON public.friend_requests USING btree (sender_user_id, status)"
   },
   {
     "tablename": "friends",
@@ -208,6 +223,11 @@
     "tablename": "text_messages",
     "indexname": "text_messages_text_message_id_key",
     "indexdef": "CREATE UNIQUE INDEX text_messages_text_message_id_key ON public.text_messages USING btree (text_message_id)"
+  },
+  {
+    "tablename": "users",
+    "indexname": "idx_users_username_lower",
+    "indexdef": "CREATE UNIQUE INDEX idx_users_username_lower ON public.users USING btree (lower(username)) WHERE (username IS NOT NULL)"
   },
   {
     "tablename": "users",

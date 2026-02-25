@@ -319,7 +319,7 @@
     "column_name": "user_id1",
     "data_type": "uuid",
     "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
+    "column_default": null,
     "key_info": "PRIMARY KEY",
     "is_unique": "NO"
   },
@@ -328,7 +328,7 @@
     "column_name": "user_id2",
     "data_type": "uuid",
     "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
+    "column_default": null,
     "key_info": "PRIMARY KEY",
     "is_unique": "NO"
   },
@@ -508,7 +508,7 @@
     "column_name": "table_id",
     "data_type": "uuid",
     "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
+    "column_default": null,
     "key_info": "FOREIGN KEY -> tables(table_id)",
     "is_unique": "YES"
   },
@@ -517,7 +517,7 @@
     "column_name": "user_id",
     "data_type": "uuid",
     "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
+    "column_default": null,
     "key_info": "FOREIGN KEY -> users(user_id)",
     "is_unique": "YES"
   },

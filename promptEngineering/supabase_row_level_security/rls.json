@@ -11,21 +11,21 @@
     "policy_name": "bet_participations_insert_scoped",
     "command": "INSERT",
     "using_expression": null,
-    "check_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::bet_lifecycle_status) AND is_bet_open(bp.bet_id)))))"
+    "check_expression": "((auth.uid() = user_id) AND is_user_member_of_table(table_id, auth.uid()) AND (EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = bet_participations.bet_id) AND (bp.table_id = bet_participations.table_id) AND (bp.bet_status = 'active'::bet_lifecycle_status) AND is_bet_open(bp.bet_id)))))"
   },
   {
     "table_name": "bet_participations",
     "policy_name": "bet_participations_select_scoped",
     "command": "SELECT",
-    "using_expression": "((auth.uid() = user_id) OR (is_table_member(table_id, auth.uid()) AND (NOT is_bet_open(bet_id))))",
+    "using_expression": "((auth.uid() = user_id) OR (is_user_member_of_table(table_id, auth.uid()) AND (NOT is_bet_open(bet_id))))",
     "check_expression": null
   },
   {
     "table_name": "bet_participations",
     "policy_name": "bet_participations_update_scoped",
     "command": "UPDATE",
-    "using_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND is_bet_open(bet_id))",
-    "check_expression": "((auth.uid() = user_id) AND is_table_member(table_id, auth.uid()) AND is_bet_open(bet_id))"
+    "using_expression": "((auth.uid() = user_id) AND is_user_member_of_table(table_id, auth.uid()) AND is_bet_open(bet_id))",
+    "check_expression": "((auth.uid() = user_id) AND is_user_member_of_table(table_id, auth.uid()) AND is_bet_open(bet_id))"
   },
   {
     "table_name": "bet_proposals",
@@ -54,6 +54,13 @@
     "command": "UPDATE",
     "using_expression": "false",
     "check_expression": "false"
+  },
+  {
+    "table_name": "friend_requests",
+    "policy_name": "friend_requests_delete_sender_pending",
+    "command": "DELETE",
+    "using_expression": "((auth.uid() = sender_user_id) AND (status = 'pending'::friend_request_status))",
+    "check_expression": null
   },
   {
     "table_name": "friend_requests",
@@ -113,9 +120,30 @@
   },
   {
     "table_name": "resolution_history",
+    "policy_name": "resolution_history_delete_deny",
+    "command": "DELETE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
+    "table_name": "resolution_history",
+    "policy_name": "resolution_history_insert_deny",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "false"
+  },
+  {
+    "table_name": "resolution_history",
     "policy_name": "resolution_history_select_for_members",
     "command": "SELECT",
     "using_expression": "(EXISTS ( SELECT 1\n   FROM bet_proposals bp\n  WHERE ((bp.bet_id = resolution_history.bet_id) AND ((bp.proposer_user_id = auth.uid()) OR (EXISTS ( SELECT 1\n           FROM table_members tm\n          WHERE ((tm.table_id = bp.table_id) AND (tm.user_id = auth.uid()))))))))",
+    "check_expression": null
+  },
+  {
+    "table_name": "resolution_history",
+    "policy_name": "resolution_history_update_deny",
+    "command": "UPDATE",
+    "using_expression": "false",
     "check_expression": null
   },
   {
@@ -239,17 +267,10 @@
   },
   {
     "table_name": "text_messages",
-    "policy_name": "Users can delete their own text messages",
+    "policy_name": "text_messages_delete_deny",
     "command": "DELETE",
-    "using_expression": "(auth.uid() = user_id)",
+    "using_expression": "false",
     "check_expression": null
-  },
-  {
-    "table_name": "text_messages",
-    "policy_name": "Users can update their own text messages",
-    "command": "UPDATE",
-    "using_expression": "(auth.uid() = user_id)",
-    "check_expression": "(auth.uid() = user_id)"
   },
   {
     "table_name": "text_messages",
@@ -266,6 +287,13 @@
     "check_expression": null
   },
   {
+    "table_name": "text_messages",
+    "policy_name": "text_messages_update_deny",
+    "command": "UPDATE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
     "table_name": "users",
     "policy_name": "Allow authenticated read access to usernames",
     "command": "SELECT",
@@ -274,16 +302,23 @@
   },
   {
     "table_name": "users",
-    "policy_name": "Allow individual read access to own profile",
-    "command": "SELECT",
-    "using_expression": "(auth.uid() = user_id)",
-    "check_expression": null
-  },
-  {
-    "table_name": "users",
     "policy_name": "Allow users to update their own profile",
     "command": "UPDATE",
     "using_expression": "(auth.uid() = user_id)",
     "check_expression": "(auth.uid() = user_id)"
+  },
+  {
+    "table_name": "users",
+    "policy_name": "users_delete_deny",
+    "command": "DELETE",
+    "using_expression": "false",
+    "check_expression": null
+  },
+  {
+    "table_name": "users",
+    "policy_name": "users_insert_deny",
+    "command": "INSERT",
+    "using_expression": null,
+    "check_expression": "false"
   }
 ]

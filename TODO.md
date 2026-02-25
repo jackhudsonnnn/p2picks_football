@@ -564,40 +564,53 @@ Changes to triggers, functions, RLS policies, and schema are apparently managed 
 
 ---
 
-### Phase 7 — Schema & Constraint Hardening
+### Phase 7 — Schema & Constraint Hardening ✅ Done
 
 **Goal:** Add missing indexes, constraints, and fix schema defaults to prevent data anomalies.
 
 **Duration:** ~1 day
 
-| # | Task | Refs |
-|---|---|---|
-| 1 | **Indexes:** Add composite indexes: `bet_proposals(table_id, bet_status)`, `bet_participations(bet_id, user_guess)`, `bet_participations(user_id, participation_time DESC)`, `messages(table_id, posted_at DESC, message_id DESC)`, `friend_requests(sender_user_id, status)`, `friend_requests(receiver_user_id, status)`. | §6.1 |
-| 2 | **Unique constraints:** `UNIQUE (table_id, user_id)` on `table_members`, `UNIQUE (bet_id, user_id)` on `bet_participations`. | §6.2 |
-| 3 | **Check constraints:** `wager_amount > 0`, `sender_user_id <> receiver_user_id` on `friend_requests`, `length(message_text) <= 1000` on `text_messages`. | §6.2 |
-| 4 | **Fix defaults:** Remove `DEFAULT gen_random_uuid()` from `friends.user_id1`, `friends.user_id2`, `table_members.table_id`, `table_members.user_id`. | §6.4 |
-| 5 | **Case-insensitive username:** `CREATE UNIQUE INDEX idx_users_username_lower ON users (lower(username))`. Update `isUsernameTaken` to use `.ilike()`. | §8.7 |
-| 6 | **Timestamp convention:** Pick `now()` everywhere (transaction time in UTC). Remove `timezone('utc', now())` variants for consistency. | §8.5 |
-| 7 | Write all as migration files. Test on a staging copy first — unique constraints may fail if duplicates already exist. | §8.3 |
+| # | Task | Refs | Status |
+|---|---|---|---|
+| 1 | **Indexes:** Add composite indexes: `bet_proposals(table_id, bet_status)`, `friend_requests(sender_user_id, status)`, `friend_requests(receiver_user_id, status)`. (`bet_participations` and `messages` indexes already present — skipped.) | §6.1 | ✅ |
+| 2 | **Unique constraints:** Already present on `table_members(table_id, user_id)` and `bet_participations(bet_id, user_id)` — no action needed. | §6.2 | ✅ |
+| 3 | **Check constraints:** `wager_amount > 0`, `sender_user_id <> receiver_user_id` on `friend_requests`, `length(message_text) <= 1000` on `text_messages`. | §6.2 | ✅ |
+| 4 | **Fix defaults:** Removed `DEFAULT gen_random_uuid()` from `friends.user_id1`, `friends.user_id2`, `table_members.table_id`, `table_members.user_id`. | §6.4 | ✅ |
+| 5 | **Case-insensitive username:** `CREATE UNIQUE INDEX idx_users_username_lower ON users (lower(username)) WHERE username IS NOT NULL`. Updated `isUsernameTaken` to use `.ilike()`. | §8.7 | ✅ |
+| 6 | **Timestamp convention:** `messages_sync_from_bet_proposals` and `touch_table_last_activity` rewritten to use `now()` instead of `timezone('utc', now())`. | §8.5 | ✅ |
+| 7 | Write all as migration files. | §8.3 | ✅ |
 
-**Verification:** Try inserting a duplicate `(table_id, user_id)` into `table_members` — should fail. Try a wager of `0` — should fail. `EXPLAIN ANALYZE` on the chat pagination query — should use the new index.
+**Changelog:**
+- `supabase/migrations/20260225000005_schema_constraint_hardening.sql` — new migration (all DB changes)
+- `client/src/data/repositories/socialRepository.ts` — `isUsernameTaken` uses `.ilike()` for case-insensitive username check
+- `server/docs/SYSTEM_ARCHITECTURE.md` — §4.2a Indexes table, §4.2b Check Constraints table, §14.1 migration list + summary added
+
+**Verification:** Try inserting a `wager_amount = 0` bet — should fail. Try `sender_user_id = receiver_user_id` on `friend_requests` — should fail. Insert "Alice" then "alice" as usernames — second should fail. `EXPLAIN ANALYZE` on `isUsernameTaken` query — should use `idx_users_username_lower`.
 
 ---
 
-### Phase 8 — Realtime & Subscription Improvements
+### Phase 8 — Realtime & Subscription Improvements ✅ Done
 
 **Goal:** Reduce Realtime noise, add resilience to subscriptions, prevent cross-tab channel collisions.
 
 **Duration:** ~1-2 days
 
-| # | Task | Refs |
-|---|---|---|
-| 1 | **Filter `useTickets` subscription:** Replace the unfiltered `bet_proposals` subscription with per-table scoped channels, or filter server-side by adding `bet_id` list to the filter. | §7.1 |
-| 2 | **Channel name uniqueness:** Append a session/tab ID (e.g., `crypto.randomUUID()` per page load) to all channel names. | §7.2 |
-| 3 | **Reconnection logic:** Add exponential-backoff retry to `handleSubscriptionStatus` when status is `TIMED_OUT` or `CHANNEL_ERROR`. | §7.3 |
-| 4 | **`touch_table_last_activity` debounce:** Update the trigger to skip the UPDATE if `last_activity_at > now() - interval '5 seconds'`. | §5.3 |
+| # | Task | Refs | Status |
+|---|---|---|---|
+| 1 | **Filter `useTickets` subscription:** Replaced single unfiltered global `bet_proposals` channel with **per-table channels** (`ticket_proposals:<tableId>:<SESSION_ID>`), each filtered server-side with `table_id=eq.<id>`. `trackedBetIdsRef` provides a second client-side guard. | §7.1 | ✅ |
+| 2 | **Channel name uniqueness:** Added `SESSION_ID` (`crypto.randomUUID()` per page load, `client/src/shared/utils/sessionId.ts`) appended to all channel names in `tableSubscriptions.ts`, `useTickets.ts`, and `social/hooks.ts`. | §7.2 | ✅ |
+| 3 | **Reconnection logic:** `handleSubscriptionStatus` in `tableSubscriptions.ts` now accepts a `_factory` function. On `CHANNEL_ERROR` or `TIMED_OUT` it schedules a retry with exponential backoff (100 ms × 2ⁿ, capped at 30 s). All five `subscribe*` functions pass their own factory for automatic reconnection. | §7.3 | ✅ |
+| 4 | **`touch_table_last_activity` debounce:** Rewrote the trigger function to skip the `UPDATE` if `last_activity_at > now() - interval '5 seconds'`. Caps write amplification to ≤ 1 `tables` UPDATE per 5-second window. | §5.3 | ✅ |
 
-**Verification:** Open two tabs to the same table — confirm independent subscriptions. Kill the Supabase Realtime connection (network toggle) — confirm it reconnects. Watch the `tables` UPDATE rate during rapid chatting — should be ≤1 per 5 seconds.
+**Changelog:**
+- `client/src/shared/utils/sessionId.ts` — NEW. `SESSION_ID` constant (stable per-tab UUID)
+- `client/src/data/subscriptions/tableSubscriptions.ts` — `handleSubscriptionStatus` gains exponential-backoff reconnection via `_factory` param; all 5 channel names updated with `SESSION_ID` suffix
+- `client/src/features/bets/hooks/useTickets.ts` — `bet_proposals` subscription restructured to one channel per distinct `tableId`; both channel names suffixed with `SESSION_ID`
+- `client/src/features/social/hooks.ts` — `friend_requests` channel name updated with `SESSION_ID` suffix
+- `supabase/migrations/20260225000006_realtime_improvements.sql` — NEW. Debounced `touch_table_last_activity`
+- `server/docs/SYSTEM_ARCHITECTURE.md` — Added §4.7 Realtime Subscriptions; §14.1 migration tree + Phase 8 summary
+
+**Verification:** Open two tabs to the same table — confirm independent subscriptions (channel names differ by SESSION_ID). Kill the Supabase Realtime connection (network toggle) — confirm it reconnects with backoff. Watch the `tables` UPDATE rate during rapid chatting — should be ≤1 per 5 seconds.
 
 ---
 

@@ -197,6 +197,13 @@
   },
   {
     "table_name": "bet_proposals",
+    "constraint_name": "bet_proposals_wager_positive",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "((wager_amount > (0)::numeric))"
+  },
+  {
+    "table_name": "bet_proposals",
     "constraint_name": "bet_proposals_proposer_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "columns": "proposer_user_id",
@@ -264,6 +271,13 @@
     "constraint_type": "CHECK",
     "columns": null,
     "check_clause": "status IS NOT NULL"
+  },
+  {
+    "table_name": "friend_requests",
+    "constraint_name": "friend_requests_no_self_request",
+    "constraint_type": "CHECK",
+    "columns": null,
+    "check_clause": "((sender_user_id <> receiver_user_id))"
   },
   {
     "table_name": "friend_requests",
@@ -684,19 +698,5 @@
     "constraint_type": "CHECK",
     "columns": null,
     "check_clause": "((length(table_name) <= 10))"
-  },
-  {
-    "table_name": "tables",
-    "constraint_name": "private_tables_host_user_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "columns": "host_user_id",
-    "check_clause": null
-  },
-  {
-    "table_name": "tables",
-    "constraint_name": "private_tables_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "columns": "table_id",
-    "check_clause": null
   }
 ]

@@ -36,7 +36,8 @@ export async function updateUsername(_userId: string, username: string): Promise
 }
 
 export async function isUsernameTaken(username: string, excludeUserId?: string): Promise<boolean> {
-  const query = supabase.from('users').select('user_id').eq('username', username);
+  // Use .ilike() for case-insensitive comparison — backed by idx_users_username_lower
+  const query = supabase.from('users').select('user_id').ilike('username', username);
   const { data, error } = excludeUserId
     ? await query.neq('user_id', excludeUserId).maybeSingle()
     : await query.maybeSingle();

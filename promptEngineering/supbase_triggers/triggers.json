@@ -24,7 +24,7 @@
     "table_name": "bet_participations",
     "trigger_schema": "public",
     "trigger_name": "trg_touch_tables_on_bet_participations",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION touch_table_last_activity()"
@@ -84,7 +84,7 @@
     "table_name": "bet_proposals",
     "trigger_schema": "public",
     "trigger_name": "trg_messages_from_bets",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION messages_sync_from_bet_proposals()"
@@ -105,16 +105,6 @@
     "trigger_schema": "public",
     "trigger_name": "trg_set_bet_close_time",
     "event": "INSERT,UPDATE",
-    "activation": "BEFORE",
-    "condition": null,
-    "definition": "EXECUTE FUNCTION set_bet_close_time()"
-  },
-  {
-    "table_schema": "public",
-    "table_name": "bet_proposals",
-    "trigger_schema": "public",
-    "trigger_name": "trg_set_bet_close_time_before_insert",
-    "event": "INSERT",
     "activation": "BEFORE",
     "condition": null,
     "definition": "EXECUTE FUNCTION set_bet_close_time()"
@@ -154,7 +144,7 @@
     "table_name": "system_messages",
     "trigger_schema": "public",
     "trigger_name": "trg_touch_tables_on_system_messages",
-    "event": "UPDATE,INSERT",
+    "event": "INSERT,UPDATE",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION touch_table_last_activity()"
@@ -163,8 +153,18 @@
     "table_schema": "public",
     "table_name": "table_members",
     "trigger_schema": "public",
+    "trigger_name": "trg_table_members_immutable_fields",
+    "event": "UPDATE",
+    "activation": "BEFORE",
+    "condition": null,
+    "definition": "EXECUTE FUNCTION enforce_immutable_table_member_fields()"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "table_members",
+    "trigger_schema": "public",
     "trigger_name": "trg_touch_tables_on_table_members",
-    "event": "DELETE,INSERT,UPDATE",
+    "event": "INSERT,DELETE,UPDATE",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION touch_table_last_activity()"
@@ -184,7 +184,7 @@
     "table_name": "text_messages",
     "trigger_schema": "public",
     "trigger_name": "trg_touch_tables_on_text_messages",
-    "event": "INSERT,UPDATE",
+    "event": "UPDATE,INSERT",
     "activation": "AFTER",
     "condition": null,
     "definition": "EXECUTE FUNCTION touch_table_last_activity()"

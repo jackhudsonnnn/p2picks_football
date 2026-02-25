@@ -230,6 +230,40 @@ resolution_history
 | `message_type` | `chat`, `system`, `bet_proposal` |
 | `friend_request_status` | `pending`, `accepted`, `rejected` |
 
+### 4.2a Indexes
+
+Key non-unique indexes (unique indexes exist on all PKs and explicit UNIQUE constraints):
+
+| Index | Columns | Purpose |
+|---|---|---|
+| `idx_bet_proposals_table_id_status` | `bet_proposals(table_id, bet_status)` | Lifecycle service — active bets per table; member view policy |
+| `idx_bet_proposals_close_time` | `bet_proposals(close_time)` | Overdue-bet scan in `set_bets_pending` |
+| `idx_bet_proposals_status` | `bet_proposals(bet_status)` | Filter by lifecycle status |
+| `idx_bet_participations_bet_id_guess` | `bet_participations(bet_id, user_guess)` | Payout aggregation in trigger functions |
+| `bet_participations_user_time_id_desc` | `bet_participations(user_id, participation_time DESC, participation_id DESC)` | Tickets page — per-user participation history |
+| `idx_messages_table_posted_at` | `messages(table_id, posted_at DESC, message_id DESC)` | Chat pagination |
+| `idx_friend_requests_sender_status` | `friend_requests(sender_user_id, status)` | "My pending requests" queries |
+| `idx_friend_requests_receiver_status` | `friend_requests(receiver_user_id, status)` | "Incoming requests" queries |
+| `idx_resolution_history_bet_id_created_at` | `resolution_history(bet_id, created_at DESC)` | Resolution event history per bet |
+| `tables_last_activity_desc` | `tables(last_activity_at DESC, table_id DESC)` | Tables list — sorted by activity |
+
+**Username uniqueness:** `idx_users_username_lower` — `UNIQUE` on `lower(username) WHERE username IS NOT NULL`. Enforces case-insensitive username uniqueness at the DB level. The `isUsernameTaken()` client function and server `updateUsername` handler both use case-insensitive comparison (`.ilike()`) to leverage this index.
+
+### 4.2b Check Constraints
+
+Key business-rule constraints beyond NOT NULL:
+
+| Table | Constraint | Rule |
+|---|---|---|
+| `bet_proposals` | `bet_proposals_wager_positive` | `wager_amount > 0` |
+| `bet_proposals` | `time_limit_seconds` range | `15 ≤ time_limit_seconds ≤ 120` |
+| `bet_proposals` | `wager_amount` precision | `wager_amount % 0.01 = 0` (2 d.p. max) |
+| `friend_requests` | `friend_requests_no_self_request` | `sender_user_id <> receiver_user_id` |
+| `text_messages` | `text_messages_length_limit` | `length(message_text) <= 1000` |
+| `friends` | `check_different_users` | `user_id1 <> user_id2` |
+| `table_members` | `bust_balance` precision | `bust_balance % 0.01 = 0` |
+| `messages` | `messages_type_match` | Polymorphic type/FK consistency check |
+
 ### 4.3 Key RPC Functions
 
 | Function | Security | Purpose |
@@ -316,6 +350,28 @@ All tables have RLS enabled. Key policies:
 | `system_messages` | Table members (scoped via `is_user_member_of_table`) | Service role only | None (false) |
 
 **`user_profiles` view** (`public.user_profiles`): A `SECURITY DEFINER` view exposing only `(user_id, username)` from `public.users`. Used by `getUsernamesByIds()` and `listFriends()` on the client for cross-user lookups where `email`, `updated_at`, etc. must not be visible. `getAuthUserProfile()` still queries `public.users` directly (own row, all columns).
+
+---
+
+### 4.7 Realtime Subscriptions (Client)
+
+All Supabase Realtime channels are managed in two files:
+
+| File | Channels | Purpose |
+|---|---|---|
+| `client/src/data/subscriptions/tableSubscriptions.ts` | `table_members`, `messages`, `bet_proposals`, `user_table_memberships`, `bet_participants` | Table-scoped UI subscriptions (member list, chat feed, bet state) |
+| `client/src/features/bets/hooks/useTickets.ts` | `ticket_proposals` (per-table), `my_participations` | Ticket-page bet-state patches and participation changes |
+| `client/src/features/social/hooks.ts` | `friend_requests` | Incoming friend-request badge updates |
+
+**Channel naming convention:** `<purpose>:<scopeId>:<SESSION_ID>`
+
+`SESSION_ID` is a `crypto.randomUUID()` generated once per page load (`client/src/shared/utils/sessionId.ts`). It is appended to every channel name to prevent cross-tab channel collisions — without it, two tabs subscribed to the same logical channel would share a single Realtime connection and interfere with each other's lifecycle (§7.2).
+
+**Reconnection:** `handleSubscriptionStatus` in `tableSubscriptions.ts` uses an exponential-backoff retry loop (100 ms × 2ⁿ, capped at 30 s) when a channel hits `CHANNEL_ERROR` or `TIMED_OUT`. The factory function is passed so the backoff can create a fresh channel object on each attempt (§7.3).
+
+**`useTickets` subscription filtering (§7.1):** Instead of one unfiltered global `bet_proposals` subscription (which would receive every platform event), `useTickets` opens one channel **per distinct `table_id`** found in the user's loaded tickets, each filtered server-side with `table_id=eq.<id>`. An in-memory `trackedBetIdsRef` provides a second guard to discard any change not belonging to a tracked bet.
+
+**`touch_table_last_activity` debounce (§7.4):** The trigger skips the `UPDATE` if `last_activity_at > now() - 5 seconds`, capping write amplification during rapid chat to ≤ 1 `tables` UPDATE per 5-second window.
 
 ---
 
@@ -1149,7 +1205,9 @@ supabase/
     ├── 20260225000001_create_table_settlements.sql  # table_settlements table + RLS + index
     ├── 20260225000002_atomic_rpcs_and_cascades.sql  # settle_table, create_table_with_host, accept_friend_request RPCs + 6 CASCADE FKs
     ├── 20260225000003_rls_hardening.sql             # 7 RLS changes: deny policies, user_profiles view, text_messages lock, table_members immutable trigger
-    └── 20260225000004_trigger_function_cleanup.sql  # Phase 6: drop redundant trigger, consolidate helper fns, SECURITY DEFINER hardening, escrow comments
+    ├── 20260225000004_trigger_function_cleanup.sql  # Phase 6: drop redundant trigger, consolidate helper fns, SECURITY DEFINER hardening, escrow comments
+    ├── 20260225000005_schema_constraint_hardening.sql  # Phase 7: 3 indexes, 3 check constraints, drop bad FK defaults, username CI index, timestamp consistency
+    └── 20260225000006_realtime_improvements.sql        # Phase 8: debounce touch_table_last_activity (≤1 UPDATE per 5 s)
 ```
 
 **Migration 20260225000004 summary (Phase 6):**
@@ -1158,6 +1216,17 @@ supabase/
 - **Hardened** four functions with `SECURITY DEFINER` + `SET search_path TO 'public'`: `set_bet_close_time`, `set_bet_resolved_on_winning_choice`, `enforce_immutable_bet_participation_fields`, `is_bet_open`
 - **Documented** two-phase escrow model as inline comments in `transition_bet_to_pending` and `apply_bet_payouts`
 - **Server** (`washService.ts`): removed `createWashSystemMessage()` — wash messages are now exclusively generated by the `trg_bet_proposals_washed_msg` DB trigger (prevents duplicate messages)
+
+**Migration 20260225000005 summary (Phase 7):**
+- **Indexes added:** `idx_bet_proposals_table_id_status`, `idx_friend_requests_sender_status`, `idx_friend_requests_receiver_status`
+- **Check constraints added:** `bet_proposals_wager_positive` (`wager_amount > 0`), `friend_requests_no_self_request` (`sender ≠ receiver`), `text_messages_length_limit` (`length ≤ 1000`)
+- **Removed bad defaults:** `DEFAULT gen_random_uuid()` dropped from FK columns `friends.user_id1`, `friends.user_id2`, `table_members.table_id`, `table_members.user_id`
+- **Case-insensitive username index:** `idx_users_username_lower` — `UNIQUE ON lower(username) WHERE username IS NOT NULL`
+- **Timestamp consistency:** `messages_sync_from_bet_proposals` and `touch_table_last_activity` rewritten to use `now()` instead of `timezone('utc', now())`
+- **Client** (`socialRepository.ts`): `isUsernameTaken` updated to use `.ilike()` to leverage `idx_users_username_lower`
+
+**Migration 20260225000006 summary (Phase 8):**
+- **Debounce `touch_table_last_activity`:** Rewrote the trigger function to skip the `UPDATE tables SET last_activity_at` if `last_activity_at > now() - interval '5 seconds'`. Prevents write amplification (previously fired for every chat message, bet insert, etc.). Write rate capped to ≤ 1 `tables` UPDATE per 5-second window.
 
 ### 14.2 Migration Workflow
 

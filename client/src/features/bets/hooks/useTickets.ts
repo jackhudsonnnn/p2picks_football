@@ -9,6 +9,7 @@ import { mapParticipationRowToTicket } from '../mappers';
 import type { Ticket, TicketCounts } from '../types';
 import { logger } from '@shared/utils/logger';
 import { ticketKeys } from '@shared/queryKeys';
+import { SESSION_ID } from '@shared/utils/sessionId';
 
 type BetParticipationRow = Database['public']['Tables']['bet_participations']['Row'];
 type BetProposalRow = Database['public']['Tables']['bet_proposals']['Row'];
@@ -71,50 +72,64 @@ export function useTickets(userId?: string) {
     trackedBetIdsRef.current = new Set(tickets.map((t) => t.betId).filter(Boolean) as string[]);
   }, [tickets]);
 
-  // §5.2 — Single channel for all bet_proposal changes relevant to this user,
-  // filtered client-side via trackedBetIdsRef.
+  // §7.1 — One channel per distinct table_id (instead of a single unfiltered
+  // global subscription).  Each channel is filtered server-side with
+  // `table_id=eq.<id>` so only relevant rows reach the client.
+  // §7.2 — SESSION_ID suffix prevents cross-tab channel collisions.
+  const tableIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    tableIdsRef.current = new Set(
+      tickets.map((t) => t.tableId).filter(Boolean) as string[],
+    );
+  }, [tickets]);
+
   useEffect(() => {
     if (!userId || tickets.length === 0) return;
 
-    const channel = supabase
-      .channel(`ticket_proposals:${userId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'bet_proposals' },
-        (payload: RealtimePostgresChangesPayload<BetProposalRow>) => {
-          const row = (payload.new ?? payload.old) as Partial<BetProposalRow>;
-          const betId = row?.bet_id;
-          if (!betId || !trackedBetIdsRef.current.has(betId)) return;
+    const tableIds = Array.from(tableIdsRef.current);
+    if (tableIds.length === 0) return;
 
-          supabase
-            .from('bet_proposals')
-            .select('bet_id, bet_status, close_time, winning_choice, resolution_time')
-            .eq('bet_id', betId)
-            .maybeSingle()
-            .then(({ data }) => {
-              if (!data) return;
-              const state = data.bet_status as string;
-              const settled = state === 'resolved' || state === 'washed';
-              setPatches((prev) => {
-                const next = new Map(prev);
-                next.set(betId, {
-                  state,
-                  closeTime: data.close_time ?? null,
-                  winningChoice: data.winning_choice ?? null,
-                  resolutionTime: data.resolution_time ?? null,
-                  settledStatus: settled,
-                  result: data.winning_choice ?? null,
-                  closedAt: data.resolution_time ?? null,
+    const channels = tableIds.map((tableId) =>
+      supabase
+        .channel(`ticket_proposals:${tableId}:${SESSION_ID}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'bet_proposals', filter: `table_id=eq.${tableId}` },
+          (payload: RealtimePostgresChangesPayload<BetProposalRow>) => {
+            const row = (payload.new ?? payload.old) as Partial<BetProposalRow>;
+            const betId = row?.bet_id;
+            if (!betId || !trackedBetIdsRef.current.has(betId)) return;
+
+            supabase
+              .from('bet_proposals')
+              .select('bet_id, bet_status, close_time, winning_choice, resolution_time')
+              .eq('bet_id', betId)
+              .maybeSingle()
+              .then(({ data }) => {
+                if (!data) return;
+                const state = data.bet_status as string;
+                const settled = state === 'resolved' || state === 'washed';
+                setPatches((prev) => {
+                  const next = new Map(prev);
+                  next.set(betId, {
+                    state,
+                    closeTime: data.close_time ?? null,
+                    winningChoice: data.winning_choice ?? null,
+                    resolutionTime: data.resolution_time ?? null,
+                    settledStatus: settled,
+                    result: data.winning_choice ?? null,
+                    closedAt: data.resolution_time ?? null,
+                  });
+                  return next;
                 });
-                return next;
               });
-            });
-        },
-      )
-      .subscribe();
+          },
+        )
+        .subscribe(),
+    );
 
     return () => {
-      channel.unsubscribe();
+      channels.forEach((ch) => ch.unsubscribe());
     };
   }, [userId, tickets.length > 0]);
 
@@ -122,7 +137,7 @@ export function useTickets(userId?: string) {
     if (!userId) return;
 
     const channel = supabase
-      .channel(`my_participations:${userId}`)
+      .channel(`my_participations:${userId}:${SESSION_ID}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'bet_participations', filter: `user_id=eq.${userId}` },
